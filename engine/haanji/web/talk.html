@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talk to HaanJi</title>
+<style>
+  :root { --ink:#0F1E33; --panel:#152A47; --line:#27466E; --amber:#E8952F; --amber-dk:#A9640F;
+          --teal:#2FBFA9; --red:#E4604E; --mist:#9DB2C9; --paper:#F6F8FA; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;
+         background:var(--ink); color:#E8EEF6; height:100vh; display:flex; flex-direction:column; }
+  header { display:flex; gap:12px; align-items:center; padding:14px 20px;
+           border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0 12px 0 0; } header h1 b { color:var(--amber); }
+  select, input[type=text] { background:var(--panel); color:#E8EEF6; border:1px solid var(--line);
+           border-radius:8px; padding:7px 10px; font-size:13.5px; }
+  button { border:0; border-radius:8px; padding:8px 16px; font-size:13.5px; font-weight:600;
+           cursor:pointer; }
+  .primary { background:var(--amber); color:#1B1B1B; }
+  .ghost { background:var(--panel); color:var(--mist); border:1px solid var(--line); }
+  .danger { background:var(--red); color:#fff; }
+  #chat { flex:1; overflow-y:auto; padding:22px 0; }
+  .inner { max-width:860px; margin:0 auto; padding:0 20px; }
+  .row { display:flex; margin:10px 0; }
+  .row.caller { justify-content:flex-end; }
+  .bubble { max-width:74%; padding:11px 15px; border-radius:14px; font-size:15px; }
+  .agent .bubble { background:var(--panel); border:1px solid var(--line);
+                   border-bottom-left-radius:4px; }
+  .caller .bubble { background:var(--amber); color:#1B1B1B; border-bottom-right-radius:4px; }
+  .meta { font-size:11.5px; color:var(--mist); margin-top:7px; display:flex; gap:8px;
+          flex-wrap:wrap; align-items:center; }
+  .chip { display:inline-block; border-radius:999px; padding:1px 9px; font-size:11px;
+          font-weight:600; }
+  .chip.fix { background:rgba(232,149,47,.16); color:var(--amber); }
+  .chip.spec { background:rgba(47,191,169,.16); color:var(--teal); }
+  .chip.tool { background:#122844; color:var(--mist); }
+  .chip.rcpt { background:rgba(47,191,169,.16); color:var(--teal); font-family:ui-monospace,monospace; }
+  .chip.guard { background:rgba(228,96,78,.18); color:var(--red); }
+  .fix s { opacity:.75; }
+  footer { border-top:1px solid var(--line); padding:14px 20px 18px; }
+  .bar { max-width:860px; margin:0 auto; display:flex; gap:10px; align-items:center; }
+  #text { flex:1; }
+  #mic { width:52px; height:52px; border-radius:50%; font-size:22px; background:var(--panel);
+         border:1px solid var(--line); color:#E8EEF6; }
+  #mic.live { background:var(--red); border-color:var(--red); animation:pulse 1.2s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(228,96,78,.5)} 70%{box-shadow:0 0 0 14px rgba(228,96,78,0)} 100%{box-shadow:0 0 0 0 rgba(228,96,78,0)} }
+  #interim { color:var(--mist); font-size:13px; min-height:18px; max-width:860px;
+             margin:6px auto 0; padding:0 2px; font-style:italic; }
+  .note { color:#5E7590; font-size:12px; text-align:center; margin-top:8px; }
+  .sys { text-align:center; color:var(--mist); font-size:12.5px; margin:14px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Talk to <b>HaanJi</b></h1>
+  <select id="pack"></select>
+  <input type="text" id="phone" placeholder="phone (optional — try 9876543210)" size="26"
+         maxlength="10" pattern="\d*">
+  <button class="primary" id="start">Start call</button>
+  <button class="danger" id="end" hidden>End call</button>
+  <button class="ghost" id="mute">🔊 voice on</button>
+  <span id="state" style="color:var(--mist);font-size:12.5px"></span>
+</header>
+
+<div id="chat"><div class="inner" id="log">
+  <p class="sys">Pack chuniye, "Start call" dabaiye — phir mic se boliye ya neeche type kijiye.<br>
+  Tip: phone 9876543210 daaloge toh returning-caller greeting dikhega.</p>
+</div></div>
+
+<footer>
+  <div id="interim"></div>
+  <div class="bar">
+    <button id="mic" title="hold-free mic — click to talk">🎤</button>
+    <input type="text" id="text" placeholder="…ya yahan type karke Enter">
+    <button class="primary" id="send">Send</button>
+  </div>
+  <p class="note">Speech recognition browser me chalta hai (Chrome best). Interim transcripts
+  server ko jaate hain isi liye speculation ko wahi early signal milta hai jo phone par milta.</p>
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+let sid = null, muted = false, recog = null, listening = false;
+
+async function api(path, opts) {
+  const r = await fetch(path, {headers: {"Content-Type": "application/json"}, ...opts});
+  if (!r.ok) throw new Error((await r.text()) || r.status);
+  return r.json();
+}
+
+fetch("/api/status").then(r => r.json()).then(s => {
+  $("pack").innerHTML = s.packs.map(p =>
+    `<option ${p === s.default_pack ? "selected" : ""}>${p}</option>`).join("");
+});
+
+function row(who, text) {
+  const div = document.createElement("div");
+  div.className = "row " + who;
+  div.innerHTML = `<div class="bubble">${text.replace(/</g, "&lt;")}</div>`;
+  $("log").appendChild(div);
+  $("chat").scrollTop = $("chat").scrollHeight;
+  return div.querySelector(".bubble");
+}
+
+function speak(text) {
+  if (muted || !window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(text);
+  const v = speechSynthesis.getVoices().find(v => /hi[-_]IN/i.test(v.lang));
+  if (v) u.voice = v; u.lang = "hi-IN"; u.rate = 1.02;
+  speechSynthesis.speak(u);
+}
+
+function metaChips(t, bubble) {
+  const meta = document.createElement("div"); meta.className = "meta";
+  for (const c of t.corrections || []) {
+    meta.insertAdjacentHTML("beforeend",
+      `<span class="chip fix">Bhasha: <s>${c.from_token}</s> → ${c.to_surface} @${c.asr_confidence}</span>`);
+  }
+  for (const tool of t.tools || []) {
+    const spec = (t.speculation_hits || []).includes(tool);
+    meta.insertAdjacentHTML("beforeend",
+      `<span class="chip ${spec ? "spec" : "tool"}">${tool}${spec ? " ⚡ speculated" : ""}</span>`);
+  }
+  if (t.guard) meta.insertAdjacentHTML("beforeend", `<span class="chip guard">guardrail: ${t.guard}</span>`);
+  for (const r of t.receipts || []) {
+    meta.insertAdjacentHTML("beforeend", `<span class="chip rcpt">🔏 receipt ${r}</span>`);
+  }
+  if (t.latency_ms != null) meta.insertAdjacentHTML("beforeend",
+    `<span style="color:#5E7590">${Math.round(t.latency_ms)} ms</span>`);
+  if (meta.children.length) bubble.appendChild(meta);
+}
+
+async function startCall() {
+  const phone = $("phone").value.trim();
+  const res = await api("/api/sessions", {method: "POST",
+    body: JSON.stringify({pack: $("pack").value, phone: phone || null})});
+  sid = res.session_id;
+  $("log").innerHTML = "";
+  document.title = res.business + " — HaanJi";
+  row("agent", res.greeting); speak(res.greeting);
+  $("start").hidden = true; $("end").hidden = false;
+  $("state").textContent = "on call · " + res.business;
+}
+
+async function endCall(silent) {
+  if (sid) await api("/api/sessions/" + sid, {method: "DELETE"}).catch(() => {});
+  sid = null; $("start").hidden = false; $("end").hidden = true;
+  $("state").textContent = "";
+  if (!silent) $("log").insertAdjacentHTML("beforeend", `<p class="sys">call ended</p>`);
+}
+
+async function sendUtterance(text) {
+  if (!text.trim()) return;
+  if (!sid) await startCall();
+  speechSynthesis && speechSynthesis.cancel();          // barge-in
+  row("caller", text);
+  const t = await api(`/api/sessions/${sid}/utterance`, {method: "POST",
+    body: JSON.stringify({text})});
+  const bubble = row("agent", t.reply);
+  metaChips(t, bubble);
+  speak(t.reply);
+  if (t.end_call) { sid = null; $("start").hidden = false; $("end").hidden = true;
+    $("state").textContent = ""; $("log").insertAdjacentHTML("beforeend",
+      `<p class="sys">call ended — outcome ${t.outcome}</p>`); }
+}
+
+function sendPartial(text) {
+  if (sid && text.trim()) {
+    fetch(`/api/sessions/${sid}/partial`, {method: "POST",
+      headers: {"Content-Type": "application/json"}, body: JSON.stringify({text})});
+  }
+}
+
+// ---- microphone (Web Speech API; text box is the universal fallback)
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SR) {
+  recog = new SR();
+  recog.lang = "hi-IN"; recog.interimResults = true; recog.continuous = false;
+  let finalText = "";
+  recog.onresult = e => {
+    let interim = ""; finalText = "";
+    for (const r of e.results) (r.isFinal ? (finalText += r[0].transcript)
+                                          : (interim += r[0].transcript));
+    $("interim").textContent = interim || finalText;
+    if (interim) sendPartial(interim);
+  };
+  recog.onend = () => {
+    listening = false; $("mic").classList.remove("live");
+    const text = finalText.trim(); finalText = ""; $("interim").textContent = "";
+    if (text) sendUtterance(text);
+  };
+  recog.onerror = () => { listening = false; $("mic").classList.remove("live");
+    $("interim").textContent = "mic error — type kijiye, ya Chrome try kijiye"; };
+} else {
+  $("mic").title = "Is browser me speech API nahi hai — type kijiye";
+}
+
+$("mic").onclick = async () => {
+  if (!recog) return;
+  if (!sid) await startCall();
+  if (listening) { recog.stop(); return; }
+  speechSynthesis && speechSynthesis.cancel();          // barge-in on the agent
+  listening = true; $("mic").classList.add("live");
+  recog.start();
+};
+$("start").onclick = startCall;
+$("end").onclick = () => endCall(false);
+$("mute").onclick = () => { muted = !muted;
+  $("mute").textContent = muted ? "🔇 voice off" : "🔊 voice on";
+  if (muted) speechSynthesis && speechSynthesis.cancel(); };
+$("send").onclick = () => { sendUtterance($("text").value); $("text").value = ""; };
+$("text").addEventListener("keydown", e => {
+  if (e.key === "Enter") { sendUtterance($("text").value); $("text").value = ""; }
+  else if (sid && $("text").value.length % 6 === 5) sendPartial($("text").value);
+});
+window.addEventListener("beforeunload", () => sid && navigator.sendBeacon &&
+  fetch("/api/sessions/" + sid, {method: "DELETE", keepalive: true}));
+</script>
+</body>
+</html>

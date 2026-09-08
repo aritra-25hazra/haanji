@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HaanJi — WhatsApp simulator</title>
+<style>
+  :root { --bg:#0B141A; --panel:#111B21; --line:#233138; --head:#202C33; --in:#202C33;
+          --out:#005C4B; --accent:#00A884; --mist:#8696A0; --amber:#E8952F; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14.5px/1.45 -apple-system,"Segoe UI",Roboto,sans-serif;
+         background:var(--bg); color:#E9EDEF; height:100vh; display:flex; }
+  aside { width:320px; min-width:260px; background:var(--panel); border-right:1px solid var(--line);
+          display:flex; flex-direction:column; }
+  aside h1 { font-size:16px; margin:0; padding:16px; border-bottom:1px solid var(--line); }
+  aside h1 b { color:var(--accent); }
+  .newthread { padding:12px 14px; border-bottom:1px solid var(--line); display:flex; gap:8px; }
+  .newthread input { flex:1; background:var(--head); border:1px solid var(--line); color:#E9EDEF;
+          border-radius:8px; padding:8px 10px; font-size:13.5px; }
+  .newthread button, .missed button { background:var(--accent); border:0; color:#06110D;
+          font-weight:700; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:13px; }
+  .missed { padding:10px 14px; border-bottom:1px solid var(--line); }
+  .missed button { background:var(--amber); width:100%; }
+  .missed p { margin:8px 0 0; color:var(--mist); font-size:11.5px; }
+  #threads { flex:1; overflow-y:auto; }
+  .thread { padding:13px 16px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .thread:hover, .thread.active { background:var(--head); }
+  .thread b { display:block; font-size:14.5px; }
+  .thread span { color:var(--mist); font-size:12px; }
+  main { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .chathead { background:var(--head); padding:12px 18px; border-bottom:1px solid var(--line);
+              display:flex; align-items:center; gap:12px; }
+  .avatar { width:38px; height:38px; border-radius:50%; background:var(--accent); color:#06110D;
+            display:flex; align-items:center; justify-content:center; font-weight:800; }
+  .chathead small { display:block; color:var(--mist); }
+  #msgs { flex:1; overflow-y:auto; padding:20px 8%;
+          background-image:radial-gradient(rgba(255,255,255,.03) 1px, transparent 1px);
+          background-size:22px 22px; }
+  .m { display:flex; margin:6px 0; }
+  .m.out { justify-content:flex-end; }
+  .b { max-width:70%; padding:8px 12px; border-radius:10px; font-size:14px; white-space:pre-wrap; }
+  .m.in  .b { background:var(--in); border-top-left-radius:2px; }
+  .m.out .b { background:var(--out); border-top-right-radius:2px; }
+  .time { font-size:10.5px; color:var(--mist); margin-top:4px; text-align:right; }
+  .meta { margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; }
+  .chip { border-radius:999px; padding:1px 8px; font-size:10.5px; font-weight:700; }
+  .chip.fix { background:rgba(232,149,47,.2); color:var(--amber); }
+  .chip.rcpt { background:rgba(0,168,132,.2); color:var(--accent); font-family:monospace; }
+  .chip.tool { background:rgba(134,150,160,.18); color:var(--mist); }
+  .compose { display:flex; gap:10px; padding:12px 16px; background:var(--head); }
+  .compose input { flex:1; background:var(--panel); border:1px solid var(--line); color:#E9EDEF;
+          border-radius:22px; padding:11px 16px; font-size:14px; }
+  .compose button { background:var(--accent); border:0; border-radius:50%; width:44px; height:44px;
+          font-size:18px; cursor:pointer; }
+  .empty { margin:auto; text-align:center; color:var(--mist); max-width:420px; }
+  .sys { text-align:center; margin:10px 0; }
+  .sys span { background:#182229; color:#FFD279; font-size:11.5px; padding:4px 12px;
+              border-radius:8px; }
+</style>
+</head>
+<body>
+<aside>
+  <h1>Haan<b>Ji</b> · WhatsApp <span style="color:var(--mist);font-weight:400">simulator</span></h1>
+  <div class="newthread">
+    <input id="phone" placeholder="10-digit number, e.g. 9812345678" maxlength="10">
+    <button id="open">Open</button>
+  </div>
+  <div class="missed">
+    <button id="missed">📵 Simulate a missed call</button>
+    <p>Telephony webhook fire hota hai → HaanJi khud WhatsApp par outreach bhejta hai →
+       reply se booking hui toh missed call "recovered" ginta hai.</p>
+  </div>
+  <div id="threads"></div>
+</aside>
+<main>
+  <div class="chathead">
+    <div class="avatar" id="av">H</div>
+    <div><b id="who">Koi thread chuniye</b><small id="biz"></small></div>
+    <select id="pack" style="margin-left:auto;background:var(--panel);color:#E9EDEF;
+      border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12.5px"></select>
+  </div>
+  <div id="msgs"><div class="empty">
+    <h2>WhatsApp channel demo</h2>
+    <p>Left me number daal ke thread kholo — ya "Simulate a missed call" dabao aur dekho
+       HaanJi khud pehla message bhejta hai. Same engine, same policy, same ledger —
+       sirf channel alag.</p>
+  </div></div>
+  <div class="compose">
+    <input id="text" placeholder="Message" disabled>
+    <button id="send" disabled>➤</button>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let phone = null;
+
+async function api(path, opts) {
+  const r = await fetch(path, {headers: {"Content-Type": "application/json"}, ...opts});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+fetch("/api/status").then(r => r.json()).then(s => {
+  $("pack").innerHTML = s.packs.map(p =>
+    `<option ${p === s.default_pack ? "selected" : ""}>${p}</option>`).join("");
+  loadThreads();
+});
+
+async function loadThreads() {
+  const t = await api("/api/wa/threads?pack=" + $("pack").value);
+  $("threads").innerHTML = t.threads.map(x =>
+    `<div class="thread ${x.phone === phone ? "active" : ""}" data-p="${x.phone}">
+       <b>+91 ${x.phone}</b><span>${x.messages} messages · ${x.last_at.slice(11, 16)}</span>
+     </div>`).join("");
+  for (const el of document.querySelectorAll(".thread"))
+    el.onclick = () => openThread(el.dataset.p);
+}
+
+function renderMsg(m) {
+  const meta = JSON.parse(m.meta_json || "{}");
+  let chips = "";
+  for (const c of meta.corrections || [])
+    chips += `<span class="chip fix"><s>${c.from_token}</s> → ${c.to_surface}</span>`;
+  for (const t of meta.tools || []) chips += `<span class="chip tool">${t}</span>`;
+  for (const r of meta.receipts || []) chips += `<span class="chip rcpt">🔏 ${r}</span>`;
+  const sys = meta.missed_call_recovery
+    ? `<div class="sys"><span>📵 missed call → automatic outreach</span></div>` : "";
+  return `${sys}<div class="m ${m.direction === "in" ? "out" : "in"}"><div class="b">${
+    m.text.replace(/</g, "&lt;")}${chips ? `<div class="meta">${chips}</div>` : ""}
+    <div class="time">${m.at.slice(11, 16)}</div></div></div>`;
+}
+// note: caller's own messages ("in" to the business) render on the right like a
+// phone would show them; the agent's replies on the left.
+
+async function openThread(p) {
+  phone = p; $("phone").value = p;
+  $("who").textContent = "+91 " + p;
+  $("av").textContent = p.slice(-2);
+  $("biz").textContent = "HaanJi · " + $("pack").value;
+  $("text").disabled = $("send").disabled = false;
+  const t = await api(`/api/wa/threads/${p}?pack=` + $("pack").value);
+  $("msgs").innerHTML = t.messages.map(renderMsg).join("");
+  $("msgs").scrollTop = $("msgs").scrollHeight;
+  loadThreads();
+}
+
+async function send() {
+  const text = $("text").value.trim();
+  if (!text || !phone) return;
+  $("text").value = "";
+  await api("/api/wa/incoming", {method: "POST",
+    body: JSON.stringify({pack: $("pack").value, phone, text})});
+  openThread(phone);
+}
+
+$("open").onclick = () => {
+  const p = $("phone").value.trim();
+  if (/^\d{10}$/.test(p)) openThread(p);
+  else alert("10 digit number chahiye");
+};
+$("missed").onclick = async () => {
+  const p = $("phone").value.trim() || String(9700000000 + Math.floor(Math.random() * 9999999));
+  $("phone").value = p;
+  await api("/api/telephony/missed-call", {method: "POST",
+    body: JSON.stringify({pack: $("pack").value, phone: p})});
+  openThread(p);
+};
+$("send").onclick = send;
+$("text").addEventListener("keydown", e => e.key === "Enter" && send());
+$("pack").onchange = loadThreads;
+</script>
+</body>
+</html>

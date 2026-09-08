@@ -1,0 +1,36 @@
+# The four things worth waking somebody up for. Everything else is a dashboard.
+groups:
+  - name: haanji
+    rules:
+      - alert: TurnLatencyTooHigh
+        expr: histogram_quantile(0.90, rate(haanji_turn_latency_ms_bucket[5m])) > 1500
+        for: 5m
+        labels: { severity: page }
+        annotations:
+          summary: "Callers are waiting more than 1.5 s for a reply (p90)"
+          runbook: "Check provider latency first; the engine adds under 50 ms of its own."
+
+      - alert: UnconfirmedWriteAttempted
+        expr: increase(haanji_ledger_unconfirmed_refused_total[10m]) > 0
+        labels: { severity: page }
+        annotations:
+          summary: "The ledger refused a write with no confirmation proof"
+          runbook: "This should be impossible. Inspect the conversation before restarting."
+
+      - alert: SpeculationWasteHigh
+        expr: |
+          rate(haanji_speculation_wasted_total[15m])
+            / clamp_min(rate(haanji_speculation_started_total[15m]), 1) > 0.75
+        for: 15m
+        labels: { severity: ticket }
+        annotations:
+          summary: "Three quarters of speculations are being thrown away"
+          runbook: "The predictor is mis-firing for this tenant; consider raising the threshold."
+
+      - alert: CorrectionRateSpike
+        expr: rate(haanji_bhasha_corrections_total[10m]) > 3 * rate(haanji_bhasha_corrections_total[6h] offset 1d)
+        for: 20m
+        labels: { severity: ticket }
+        annotations:
+          summary: "Bhasha Bridge is repairing far more than usual"
+          runbook: "Usually a recogniser regression or a bad lexicon rebuild."

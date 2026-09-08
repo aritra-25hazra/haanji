@@ -1,0 +1,122 @@
+# Vertical Pack — unisex salon and spa
+pack: salon_spa
+display_name: Salon and spa
+version: 2
+language: hinglish
+
+persona:
+  agent_name: Haanji
+  business_name: Glow Studio
+  greeting: "Haanji, Glow Studio. Kya service chahiye aapko?"
+  closing: "Perfect, aapka slot lag gaya. Milte hain!"
+  style: "Friendly, upbeat, short Hinglish sentences. Always confirms the stylist by name."
+
+guardrails:
+  never_quote_outside_catalogue: true
+  max_discount_pct: 0
+  refuse:
+    - promising a hair or skin result
+    - advice on a scalp or skin condition
+    - matching a competitor's price
+  escalate_on:
+    - allergic reaction after a service
+    - complaint about a previous service
+    - refund request
+  refusal_line: "Ye stylist aapko dekh kar hi bata payenge, main aapka slot laga deta hoon."
+  escalation_line: "Ye main manager ko de raha hoon, wo abhi baat karengi."
+
+staff_role: stylist
+staff: [Neha, Farhan, Ritu, Sanjay]
+
+hours:
+  tue-sun: ["10:00", "21:00"]
+  mon: null
+
+services:
+  - name: hair spa
+    duration_min: 60
+    price_inr: 1500
+    staff: [Neha, Ritu]
+    aliases: [spa, hair treatment]
+  - name: global colour
+    duration_min: 120
+    price_inr: 4500
+    staff: [Farhan, Neha]
+    aliases: [colour, color, hair colour, global color, colouring]
+  - name: haircut
+    duration_min: 30
+    price_inr: 500
+    staff: [Neha, Farhan, Ritu, Sanjay]
+    aliases: [hair cut, trim]
+  - name: bridal makeup
+    duration_min: 180
+    price_inr: 15000
+    staff: [Neha]
+    prep_note: "Trial session pehle karani padti hai."
+    aliases: [bridal, dulhan makeup, wedding makeup]
+  - name: beard trim
+    duration_min: 20
+    price_inr: 250
+    staff: [Farhan, Sanjay]
+    aliases: [beard, dadhi]
+  - name: keratin treatment
+    duration_min: 150
+    price_inr: 6000
+    staff: [Farhan]
+    aliases: [keratin, smoothening]
+
+lexicon:
+  places: [Vijay Nagar, Palasia, Saket, Treasure Island]
+  brands: [Glow Studio, Loreal, Schwarzkopf, Olaplex]
+  phrases: [walk in, advance booking, membership card]
+  variants:
+    Schwarzkopf: [Shwarzkof]
+
+knowledge:
+  - q: "Salon kab khulta hai?"
+    a: "Tuesday se Sunday, subah 10 baje se raat 9 baje tak. Monday weekly off hai."
+    tags: [timing, timings, khulta, kab, band, open, hours, monday]
+  - q: "Haircut ka kitna lagta hai?"
+    a: "Haircut 500 rupaye se shuru hai, stylist ke hisaab se badal sakta hai."
+    tags: [haircut, cut, kitna, charge, charges, price, rate, lagta]
+  - q: "Bridal package hai kya?"
+    a: "Bridal makeup 15,000 rupaye se shuru hai aur usme ek trial session shaamil hai."
+    tags: [bridal, dulhan, package, shaadi, wedding, makeup]
+  - q: "Membership hai?"
+    a: "Haan, 5,000 rupaye ki membership par saal bhar 20 percent chhoot milti hai."
+    tags: [membership, card, discount, offer, chhoot]
+
+scenarios:
+  - name: colour_booking
+    expect: BOOKED
+    turns:
+      - heard: "global kalar karwana hai kal"
+        truth: "global colour karwana hai kal"
+        low_conf: [kalar]
+      - heard: "haan wahi time theek hai"
+        truth: "haan wahi time theek hai"
+      - heard: "Priya Menon 9823456710"
+        truth: "Priya Menon 9823456710"
+      - heard: "haan confirm"
+        truth: "haan confirm"
+  - name: monday_closed_lead
+    expect: LEAD_CAPTURED
+    turns:
+      - heard: "monday ko hercut ka slot hai kya"
+        truth: "monday ko haircut ka slot hai kya"
+        low_conf: [hercut]
+      - heard: "Sameer 9812000111"
+        truth: "Sameer 9812000111"
+  - name: price_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "hercut ka kitna charge hai"
+        truth: "haircut ka kitna charge hai"
+        low_conf: [hercut]
+      - heard: "nahi bas yahi puchna tha"
+        truth: "nahi bas yahi puchna tha"
+  - name: complaint_handoff
+    expect: HANDED_OFF
+    turns:
+      - heard: "pichhli baar service kharab thi refund chahiye"
+        truth: "pichhli baar service kharab thi refund chahiye"

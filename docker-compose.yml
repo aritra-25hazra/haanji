@@ -1,0 +1,95 @@
+# One command brings the whole system up:  docker compose up --build
+#
+# The engine is the only container that needs to talk to the outside world, and
+# it is the only one that is horizontally scaled here, because a voice call is
+# the part of this system that is expensive and bursty.
+
+name: haanji
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: haanji
+      POSTGRES_USER: haanji
+      POSTGRES_PASSWORD: haanji
+    ports: ["5432:5432"]
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U haanji -d haanji"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb",
+              "--maxmemory-policy", "allkeys-lru"]
+    ports: ["6379:6379"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  core-api:
+    build: { context: ./core-api }
+    environment:
+      HAANJI_DB_URL: jdbc:postgresql://db:5432/haanji
+      HAANJI_REDIS_HOST: redis
+      HAANJI_PACK_DIR: /packs
+      HAANJI_JWT_SECRET: local-development-secret-at-least-32-characters
+    volumes: ["./packs:/packs:ro"]
+    ports: ["8080:8080"]
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+
+  engine:
+    build: { context: ./engine }
+    environment:
+      HAANJI_CORE_URL: http://core-api:8080
+      HAANJI_PACK_DIR: /packs
+      HAANJI_PROVIDER_STT: ${HAANJI_PROVIDER_STT:-mock}
+      HAANJI_PROVIDER_LLM: ${HAANJI_PROVIDER_LLM:-mock}
+      HAANJI_PROVIDER_TTS: ${HAANJI_PROVIDER_TTS:-mock}
+    volumes: ["./packs:/packs:ro"]
+    ports: ["8090:8090"]
+    depends_on:
+      core-api: { condition: service_healthy }
+    deploy:
+      replicas: 2
+      resources:
+        limits: { cpus: "2.0", memory: 1g }
+
+  console:
+    build:
+      context: ./console
+      args: { VITE_API_BASE: http://localhost:8080 }
+    ports: ["5173:80"]
+    depends_on: [core-api]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes: ["./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["9090:9090"]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: haanji
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes: ["./ops/grafana:/etc/grafana/provisioning:ro"]
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+
+volumes:
+  db-data:
+  redis-data:

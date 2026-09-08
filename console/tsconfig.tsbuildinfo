@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/api.ts","./src/live.ts","./src/main.tsx","./src/mock.ts","./src/types.ts","./src/components/Common.tsx","./src/pages/CallDetail.tsx","./src/pages/Calls.tsx","./src/pages/Dashboard.tsx","./src/pages/Ledger.tsx","./src/pages/Lexicon.tsx","./src/pages/PackStudio.tsx","./src/pages/Packs.tsx"],"version":"5.9.3"}

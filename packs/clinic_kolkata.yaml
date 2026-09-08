@@ -1,0 +1,108 @@
+# Vertical Pack — dental clinic, Kolkata (Benglish)
+# The point of this pack: the SAME engine, with zero code changes, serves a
+# Bengali-English caller. Everything Benglish lives in data — persona lines,
+# vocabulary seeds and the scenarios that prove it works.
+pack: clinic_kolkata
+display_name: Dental clinic (Kolkata, Benglish)
+version: 1
+language: benglish
+
+persona:
+  agent_name: Haanji
+  business_name: Sundar Smile Dental
+  greeting: "Nomoshkar, Sundar Smile Dental. Ki bhabe help korbo?"
+  closing: "Achha, dekha hobe. Bhalo thakben."
+  style: >
+    Warm, short sentences, Bengali-English mix in Roman script. Uses "apni".
+    Repeats the date, time and doctor's name once before asking to confirm.
+
+guardrails:
+  never_quote_outside_catalogue: true
+  refuse:
+    - medical diagnosis or advice
+    - prescribing or naming medicines
+  escalate_on:
+    - bleeding that will not stop
+    - severe pain or swelling with fever
+  refusal_line: "Eta doctor dekhe bolte parben — ami apnar jonno slot kore dichhi."
+  escalation_line: "Eta urgent mone hochhe. Ami ekhoni clinic er sathe jog kore dichhi."
+
+staff_role: dentist
+staff:
+  - Dr Sen
+  - Dr Banerjee
+
+hours:
+  mon-sat: ["10:00", "20:30", "14:00", "15:30"]
+  sun: null
+
+services:
+  - name: teeth cleaning
+    duration_min: 30
+    price_inr: 1100
+    staff: [Dr Sen, Dr Banerjee]
+    aliases: [cleaning, scaling, polish]
+  - name: root canal
+    duration_min: 60
+    price_inr: 6000
+    staff: [Dr Sen]
+    aliases: [rct, root canal treatment]
+  - name: dental checkup
+    duration_min: 20
+    price_inr: 500
+    staff: [Dr Banerjee]
+    aliases: [checkup, check up]
+  - name: tooth extraction
+    duration_min: 45
+    price_inr: 2200
+    staff: [Dr Sen, Dr Banerjee]
+    aliases: [extraction, dat tola]
+
+lexicon:
+  places: [Salt Lake, Gariahat, Dumdum, Jadavpur, New Town]
+  brands: [Sundar Smile Dental, Sensodyne]
+  phrases: [home visit, cashless insurance]
+  variants:
+    Gariahat: [Goriahat]
+    Dr Banerjee: [Dr Bandopadhyay, Doctor Banarji]
+
+knowledge:
+  - q: "Clinic kokhon khola thake?"
+    a: "Amra Monday theke Saturday, shokal 10 ta theke raat 8:30 porjonto khola thaki. Sunday bondho."
+    tags: [kokhon, khola, timing, timings, band, bondho, kobe, open, hours]
+  - q: "Cleaning er koto daam?"
+    a: "Teeth cleaning 1,100 taka, polishing shoho."
+    tags: [cleaning, koto, daam, price, charge, charges, taka, kitna]
+  - q: "Clinic kothay?"
+    a: "Amra Salt Lake, Sector 1 e — City Centre er kachhe, first floor."
+    tags: [kothay, address, location, jayga, kahan]
+  - q: "Root canal er khoroch koto?"
+    a: "Root canal 6,000 taka theke shuru. Doctor dekhe exact bolben."
+    tags: [root, canal, koto, daam, khoroch, price, rct]
+
+scenarios:
+  - name: benglish_booking_with_noise
+    expect: BOOKED
+    note: "A Benglish caller; the recogniser mangles the service, the pack repairs it."
+    turns:
+      - heard: "kalke shokale teeth clining er slot hobe?"
+        truth: "kalke shokale teeth cleaning er slot hobe?"
+        low_conf: [clining]
+      - heard: "hyan thik ache"
+        truth: "hyan thik ache"
+      - heard: "Rohan Sen 9830012345"
+        truth: "Rohan Sen 9830012345"
+      - heard: "hyan confirm koro"
+        truth: "hyan confirm koro"
+  - name: benglish_price_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "cleaning er koto daam?"
+        truth: "cleaning er koto daam?"
+      - heard: "na thank you eituku"
+        truth: "na thank you eituku"
+  - name: benglish_emergency
+    expect: HANDED_OFF
+    turns:
+      - heard: "khub rokto porche dat theke"
+        truth: "khub rokto porche dat theke"

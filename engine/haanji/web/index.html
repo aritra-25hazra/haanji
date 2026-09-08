@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HaanJi — demo server</title>
+<style>
+  :root { --ink:#0F1E33; --card:#1B3557; --line:#27466E; --amber:#E8952F; --teal:#2FBFA9;
+          --mist:#9DB2C9; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif;
+         background:var(--ink); color:#E8EEF6; min-height:100vh; }
+  .wrap { max-width:980px; margin:0 auto; padding:48px 24px 64px; }
+  h1 { font-size:44px; margin:0; letter-spacing:-.5px; }
+  h1 span { color:var(--amber); }
+  .sub { color:var(--mist); margin:6px 0 8px; }
+  .status { font-size:13px; color:var(--teal); margin-bottom:36px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; }
+  a.card { display:block; background:var(--card); border:1px solid var(--line);
+           border-radius:14px; padding:22px; color:inherit; text-decoration:none;
+           transition:transform .12s ease, border-color .12s ease; }
+  a.card:hover { transform:translateY(-2px); border-color:var(--amber); }
+  .card h2 { margin:0 0 8px; font-size:19px; }
+  .card p { margin:0; color:var(--mist); font-size:13.5px; }
+  .k { display:inline-block; background:rgba(232,149,47,.15); color:var(--amber);
+       border-radius:6px; padding:1px 8px; font-size:11.5px; font-weight:600;
+       letter-spacing:.06em; margin-bottom:12px; }
+  .foot { margin-top:40px; color:#5E7590; font-size:12.5px; }
+  code { background:#122844; padding:2px 7px; border-radius:6px; font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Haan<span>Ji</span></h1>
+  <p class="sub">AI voice receptionist for Indian small businesses — demo server</p>
+  <p class="status" id="status">checking server…</p>
+
+  <div class="grid">
+    <a class="card" href="/talk">
+      <span class="k">LIVE CALL</span>
+      <h2>Talk to HaanJi</h2>
+      <p>Speak into the mic (or type). Watch Bhasha Bridge repair the transcript,
+         speculation answer before you finish, and a signed receipt appear.</p>
+    </a>
+    <a class="card" href="/whatsapp">
+      <span class="k">WHATSAPP</span>
+      <h2>WhatsApp simulator</h2>
+      <p>The same agent over chat — plus the missed-call recovery flow: a rung-out
+         call becomes a WhatsApp thread that ends in a booking.</p>
+    </a>
+    <a class="card" href="/verify">
+      <span class="k">PRAMAAN</span>
+      <h2>Public receipt verifier</h2>
+      <p>Runs entirely in your browser. Load this server's export, verify every hash
+         and signature, then tamper with a field and watch it break.</p>
+    </a>
+    <a class="card" href="http://localhost:5173" target="_blank" rel="noopener">
+      <span class="k">OWNER CONSOLE</span>
+      <h2>Console (React)</h2>
+      <p>Dashboard with live insights, call history with repairs inline, Pack Studio.
+         Start it with <code>npm run dev</code> in <code>code/console</code>.</p>
+    </a>
+  </div>
+
+  <p class="foot">Everything on this page runs locally — no API keys. Speech happens in your
+     browser; the dialogue, the correction layer, speculation and the ledger run in the
+     Python engine behind this server.</p>
+</div>
+<script>
+  fetch("/api/status").then(r => r.json()).then(s => {
+    document.getElementById("status").textContent =
+      "server up · v" + s.version + " · packs: " + s.packs.join(", ");
+  }).catch(() => document.getElementById("status").textContent = "server not reachable");
+</script>
+</body>
+</html>

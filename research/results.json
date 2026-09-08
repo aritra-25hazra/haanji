@@ -1,0 +1,1700 @@
+{
+  "generated_at": "2026-08-30T06:59:09+00:00",
+  "reps": 5,
+  "time_scale": 90.0,
+  "packs": [
+    "coaching_institute",
+    "dental_clinic",
+    "diagnostic_lab",
+    "salon_spa"
+  ],
+  "scenarios": 18,
+  "authored": {
+    "full": {
+      "config": "full",
+      "noise": null,
+      "bhasha": true,
+      "speculation": {
+        "started": 110,
+        "hits": 50,
+        "wasted": 60,
+        "hit_rate": 0.455,
+        "saved_ms_total": 10638.0,
+        "saved_ms_per_hit": 212.8
+      },
+      "calls": 90,
+      "turns": 240,
+      "outcome_accuracy": 1.0,
+      "entity_error_rate": 0.0,
+      "entities_evaluated": 55,
+      "latency_ms": {
+        "mean": 70.5,
+        "p50": 38.2,
+        "p90": 225.7,
+        "p95": 239.6,
+        "max": 448.7
+      },
+      "tool_turn_latency_ms": {
+        "n": 140,
+        "mean": 112.5,
+        "p50": 86.5,
+        "p90": 230.9,
+        "p95": 242.0
+      },
+      "read_turn_latency_ms": {
+        "n": 70,
+        "mean": 135.0,
+        "p50": 137.0,
+        "p90": 242.0,
+        "p95": 244.9
+      },
+      "correction_quality": {
+        "beneficial": 45,
+        "neutral": 0,
+        "harmful": 0
+      },
+      "unconfirmed_writes": 0,
+      "per_pack": {
+        "coaching_institute": {
+          "calls": 15,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "dental_clinic": {
+          "calls": 40,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "diagnostic_lab": {
+          "calls": 15,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "salon_spa": {
+          "calls": 20,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        }
+      },
+      "metrics": {
+        "counters": {
+          "tool_check_availability": 55,
+          "corrections": 45,
+          "speculation_hits": 50,
+          "tool_book_appointment": 35,
+          "outcome_BOOKED": 35,
+          "tool_search_knowledge": 75,
+          "outcome_FAQ_ANSWERED": 20,
+          "tool_handoff": 25,
+          "outcome_HANDED_OFF": 25,
+          "tool_capture_lead": 10,
+          "outcome_LEAD_CAPTURED": 10
+        },
+        "latency": {
+          "bhasha_ms": {
+            "n": 240,
+            "mean": 5.5,
+            "p50": 0.9,
+            "p90": 20.8,
+            "p95": 25.3,
+            "max": 151.0
+          },
+          "read_turn_latency_ms": {
+            "n": 70,
+            "mean": 135.0,
+            "p50": 137.0,
+            "p90": 242.0,
+            "p95": 244.9,
+            "max": 381.9
+          },
+          "tool_book_appointment_ms": {
+            "n": 35,
+            "mean": 87.9,
+            "p50": 76.0,
+            "p90": 93.4,
+            "p95": 101.9,
+            "max": 429
+          },
+          "tool_capture_lead_ms": {
+            "n": 10,
+            "mean": 61.4,
+            "p50": 61.5,
+            "p90": 64.6,
+            "p95": 67.3,
+            "max": 70
+          },
+          "tool_check_availability_ms": {
+            "n": 55,
+            "mean": 211.5,
+            "p50": 211.0,
+            "p90": 221.0,
+            "p95": 221.0,
+            "max": 223
+          },
+          "tool_handoff_ms": {
+            "n": 25,
+            "mean": 60.3,
+            "p50": 60.0,
+            "p90": 69.2,
+            "p95": 71.6,
+            "max": 80
+          },
+          "tool_search_knowledge_ms": {
+            "n": 75,
+            "mean": 203.5,
+            "p50": 203.0,
+            "p90": 209.6,
+            "p95": 210.0,
+            "max": 220
+          },
+          "tool_turn_latency_ms": {
+            "n": 140,
+            "mean": 112.5,
+            "p50": 86.5,
+            "p90": 230.9,
+            "p95": 242.0,
+            "max": 448.7
+          },
+          "turn_latency_ms": {
+            "n": 240,
+            "mean": 70.5,
+            "p50": 38.2,
+            "p90": 225.7,
+            "p95": 239.6,
+            "max": 448.7
+          }
+        }
+      },
+      "wall_seconds": 13.6
+    },
+    "no_speculation": {
+      "config": "no_speculation",
+      "noise": null,
+      "bhasha": true,
+      "speculation": {
+        "started": 0,
+        "hits": 0,
+        "wasted": 0,
+        "hit_rate": 0.0,
+        "saved_ms_total": 0.0,
+        "saved_ms_per_hit": 0.0
+      },
+      "calls": 90,
+      "turns": 240,
+      "outcome_accuracy": 1.0,
+      "entity_error_rate": 0.0,
+      "entities_evaluated": 55,
+      "latency_ms": {
+        "mean": 100.9,
+        "p50": 75.0,
+        "p90": 243.8,
+        "p95": 254.4,
+        "max": 296.5
+      },
+      "tool_turn_latency_ms": {
+        "n": 140,
+        "mean": 163.7,
+        "p50": 175.4,
+        "p90": 251.6,
+        "p95": 260.2
+      },
+      "read_turn_latency_ms": {
+        "n": 70,
+        "mean": 240.7,
+        "p50": 238.7,
+        "p90": 260.2,
+        "p95": 271.0
+      },
+      "correction_quality": {
+        "beneficial": 45,
+        "neutral": 0,
+        "harmful": 0
+      },
+      "unconfirmed_writes": 0,
+      "per_pack": {
+        "coaching_institute": {
+          "calls": 15,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "dental_clinic": {
+          "calls": 40,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "diagnostic_lab": {
+          "calls": 15,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "salon_spa": {
+          "calls": 20,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        }
+      },
+      "metrics": {
+        "counters": {
+          "corrections": 45,
+          "tool_check_availability": 45,
+          "tool_book_appointment": 35,
+          "outcome_BOOKED": 35,
+          "tool_search_knowledge": 25,
+          "outcome_FAQ_ANSWERED": 20,
+          "tool_handoff": 25,
+          "outcome_HANDED_OFF": 25,
+          "tool_capture_lead": 10,
+          "outcome_LEAD_CAPTURED": 10
+        },
+        "latency": {
+          "bhasha_ms": {
+            "n": 240,
+            "mean": 4.9,
+            "p50": 0.9,
+            "p90": 21.1,
+            "p95": 26.0,
+            "max": 40.2
+          },
+          "read_turn_latency_ms": {
+            "n": 70,
+            "mean": 240.7,
+            "p50": 238.7,
+            "p90": 260.2,
+            "p95": 271.0,
+            "max": 296.5
+          },
+          "tool_book_appointment_ms": {
+            "n": 35,
+            "mean": 80.8,
+            "p50": 77.0,
+            "p90": 92.2,
+            "p95": 102.5,
+            "max": 115
+          },
+          "tool_capture_lead_ms": {
+            "n": 10,
+            "mean": 62.2,
+            "p50": 63.0,
+            "p90": 66.3,
+            "p95": 67.6,
+            "max": 69
+          },
+          "tool_check_availability_ms": {
+            "n": 45,
+            "mean": 217.0,
+            "p50": 217.0,
+            "p90": 223.6,
+            "p95": 225.6,
+            "max": 256
+          },
+          "tool_handoff_ms": {
+            "n": 25,
+            "mean": 59.1,
+            "p50": 56.0,
+            "p90": 72.6,
+            "p95": 77.8,
+            "max": 89
+          },
+          "tool_search_knowledge_ms": {
+            "n": 25,
+            "mean": 210.0,
+            "p50": 210.0,
+            "p90": 214.6,
+            "p95": 215.0,
+            "max": 215
+          },
+          "tool_turn_latency_ms": {
+            "n": 140,
+            "mean": 163.7,
+            "p50": 175.4,
+            "p90": 251.6,
+            "p95": 260.2,
+            "max": 296.5
+          },
+          "turn_latency_ms": {
+            "n": 240,
+            "mean": 100.9,
+            "p50": 75.0,
+            "p90": 243.8,
+            "p95": 254.4,
+            "max": 296.5
+          }
+        }
+      },
+      "wall_seconds": 13.7
+    },
+    "no_bhasha": {
+      "config": "no_bhasha",
+      "noise": null,
+      "bhasha": false,
+      "speculation": {
+        "started": 100,
+        "hits": 20,
+        "wasted": 80,
+        "hit_rate": 0.2,
+        "saved_ms_total": 4293.0,
+        "saved_ms_per_hit": 214.6
+      },
+      "calls": 90,
+      "turns": 240,
+      "outcome_accuracy": 0.6667,
+      "entity_error_rate": 0.7273,
+      "entities_evaluated": 55,
+      "latency_ms": {
+        "mean": 53.0,
+        "p50": 9.6,
+        "p90": 220.4,
+        "p95": 227.5,
+        "max": 286.8
+      },
+      "tool_turn_latency_ms": {
+        "n": 80,
+        "mean": 141.5,
+        "p50": 98.6,
+        "p90": 231.2,
+        "p95": 236.7
+      },
+      "read_turn_latency_ms": {
+        "n": 40,
+        "mean": 201.6,
+        "p50": 221.4,
+        "p90": 236.7,
+        "p95": 237.4
+      },
+      "correction_quality": {
+        "beneficial": 0,
+        "neutral": 0,
+        "harmful": 0
+      },
+      "unconfirmed_writes": 0,
+      "per_pack": {
+        "coaching_institute": {
+          "calls": 15,
+          "outcome_accuracy": 0.667,
+          "entity_error_rate": 1.0
+        },
+        "dental_clinic": {
+          "calls": 40,
+          "outcome_accuracy": 0.625,
+          "entity_error_rate": 0.6667
+        },
+        "diagnostic_lab": {
+          "calls": 15,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "salon_spa": {
+          "calls": 20,
+          "outcome_accuracy": 0.5,
+          "entity_error_rate": 1.0
+        }
+      },
+      "metrics": {
+        "counters": {
+          "corrections": 0,
+          "outcome_ABANDONED": 25,
+          "tool_search_knowledge": 75,
+          "outcome_FAQ_ANSWERED": 25,
+          "tool_handoff": 25,
+          "outcome_HANDED_OFF": 25,
+          "tool_check_availability": 35,
+          "speculation_hits": 20,
+          "tool_book_appointment": 15,
+          "outcome_BOOKED": 15
+        },
+        "latency": {
+          "bhasha_ms": {
+            "n": 240,
+            "mean": 0.2,
+            "p50": 0.1,
+            "p90": 0.2,
+            "p95": 0.2,
+            "max": 1.8
+          },
+          "read_turn_latency_ms": {
+            "n": 40,
+            "mean": 201.6,
+            "p50": 221.4,
+            "p90": 236.7,
+            "p95": 237.4,
+            "max": 286.8
+          },
+          "tool_book_appointment_ms": {
+            "n": 15,
+            "mean": 78.3,
+            "p50": 76.0,
+            "p90": 91.4,
+            "p95": 97.4,
+            "max": 103
+          },
+          "tool_check_availability_ms": {
+            "n": 35,
+            "mean": 218.3,
+            "p50": 213.0,
+            "p90": 218.2,
+            "p95": 219.9,
+            "max": 424
+          },
+          "tool_handoff_ms": {
+            "n": 25,
+            "mean": 59.4,
+            "p50": 58.0,
+            "p90": 66.0,
+            "p95": 70.0,
+            "max": 79
+          },
+          "tool_search_knowledge_ms": {
+            "n": 75,
+            "mean": 204.3,
+            "p50": 205.0,
+            "p90": 212.0,
+            "p95": 215.0,
+            "max": 235
+          },
+          "tool_turn_latency_ms": {
+            "n": 80,
+            "mean": 141.5,
+            "p50": 98.6,
+            "p90": 231.2,
+            "p95": 236.7,
+            "max": 286.8
+          },
+          "turn_latency_ms": {
+            "n": 240,
+            "mean": 53.0,
+            "p50": 9.6,
+            "p90": 220.4,
+            "p95": 227.5,
+            "max": 286.8
+          }
+        }
+      },
+      "wall_seconds": 13.2
+    },
+    "baseline": {
+      "config": "baseline",
+      "noise": null,
+      "bhasha": false,
+      "speculation": {
+        "started": 0,
+        "hits": 0,
+        "wasted": 0,
+        "hit_rate": 0.0,
+        "saved_ms_total": 0.0,
+        "saved_ms_per_hit": 0.0
+      },
+      "calls": 90,
+      "turns": 240,
+      "outcome_accuracy": 0.6667,
+      "entity_error_rate": 0.7273,
+      "entities_evaluated": 55,
+      "latency_ms": {
+        "mean": 60.0,
+        "p50": 11.5,
+        "p90": 228.4,
+        "p95": 235.8,
+        "max": 296.6
+      },
+      "tool_turn_latency_ms": {
+        "n": 80,
+        "mean": 158.7,
+        "p50": 218.8,
+        "p90": 238.6,
+        "p95": 242.4
+      },
+      "read_turn_latency_ms": {
+        "n": 40,
+        "mean": 230.8,
+        "p50": 229.0,
+        "p90": 242.1,
+        "p95": 243.3
+      },
+      "correction_quality": {
+        "beneficial": 0,
+        "neutral": 0,
+        "harmful": 0
+      },
+      "unconfirmed_writes": 0,
+      "per_pack": {
+        "coaching_institute": {
+          "calls": 15,
+          "outcome_accuracy": 0.667,
+          "entity_error_rate": 1.0
+        },
+        "dental_clinic": {
+          "calls": 40,
+          "outcome_accuracy": 0.625,
+          "entity_error_rate": 0.6667
+        },
+        "diagnostic_lab": {
+          "calls": 15,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "salon_spa": {
+          "calls": 20,
+          "outcome_accuracy": 0.5,
+          "entity_error_rate": 1.0
+        }
+      },
+      "metrics": {
+        "counters": {
+          "corrections": 0,
+          "outcome_ABANDONED": 25,
+          "tool_search_knowledge": 25,
+          "outcome_FAQ_ANSWERED": 25,
+          "tool_handoff": 25,
+          "outcome_HANDED_OFF": 25,
+          "tool_check_availability": 15,
+          "tool_book_appointment": 15,
+          "outcome_BOOKED": 15
+        },
+        "latency": {
+          "bhasha_ms": {
+            "n": 240,
+            "mean": 0.1,
+            "p50": 0.1,
+            "p90": 0.2,
+            "p95": 0.2,
+            "max": 1.6
+          },
+          "read_turn_latency_ms": {
+            "n": 40,
+            "mean": 230.8,
+            "p50": 229.0,
+            "p90": 242.1,
+            "p95": 243.3,
+            "max": 248.5
+          },
+          "tool_book_appointment_ms": {
+            "n": 15,
+            "mean": 77.5,
+            "p50": 77.0,
+            "p90": 85.6,
+            "p95": 89.2,
+            "max": 92
+          },
+          "tool_check_availability_ms": {
+            "n": 15,
+            "mean": 220.2,
+            "p50": 220.0,
+            "p90": 228.0,
+            "p95": 228.0,
+            "max": 228
+          },
+          "tool_handoff_ms": {
+            "n": 25,
+            "mean": 61.6,
+            "p50": 58.0,
+            "p90": 80.6,
+            "p95": 92.2,
+            "max": 96
+          },
+          "tool_search_knowledge_ms": {
+            "n": 25,
+            "mean": 212.6,
+            "p50": 212.0,
+            "p90": 220.6,
+            "p95": 221.8,
+            "max": 223
+          },
+          "tool_turn_latency_ms": {
+            "n": 80,
+            "mean": 158.7,
+            "p50": 218.8,
+            "p90": 238.6,
+            "p95": 242.4,
+            "max": 296.6
+          },
+          "turn_latency_ms": {
+            "n": 240,
+            "mean": 60.0,
+            "p50": 11.5,
+            "p90": 228.4,
+            "p95": 235.8,
+            "max": 296.6
+          }
+        }
+      },
+      "wall_seconds": 13.1
+    }
+  },
+  "transcripts": {
+    "0.15": {
+      "sentences": 2940,
+      "entities": 4035,
+      "entity_error_rate_off": 0.1809,
+      "entity_error_rate_on": 0.0042,
+      "relative_reduction_pct": 97.7,
+      "corrections": {
+        "beneficial": 925,
+        "neutral": 4,
+        "harmful": 0
+      },
+      "precision": 0.9957,
+      "median_correct_ms": 0.017
+    },
+    "0.30": {
+      "sentences": 2940,
+      "entities": 4035,
+      "entity_error_rate_off": 0.3162,
+      "entity_error_rate_on": 0.0114,
+      "relative_reduction_pct": 96.4,
+      "corrections": {
+        "beneficial": 1612,
+        "neutral": 9,
+        "harmful": 0
+      },
+      "precision": 0.9944,
+      "median_correct_ms": 0.192
+    },
+    "0.45": {
+      "sentences": 2940,
+      "entities": 4035,
+      "entity_error_rate_off": 0.4872,
+      "entity_error_rate_on": 0.0203,
+      "relative_reduction_pct": 95.8,
+      "corrections": {
+        "beneficial": 2329,
+        "neutral": 11,
+        "harmful": 0
+      },
+      "precision": 0.9953,
+      "median_correct_ms": 0.281
+    }
+  },
+  "noise_sweep": {
+    "0.15": {
+      "full": {
+        "config": "full",
+        "noise": 0.15,
+        "bhasha": true,
+        "speculation": {
+          "started": 106,
+          "hits": 52,
+          "wasted": 54,
+          "hit_rate": 0.491,
+          "saved_ms_total": 10962.0,
+          "saved_ms_per_hit": 210.8
+        },
+        "calls": 90,
+        "turns": 240,
+        "outcome_accuracy": 0.9556,
+        "entity_error_rate": 0.0,
+        "entities_evaluated": 55,
+        "latency_ms": {
+          "mean": 67.7,
+          "p50": 31.1,
+          "p90": 223.7,
+          "p95": 234.1,
+          "max": 433.8
+        },
+        "tool_turn_latency_ms": {
+          "n": 136,
+          "mean": 107.7,
+          "p50": 82.5,
+          "p90": 233.8,
+          "p95": 238.1
+        },
+        "read_turn_latency_ms": {
+          "n": 68,
+          "mean": 130.2,
+          "p50": 132.9,
+          "p90": 238.2,
+          "p95": 247.3
+        },
+        "correction_quality": {
+          "beneficial": 11,
+          "neutral": 1,
+          "harmful": 0
+        },
+        "unconfirmed_writes": 0,
+        "per_pack": {
+          "coaching_institute": {
+            "calls": 15,
+            "outcome_accuracy": 0.933,
+            "entity_error_rate": 0.0
+          },
+          "dental_clinic": {
+            "calls": 40,
+            "outcome_accuracy": 0.95,
+            "entity_error_rate": 0.0
+          },
+          "diagnostic_lab": {
+            "calls": 15,
+            "outcome_accuracy": 1.0,
+            "entity_error_rate": 0.0
+          },
+          "salon_spa": {
+            "calls": 20,
+            "outcome_accuracy": 0.95,
+            "entity_error_rate": 0.0
+          }
+        },
+        "metrics": {
+          "counters": {
+            "tool_check_availability": 54,
+            "corrections": 12,
+            "speculation_hits": 52,
+            "tool_book_appointment": 35,
+            "outcome_BOOKED": 35,
+            "tool_search_knowledge": 67,
+            "outcome_FAQ_ANSWERED": 18,
+            "tool_handoff": 23,
+            "outcome_HANDED_OFF": 23,
+            "outcome_ABANDONED": 4,
+            "tool_capture_lead": 10,
+            "outcome_LEAD_CAPTURED": 10
+          },
+          "latency": {
+            "bhasha_ms": {
+              "n": 240,
+              "mean": 6.9,
+              "p50": 1.1,
+              "p90": 19.8,
+              "p95": 24.9,
+              "max": 215.8
+            },
+            "read_turn_latency_ms": {
+              "n": 68,
+              "mean": 130.2,
+              "p50": 132.9,
+              "p90": 238.2,
+              "p95": 247.3,
+              "max": 433.8
+            },
+            "tool_book_appointment_ms": {
+              "n": 35,
+              "mean": 81.8,
+              "p50": 76.0,
+              "p90": 101.6,
+              "p95": 105.0,
+              "max": 117
+            },
+            "tool_capture_lead_ms": {
+              "n": 10,
+              "mean": 54.2,
+              "p50": 53.0,
+              "p90": 60.4,
+              "p95": 62.2,
+              "max": 64
+            },
+            "tool_check_availability_ms": {
+              "n": 54,
+              "mean": 209.9,
+              "p50": 210.0,
+              "p90": 218.0,
+              "p95": 218.0,
+              "max": 232
+            },
+            "tool_handoff_ms": {
+              "n": 23,
+              "mean": 53.6,
+              "p50": 53.0,
+              "p90": 59.0,
+              "p95": 77.0,
+              "max": 80
+            },
+            "tool_search_knowledge_ms": {
+              "n": 67,
+              "mean": 203.8,
+              "p50": 203.0,
+              "p90": 211.0,
+              "p95": 211.0,
+              "max": 225
+            },
+            "tool_turn_latency_ms": {
+              "n": 136,
+              "mean": 107.7,
+              "p50": 82.5,
+              "p90": 233.8,
+              "p95": 238.1,
+              "max": 433.8
+            },
+            "turn_latency_ms": {
+              "n": 240,
+              "mean": 67.7,
+              "p50": 31.1,
+              "p90": 223.7,
+              "p95": 234.1,
+              "max": 433.8
+            }
+          }
+        }
+      },
+      "no_bhasha": {
+        "config": "no_bhasha",
+        "noise": 0.15,
+        "bhasha": false,
+        "speculation": {
+          "started": 101,
+          "hits": 45,
+          "wasted": 56,
+          "hit_rate": 0.446,
+          "saved_ms_total": 9549.0,
+          "saved_ms_per_hit": 212.2
+        },
+        "calls": 90,
+        "turns": 240,
+        "outcome_accuracy": 0.8667,
+        "entity_error_rate": 0.1818,
+        "entities_evaluated": 55,
+        "latency_ms": {
+          "mean": 57.8,
+          "p50": 12.6,
+          "p90": 217.6,
+          "p95": 224.8,
+          "max": 243.7
+        },
+        "tool_turn_latency_ms": {
+          "n": 121,
+          "mean": 107.0,
+          "p50": 82.4,
+          "p90": 224.6,
+          "p95": 233.7
+        },
+        "read_turn_latency_ms": {
+          "n": 61,
+          "mean": 135.6,
+          "p50": 212.5,
+          "p90": 233.7,
+          "p95": 236.3
+        },
+        "correction_quality": {
+          "beneficial": 0,
+          "neutral": 0,
+          "harmful": 0
+        },
+        "unconfirmed_writes": 0,
+        "per_pack": {
+          "coaching_institute": {
+            "calls": 15,
+            "outcome_accuracy": 0.933,
+            "entity_error_rate": 0.0
+          },
+          "dental_clinic": {
+            "calls": 40,
+            "outcome_accuracy": 0.825,
+            "entity_error_rate": 0.2
+          },
+          "diagnostic_lab": {
+            "calls": 15,
+            "outcome_accuracy": 1.0,
+            "entity_error_rate": 0.0
+          },
+          "salon_spa": {
+            "calls": 20,
+            "outcome_accuracy": 0.8,
+            "entity_error_rate": 0.2667
+          }
+        },
+        "metrics": {
+          "counters": {
+            "tool_check_availability": 49,
+            "corrections": 0,
+            "speculation_hits": 45,
+            "tool_book_appointment": 30,
+            "outcome_BOOKED": 30,
+            "tool_search_knowledge": 68,
+            "outcome_FAQ_ANSWERED": 20,
+            "tool_handoff": 23,
+            "outcome_HANDED_OFF": 23,
+            "outcome_ABANDONED": 10,
+            "tool_capture_lead": 7,
+            "outcome_LEAD_CAPTURED": 7
+          },
+          "latency": {
+            "bhasha_ms": {
+              "n": 240,
+              "mean": 0.1,
+              "p50": 0.1,
+              "p90": 0.2,
+              "p95": 0.2,
+              "max": 2.2
+            },
+            "read_turn_latency_ms": {
+              "n": 61,
+              "mean": 135.6,
+              "p50": 212.5,
+              "p90": 233.7,
+              "p95": 236.3,
+              "max": 243.7
+            },
+            "tool_book_appointment_ms": {
+              "n": 30,
+              "mean": 74.4,
+              "p50": 73.0,
+              "p90": 79.0,
+              "p95": 87.2,
+              "max": 99
+            },
+            "tool_capture_lead_ms": {
+              "n": 7,
+              "mean": 61.0,
+              "p50": 61.0,
+              "p90": 71.6,
+              "p95": 74.3,
+              "max": 77
+            },
+            "tool_check_availability_ms": {
+              "n": 49,
+              "mean": 211.5,
+              "p50": 211.0,
+              "p90": 219.0,
+              "p95": 220.6,
+              "max": 225
+            },
+            "tool_handoff_ms": {
+              "n": 23,
+              "mean": 55.0,
+              "p50": 51.0,
+              "p90": 62.4,
+              "p95": 71.1,
+              "max": 93
+            },
+            "tool_search_knowledge_ms": {
+              "n": 68,
+              "mean": 202.1,
+              "p50": 202.0,
+              "p90": 208.0,
+              "p95": 209.7,
+              "max": 216
+            },
+            "tool_turn_latency_ms": {
+              "n": 121,
+              "mean": 107.0,
+              "p50": 82.4,
+              "p90": 224.6,
+              "p95": 233.7,
+              "max": 243.7
+            },
+            "turn_latency_ms": {
+              "n": 240,
+              "mean": 57.8,
+              "p50": 12.6,
+              "p90": 217.6,
+              "p95": 224.8,
+              "max": 243.7
+            }
+          }
+        }
+      }
+    },
+    "0.30": {
+      "full": {
+        "config": "full",
+        "noise": 0.3,
+        "bhasha": true,
+        "speculation": {
+          "started": 107,
+          "hits": 56,
+          "wasted": 51,
+          "hit_rate": 0.523,
+          "saved_ms_total": 12006.0,
+          "saved_ms_per_hit": 214.4
+        },
+        "calls": 90,
+        "turns": 240,
+        "outcome_accuracy": 0.9222,
+        "entity_error_rate": 0.0,
+        "entities_evaluated": 55,
+        "latency_ms": {
+          "mean": 67.9,
+          "p50": 30.7,
+          "p90": 228.2,
+          "p95": 238.9,
+          "max": 437.3
+        },
+        "tool_turn_latency_ms": {
+          "n": 133,
+          "mean": 109.2,
+          "p50": 84.3,
+          "p90": 238.0,
+          "p95": 248.3
+        },
+        "read_turn_latency_ms": {
+          "n": 69,
+          "mean": 132.0,
+          "p50": 43.3,
+          "p90": 248.3,
+          "p95": 256.3
+        },
+        "correction_quality": {
+          "beneficial": 22,
+          "neutral": 5,
+          "harmful": 0
+        },
+        "unconfirmed_writes": 0,
+        "per_pack": {
+          "coaching_institute": {
+            "calls": 15,
+            "outcome_accuracy": 0.8,
+            "entity_error_rate": 0.0
+          },
+          "dental_clinic": {
+            "calls": 40,
+            "outcome_accuracy": 0.9,
+            "entity_error_rate": 0.0
+          },
+          "diagnostic_lab": {
+            "calls": 15,
+            "outcome_accuracy": 1.0,
+            "entity_error_rate": 0.0
+          },
+          "salon_spa": {
+            "calls": 20,
+            "outcome_accuracy": 1.0,
+            "entity_error_rate": 0.0
+          }
+        },
+        "metrics": {
+          "counters": {
+            "tool_check_availability": 52,
+            "corrections": 27,
+            "speculation_hits": 56,
+            "tool_book_appointment": 35,
+            "outcome_BOOKED": 35,
+            "tool_search_knowledge": 66,
+            "outcome_FAQ_ANSWERED": 19,
+            "outcome_ABANDONED": 7,
+            "tool_handoff": 19,
+            "outcome_HANDED_OFF": 19,
+            "tool_capture_lead": 10,
+            "outcome_LEAD_CAPTURED": 10
+          },
+          "latency": {
+            "bhasha_ms": {
+              "n": 240,
+              "mean": 8.8,
+              "p50": 1.7,
+              "p90": 21.8,
+              "p95": 27.6,
+              "max": 52.0
+            },
+            "read_turn_latency_ms": {
+              "n": 69,
+              "mean": 132.0,
+              "p50": 43.3,
+              "p90": 248.3,
+              "p95": 256.3,
+              "max": 437.3
+            },
+            "tool_book_appointment_ms": {
+              "n": 35,
+              "mean": 77.1,
+              "p50": 76.0,
+              "p90": 83.8,
+              "p95": 93.5,
+              "max": 116
+            },
+            "tool_capture_lead_ms": {
+              "n": 10,
+              "mean": 55.3,
+              "p50": 56.5,
+              "p90": 61.1,
+              "p95": 61.5,
+              "max": 62
+            },
+            "tool_check_availability_ms": {
+              "n": 52,
+              "mean": 214.1,
+              "p50": 211.0,
+              "p90": 220.7,
+              "p95": 222.9,
+              "max": 389
+            },
+            "tool_handoff_ms": {
+              "n": 19,
+              "mean": 52.6,
+              "p50": 51.0,
+              "p90": 61.2,
+              "p95": 62.5,
+              "max": 67
+            },
+            "tool_search_knowledge_ms": {
+              "n": 66,
+              "mean": 204.5,
+              "p50": 202.0,
+              "p90": 208.5,
+              "p95": 209.8,
+              "max": 399
+            },
+            "tool_turn_latency_ms": {
+              "n": 133,
+              "mean": 109.2,
+              "p50": 84.3,
+              "p90": 238.0,
+              "p95": 248.3,
+              "max": 437.3
+            },
+            "turn_latency_ms": {
+              "n": 240,
+              "mean": 67.9,
+              "p50": 30.7,
+              "p90": 228.2,
+              "p95": 238.9,
+              "max": 437.3
+            }
+          }
+        }
+      },
+      "no_bhasha": {
+        "config": "no_bhasha",
+        "noise": 0.3,
+        "bhasha": false,
+        "speculation": {
+          "started": 102,
+          "hits": 44,
+          "wasted": 58,
+          "hit_rate": 0.431,
+          "saved_ms_total": 9270.0,
+          "saved_ms_per_hit": 210.7
+        },
+        "calls": 90,
+        "turns": 240,
+        "outcome_accuracy": 0.7889,
+        "entity_error_rate": 0.3091,
+        "entities_evaluated": 55,
+        "latency_ms": {
+          "mean": 52.1,
+          "p50": 10.2,
+          "p90": 216.2,
+          "p95": 219.7,
+          "max": 234.5
+        },
+        "tool_turn_latency_ms": {
+          "n": 109,
+          "mean": 105.1,
+          "p50": 82.3,
+          "p90": 220.2,
+          "p95": 229.1
+        },
+        "read_turn_latency_ms": {
+          "n": 57,
+          "mean": 127.5,
+          "p50": 213.7,
+          "p90": 228.9,
+          "p95": 231.8
+        },
+        "correction_quality": {
+          "beneficial": 0,
+          "neutral": 0,
+          "harmful": 0
+        },
+        "unconfirmed_writes": 0,
+        "per_pack": {
+          "coaching_institute": {
+            "calls": 15,
+            "outcome_accuracy": 0.8,
+            "entity_error_rate": 0.0
+          },
+          "dental_clinic": {
+            "calls": 40,
+            "outcome_accuracy": 0.65,
+            "entity_error_rate": 0.4333
+          },
+          "diagnostic_lab": {
+            "calls": 15,
+            "outcome_accuracy": 0.933,
+            "entity_error_rate": 0.2
+          },
+          "salon_spa": {
+            "calls": 20,
+            "outcome_accuracy": 0.95,
+            "entity_error_rate": 0.2
+          }
+        },
+        "metrics": {
+          "counters": {
+            "tool_check_availability": 43,
+            "corrections": 0,
+            "speculation_hits": 44,
+            "tool_book_appointment": 24,
+            "outcome_BOOKED": 24,
+            "tool_search_knowledge": 66,
+            "outcome_FAQ_ANSWERED": 21,
+            "outcome_ABANDONED": 17,
+            "tool_handoff": 19,
+            "outcome_HANDED_OFF": 19,
+            "tool_capture_lead": 9,
+            "outcome_LEAD_CAPTURED": 9
+          },
+          "latency": {
+            "bhasha_ms": {
+              "n": 240,
+              "mean": 0.1,
+              "p50": 0.1,
+              "p90": 0.2,
+              "p95": 0.2,
+              "max": 0.2
+            },
+            "read_turn_latency_ms": {
+              "n": 57,
+              "mean": 127.5,
+              "p50": 213.7,
+              "p90": 228.9,
+              "p95": 231.8,
+              "max": 234.5
+            },
+            "tool_book_appointment_ms": {
+              "n": 24,
+              "mean": 79.4,
+              "p50": 76.0,
+              "p90": 91.8,
+              "p95": 110.8,
+              "max": 122
+            },
+            "tool_capture_lead_ms": {
+              "n": 9,
+              "mean": 61.6,
+              "p50": 58.0,
+              "p90": 72.2,
+              "p95": 84.6,
+              "max": 97
+            },
+            "tool_check_availability_ms": {
+              "n": 43,
+              "mean": 213.6,
+              "p50": 211.0,
+              "p90": 218.0,
+              "p95": 220.9,
+              "max": 345
+            },
+            "tool_handoff_ms": {
+              "n": 19,
+              "mean": 55.7,
+              "p50": 53.0,
+              "p90": 72.2,
+              "p95": 73.0,
+              "max": 73
+            },
+            "tool_search_knowledge_ms": {
+              "n": 66,
+              "mean": 202.9,
+              "p50": 203.0,
+              "p90": 208.5,
+              "p95": 209.8,
+              "max": 237
+            },
+            "tool_turn_latency_ms": {
+              "n": 109,
+              "mean": 105.1,
+              "p50": 82.3,
+              "p90": 220.2,
+              "p95": 229.1,
+              "max": 234.5
+            },
+            "turn_latency_ms": {
+              "n": 240,
+              "mean": 52.1,
+              "p50": 10.2,
+              "p90": 216.2,
+              "p95": 219.7,
+              "max": 234.5
+            }
+          }
+        }
+      }
+    },
+    "0.45": {
+      "full": {
+        "config": "full",
+        "noise": 0.45,
+        "bhasha": true,
+        "speculation": {
+          "started": 98,
+          "hits": 55,
+          "wasted": 43,
+          "hit_rate": 0.561,
+          "saved_ms_total": 11556.0,
+          "saved_ms_per_hit": 210.1
+        },
+        "calls": 90,
+        "turns": 240,
+        "outcome_accuracy": 0.8333,
+        "entity_error_rate": 0.0,
+        "entities_evaluated": 55,
+        "latency_ms": {
+          "mean": 68.2,
+          "p50": 33.8,
+          "p90": 227.1,
+          "p95": 238.4,
+          "max": 464.2
+        },
+        "tool_turn_latency_ms": {
+          "n": 124,
+          "mean": 114.1,
+          "p50": 83.2,
+          "p90": 238.2,
+          "p95": 255.7
+        },
+        "read_turn_latency_ms": {
+          "n": 67,
+          "mean": 139.2,
+          "p50": 211.1,
+          "p90": 250.8,
+          "p95": 262.9
+        },
+        "correction_quality": {
+          "beneficial": 29,
+          "neutral": 5,
+          "harmful": 0
+        },
+        "unconfirmed_writes": 0,
+        "per_pack": {
+          "coaching_institute": {
+            "calls": 15,
+            "outcome_accuracy": 0.6,
+            "entity_error_rate": 0.0
+          },
+          "dental_clinic": {
+            "calls": 40,
+            "outcome_accuracy": 0.875,
+            "entity_error_rate": 0.0
+          },
+          "diagnostic_lab": {
+            "calls": 15,
+            "outcome_accuracy": 0.933,
+            "entity_error_rate": 0.0
+          },
+          "salon_spa": {
+            "calls": 20,
+            "outcome_accuracy": 0.85,
+            "entity_error_rate": 0.0
+          }
+        },
+        "metrics": {
+          "counters": {
+            "tool_check_availability": 50,
+            "corrections": 34,
+            "speculation_hits": 55,
+            "tool_book_appointment": 35,
+            "outcome_BOOKED": 35,
+            "outcome_ABANDONED": 14,
+            "tool_search_knowledge": 59,
+            "outcome_FAQ_ANSWERED": 19,
+            "tool_handoff": 12,
+            "outcome_HANDED_OFF": 12,
+            "tool_capture_lead": 10,
+            "outcome_LEAD_CAPTURED": 10
+          },
+          "latency": {
+            "bhasha_ms": {
+              "n": 240,
+              "mean": 11.9,
+              "p50": 8.0,
+              "p90": 31.3,
+              "p95": 38.7,
+              "max": 76.1
+            },
+            "read_turn_latency_ms": {
+              "n": 67,
+              "mean": 139.2,
+              "p50": 211.1,
+              "p90": 250.8,
+              "p95": 262.9,
+              "max": 464.2
+            },
+            "tool_book_appointment_ms": {
+              "n": 35,
+              "mean": 75.5,
+              "p50": 73.0,
+              "p90": 94.8,
+              "p95": 100.7,
+              "max": 111
+            },
+            "tool_capture_lead_ms": {
+              "n": 10,
+              "mean": 54.0,
+              "p50": 52.5,
+              "p90": 60.7,
+              "p95": 63.8,
+              "max": 67
+            },
+            "tool_check_availability_ms": {
+              "n": 50,
+              "mean": 209.9,
+              "p50": 210.0,
+              "p90": 215.0,
+              "p95": 220.6,
+              "max": 248
+            },
+            "tool_handoff_ms": {
+              "n": 12,
+              "mean": 49.7,
+              "p50": 49.5,
+              "p90": 54.0,
+              "p95": 59.4,
+              "max": 66
+            },
+            "tool_search_knowledge_ms": {
+              "n": 59,
+              "mean": 202.0,
+              "p50": 201.0,
+              "p90": 209.0,
+              "p95": 210.0,
+              "max": 229
+            },
+            "tool_turn_latency_ms": {
+              "n": 124,
+              "mean": 114.1,
+              "p50": 83.2,
+              "p90": 238.2,
+              "p95": 255.7,
+              "max": 464.2
+            },
+            "turn_latency_ms": {
+              "n": 240,
+              "mean": 68.2,
+              "p50": 33.8,
+              "p90": 227.1,
+              "p95": 238.4,
+              "max": 464.2
+            }
+          }
+        }
+      },
+      "no_bhasha": {
+        "config": "no_bhasha",
+        "noise": 0.45,
+        "bhasha": false,
+        "speculation": {
+          "started": 87,
+          "hits": 34,
+          "wasted": 53,
+          "hit_rate": 0.391,
+          "saved_ms_total": 7065.0,
+          "saved_ms_per_hit": 207.8
+        },
+        "calls": 90,
+        "turns": 240,
+        "outcome_accuracy": 0.6,
+        "entity_error_rate": 0.4545,
+        "entities_evaluated": 55,
+        "latency_ms": {
+          "mean": 42.5,
+          "p50": 8.5,
+          "p90": 212.0,
+          "p95": 219.1,
+          "max": 249.4
+        },
+        "tool_turn_latency_ms": {
+          "n": 82,
+          "mean": 109.0,
+          "p50": 86.3,
+          "p90": 219.7,
+          "p95": 228.3
+        },
+        "read_turn_latency_ms": {
+          "n": 46,
+          "mean": 130.9,
+          "p50": 212.5,
+          "p90": 227.4,
+          "p95": 230.3
+        },
+        "correction_quality": {
+          "beneficial": 0,
+          "neutral": 0,
+          "harmful": 0
+        },
+        "unconfirmed_writes": 0,
+        "per_pack": {
+          "coaching_institute": {
+            "calls": 15,
+            "outcome_accuracy": 0.533,
+            "entity_error_rate": 0.2
+          },
+          "dental_clinic": {
+            "calls": 40,
+            "outcome_accuracy": 0.475,
+            "entity_error_rate": 0.6333
+          },
+          "diagnostic_lab": {
+            "calls": 15,
+            "outcome_accuracy": 0.867,
+            "entity_error_rate": 0.2
+          },
+          "salon_spa": {
+            "calls": 20,
+            "outcome_accuracy": 0.7,
+            "entity_error_rate": 0.2667
+          }
+        },
+        "metrics": {
+          "counters": {
+            "tool_check_availability": 33,
+            "corrections": 0,
+            "speculation_hits": 34,
+            "tool_book_appointment": 18,
+            "outcome_BOOKED": 18,
+            "outcome_ABANDONED": 34,
+            "tool_search_knowledge": 59,
+            "outcome_FAQ_ANSWERED": 20,
+            "tool_handoff": 12,
+            "outcome_HANDED_OFF": 12,
+            "tool_capture_lead": 6,
+            "outcome_LEAD_CAPTURED": 6
+          },
+          "latency": {
+            "bhasha_ms": {
+              "n": 240,
+              "mean": 0.1,
+              "p50": 0.1,
+              "p90": 0.2,
+              "p95": 0.2,
+              "max": 0.6
+            },
+            "read_turn_latency_ms": {
+              "n": 46,
+              "mean": 130.9,
+              "p50": 212.5,
+              "p90": 227.4,
+              "p95": 230.3,
+              "max": 249.4
+            },
+            "tool_book_appointment_ms": {
+              "n": 18,
+              "mean": 76.6,
+              "p50": 75.5,
+              "p90": 81.8,
+              "p95": 87.9,
+              "max": 99
+            },
+            "tool_capture_lead_ms": {
+              "n": 6,
+              "mean": 59.2,
+              "p50": 57.5,
+              "p90": 65.5,
+              "p95": 67.8,
+              "max": 70
+            },
+            "tool_check_availability_ms": {
+              "n": 33,
+              "mean": 210.7,
+              "p50": 212.0,
+              "p90": 216.8,
+              "p95": 218.4,
+              "max": 227
+            },
+            "tool_handoff_ms": {
+              "n": 12,
+              "mean": 53.7,
+              "p50": 54.0,
+              "p90": 60.8,
+              "p95": 61.0,
+              "max": 61
+            },
+            "tool_search_knowledge_ms": {
+              "n": 59,
+              "mean": 202.5,
+              "p50": 202.0,
+              "p90": 208.0,
+              "p95": 211.4,
+              "max": 241
+            },
+            "tool_turn_latency_ms": {
+              "n": 82,
+              "mean": 109.0,
+              "p50": 86.3,
+              "p90": 219.7,
+              "p95": 228.3,
+              "max": 249.4
+            },
+            "turn_latency_ms": {
+              "n": 240,
+              "mean": 42.5,
+              "p50": 8.5,
+              "p90": 212.0,
+              "p95": 219.1,
+              "max": 249.4
+            }
+          }
+        }
+      }
+    }
+  },
+  "ledger": {
+    "chain_length": 40,
+    "clean_chain_valid": true,
+    "mutations_attempted": 80,
+    "mutations_detected": 80,
+    "detection_rate": 1.0,
+    "per_field": {
+      "action_args.time": {
+        "attempted": 10,
+        "detected": 10,
+        "rate": 1.0
+      },
+      "action_args.service": {
+        "attempted": 10,
+        "detected": 10,
+        "rate": 1.0
+      },
+      "action_args.phone": {
+        "attempted": 10,
+        "detected": 10,
+        "rate": 1.0
+      },
+      "confirmation.reply_text": {
+        "attempted": 10,
+        "detected": 10,
+        "rate": 1.0
+      },
+      "confirmation.asr_confidence": {
+        "attempted": 10,
+        "detected": 10,
+        "rate": 1.0
+      },
+      "transcript_excerpt": {
+        "attempted": 10,
+        "detected": 10,
+        "rate": 1.0
+      },
+      "occurred_at": {
+        "attempted": 10,
+        "detected": 10,
+        "rate": 1.0
+      },
+      "agent_config_version": {
+        "attempted": 10,
+        "detected": 10,
+        "rate": 1.0
+      }
+    },
+    "deletion_detected": true,
+    "deletion_reason": "prev_hash does not match the previous receipt's chain hash",
+    "forged_signature_rejected": true,
+    "forged_reason": "signature does not verify against the tenant public key",
+    "unconfirmed_writes_accepted": 0,
+    "daily_anchor": "18045415c78a1783516d73c21d225f46..."
+  },
+  "headline": {
+    "noise_rate": 0.3,
+    "sentences_scored": 2940,
+    "entities_scored": 4035,
+    "entity_error_rate_without_bhasha": 0.3162,
+    "entity_error_rate_with_bhasha": 0.0114,
+    "entity_error_reduction_pct": 96.4,
+    "correction_precision": 0.9944,
+    "harmful_corrections_transcript": 0,
+    "bhasha_median_ms": 0.192,
+    "task_success_without_bhasha": 0.7889,
+    "task_success_with_bhasha": 0.9222,
+    "harmful_corrections": 0,
+    "beneficial_corrections": 22,
+    "neutral_corrections": 5,
+    "read_turn_p50_without_speculation": 238.7,
+    "read_turn_p50_with_speculation": 137.0,
+    "read_turn_p50_reduction_pct": 42.6,
+    "read_turn_p90_without_speculation": 260.2,
+    "read_turn_p90_with_speculation": 242.0,
+    "read_turn_p90_reduction_pct": 7.0,
+    "write_turn_p90_with_speculation": 230.9,
+    "speculation_hit_rate": 0.455,
+    "speculations_started": 110,
+    "wasted_speculations": 60,
+    "saved_ms_per_hit": 212.8,
+    "outcome_accuracy_clean": 1.0,
+    "total_wall_seconds": 138.8
+  }
+}

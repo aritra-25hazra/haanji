@@ -1,0 +1,113 @@
+# Vertical Pack — diagnostic pathology lab
+pack: diagnostic_lab
+display_name: Diagnostic lab
+version: 2
+language: hinglish
+
+persona:
+  agent_name: Haanji
+  business_name: Sanjeevani Diagnostics
+  greeting: "Haanji, Sanjeevani Diagnostics. Kaun sa test karwana hai?"
+  closing: "Ho gaya. Report time par mil jayegi."
+  style: "Calm, precise, short Hinglish. Always states fasting requirement when one applies."
+
+guardrails:
+  never_quote_outside_catalogue: true
+  refuse:
+    - interpreting a test result
+    - saying whether a value is dangerous
+    - suggesting a diagnosis or a medicine
+  escalate_on:
+    - patient says they feel faint or unwell
+    - asking about a critical value in a report
+    - insurance or TPA dispute
+  refusal_line: "Report ka matlab doctor hi batayenge — main aapko report time par bhej deta hoon."
+  escalation_line: "Main abhi aapko humare lab in-charge se joddta hoon."
+
+staff_role: phlebotomist
+staff: [Meena, Arvind, Salma]
+
+hours:
+  mon-sat: ["07:00", "19:00", "13:00", "14:00"]
+  sun: ["07:00", "12:00"]
+
+services:
+  - name: complete blood count
+    duration_min: 15
+    price_inr: 350
+    staff: [Meena, Arvind, Salma]
+    aliases: [cbc, blood count, blood test]
+  - name: lipid profile
+    duration_min: 15
+    price_inr: 700
+    staff: [Meena, Arvind]
+    prep_note: "Bara ghante ka fasting zaroori hai."
+    aliases: [cholesterol test, lipid]
+  - name: thyroid profile
+    duration_min: 15
+    price_inr: 550
+    staff: [Meena, Salma]
+    aliases: [tsh, thyroid test, t3 t4]
+  - name: vitamin d test
+    duration_min: 15
+    price_inr: 1200
+    staff: [Arvind, Salma]
+    aliases: [vitamin d, vit d]
+  - name: full body checkup
+    duration_min: 45
+    price_inr: 2400
+    staff: [Meena, Arvind]
+    prep_note: "Subah khali pet aana hai."
+    aliases: [full body, health package, master checkup]
+  - name: home sample collection
+    duration_min: 30
+    price_inr: 200
+    staff: [Arvind, Salma]
+    aliases: [home collection, ghar se sample]
+
+lexicon:
+  places: [Vijay Nagar, Bhawarkuan, Rau, Annapurna, Scheme 54]
+  brands: [Sanjeevani Diagnostics, NABL, Ayushman]
+  phrases: [fasting, khali pet, report kab milegi, home collection, hard copy]
+  variants:
+    Bhawarkuan: [Bhavarkua]
+
+knowledge:
+  - q: "Report kab milegi?"
+    a: "Zyadatar reports usi shaam 6 baje tak WhatsApp par aa jaati hain. Vitamin D agle din aati hai."
+    tags: [report, kab, milegi, time, whatsapp, kitni der]
+  - q: "Fasting zaroori hai kya?"
+    a: "Lipid profile aur full body checkup ke liye bara ghante ka fasting chahiye. Baaki tests ke liye nahi."
+    tags: [fasting, khali, pet, khana, bhookhe]
+  - q: "Home collection hota hai?"
+    a: "Haan, ghar se sample lene ka 200 rupaye charge hai, subah 7 se 11 ke beech."
+    tags: [home, ghar, collection, sample, aayenge]
+  - q: "Lab kab khulti hai?"
+    a: "Monday se Saturday subah 7 se shaam 7 baje tak, Sunday subah 7 se dopahar 12 tak."
+    tags: [timing, timings, khulti, kab, band, open, sunday, hours]
+
+scenarios:
+  - name: fasting_test_booking
+    expect: BOOKED
+    turns:
+      - heard: "lipid profail karwana hai kal subah"
+        truth: "lipid profile karwana hai kal subah"
+        low_conf: [profail]
+      - heard: "haan theek hai"
+        truth: "haan theek hai"
+      - heard: "Ramesh Gupta 9811223344"
+        truth: "Ramesh Gupta 9811223344"
+      - heard: "haan ji confirm kar dijiye"
+        truth: "haan ji confirm kar dijiye"
+  - name: report_interpretation_refusal
+    expect: HANDED_OFF
+    turns:
+      - heard: "meri report mein hemoglobin kam hai kya khatra hai"
+        truth: "meri report mein hemoglobin kam hai kya khatra hai"
+  - name: fasting_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "fasting zaroori hai kya"
+        truth: "fasting zaroori hai kya"
+      - heard: "nahi bas itna hi"
+        truth: "nahi bas itna hi"

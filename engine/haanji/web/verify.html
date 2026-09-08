@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pramaan — public receipt verifier</title>
+<style>
+  :root { --ink:#0F1E33; --panel:#152A47; --line:#27466E; --amber:#E8952F; --teal:#2FBFA9;
+          --red:#E4604E; --mist:#9DB2C9; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif;
+         background:var(--ink); color:#E8EEF6; }
+  .wrap { max-width:960px; margin:0 auto; padding:36px 22px 80px; }
+  h1 { margin:0; font-size:30px; } h1 b { color:var(--teal); }
+  .sub { color:var(--mist); margin:6px 0 26px; max-width:720px; }
+  .controls { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  button { border:0; border-radius:8px; padding:9px 16px; font-weight:600; cursor:pointer;
+           font-size:13.5px; }
+  .primary { background:var(--teal); color:#08211C; }
+  .ghost { background:var(--panel); color:var(--mist); border:1px solid var(--line); }
+  .danger { background:var(--red); color:#fff; }
+  select { background:var(--panel); color:#E8EEF6; border:1px solid var(--line);
+           border-radius:8px; padding:8px 10px; }
+  textarea { width:100%; height:130px; background:var(--panel); color:#CFE0F0;
+             border:1px solid var(--line); border-radius:10px; padding:12px;
+             font:12px ui-monospace,monospace; }
+  #banner { border-radius:12px; padding:16px 18px; margin:18px 0; font-size:16px;
+            font-weight:700; display:none; }
+  #banner.ok { display:block; background:rgba(47,191,169,.13); color:var(--teal);
+               border:1px solid rgba(47,191,169,.4); }
+  #banner.bad { display:block; background:rgba(228,96,78,.13); color:var(--red);
+                border:1px solid rgba(228,96,78,.4); }
+  #banner small { display:block; font-weight:400; color:var(--mist); margin-top:4px; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th { text-align:left; color:var(--mist); font-size:11px; letter-spacing:.08em;
+       text-transform:uppercase; padding:9px 10px; border-bottom:1px solid var(--line); }
+  td { padding:9px 10px; border-bottom:1px solid rgba(39,70,110,.5); }
+  td.mono { font-family:ui-monospace,monospace; font-size:12.5px; }
+  .st-ok { color:var(--teal); font-weight:700; }
+  .st-bad { color:var(--red); font-weight:700; }
+  .st-skip { color:var(--mist); }
+  .keyline { font:12px ui-monospace,monospace; color:var(--mist); word-break:break-all;
+             margin:10px 0 20px; }
+  .how { background:var(--panel); border:1px solid var(--line); border-radius:12px;
+         padding:16px 18px; color:var(--mist); font-size:13.5px; margin-top:30px; }
+  .how b { color:#E8EEF6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pramaan <b>verifier</b></h1>
+  <p class="sub">Har hash aur har Ed25519 signature <b>aapke browser me</b> dobara compute hota
+  hai — server par bharosa kiye bina. Export load kijiye, verify kijiye, phir kisi field se
+  chhedchhad karke dekhiye ki chain kaise tootti hai.</p>
+
+  <div class="controls">
+    <select id="pack"></select>
+    <button class="primary" id="load">Load this server's export</button>
+    <button class="ghost" id="paste">Verify pasted JSON</button>
+    <button class="danger" id="tamper" disabled>😈 Tamper one field & re-verify</button>
+  </div>
+  <textarea id="json" placeholder='…ya kisi bhi HaanJi export ka JSON yahan paste kijiye ({"tenant_id": …, "public_key": …, "receipts": […]})'></textarea>
+
+  <div id="banner"></div>
+  <div class="keyline" id="key"></div>
+  <div style="overflow-x:auto"><table id="tbl" hidden>
+    <thead><tr><th>Seq</th><th>Action</th><th>Code</th><th>Verdict</th><th>Reason</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+
+  <div class="how">
+    <b>Ye page kya karta hai:</b> har receipt ka payload hash uske stored fields se dobara banata
+    hai (canonical JSON — sorted keys, no whitespace), chain link (<i>prev_hash‖payload_hash</i>)
+    recompute karta hai, aur signature ko tenant ki public key se check karta hai
+    (Ed25519, TweetNaCl). Ek bhi character badla → us receipt ka hash badla → aage ki puri
+    chain toot gayi. Kuch bhi is server par wapas nahi jaata.
+  </div>
+</div>
+
+<script src="/static/nacl-fast.min.js"></script>
+<script src="/static/verifier.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let current = null;
+
+fetch("/api/status").then(r => r.json()).then(s => {
+  $("pack").innerHTML = s.packs.map(p =>
+    `<option ${p === s.default_pack ? "selected" : ""}>${p}</option>`).join("");
+}).catch(() => {});
+
+async function run(exp, label) {
+  current = exp;
+  $("tamper").disabled = false;
+  $("key").textContent = "tenant " + exp.tenant_id + " · public key (Ed25519): " +
+                         (exp.public_key || "—");
+  const rep = await PramaanVerifier.verifyChain(exp, nacl);
+  const b = $("banner");
+  b.className = rep.ok ? "ok" : "bad";
+  b.innerHTML = rep.ok
+    ? `✔ VALID — ${rep.checked} receipts, chain intact <small>${label || ""}</small>`
+    : `✘ BROKEN at seq ${rep.firstBrokenSeq}: ${rep.reason} <small>${label || ""}</small>`;
+  $("tbl").hidden = false;
+  $("rows").innerHTML = rep.rows.map(r => `<tr>
+      <td>${r.seq}</td><td>${r.action}</td>
+      <td class="mono">${r.code.slice(0,4)}-${r.code.slice(4,8)}</td>
+      <td class="${r.ok === true ? "st-ok" : r.ok === false ? "st-bad" : "st-skip"}">
+        ${r.ok === true ? "verified" : r.ok === false ? "BROKEN" : "skipped"}</td>
+      <td>${r.reason || "hash + link + signature all recomputed"}</td></tr>`).join("");
+  if (!rep.rows.length) $("rows").innerHTML =
+    `<tr><td colspan="5" style="color:var(--mist)">Export me koi receipt nahi —
+     pehle /talk ya /whatsapp par ek booking kijiye.</td></tr>`;
+}
+
+$("load").onclick = async () => {
+  const exp = await (await fetch("/api/receipts/export?pack=" + $("pack").value)).json();
+  $("json").value = JSON.stringify(exp, null, 1).slice(0, 4000);
+  run(exp, "· loaded live from this server");
+};
+$("paste").onclick = () => {
+  try { run(JSON.parse($("json").value), "· pasted export"); }
+  catch (e) { alert("JSON parse nahi hua: " + e.message); }
+};
+$("tamper").onclick = () => {
+  if (!current || !current.receipts.length) return;
+  const t = JSON.parse(JSON.stringify(current));
+  const victim = t.receipts[Math.floor(t.receipts.length / 2)];
+  try {
+    const args = JSON.parse(victim.action_args);
+    if (args.time) args.time = "18:00";
+    else if (args.service) args.service = "dental implant";
+    else args.__edited = true;
+    victim.action_args = JSON.stringify(args);
+  } catch { victim.transcript_excerpt = "caller: haan"; }
+  run(t, `· after editing receipt seq ${victim.seq} locally`);
+};
+</script>
+</body>
+</html>

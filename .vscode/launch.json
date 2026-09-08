@@ -1,0 +1,51 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "HaanJi: demo call",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "haanji.cli",
+      "args": ["demo"],
+      "cwd": "${workspaceFolder}/engine",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "HaanJi: serve (talk · whatsapp · verify) :8090",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "haanji.cli",
+      "args": ["serve"],
+      "cwd": "${workspaceFolder}/engine",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "HaanJi: selftest (all packs)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "haanji.cli",
+      "args": ["selftest"],
+      "cwd": "${workspaceFolder}/engine",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "HaanJi: bench (regenerate results.json)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "haanji.bench",
+      "cwd": "${workspaceFolder}/engine",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Python: debug current test file",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-q"],
+      "cwd": "${workspaceFolder}/engine",
+      "console": "integratedTerminal"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+spring:
+  application.name: haanji-core-api
+  datasource:
+    url: ${HAANJI_DB_URL:jdbc:postgresql://localhost:5432/haanji}
+    username: ${HAANJI_DB_USER:haanji}
+    password: ${HAANJI_DB_PASSWORD:haanji}
+    hikari:
+      maximum-pool-size: 20
+      pool-name: haanji-pool
+  jpa:
+    hibernate.ddl-auto: validate          # Flyway owns the schema, never Hibernate
+    open-in-view: false
+    properties.hibernate.jdbc.batch_size: 30
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  data.redis:
+    host: ${HAANJI_REDIS_HOST:localhost}
+    port: ${HAANJI_REDIS_PORT:6379}
+
+server:
+  port: ${HAANJI_PORT:8080}
+  shutdown: graceful
+  error.include-message: always
+
+management:
+  endpoints.web.exposure.include: health,info,prometheus,metrics
+  endpoint.health.probes.enabled: true
+  metrics.tags.application: haanji-core-api
+
+haanji:
+  jwt:
+    issuer: haanji.ai
+    secret: ${HAANJI_JWT_SECRET:change-me-in-production-this-is-only-for-local-development}
+    ttl-minutes: 720
+  packs:
+    directory: ${HAANJI_PACK_DIR:../packs}
+  engine:
+    base-url: ${HAANJI_ENGINE_URL:http://localhost:8090}
+  ledger:
+    require-confirmation: true
+    anchor-cron: "0 15 0 * * *"           # 00:15 IST, after the business day closes
+  telephony:
+    provider: ${HAANJI_TELEPHONY:exotel}
+    webhook-secret: ${HAANJI_TELEPHONY_SECRET:local-dev-secret}
+
+logging.level:
+  ai.haanji: INFO
+  org.hibernate.SQL: WARN

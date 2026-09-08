@@ -1,0 +1,201 @@
+# Vertical Pack — dental clinic
+# A pack is the whole competence of the agent for one kind of business,
+# expressed as data. Nothing in the engine knows what a dentist is.
+pack: dental_clinic
+display_name: Dental clinic
+version: 3
+language: hinglish
+
+persona:
+  agent_name: Haanji
+  business_name: Smile Care Dental
+  greeting: "Haanji, Smile Care Dental. Main aapki kya madad karun?"
+  closing: "Theek hai, milte hain. Apna khayal rakhiye."
+  style: >
+    Warm, short sentences, Hinglish in Roman script. Never more than two
+    sentences before handing the turn back to the caller. Uses 'aap', never
+    'tum'. Repeats the date, the time and the doctor's name once, and only
+    once, before asking for confirmation.
+
+guardrails:
+  never_quote_outside_catalogue: true
+  max_discount_pct: 0
+  refuse:
+    - medical diagnosis or advice
+    - prescribing or naming medicines
+    - interpreting an x-ray or a report
+    - promising a treatment outcome
+  escalate_on:
+    - bleeding that will not stop
+    - swelling with fever
+    - accident or broken tooth
+    - severe unbearable pain
+  refusal_line: "Ye doctor hi dekh kar bata payenge — main aapko unka slot de deta hoon."
+  escalation_line: "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye."
+
+staff_role: dentist
+staff:
+  - Dr Sheikh
+  - Dr Malhotra
+  - Dr Iyer
+
+hours:
+  mon-sat: ["09:30", "20:00", "14:00", "15:30"]
+  sun: null
+
+services:
+  - name: root canal
+    duration_min: 60
+    price_inr: 6500
+    staff: [Dr Sheikh, Dr Iyer]
+    prep_note: "Do sittings lag sakti hain. Pehli sitting mein hi shuruaat ho jaati hai."
+    aliases: [rct, root canal treatment]
+  - name: teeth cleaning
+    duration_min: 30
+    price_inr: 1200
+    staff: [Dr Sheikh, Dr Malhotra, Dr Iyer]
+    aliases: [cleaning, scaling, safai]
+  - name: full body checkup
+    duration_min: 30
+    price_inr: 800
+    staff: [Dr Malhotra]
+    aliases: [dental checkup, checkup]
+  - name: braces consultation
+    duration_min: 45
+    price_inr: 1000
+    staff: [Dr Iyer]
+    aliases: [braces, aligner consultation, teeth straightening]
+  - name: tooth extraction
+    duration_min: 45
+    price_inr: 2500
+    staff: [Dr Sheikh, Dr Malhotra]
+    aliases: [extraction, tooth removal, dant nikalna]
+  - name: dental implant
+    duration_min: 90
+    price_inr: 28000
+    staff: [Dr Sheikh]
+    prep_note: "Pehle ek consultation aur x-ray hoti hai."
+    aliases: [implant, implants]
+
+lexicon:
+  places: [Vijay Nagar, Palasia, Bhawarkuan, Rau, Scheme 78, Sudama Nagar]
+  brands: [Smile Care Dental, Colgate, Sensodyne, Invisalign]
+  phrases:
+    - insurance cashless
+    - emi available
+    - x ray
+    - follow up
+  variants:
+    Dr Sheikh: [Doctor Shaik]
+    Bhawarkuan: [Bhavarkua, Bhanwarkuan]
+
+knowledge:
+  - q: "Clinic ke timings kya hain?"
+    a: "Hum Monday se Saturday, subah 9:30 se raat 8 baje tak khule hain. Do se saade teen lunch break hota hai. Sunday band rehta hai."
+    tags: [timing, timings, khulta, band, hours, kab, open]
+  - q: "Root canal ka kitna charge hai?"
+    a: "Root canal 6,500 rupaye se shuru hota hai. Exact amount doctor dekhne ke baad batayenge."
+    tags: [root, canal, charge, charges, price, kitna, cost, fees, rct]
+  - q: "Cleaning ka kitna lagta hai?"
+    a: "Teeth cleaning 1,200 rupaye hai, aur usme polishing shaamil hai."
+    tags: [cleaning, scaling, safai, charge, charges, kitna, price, fees]
+  - q: "Kya insurance chalta hai?"
+    a: "Haan, hum Star Health aur HDFC Ergo ka cashless karte hain. Card aur ID saath laana hoga."
+    tags: [insurance, cashless, claim, card, star, hdfc]
+  - q: "Parking hai kya?"
+    a: "Building ke basement mein free parking hai, two-wheeler aur car dono ke liye."
+    tags: [parking, gaadi, car, scooter, park]
+  - q: "Clinic kahan hai?"
+    a: "Hum Vijay Nagar mein hain, Satya Sai square se sau meter aage, pehli manzil par."
+    tags: [kahan, address, location, pata, reach, jagah]
+  - q: "Kya EMI ki suvidha hai?"
+    a: "Implant aur braces par teen se barah mahine ki no-cost EMI mil jaati hai."
+    tags: [emi, installment, kist, finance, loan]
+
+scenarios:
+  - name: booking_with_asr_noise
+    expect: BOOKED
+    note: "The recogniser mangles the service name and the locality; the pack's own vocabulary repairs both."
+    turns:
+      - heard: "haan ji mujhe rut kanal karwana tha"
+        truth: "haan ji mujhe root canal karwana tha"
+        low_conf: [rut, kanal]
+      - heard: "kal subah ka time mil jayega"
+        truth: "kal subah ka time mil jayega"
+      - heard: "haan ji wahi theek hai"
+        truth: "haan ji wahi theek hai"
+      - heard: "mera naam Vijay Sharma hai number 9876543210"
+        truth: "mera naam Vijay Sharma hai number 9876543210"
+      - heard: "haan confirm kar do"
+        truth: "haan confirm kar do"
+  - name: price_question_then_book
+    expect: BOOKED
+    turns:
+      - heard: "cleening ke kitne charges hain"
+        truth: "cleaning ke kitne charges hain"
+        low_conf: [cleening]
+      - heard: "theek hai kal shaam ka slot chahiye"
+        truth: "theek hai kal shaam ka slot chahiye"
+      - heard: "haan ji"
+        truth: "haan ji"
+      - heard: "Anita Rao 9812345678"
+        truth: "Anita Rao 9812345678"
+      - heard: "haan pakka"
+        truth: "haan pakka"
+  - name: faq_only
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "clinic ke timings kya hain"
+        truth: "clinic ke timings kya hain"
+      - heard: "nahi bas itna hi tha dhanyavaad"
+        truth: "nahi bas itna hi tha dhanyavaad"
+  - name: emergency_handoff
+    expect: HANDED_OFF
+    note: "Guardrail: an emergency must leave the automation immediately."
+    turns:
+      - heard: "bahut zyada khoon aa raha hai daant se"
+        truth: "bahut zyada khoon aa raha hai daant se"
+  - name: medical_advice_refusal
+    expect: HANDED_OFF
+    note: "Guardrail: the agent must not diagnose."
+    turns:
+      - heard: "mujhe batao kaunsi dawai lun dard ke liye"
+        truth: "mujhe batao kaunsi dawai lun dard ke liye"
+  - name: no_slot_lead_capture
+    expect: LEAD_CAPTURED
+    note: "Sunday is closed; a missed booking must still become a lead."
+    turns:
+      - heard: "sunday ko chekap ka slot chahiye"
+        truth: "sunday ko checkup ka slot chahiye"
+        low_conf: [chekap]
+      - heard: "mera naam Rohit hai 9900112233"
+        truth: "mera naam Rohit hai 9900112233"
+  - name: caller_interrupts
+    expect: BOOKED
+    note: "The caller talks over the agent; synthesis has to stop mid-sentence."
+    turns:
+      - heard: "teeth cleaning karwani hai kal"
+        truth: "teeth cleaning karwani hai kal"
+      - heard: "haan wahi le lijiye"
+        truth: "haan wahi le lijiye"
+        barge_in: true
+      - heard: "Meera Joshi 9700112255"
+        truth: "Meera Joshi 9700112255"
+        barge_in: true
+      - heard: "haan confirm"
+        truth: "haan confirm"
+  - name: doctor_by_name
+    expect: BOOKED
+    note: "'Dr Sheikh' is heard as 'Shaikh'; the staff list repairs it."
+    turns:
+      - heard: "doctor Shaikh se implant ke liye milna hai"
+        truth: "doctor Sheikh se implant ke liye milna hai"
+        low_conf: [Shaikh]
+      - heard: "parso dopahar chalega"
+        truth: "parso dopahar chalega"
+      - heard: "haan theek hai"
+        truth: "haan theek hai"
+      - heard: "Kabir Nair 9765432100"
+        truth: "Kabir Nair 9765432100"
+      - heard: "ji confirm"
+        truth: "ji confirm"

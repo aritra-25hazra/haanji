@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.debugpy",
+    "redhat.vscode-yaml",
+    "dbaeumer.vscode-eslint",
+    "vscjava.vscode-java-pack"
+  ]
+}

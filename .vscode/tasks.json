@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Engine: install (venv + deps)",
+      "type": "shell",
+      "command": "python3 -m venv .venv && .venv/bin/pip install -e '.[dev,web]'",
+      "windows": { "command": "py -3 -m venv .venv; .venv\\Scripts\\pip install -e .[dev,web]" },
+      "options": { "cwd": "${workspaceFolder}/engine" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Engine: tests (161)",
+      "type": "shell",
+      "command": ".venv/bin/python -m pytest -q",
+      "windows": { "command": ".venv\\Scripts\\python -m pytest -q" },
+      "options": { "cwd": "${workspaceFolder}/engine" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Engine: serve :8090",
+      "type": "shell",
+      "command": ".venv/bin/python -m haanji.cli serve",
+      "windows": { "command": ".venv\\Scripts\\python -m haanji.cli serve" },
+      "options": { "cwd": "${workspaceFolder}/engine" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Console: install",
+      "type": "shell",
+      "command": "npm install",
+      "options": { "cwd": "${workspaceFolder}/console" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Console: dev :5173",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/console" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Run everything (serve + console)",
+      "dependsOn": ["Engine: serve :8090", "Console: dev :5173"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}
