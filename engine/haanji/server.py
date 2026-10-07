@@ -44,7 +44,11 @@ SESSION_IDLE_S = 1800
 os.makedirs(VAR_DIR, exist_ok=True)
 
 app = FastAPI(title="HaanJi demo server", version="0.4.0")
-app.add_middleware(CORSMiddleware, allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+# Same-origin in production, because the console is served through a rewrite;
+# the regex is overridable so the engine can also be called directly.
+CORS_ORIGIN_REGEX = os.environ.get(
+    "HAANJI_CORS_ORIGIN_REGEX", r"http://(localhost|127\.0\.0\.1)(:\d+)?")
+app.add_middleware(CORSMiddleware, allow_origin_regex=CORS_ORIGIN_REGEX,
                    allow_methods=["*"], allow_headers=["*"])
 
 store = DemoStore(os.path.join(VAR_DIR, "store.sqlite"))

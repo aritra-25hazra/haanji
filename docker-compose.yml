@@ -53,7 +53,7 @@ services:
       retries: 12
 
   engine:
-    build: { context: ./engine }
+    build: { context: ., dockerfile: engine/Dockerfile }
     environment:
       HAANJI_CORE_URL: http://core-api:8080
       HAANJI_PACK_DIR: /packs

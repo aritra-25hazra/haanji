@@ -1,0 +1,35 @@
+# Render blueprint: the voice engine, as one self-contained Docker service.
+#
+# The engine's serve mode is the whole demo in one process -- web calls, the
+# WhatsApp simulator, the public Pramaan verifier and the insights API -- and
+# it needs no database, so there is nothing else to provision here. The React
+# console is deployed separately on Vercel and reaches this service through a
+# rewrite, which keeps it same-origin and so keeps CORS out of the picture.
+services:
+  - type: web
+    name: haanji-engine
+    runtime: docker
+    dockerfilePath: ./engine/Dockerfile
+    dockerContext: .
+    plan: free
+    region: singapore
+    healthCheckPath: /api/status
+    autoDeploy: true
+    envVars:
+      # Mock providers: no API keys, and the demo exercises the real code path.
+      - key: HAANJI_PROVIDER_STT
+        value: mock
+      - key: HAANJI_PROVIDER_LLM
+        value: mock
+      - key: HAANJI_PROVIDER_TTS
+        value: mock
+      - key: HAANJI_PACK
+        value: dental_clinic
+      # Writable on the instance's ephemeral disk; the demo data is meant to be
+      # disposable, and a redeploy starts it clean.
+      - key: HAANJI_VAR_DIR
+        value: /app/var
+      # Allows the console's own origin in case it ever calls the engine
+      # directly instead of through the Vercel rewrite.
+      - key: HAANJI_CORS_ORIGIN_REGEX
+        value: https://.*\.vercel\.app|http://(localhost|127\.0\.0\.1)(:\d+)?
