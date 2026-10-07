@@ -2,8 +2,8 @@ package ai.haanji.core.web;
 
 import ai.haanji.core.domain.Conversation;
 import ai.haanji.core.domain.Tenant;
-import ai.haanji.core.repo.Repositories.ConversationRepository;
 import ai.haanji.core.repo.Repositories.TenantRepository;
+import ai.haanji.core.service.ConversationService;
 import ai.haanji.core.service.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,10 +37,10 @@ public class WebhookController {
     private static final Logger log = LoggerFactory.getLogger(WebhookController.class);
 
     private final TenantRepository tenants;
-    private final ConversationRepository conversations;
+    private final ConversationService conversations;
     private final String secret;
 
-    public WebhookController(TenantRepository tenants, ConversationRepository conversations,
+    public WebhookController(TenantRepository tenants, ConversationService conversations,
                              @Value("${haanji.telephony.webhook-secret}") String secret) {
         this.tenants = tenants;
         this.conversations = conversations;
@@ -64,8 +64,8 @@ public class WebhookController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         TenantContext.set(tenant.getId());
-        Conversation conversation = conversations.save(
-                new Conversation(tenant.getId(), Conversation.Channel.PHONE, body.get("From")));
+        Conversation conversation = conversations.start(
+                tenant.getId(), Conversation.Channel.PHONE, body.get("From"));
 
         return ResponseEntity.ok(Map.of(
                 "conversation_id", conversation.getId(),
@@ -90,8 +90,8 @@ public class WebhookController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         TenantContext.set(tenant.getId());
-        Conversation conversation = conversations.save(
-                new Conversation(tenant.getId(), Conversation.Channel.WHATSAPP, body.get("from")));
+        Conversation conversation = conversations.start(
+                tenant.getId(), Conversation.Channel.WHATSAPP, body.get("from"));
         return ResponseEntity.ok(Map.of("conversation_id", conversation.getId()));
     }
 

@@ -1,9 +1,15 @@
 package ai.haanji.core;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -45,20 +51,47 @@ class ArchitectureTest {
     @Test
     void controllersNeverTouchRepositoriesDirectlyForWrites() {
         noClasses().that().resideInAPackage("..web..")
-                .should().callMethodWhere(target ->
+                .should().callMethodWhere(DescribedPredicate.describe(
+                        "a save method on a repository", target ->
                         target.getTarget().getOwner().getName().contains(".repo.")
-                                && target.getTarget().getName().startsWith("save"))
+                                && target.getTarget().getName().startsWith("save")))
                 .because("a write must go through a service so it is sealed in the ledger")
                 .check(classes);
     }
 
     @Test
     void entitiesAreNeverReturnedFromControllers() {
-        noClasses().that().resideInAPackage("..web..")
-                .should().dependOnClassesThat().resideInAPackage("..domain..")
-                .orShould().accessClassesThat().resideInAPackage("..domain..")
-                .allowEmptyShould(true)
-                .check(classes.that(c -> !c.getName().contains("Controller$")));
+        methods().that().areDeclaredInClassesThat().resideInAPackage("..web..")
+                .should(notReturnAnEntity())
+                .because("a controller returns a DTO, so the wire format does not have "
+                         + "to change every time an entity does")
+                .check(classes);
+    }
+
+    /**
+     * Looks at every raw type involved in the return signature rather than just
+     * the outermost one, so {@code ResponseEntity<List<Receipt>>} is caught as
+     * surely as a bare {@code Receipt}.
+     */
+    private static ArchCondition<JavaMethod> notReturnAnEntity() {
+        return new ArchCondition<JavaMethod>("not return a class from ..domain..") {
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                boolean clean = true;
+                for (JavaClass involved : method.getReturnType().getAllInvolvedRawTypes()) {
+                    if (involved.getPackageName().startsWith("ai.haanji.core.domain")) {
+                        clean = false;
+                        events.add(SimpleConditionEvent.violated(method,
+                                method.getFullName() + " returns the entity "
+                                        + involved.getSimpleName()));
+                    }
+                }
+                if (clean) {
+                    events.add(SimpleConditionEvent.satisfied(method,
+                            method.getFullName() + " returns a DTO"));
+                }
+            }
+        };
     }
 
     @Test

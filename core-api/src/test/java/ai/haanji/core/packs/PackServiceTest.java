@@ -1,6 +1,5 @@
-package ai.haanji.core;
+package ai.haanji.core.packs;
 
-import ai.haanji.core.packs.PackService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
