@@ -5,6 +5,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/engine/:path*", "destination": "https://haanji-engine.onrender.com/:path*" },
+    { "source": "/static/:path*", "destination": "https://haanji-engine.onrender.com/static/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
