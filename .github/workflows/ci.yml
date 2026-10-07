@@ -13,21 +13,21 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
       - name: install
-        working-directory: code/engine
+        working-directory: engine
         run: pip install -e ".[dev]"
       - name: unit and property tests
-        working-directory: code/engine
+        working-directory: engine
         run: pytest -q
       - name: every packaged scenario must still reach its expected outcome
-        working-directory: code/engine
+        working-directory: engine
         run: python -m haanji.cli selftest --speed 60
       - name: regenerate the measured results
-        working-directory: code/engine
+        working-directory: engine
         run: python -m haanji.bench --reps 3 --speed 90
       - uses: actions/upload-artifact@v4
         with:
           name: measured-results
-          path: code/research/results.json
+          path: research/results.json
 
   core-api:
     name: core api
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "21", cache: maven }
       - name: build, unit tests and architecture rules
-        working-directory: code/core-api
+        working-directory: core-api
         run: mvn -B verify
 
   console:
@@ -46,8 +46,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: npm, cache-dependency-path: code/console/package.json }
-      - working-directory: code/console
+        with: { node-version: "20", cache: npm, cache-dependency-path: console/package.json }
+      - working-directory: console
         run: npm install
-      - working-directory: code/console
+      - working-directory: console
         run: npm run build
