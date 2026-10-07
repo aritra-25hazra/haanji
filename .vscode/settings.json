@@ -15,5 +15,8 @@
   "[python]": { "editor.tabSize": 4 },
   "[typescript]": { "editor.tabSize": 2 },
   "[typescriptreact]": { "editor.tabSize": 2 },
-  "[yaml]": { "editor.tabSize": 2 }
+  "[yaml]": {
+    "editor.tabSize": 2
+  },
+  "java.compile.nullAnalysis.mode": "automatic"
 }
