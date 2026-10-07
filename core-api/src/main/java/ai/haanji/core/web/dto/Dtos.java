@@ -1,5 +1,6 @@
 package ai.haanji.core.web.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 import java.time.Instant;

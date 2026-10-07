@@ -6,6 +6,9 @@
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "vector";
+-- btree_gist lets the appointments_no_overlap exclusion constraint compare
+-- the uuid staff_id with = inside a GiST index.
+CREATE EXTENSION IF NOT EXISTS "btree_gist";
 
 CREATE TABLE tenants (
     tenant_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),

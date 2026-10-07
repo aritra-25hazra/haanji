@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY pyproject.toml ./
-RUN pip install --upgrade pip && pip install ".[live]"
+RUN pip install --upgrade pip && pip install ".[live,web]"
 
 COPY haanji ./haanji
 COPY tests ./tests
@@ -21,4 +21,4 @@ EXPOSE 8090
 HEALTHCHECK --interval=15s --timeout=3s --retries=3 \
     CMD python -c "import haanji; print('ok')" || exit 1
 
-CMD ["python", "-m", "haanji.cli", "selftest"]
+CMD ["python", "-m", "haanji.cli", "serve", "--host", "0.0.0.0", "--port", "8090"]

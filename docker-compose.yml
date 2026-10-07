@@ -61,7 +61,8 @@ services:
       HAANJI_PROVIDER_LLM: ${HAANJI_PROVIDER_LLM:-mock}
       HAANJI_PROVIDER_TTS: ${HAANJI_PROVIDER_TTS:-mock}
     volumes: ["./packs:/packs:ro"]
-    ports: ["8090:8090"]
+    # Two replicas cannot share one host port; each takes one from the range.
+    ports: ["8090-8091:8090"]
     depends_on:
       core-api: { condition: service_healthy }
     deploy:

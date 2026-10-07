@@ -1,8 +1,10 @@
 package ai.haanji.core;
 
+import ai.haanji.core.repo.Repositories;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -19,6 +21,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @ConfigurationPropertiesScan
 @EnableTransactionManagement
 @EnableScheduling
+// The repository interfaces are nested inside Repositories on purpose;
+// Spring Data does not scan nested interfaces unless told to.
+@EnableJpaRepositories(basePackageClasses = Repositories.class,
+        considerNestedRepositories = true)
 public class CoreApiApplication {
     public static void main(String[] args) {
         SpringApplication.run(CoreApiApplication.class, args);
