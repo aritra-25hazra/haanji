@@ -13,3 +13,6 @@ target/
 engine/var/
 var/
 *.log
+
+# brainstorming companion sessions
+.superpowers/
