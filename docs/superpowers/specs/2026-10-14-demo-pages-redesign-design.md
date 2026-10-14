@@ -8,14 +8,14 @@ project and is out of scope here.
 
 ## 1. What we decided, and why
 
-| Decision | Choice | Reason |
-|---|---|---|
-| Which surface first | Demo pages | They are what a visitor sees from a shared link; first impression lives here. |
-| Visual direction | **A · Signboard** — hand-painted Indian shop sign | Drawn from the customer's own world (clinic, salon, lab signboards), not from any AI-product default. Bilingual lettering is native to the subject. |
-| Landing hero | **2 · the call, replayed** — split hero with a scripted call auto-playing in a phone frame | The product's whole argument is that it *does the thing*; the hero should show it doing the thing while the headline gives an evaluator context. |
-| `/talk` layout | **3 · call + engine panel** — transcript on the left, a live panel showing Bhasha, Speculation and Pramaan on the right | The three research contributions are invisible today. The panel makes them observable while a call happens. |
-| Implementation | **Plain HTML/CSS/JS inside the engine**, shared `signboard.css` + `signboard.js` | Keeps the README's "one process is the whole platform" promise, no build step, deploys to Render unchanged. The look does not need a framework. |
-| Keep-awake | GitHub Actions pings the engine every 10 minutes | Removes the ~23 s cold start on the free plan. Fits in the free 750 h/month. Removable by deleting one file. |
+| Decision            | Choice                                                                                                                  | Reason                                                                                                                                              |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Which surface first | Demo pages                                                                                                              | They are what a visitor sees from a shared link; first impression lives here.                                                                       |
+| Visual direction    | **A · Signboard** — hand-painted Indian shop sign                                                                       | Drawn from the customer's own world (clinic, salon, lab signboards), not from any AI-product default. Bilingual lettering is native to the subject. |
+| Landing hero        | **2 · the call, replayed** — split hero with a scripted call auto-playing in a phone frame                              | The product's whole argument is that it _does the thing_; the hero should show it doing the thing while the headline gives an evaluator context.    |
+| `/talk` layout      | **3 · call + engine panel** — transcript on the left, a live panel showing Bhasha, Speculation and Pramaan on the right | The three research contributions are invisible today. The panel makes them observable while a call happens.                                         |
+| Implementation      | **Plain HTML/CSS/JS inside the engine**, shared `signboard.css` + `signboard.js`                                        | Keeps the README's "one process is the whole platform" promise, no build step, deploys to Render unchanged. The look does not need a framework.     |
+| Keep-awake          | GitHub Actions pings the engine every 10 minutes                                                                        | Removes the ~23 s cold start on the free plan. Fits in the free 750 h/month. Removable by deleting one file.                                        |
 
 ## 2. Design system — tokens
 
@@ -24,16 +24,16 @@ properties on `:root`. Pages never use raw hex.
 
 ### Colour
 
-| Token | Hex | Role |
-|---|---|---|
-| `--cobalt` | `#1B3B8C` | The board. Primary surface for hero, `/talk`, `/verify`, nav. |
-| `--cobalt-deep` | `#102A66` | Recessed panels and cards sitting on the board. |
-| `--marigold` | `#F5B91E` | Painted lettering. Primary buttons, repairs, highlights, focus ring. |
-| `--chalk` | `#FFF7E6` | Text on cobalt; background of "whitewashed wall" sections on the landing page. |
-| `--ink` | `#14213D` | Text on chalk sections. |
-| `--haze` | `#9FB3E8` | Muted text on cobalt (struck-through words, hints). Only at ≥14 px. |
-| `--sindoor` | `#E2553A` | Alerts, guardrails, broken chain, "End call". |
-| `--leaf` | `#8FD694` | Verified, chain intact, speculation hit. |
+| Token           | Hex       | Role                                                                           |
+| --------------- | --------- | ------------------------------------------------------------------------------ |
+| `--cobalt`      | `#1B3B8C` | The board. Primary surface for hero, `/talk`, `/verify`, nav.                  |
+| `--cobalt-deep` | `#102A66` | Recessed panels and cards sitting on the board.                                |
+| `--marigold`    | `#F5B91E` | Painted lettering. Primary buttons, repairs, highlights, focus ring.           |
+| `--chalk`       | `#FFF7E6` | Text on cobalt; background of "whitewashed wall" sections on the landing page. |
+| `--ink`         | `#14213D` | Text on chalk sections.                                                        |
+| `--haze`        | `#9FB3E8` | Muted text on cobalt (struck-through words, hints). Only at ≥14 px.            |
+| `--sindoor`     | `#E2553A` | Alerts, guardrails, broken chain, "End call".                                  |
+| `--leaf`        | `#8FD694` | Verified, chain intact, speculation hit.                                       |
 
 Contrast (checked): chalk on cobalt 11.2:1 · marigold on cobalt 6.5:1 · cobalt on
 marigold 6.5:1 · ink on chalk 13.9:1 · haze on cobalt 4.7:1 · sindoor on cobalt
@@ -41,12 +41,12 @@ marigold 6.5:1 · ink on chalk 13.9:1 · haze on cobalt 4.7:1 · sindoor on coba
 
 ### Type
 
-| Role | Face | Weights | Used for |
-|---|---|---|---|
-| Display | **Bricolage Grotesque** (opsz 12–96) | 800 | h1, h2, wordmark "HaanJi" |
-| Devanagari display | **Yatra One** | 400 | हाँजी and Hindi words inside headlines |
-| Body | **Instrument Sans** | 400 / 500 / 600 | everything else |
-| Data | **JetBrains Mono** | 500 | sound keys, receipt codes, timers, ms, hashes |
+| Role               | Face                                 | Weights         | Used for                                      |
+| ------------------ | ------------------------------------ | --------------- | --------------------------------------------- |
+| Display            | **Bricolage Grotesque** (opsz 12–96) | 800             | h1, h2, wordmark "HaanJi"                     |
+| Devanagari display | **Yatra One**                        | 400             | हाँजी and Hindi words inside headlines        |
+| Body               | **Instrument Sans**                  | 400 / 500 / 600 | everything else                               |
+| Data               | **JetBrains Mono**                   | 500             | sound keys, receipt codes, timers, ms, hashes |
 
 Loaded from Google Fonts with `display=swap` and a `preconnect`. Fallback stacks:
 display → `"Arial Black", Impact, sans-serif`; body → system sans; mono → `ui-monospace, Menlo, monospace`.
@@ -62,13 +62,13 @@ comes from `--cobalt-deep` and the painted border (below).
 
 ### Motion tokens
 
-| Token | Value | Used for |
-|---|---|---|
-| `--t-micro` | 160 ms | hover, press, chip appear |
-| `--t-base` | 240 ms | reveal, panel open, bubble enter |
-| `--t-paint` | 400 ms | painted repair stroke, stamp landing |
-| `--ease-out` | `cubic-bezier(.2,.8,.2,1)` | anything entering |
-| `--ease-in` | `cubic-bezier(.4,0,1,1)` | anything leaving (exits ≈ 65 % of enter duration) |
+| Token        | Value                      | Used for                                          |
+| ------------ | -------------------------- | ------------------------------------------------- |
+| `--t-micro`  | 160 ms                     | hover, press, chip appear                         |
+| `--t-base`   | 240 ms                     | reveal, panel open, bubble enter                  |
+| `--t-paint`  | 400 ms                     | painted repair stroke, stamp landing              |
+| `--ease-out` | `cubic-bezier(.2,.8,.2,1)` | anything entering                                 |
+| `--ease-in`  | `cubic-bezier(.4,0,1,1)`   | anything leaving (exits ≈ 65 % of enter duration) |
 
 `@media (prefers-reduced-motion: reduce)`: every transform animation is removed,
 opacity transitions capped at 100 ms, the hero's scripted call renders its final
@@ -132,24 +132,24 @@ Nav: wordmark · Demo (`talk`) · WhatsApp · Verify · GitHub (external) · a
 until loaded).
 
 **Hero** (cobalt). Two columns 1.1fr / 1fr, stacking below 900 px.
-Left: eyebrow chip "AI receptionist · Hinglish"; h1 *Phone uthata hai.
-Hinglish mein. **सबूत** ke saath.* (सबूत in Yatra One, marigold); sub *Clinic,
+Left: eyebrow chip "AI receptionist · Hinglish"; h1 _Phone uthata hai.
+Hinglish mein. **सबूत** ke saath._ (सबूत in Yatra One, marigold); sub _Clinic,
 salon ya lab ke liye. Har call uthata hai, booking likhta hai, aur baad mein
-saabit kar sakta hai ki caller ne kya haan boli.*; buttons **Baat karke dekho**
+saabit kar sakta hai ki caller ne kya haan boli._; buttons **Baat karke dekho**
 (→ `talk`) and **Kaise kaam karta hai** (→ `#pillars`).
 Right: the **phone frame** (`.frame`, `--cobalt-deep`), header "● LIVE CALL ·
 SMILE CARE DENTAL" with a running timer, a transcript region
 (`aria-live="polite"`) where `hero-call.js` plays this script in a loop:
 
-| # | Who | Text | Effect after |
-|---|---|---|---|
-| 1 | agent | Haanji, Smile Care Dental. Main aapki kya madad karun? | — |
-| 2 | caller | haan ji mujhe rut kanal karwana tha | painted repair `rut kanal → root canal · 0.32` |
-| 3 | agent | Theek hai. Kis din ka time dekhun? | mono `22 ms` |
-| 4 | caller | kal subah ka time mil jayega | chip-spec `⚡ check_availability — pehle se taiyaar` |
-| 5 | agent | Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah saade 10 baje. Chalega? | mono `31 ms` |
-| 6 | caller | haan confirm kar do | chip-tool `book_appointment` |
-| 7 | agent | Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 2504-7863. | **stamp** `RECEIPT 2504-7863` |
+| #   | Who    | Text                                                                                         | Effect after                                         |
+| --- | ------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1   | agent  | Haanji, Smile Care Dental. Main aapki kya madad karun?                                       | —                                                    |
+| 2   | caller | haan ji mujhe rut kanal karwana tha                                                          | painted repair `rut kanal → root canal · 0.32`       |
+| 3   | agent  | Theek hai. Kis din ka time dekhun?                                                           | mono `22 ms`                                         |
+| 4   | caller | kal subah ka time mil jayega                                                                 | chip-spec `⚡ check_availability — pehle se taiyaar` |
+| 5   | agent  | Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah saade 10 baje. Chalega? | mono `31 ms`                                         |
+| 6   | caller | haan confirm kar do                                                                          | chip-tool `book_appointment`                         |
+| 7   | agent  | Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 2504-7863.            | **stamp** `RECEIPT 2504-7863`                        |
 
 Pacing: 900 ms between lines; agent lines are preceded by a 500 ms typing
 indicator; after line 7 hold 2.5 s, fade the transcript out (`--t-base`), restart.
@@ -161,18 +161,18 @@ data in `hero-call.js`, not markup.
 painted badge label (not numbered — they are not a sequence), a one-line plain
 explanation, the measured number from the README, and a tiny live widget:
 
-- **BHASHA BRIDGE** — *Aapke apne catalogue se bana sound-index; recogniser ko
+- **BHASHA BRIDGE** — _Aapke apne catalogue se bana sound-index; recogniser ko
   bhi batata hai aur uski galti bhi sudhaarta hai — sirf tab jab wo khud sure
-  na ho.* Number: **31.6 % → 1.1 %** entity errors at 30 % noise, 0 harmful
+  na ho._ Number: **31.6 % → 1.1 %** entity errors at 30 % noise, 0 harmful
   corrections. Widget: a painted repair that re-plays every 4 s cycling through
   three real pairs (`rut kanal → root canal`, `klining → cleaning`, `sheikh →
-  Dr Sheikh`).
-- **SPECULATIVE TURNS** — *Jab caller bol hi raha hota hai, read-only kaam pehle
-  se shuru; jawab tab use hota hai jab sawaal byte-by-byte wahi nikle.* Number:
+Dr Sheikh`).
+- **SPECULATIVE TURNS** — _Jab caller bol hi raha hota hai, read-only kaam pehle
+  se shuru; jawab tab use hota hai jab sawaal byte-by-byte wahi nikle._ Number:
   **239 → 137 ms** median on read turns, 45.5 % hit rate. Widget: two horizontal
   bars (239 / 137) that grow on reveal.
-- **PRAMAAN LEDGER** — *Har booking ek signed, chained receipt mein seal hoti hai,
-  caller ki "haan" ke saath. Koi bhi, kahin bhi verify kar sakta hai.* Number:
+- **PRAMAAN LEDGER** — _Har booking ek signed, chained receipt mein seal hoti hai,
+  caller ki "haan" ke saath. Koi bhi, kahin bhi verify kar sakta hai._ Number:
   **80 / 80** tampering attempts caught, 0 unconfirmed writes. Widget: five
   chain blocks; on reveal the fourth turns sindoor and the links after it break.
 
@@ -180,9 +180,9 @@ explanation, the measured number from the README, and a tiny live widget:
 with a label (LIVE CALL / WHATSAPP / PRAMAAN), a title, one sentence, and an
 arrow. Hover: translateY −2 px, marigold border brightens.
 
-**Built in the open** (chalk). Three short columns: packs (*ek YAML file = ek
-business type*), measured not estimated (*`python -m haanji.bench` writes
-results.json*), verify it yourself (link to `verify`). Footer: open source on
+**Built in the open** (chalk). Three short columns: packs (_ek YAML file = ek
+business type_), measured not estimated (_`python -m haanji.bench` writes
+results.json_), verify it yourself (link to `verify`). Footer: open source on
 GitHub · HaanJi v0.4.0.
 
 States: `api/status` unreachable → the Console link stays hidden, nothing else
@@ -201,11 +201,11 @@ with a "Engine ka sheesha ▴" toggle (collapsed by default, 44 px tap target).
 
 **Call column.** Transcript (`aria-live="polite"`), agent bubbles chalk-tint
 left, caller bubbles marigold right, enter: opacity + translateY 8 px over
-`--t-base`. Caller bubble shows *what was heard*; if the turn had corrections,
+`--t-base`. Caller bubble shows _what was heard_; if the turn had corrections,
 a painted repair row appears under it. Agent bubble meta: chips for tools
 (`.chip-spec` when speculated), guardrail, receipts (stamp, not chip), and the
-mono latency. Empty state before a call: *Pack chuniye aur "Start call"
-dabaiye — phir mic se boliye ya neeche type kijiye.*
+mono latency. Empty state before a call: _Pack chuniye aur "Start call"
+dabaiye — phir mic se boliye ya neeche type kijiye._
 
 Interim transcript line under the transcript in haze italics (as today).
 
@@ -214,13 +214,13 @@ turn):
 
 - **Bhasha Bridge** — last turn's corrections, each as: heard `<s>` → read
   `<b>`, then a mono line `RT·KNL = RT·KNL ✓ exact · conf 0.32`. If the turn had
-  none: *Is turn mein kuch sudhaarna nahi pada.* Counter: total repairs this call.
+  none: _Is turn mein kuch sudhaarna nahi pada._ Counter: total repairs this call.
 - **Speculation** — for each tool in the last turn: name, and a 3-tick timeline
   (shuru · tayyar · poocha) with the hit/miss verdict; `⚡ hit` in leaf, `miss`
   in haze. Counter: hits / started this call.
 - **Pramaan** — chain blocks (one per receipt this call, marigold; a dashed
   empty block at the end), latest receipt code in mono, "sealed · Ed25519".
-  Link *Verify karo →* to `verify`.
+  Link _Verify karo →_ to `verify`.
 
 Bottom bar: mic button (56 px, marigold when idle, sindoor + pulse ring while
 listening; a live waveform of 12 bars driven by `AnalyserNode` amplitude when
@@ -228,32 +228,32 @@ the mic is granted, otherwise by listening state), text input, **Bhejo**. The
 existing Web Speech, partial-transcript and barge-in behaviour is preserved
 exactly; only presentation changes.
 
-States: `api/status` unreachable → pack select disabled, top-bar notice *Server
-se connect nahi ho pa raha — thodi der mein dobara try kijiye.* Mic unsupported
-→ mic button disabled with tooltip *Is browser mein mic nahi — type kijiye
-(Chrome best).* Session ended by server (`end_call`) → system line *Call khatam —
-outcome BOOKED* and the Start button returns.
+States: `api/status` unreachable → pack select disabled, top-bar notice _Server
+se connect nahi ho pa raha — thodi der mein dobara try kijiye._ Mic unsupported
+→ mic button disabled with tooltip _Is browser mein mic nahi — type kijiye
+(Chrome best)._ Session ended by server (`end_call`) → system line _Call khatam —
+outcome BOOKED_ and the Start button returns.
 
 ### 4.3 WhatsApp — `/whatsapp` (`whatsapp.html`)
 
 The chat canvas deliberately stays WhatsApp-like (dark green `#0B141A` /
-`#005C4B` bubbles / dotted backdrop) because the demo's point is *same brain,
-different channel*. Everything around it is Signboard: the sidebar and chat
+`#005C4B` bubbles / dotted backdrop) because the demo's point is _same brain,
+different channel_. Everything around it is Signboard: the sidebar and chat
 header are cobalt with the wordmark, the "Simulate a missed call" button is
 marigold and prominent with its explanation beneath, the thread list rows use
 Instrument Sans with mono timestamps. Inside bubbles the painted repair and
 stamp components are reused (recoloured to read on green). The system line for
 missed-call recovery becomes a chip row with the phone-missed icon: `missed
-call → HaanJi ne khud message bheja`. Empty state: *Left mein number daal ke thread kholo, ya
-"missed call" dabao aur dekho HaanJi khud pehla message bhejta hai.*
+call → HaanJi ne khud message bheja`. Empty state: _Left mein number daal ke thread kholo, ya
+"missed call" dabao aur dekho HaanJi khud pehla message bhejta hai._
 
 ### 4.4 Verify — `/verify` (`verify.html`)
 
-Cobalt page. h1 *Pramaan* + *verifier* (marigold). Sub as today but shorter.
+Cobalt page. h1 _Pramaan_ + _verifier_ (marigold). Sub as today but shorter.
 Controls row: pack select · **Is server ka export load karo** (primary) ·
 **Pasted JSON verify karo** (ghost) · **Ek field chhedo aur dobara check karo**
 (danger, disabled until an export is loaded; a 12 px sindoor note beside it:
-*sirf aapke browser mein — server pe kuch nahi badalta*).
+_sirf aapke browser mein — server pe kuch nahi badalta_).
 
 Verdict: a large `.stamp`-styled banner — **VALID · 7 receipts · chain intact**
 (leaf border/text) or **BROKEN at seq 4 · payload hash does not match** (sindoor).
@@ -284,8 +284,11 @@ the landing page. `verifier.js` and `nacl-fast.min.js` are unchanged.
 - `server.py`: `api/status` gains `console_url` from `HAANJI_CONSOLE_URL`
   (default `http://localhost:5173`); the `/static/{name}` route serves any file
   in `web/` with a MIME type from the extension (`.css` → `text/css`, `.js` →
-  `text/javascript`, `.svg` → `image/svg+xml`, else as today); the four page
-  routes are unchanged. No other engine code changes.
+  `text/javascript`, `.svg` → `image/svg+xml`, else as today); each entry in a
+  turn's `corrections` gains `key` and `to_key` — `phrase_key()` of the heard
+  and the corrected text — so the Bhasha panel can show the sound-key match
+  that justified the repair; the four page routes are unchanged. No other
+  engine code changes.
 - `render.yaml`: add `HAANJI_CONSOLE_URL=https://haanji-kappa.vercel.app`.
 - Console: `App.tsx` and `PackStudio.tsx` external links change from
   `http://localhost:8090/...` to root-relative `/engine/talk` /
