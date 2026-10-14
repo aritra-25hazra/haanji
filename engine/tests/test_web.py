@@ -66,3 +66,28 @@ def test_the_landing_page_has_its_hero_pillars_and_links(client):
     assert 'href="static/signboard.css"' in html and 'src="static/hero-call.js"' in html
     assert "31.6% → 1.1%" in html and "239 → 137 ms" in html and "80 / 80" in html
     assert "localhost" not in html
+
+
+def test_the_talk_page_has_the_call_and_the_engine_panel(client):
+    html = client.get("/talk").text
+    for el_id in ("log", "interim", "panel-bhasha", "panel-spec", "panel-pramaan", "mic", "text", "send", "sheet-toggle"):
+        assert f'id="{el_id}"' in html, el_id
+    assert 'aria-live="polite"' in html
+    assert "Start call" in html and "Call khatam karo" in html
+    assert "haanji serve" not in html and "localhost" not in html
+
+
+def test_the_whatsapp_page_keeps_its_simulator_controls(client):
+    html = client.get("/whatsapp").text
+    for el_id in ("threads", "msgs", "missed", "open", "phone", "text", "send", "pack"):
+        assert f'id="{el_id}"' in html, el_id
+    assert "missed call" in html.lower()
+    assert 'href="static/signboard.css"' in html
+
+
+def test_the_verify_page_has_its_verdict_chain_and_register(client):
+    html = client.get("/verify").text
+    for el_id in ("verdict", "chainstrip", "rows", "tbl", "load", "paste", "tamper", "json", "key", "pack"):
+        assert f'id="{el_id}"' in html, el_id
+    assert 'src="static/nacl-fast.min.js"' in html and 'src="static/verifier.js"' in html
+    assert 'href="static/signboard.css"' in html

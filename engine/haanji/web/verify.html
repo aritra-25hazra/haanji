@@ -4,135 +4,149 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pramaan — public receipt verifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/signboard.css">
 <style>
-  :root { --ink:#0F1E33; --panel:#152A47; --line:#27466E; --amber:#E8952F; --teal:#2FBFA9;
-          --red:#E4604E; --mist:#9DB2C9; }
-  * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif;
-         background:var(--ink); color:#E8EEF6; }
-  .wrap { max-width:960px; margin:0 auto; padding:36px 22px 80px; }
-  h1 { margin:0; font-size:30px; } h1 b { color:var(--teal); }
-  .sub { color:var(--mist); margin:6px 0 26px; max-width:720px; }
-  .controls { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
-  button { border:0; border-radius:8px; padding:9px 16px; font-weight:600; cursor:pointer;
-           font-size:13.5px; }
-  .primary { background:var(--teal); color:#08211C; }
-  .ghost { background:var(--panel); color:var(--mist); border:1px solid var(--line); }
-  .danger { background:var(--red); color:#fff; }
-  select { background:var(--panel); color:#E8EEF6; border:1px solid var(--line);
-           border-radius:8px; padding:8px 10px; }
-  textarea { width:100%; height:130px; background:var(--panel); color:#CFE0F0;
-             border:1px solid var(--line); border-radius:10px; padding:12px;
-             font:12px ui-monospace,monospace; }
-  #banner { border-radius:12px; padding:16px 18px; margin:18px 0; font-size:16px;
-            font-weight:700; display:none; }
-  #banner.ok { display:block; background:rgba(47,191,169,.13); color:var(--teal);
-               border:1px solid rgba(47,191,169,.4); }
-  #banner.bad { display:block; background:rgba(228,96,78,.13); color:var(--red);
-                border:1px solid rgba(228,96,78,.4); }
-  #banner small { display:block; font-weight:400; color:var(--mist); margin-top:4px; }
-  table { width:100%; border-collapse:collapse; font-size:13.5px; }
-  th { text-align:left; color:var(--mist); font-size:11px; letter-spacing:.08em;
-       text-transform:uppercase; padding:9px 10px; border-bottom:1px solid var(--line); }
-  td { padding:9px 10px; border-bottom:1px solid rgba(39,70,110,.5); }
-  td.mono { font-family:ui-monospace,monospace; font-size:12.5px; }
-  .st-ok { color:var(--teal); font-weight:700; }
-  .st-bad { color:var(--red); font-weight:700; }
-  .st-skip { color:var(--mist); }
-  .keyline { font:12px ui-monospace,monospace; color:var(--mist); word-break:break-all;
-             margin:10px 0 20px; }
-  .how { background:var(--panel); border:1px solid var(--line); border-radius:12px;
-         padding:16px 18px; color:var(--mist); font-size:13.5px; margin-top:30px; }
-  .how b { color:#E8EEF6; }
+  main { padding: 24px 0 80px; }
+  h1 { font-size: clamp(36px, 5vw, 56px); margin: 16px 0 8px; }
+  .sub { max-width: 68ch; color: var(--haze); margin-bottom: 24px; }
+  .sub b { color: var(--chalk); }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px; }
+  .tamper-note { font-size: 13px; color: #FFB3A3; }
+  textarea.input { width: 100%; height: 140px; padding: 12px; font: 13px/1.5 var(--font-mono); resize: vertical; }
+  .verdict { display: none; margin: 22px 0 10px; }
+  .verdict.show { display: inline-flex; }
+  .verdict.stamp { font-size: 18px; padding: 12px 18px; gap: 12px; flex-wrap: wrap; }
+  .verdict small { font-family: var(--font-body); font-weight: 400; font-size: 13px; letter-spacing: 0; opacity: .85; }
+  .keyline { font: 12px/1.6 var(--font-mono); color: var(--haze); word-break: break-all; margin: 10px 0 16px; }
+  .chainstrip { margin: 8px 0 20px; }
+  .chainstrip i { width: 40px; height: 16px; }
+  .register { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .register th { text-align: left; color: var(--haze); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 10px 10px; border-bottom: 2px solid rgba(245, 185, 30, .5); }
+  .register td { padding: 11px 10px; border-bottom: 1px solid rgba(255, 247, 230, .14); vertical-align: top; }
+  .register td.mono { font-size: 13px; }
+  .st-ok { color: var(--leaf); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  .st-bad { color: #FFB3A3; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  .st-skip { color: var(--haze); }
+  .how { margin-top: 36px; padding: 20px 22px; border-radius: var(--r-card); background: var(--chalk); color: var(--ink); font-size: 15px; }
+  .how b { color: var(--cobalt); }
+  .how i { font-style: italic; font-family: var(--font-mono); font-size: 13px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Pramaan <b>verifier</b></h1>
-  <p class="sub">Har hash aur har Ed25519 signature <b>aapke browser me</b> dobara compute hota
-  hai — server par bharosa kiye bina. Export load kijiye, verify kijiye, phir kisi field se
-  chhedchhad karke dekhiye ki chain kaise tootti hai.</p>
+<a class="skip" href="#main">Seedha verifier pe jao</a>
+<header class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="wordmark" href="./">HaanJi <span class="dev">हाँजी</span></a>
+    <ul><li><a href="talk">Demo</a></li><li><a href="whatsapp">WhatsApp</a></li><li><a href="https://github.com/aritra-25hazra/haanji" rel="noopener"><i data-icon="github" class="ic-sm"></i>GitHub</a></li></ul>
+  </nav>
+</header>
+<main id="main" class="wrap">
+  <span class="eyebrow">Pramaan ledger</span>
+  <h1>Public <span class="dev">सबूत</span> verifier</h1>
+  <p class="sub">Har hash aur har Ed25519 signature <b>aapke browser mein</b> dobara compute hota hai — server pe bharosa kiye bina. Export load kijiye, verify kijiye, phir kisi field se chhedchhad karke dekhiye ki chain kaise tootti hai.</p>
 
   <div class="controls">
-    <select id="pack"></select>
-    <button class="primary" id="load">Load this server's export</button>
-    <button class="ghost" id="paste">Verify pasted JSON</button>
-    <button class="danger" id="tamper" disabled>😈 Tamper one field & re-verify</button>
+    <label class="field"><span>Pack</span><select id="pack" class="input"></select></label>
+    <button type="button" class="btn btn-primary" id="load">Is server ka export load karo</button>
+    <button type="button" class="btn btn-ghost" id="paste">Pasted JSON verify karo</button>
+    <button type="button" class="btn btn-danger" id="tamper" disabled><i data-icon="x"></i>Ek field chhedo aur dobara check karo</button>
+    <span class="tamper-note">sirf aapke browser mein — server pe kuch nahi badalta</span>
   </div>
-  <textarea id="json" placeholder='…ya kisi bhi HaanJi export ka JSON yahan paste kijiye ({"tenant_id": …, "public_key": …, "receipts": […]})'></textarea>
+  <textarea id="json" class="input" aria-label="Export JSON" placeholder='…ya kisi bhi HaanJi export ka JSON yahan paste kijiye ({"tenant_id": …, "public_key": …, "receipts": […]})'></textarea>
 
-  <div id="banner"></div>
+  <div id="verdict" class="stamp verdict" role="status" aria-live="polite"></div>
   <div class="keyline" id="key"></div>
-  <div style="overflow-x:auto"><table id="tbl" hidden>
-    <thead><tr><th>Seq</th><th>Action</th><th>Code</th><th>Verdict</th><th>Reason</th></tr></thead>
-    <tbody id="rows"></tbody>
-  </table></div>
+  <div class="chain chainstrip" id="chainstrip" aria-hidden="true"></div>
+
+  <div style="overflow-x:auto">
+    <table id="tbl" class="register" hidden>
+      <thead><tr><th>Seq</th><th>Action</th><th>Code</th><th>Verdict</th><th>Reason</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
 
   <div class="how">
-    <b>Ye page kya karta hai:</b> har receipt ka payload hash uske stored fields se dobara banata
-    hai (canonical JSON — sorted keys, no whitespace), chain link (<i>prev_hash‖payload_hash</i>)
-    recompute karta hai, aur signature ko tenant ki public key se check karta hai
-    (Ed25519, TweetNaCl). Ek bhi character badla → us receipt ka hash badla → aage ki puri
-    chain toot gayi. Kuch bhi is server par wapas nahi jaata.
+    <b>Ye page kya karta hai:</b> har receipt ka payload hash uske stored fields se dobara banata hai (canonical JSON — sorted keys, no whitespace), chain link (<i>prev_hash‖payload_hash</i>) recompute karta hai, aur signature ko tenant ki public key se check karta hai (Ed25519, TweetNaCl). Ek bhi character badla → us receipt ka hash badla → aage ki poori chain toot gayi. Kuch bhi is server pe wapas nahi jaata.
   </div>
-</div>
+</main>
 
-<script src="/static/nacl-fast.min.js"></script>
-<script src="/static/verifier.js"></script>
+<script src="static/nacl-fast.min.js"></script>
+<script src="static/verifier.js"></script>
+<script src="static/signboard.js"></script>
 <script>
-const $ = id => document.getElementById(id);
-let current = null;
+(function () {
+  "use strict";
+  const S = window.Signboard;
+  const $ = function (id) { return document.getElementById(id); };
+  let current = null;
 
-fetch("/api/status").then(r => r.json()).then(s => {
-  $("pack").innerHTML = s.packs.map(p =>
-    `<option ${p === s.default_pack ? "selected" : ""}>${p}</option>`).join("");
-}).catch(() => {});
+  S.status().then(function (s) {
+    if (!s) return;
+    $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+  });
 
-async function run(exp, label) {
-  current = exp;
-  $("tamper").disabled = false;
-  $("key").textContent = "tenant " + exp.tenant_id + " · public key (Ed25519): " +
-                         (exp.public_key || "—");
-  const rep = await PramaanVerifier.verifyChain(exp, nacl);
-  const b = $("banner");
-  b.className = rep.ok ? "ok" : "bad";
-  b.innerHTML = rep.ok
-    ? `✔ VALID — ${rep.checked} receipts, chain intact <small>${label || ""}</small>`
-    : `✘ BROKEN at seq ${rep.firstBrokenSeq}: ${rep.reason} <small>${label || ""}</small>`;
-  $("tbl").hidden = false;
-  $("rows").innerHTML = rep.rows.map(r => `<tr>
-      <td>${r.seq}</td><td>${r.action}</td>
-      <td class="mono">${r.code.slice(0,4)}-${r.code.slice(4,8)}</td>
-      <td class="${r.ok === true ? "st-ok" : r.ok === false ? "st-bad" : "st-skip"}">
-        ${r.ok === true ? "verified" : r.ok === false ? "BROKEN" : "skipped"}</td>
-      <td>${r.reason || "hash + link + signature all recomputed"}</td></tr>`).join("");
-  if (!rep.rows.length) $("rows").innerHTML =
-    `<tr><td colspan="5" style="color:var(--mist)">Export me koi receipt nahi —
-     pehle /talk ya /whatsapp par ek booking kijiye.</td></tr>`;
-}
+  function chainStrip(rows, firstBroken) {
+    const strip = $("chainstrip"); strip.innerHTML = "";
+    rows.forEach(function (r) {
+      const i = document.createElement("i");
+      if (firstBroken != null && r.seq >= firstBroken) i.className = "bad";
+      strip.appendChild(i);
+    });
+  }
 
-$("load").onclick = async () => {
-  const exp = await (await fetch("/api/receipts/export?pack=" + $("pack").value)).json();
-  $("json").value = JSON.stringify(exp, null, 1).slice(0, 4000);
-  run(exp, "· loaded live from this server");
-};
-$("paste").onclick = () => {
-  try { run(JSON.parse($("json").value), "· pasted export"); }
-  catch (e) { alert("JSON parse nahi hua: " + e.message); }
-};
-$("tamper").onclick = () => {
-  if (!current || !current.receipts.length) return;
-  const t = JSON.parse(JSON.stringify(current));
-  const victim = t.receipts[Math.floor(t.receipts.length / 2)];
-  try {
-    const args = JSON.parse(victim.action_args);
-    if (args.time) args.time = "18:00";
-    else if (args.service) args.service = "dental implant";
-    else args.__edited = true;
-    victim.action_args = JSON.stringify(args);
-  } catch { victim.transcript_excerpt = "caller: haan"; }
-  run(t, `· after editing receipt seq ${victim.seq} locally`);
-};
+  async function run(exp, label) {
+    current = exp;
+    $("tamper").disabled = false;
+    $("key").textContent = "tenant " + exp.tenant_id + " · public key (Ed25519): " + (exp.public_key || "—");
+    const rep = await PramaanVerifier.verifyChain(exp, nacl);
+    const v = $("verdict");
+    v.className = "stamp verdict show" + (rep.ok ? " leaf" : "");
+    v.innerHTML = rep.ok
+      ? S.icon("check") + "VALID · " + rep.checked + " receipts · chain intact" + (label ? "<small>" + S.esc(label) + "</small>" : "")
+      : S.icon("x") + "BROKEN at seq " + rep.firstBrokenSeq + " · " + S.esc(rep.reason || "") + (label ? "<small>" + S.esc(label) + "</small>" : "");
+    S.stamp(v);
+    chainStrip(rep.rows, rep.ok ? null : rep.firstBrokenSeq);
+    $("tbl").hidden = false;
+    $("rows").innerHTML = rep.rows.map(function (r) {
+      const verdict = r.ok === true ? '<span class="st-ok">' + S.icon("check", "ic-sm") + "verified</span>"
+        : r.ok === false ? '<span class="st-bad">' + S.icon("x", "ic-sm") + "BROKEN</span>"
+        : '<span class="st-skip">skipped</span>';
+      return "<tr><td class=\"mono\">" + r.seq + "</td><td>" + S.esc(r.action) + "</td>" +
+        '<td class="mono">' + S.esc(r.code.slice(0, 4)) + "-" + S.esc(r.code.slice(4, 8)) + "</td>" +
+        "<td>" + verdict + "</td><td>" + S.esc(r.reason || "hash + link + signature, teeno dobara bane") + "</td></tr>";
+    }).join("");
+    if (!rep.rows.length) {
+      $("rows").innerHTML = '<tr><td colspan="5" class="muted">Export mein koi receipt nahi — pehle <a href="talk">Talk</a> ya <a href="whatsapp">WhatsApp</a> pe ek booking kijiye.</td></tr>';
+    }
+  }
+
+  $("load").onclick = async function () {
+    const r = await fetch("api/receipts/export?pack=" + encodeURIComponent($("pack").value));
+    const exp = await r.json();
+    $("json").value = JSON.stringify(exp, null, 1).slice(0, 4000);
+    run(exp, "loaded live from this server");
+  };
+  $("paste").onclick = function () {
+    try { run(JSON.parse($("json").value), "pasted export"); }
+    catch (e) { $("json").setCustomValidity("JSON parse nahi hua: " + e.message); $("json").reportValidity(); setTimeout(function () { $("json").setCustomValidity(""); }, 2500); }
+  };
+  $("tamper").onclick = function () {
+    if (!current || !current.receipts.length) return;
+    const t = JSON.parse(JSON.stringify(current));
+    const victim = t.receipts[Math.floor(t.receipts.length / 2)];
+    try {
+      const args = JSON.parse(victim.action_args);
+      if (args.time) args.time = "18:00";
+      else if (args.service) args.service = "dental implant";
+      else args.__edited = true;
+      victim.action_args = JSON.stringify(args);
+    } catch (e) { victim.transcript_excerpt = "caller: haan"; }
+    run(t, "after editing receipt seq " + victim.seq + " locally");
+  };
+})();
 </script>
 </body>
 </html>
