@@ -35,3 +35,23 @@ def test_a_correction_carries_the_sound_keys_that_justified_it(client):
     [c] = turn["corrections"]
     assert c["from_token"] == "rut kanal" and c["to_surface"] == "root canal"
     assert c["key"] and c["key"] == c["to_key"]
+
+
+TOKENS = ["--cobalt:", "--cobalt-deep:", "--marigold:", "--chalk:", "--ink:", "--haze:",
+          "--sindoor:", "--leaf:", "--t-micro:", "--t-base:", "--t-paint:", "--ease-out:"]
+
+
+def test_the_design_system_defines_every_token(client):
+    css = client.get("/static/signboard.css").text
+    for token in TOKENS:
+        assert token in css, token
+    assert "prefers-reduced-motion" in css
+    assert ":focus-visible" in css
+
+
+def test_the_shared_script_exposes_the_signboard_api(client):
+    js = client.get("/static/signboard.js").text
+    for name in ["icon", "mountIcons", "reveal", "paintRepair", "stamp", "typingDots",
+                 "timer", "waveform", "status", "esc", "repairNode"]:
+        assert name in js, name
+    assert 'fetch("api/status")' in js            # relative, never root-relative
