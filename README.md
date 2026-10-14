@@ -1,5 +1,15 @@
 # HaanJi
 
+[![ci](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml)
+[![engine](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-engine.onrender.com%2Fapi%2Fstatus&label=engine&up_message=live&down_message=waking)](https://haanji-engine.onrender.com)
+[![console](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-kappa.vercel.app&label=console&up_message=live)](https://haanji-kappa.vercel.app)
+![tests](https://img.shields.io/badge/tests-182%20passing-1F6B45)
+![licence](https://img.shields.io/badge/licence-Apache--2.0-1B3B8C)
+
+<p align="center">
+  <a href="https://haanji-engine.onrender.com/talk"><img src="docs/media/talk.gif" width="960" alt="A call on /talk: the misheard 'rut kanal' is painted over as 'root canal', the booking is confirmed, and a signed receipt lands as a stamp while the engine panel shows the sound-key match, the speculated tool and the growing chain."></a>
+</p>
+
 **An AI voice receptionist for Indian small businesses.** It answers the phone in
 Hinglish, books the appointment, and can prove afterwards exactly what the caller
 agreed to.
@@ -23,17 +33,49 @@ Every number above was produced by `python -m haanji.bench` on this repository a
 is written to [`research/results.json`](research/results.json). Nothing in this
 README is an estimate.
 
+## See it live
+
+| | | |
+|---|---|---|
+| **Landing** | https://haanji-engine.onrender.com | a real call replayed in the hero |
+| **Talk to HaanJi** | https://haanji-engine.onrender.com/talk | your mic (Chrome) or typed lines, with the engine's three pieces live beside the transcript |
+| **WhatsApp simulator** | https://haanji-engine.onrender.com/whatsapp | same brain over chat, plus missed-call recovery |
+| **Public verifier** | https://haanji-engine.onrender.com/verify | every hash and signature re-checked in your browser |
+| **Owner console** | https://haanji-kappa.vercel.app | dashboard, calls, Pack Studio |
+| **Demo video** | *coming — see [docs/demo-script.md](docs/demo-script.md)* | 90 seconds |
+
+The engine runs on a free instance; the first visit after a quiet spell can take
+~20 s to wake.
+
+### A sixty-second tour
+
+1. Open the landing page and let the hero play — it is the README's own
+   transcript, replayed. Hover to pause it.
+2. **Baat karke dekho → Start call**, then type
+   `haan ji mujhe rut kanal karwana tha`. The misheard words are painted over;
+   the **Bhasha Bridge** card shows the two sound keys that matched and the
+   recogniser's confidence that allowed the repair.
+3. `kal subah ka time mil jayega` — the **Speculation** card shows
+   `check_availability` and whether its answer was ready before it was asked for.
+4. `haan theek hai confirm kar do` → `Vijay Sharma 9876543210` →
+   `haan confirm kar do` — a receipt stamps the reply and the **Pramaan** chain
+   grows by one block.
+5. Open `/verify`, load this server's export, then press **Ek field chhedo** —
+   the chain breaks at the edited receipt, and nothing left your browser.
+
+<p align="center"><img src="docs/media/talk-engine.png" width="960" alt="The /talk page after a booking: transcript on the left with a painted repair and a receipt stamp; on the right the Bhasha, Speculation and Pramaan cards."></p>
+
 ---
 
 ## Try it in one minute
 
 ```bash
-cd code/engine
+cd engine
 pip install -e ".[dev]"
 
 python -m haanji.cli demo          # one narrated call, at real speaking speed
 python -m haanji.cli selftest      # all 21 packaged scenarios, all five verticals
-pytest -q                          # 161 tests
+pytest -q                          # 182 tests
 python -m haanji.bench             # regenerates research/results.json
 ```
 
@@ -111,7 +153,7 @@ PRAMAAN LEDGER
 ## Repository layout
 
 ```
-code/
+.
 ├── engine/          Python 3.11 voice engine — the runnable centrepiece
 │   ├── haanji/
 │   │   ├── bhasha/          phonetics, tenant lexicon, the correction bridge
@@ -121,7 +163,7 @@ code/
 │   │   ├── backend/         the business system the agent acts on (SQLite)
 │   │   ├── tools/           the eight actions, with purity and confirmation flags
 │   │   ├── channels/        WhatsApp (Meta Cloud API) + telephony webhook adapters
-│   │   ├── web/             Talk · WhatsApp sim · public verifier (vanilla JS)
+│   │   ├── web/             landing · Talk · WhatsApp sim · verifier — the Signboard design system, vanilla JS
 │   │   ├── policy.py        the deterministic dialogue policy
 │   │   ├── pipeline.py      the turn controller — where the three ideas meet
 │   │   ├── guardrails.py    what the agent must never do
@@ -129,7 +171,7 @@ code/
 │   │   ├── insights.py      outcome/revenue/cost analytics behind /api/insights
 │   │   ├── bench.py         the evaluation harness that produces every number
 │   │   └── cli.py           demo · selftest · bench · verify · serve · packs
-│   └── tests/               161 tests, including the safety properties
+│   └── tests/               182 tests, including the safety properties and the demo pages
 ├── core-api/        Java 21 / Spring Boot 3 control plane
 │   ├── domain repo service web security config pramaan packs
 │   ├── db/migration/        Flyway: schema, ledger, knowledge + lexicon
@@ -137,6 +179,7 @@ code/
 ├── console/         React 18 + TypeScript operator console (Vite) + Pack Studio
 ├── packs/           five Vertical Packs — the commercial moat, as YAML
 ├── research/        results.json, regenerated by the harness
+├── docs/            design spec + plan for the demo pages, media, the demo video script
 └── ops/             Prometheus scrape config and the four real alerts
 ```
 
@@ -287,19 +330,22 @@ below is running code behind `haanji serve`, not a slide:
 
 ## Architecture
 
-```
-   PSTN / WhatsApp / Web            React console
-          │                               │
-   ┌──────▼───────┐               ┌───────▼────────┐
-   │ Voice engine │◄──── tools ───┤   Core API     │
-   │  (Python)    │               │ (Spring Boot)  │
-   │              │               │                │
-   │ Bhasha       │               │ bookings       │
-   │ Speculation  │               │ Pramaan ledger │
-   │ Guardrails   │               │ packs, tenants │
-   └──────────────┘               └───────┬────────┘
-                                          │
-                            PostgreSQL 16 + pgvector, Redis 7
+```mermaid
+flowchart LR
+    caller([PSTN · WhatsApp · browser mic]) --> engine
+    owner([Owner, in the React console]) --> core
+    subgraph engine [Voice engine — Python, stateless, scaled]
+        bhasha[Bhasha Bridge<br/>sound-key index + repair]
+        spec[Speculative turns<br/>read-only tools run early]
+        guard[Guardrails + policy]
+    end
+    subgraph core [Core API — Spring Boot]
+        book[bookings · tenants · packs]
+        ledger[Pramaan ledger<br/>Ed25519, hash-chained]
+    end
+    engine -- tools, every write with a confirmation proof --> core
+    core --> pg[(PostgreSQL 16 + pgvector)]
+    core --> redis[(Redis 7)]
 ```
 
 The engine is stateless and horizontally scaled — a call is the expensive, bursty
@@ -331,24 +377,38 @@ The console runs standalone too (`cd console && npm install && npm run dev`); wi
 no token present it renders the sample dataset captured from the engine's demo run,
 which is how the interface was designed and reviewed.
 
+### Deployed
+
+The live demo is the engine on Render (one Docker service from
+[`render.yaml`](render.yaml), built from the repository root so the packs ship
+inside the image) and the console on Vercel ([`console/vercel.json`](console/vercel.json)
+proxies `/engine/*` to the engine, so the console stays same-origin). The engine's
+serve mode needs no database, so Core API, PostgreSQL and Redis are not deployed —
+they run in the compose stack above. A ten-minute GitHub Actions ping keeps the free
+instance warm; delete [`.github/workflows/keep-awake.yml`](.github/workflows/keep-awake.yml)
+to stop it.
+
 ---
 
 ## Honest notes
 
 A project report should say what was verified and what was not.
 
-* **The Python engine is fully executed here.** 161 tests, 21 scenarios across
+* **The Python engine is fully executed here.** 182 tests, 21 scenarios across
   five verticals and two languages, and the entire benchmark run on this
   machine. Every number in this README comes from that run.
 * **The React console builds here.** `npm run build` type-checks the whole
   TypeScript source under `strict` and emits a production bundle.
-* **The Java Core API is compiled only as far as this sandbox allows.** The build
-  environment has no route to Maven Central, so `mvn verify` could not run. Every
-  Java file was put through `javac` and reports **no syntax errors** — the only
-  diagnostics are the missing third-party packages themselves. The build is wired
-  into CI (`.github/workflows/ci.yml`) and runs on any machine with normal network
-  access. The Java ledger is a direct port of the Python one, and the property it
-  enforces — no write without a proof — is tested end to end on the Python side.
+* **The Java Core API builds and its tests pass.** `mvn verify` runs on every
+  push in CI: 16 tests, including the ArchUnit rules that keep writes out of
+  controllers and entities out of responses. The Java ledger is a direct port of
+  the Python one, and the property it enforces — no write without a proof — is
+  tested end to end on the Python side.
+* **The demo pages were redesigned in October 2026** — the "Signboard" direction,
+  drawn from hand-painted Indian shop signs. The design decisions, the token
+  system and the page-by-page plan are in [`docs/superpowers/`](docs/superpowers/),
+  and a Playwright + axe pass (`engine/tests/visual_check.py`) keeps them to
+  WCAG 2 AA with no horizontal overflow at 390 px.
 * **The browser call uses the browser's own recogniser.** `/talk` feeds Web
   Speech API partials and finals into the same pipeline the mock providers
   exercise; per-word confidence is not exposed by browsers, so the engine
