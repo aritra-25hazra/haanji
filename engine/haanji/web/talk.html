@@ -4,218 +4,382 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Talk to HaanJi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/signboard.css">
 <style>
-  :root { --ink:#0F1E33; --panel:#152A47; --line:#27466E; --amber:#E8952F; --amber-dk:#A9640F;
-          --teal:#2FBFA9; --red:#E4604E; --mist:#9DB2C9; --paper:#F6F8FA; }
-  * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;
-         background:var(--ink); color:#E8EEF6; height:100vh; display:flex; flex-direction:column; }
-  header { display:flex; gap:12px; align-items:center; padding:14px 20px;
-           border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  header h1 { font-size:18px; margin:0 12px 0 0; } header h1 b { color:var(--amber); }
-  select, input[type=text] { background:var(--panel); color:#E8EEF6; border:1px solid var(--line);
-           border-radius:8px; padding:7px 10px; font-size:13.5px; }
-  button { border:0; border-radius:8px; padding:8px 16px; font-size:13.5px; font-weight:600;
-           cursor:pointer; }
-  .primary { background:var(--amber); color:#1B1B1B; }
-  .ghost { background:var(--panel); color:var(--mist); border:1px solid var(--line); }
-  .danger { background:var(--red); color:#fff; }
-  #chat { flex:1; overflow-y:auto; padding:22px 0; }
-  .inner { max-width:860px; margin:0 auto; padding:0 20px; }
-  .row { display:flex; margin:10px 0; }
-  .row.caller { justify-content:flex-end; }
-  .bubble { max-width:74%; padding:11px 15px; border-radius:14px; font-size:15px; }
-  .agent .bubble { background:var(--panel); border:1px solid var(--line);
-                   border-bottom-left-radius:4px; }
-  .caller .bubble { background:var(--amber); color:#1B1B1B; border-bottom-right-radius:4px; }
-  .meta { font-size:11.5px; color:var(--mist); margin-top:7px; display:flex; gap:8px;
-          flex-wrap:wrap; align-items:center; }
-  .chip { display:inline-block; border-radius:999px; padding:1px 9px; font-size:11px;
-          font-weight:600; }
-  .chip.fix { background:rgba(232,149,47,.16); color:var(--amber); }
-  .chip.spec { background:rgba(47,191,169,.16); color:var(--teal); }
-  .chip.tool { background:#122844; color:var(--mist); }
-  .chip.rcpt { background:rgba(47,191,169,.16); color:var(--teal); font-family:ui-monospace,monospace; }
-  .chip.guard { background:rgba(228,96,78,.18); color:var(--red); }
-  .fix s { opacity:.75; }
-  footer { border-top:1px solid var(--line); padding:14px 20px 18px; }
-  .bar { max-width:860px; margin:0 auto; display:flex; gap:10px; align-items:center; }
-  #text { flex:1; }
-  #mic { width:52px; height:52px; border-radius:50%; font-size:22px; background:var(--panel);
-         border:1px solid var(--line); color:#E8EEF6; }
-  #mic.live { background:var(--red); border-color:var(--red); animation:pulse 1.2s infinite; }
-  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(228,96,78,.5)} 70%{box-shadow:0 0 0 14px rgba(228,96,78,0)} 100%{box-shadow:0 0 0 0 rgba(228,96,78,0)} }
-  #interim { color:var(--mist); font-size:13px; min-height:18px; max-width:860px;
-             margin:6px auto 0; padding:0 2px; font-style:italic; }
-  .note { color:#5E7590; font-size:12px; text-align:center; margin-top:8px; }
-  .sys { text-align:center; color:var(--mist); font-size:12.5px; margin:14px 0; }
+  body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 72px; padding: 10px 20px; border-bottom: 1px solid rgba(245, 185, 30, .28); }
+  .topbar .biz { font-weight: 600; }
+  .topbar .timer { font-size: 14px; color: var(--marigold); min-width: 48px; }
+  .controls { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+  .controls .field { min-width: 150px; }
+  .notice { margin: 10px 20px 0; padding: 10px 14px; border-radius: var(--r-ctl); background: rgba(226, 85, 58, .18); color: #FFB3A3; font-size: 14px; }
+  main.talk { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.15fr 1fr; }
+  .call { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid rgba(245, 185, 30, .28); }
+  .call .transcript { flex: 1; overflow-y: auto; padding: 22px 20px; }
+  .interim { min-height: 22px; padding: 4px 20px; font-size: 14px; font-style: italic; color: var(--haze); }
+  .engine { min-height: 0; overflow-y: auto; background: var(--cobalt-deep); padding: 16px; }
+  .sheet-toggle { display: none; }
+  .engine-cards { display: flex; flex-direction: column; gap: 14px; }
+  .ecard { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .ecard header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .ecard h2 { font-size: 16px; letter-spacing: .02em; }
+  .ecard header a { font-size: 13px; color: var(--marigold); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+  .ebody { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+  .erow { padding: 10px 12px; border-radius: 10px; background: rgba(255, 247, 230, .06); display: flex; flex-direction: column; gap: 6px; }
+  .keys { font-size: 12.5px; color: var(--haze); word-break: break-all; }
+  .keys .ok { display: inline-flex; align-items: center; gap: 3px; }
+  .tl { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--haze); flex-wrap: wrap; }
+  .tl i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 247, 230, .2); }
+  .tl i.on { background: var(--leaf); }
+  .tl i.off { background: var(--haze); opacity: .5; }
+  .tl b { font-weight: 500; color: var(--chalk); }
+  .bar { display: flex; align-items: center; gap: 12px; padding: 12px 20px 16px; border-top: 1px solid rgba(245, 185, 30, .28); }
+  .mic { width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--marigold); color: var(--cobalt); display: inline-flex; align-items: center; justify-content: center; flex: none; transition: background var(--t-micro), transform var(--t-micro); }
+  .mic:active { transform: scale(.95); }
+  .mic .ic { width: 24px; height: 24px; }
+  .mic.live { background: var(--sindoor); color: var(--chalk); animation: pulse 1.2s infinite; }
+  .mic:disabled { opacity: .45; cursor: default; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(226, 85, 58, .5); } 70% { box-shadow: 0 0 0 14px rgba(226, 85, 58, 0); } 100% { box-shadow: 0 0 0 0 rgba(226, 85, 58, 0); } }
+  .bar .wave { flex: none; }
+  @media (max-width: 900px) {
+    main.talk { grid-template-columns: 1fr; }
+    .call { border-right: 0; }
+    .engine { position: fixed; left: 0; right: 0; bottom: 84px; z-index: 5; max-height: 62dvh; border-top: 1px solid rgba(245, 185, 30, .4); border-radius: 16px 16px 0 0; transform: translateY(calc(100% - 56px)); transition: transform var(--t-base) var(--ease-out); }
+    .engine.open { transform: none; }
+    .sheet-toggle { display: inline-flex; width: 100%; justify-content: space-between; margin-bottom: 12px; }
+    .sheet-toggle .ic { transition: transform var(--t-base); }
+    .engine.open .sheet-toggle .ic { transform: rotate(180deg); }
+    .controls .field { min-width: 120px; }
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>Talk to <b>HaanJi</b></h1>
-  <select id="pack"></select>
-  <input type="text" id="phone" placeholder="phone (optional — try 9876543210)" size="26"
-         maxlength="10" pattern="\d*">
-  <button class="primary" id="start">Start call</button>
-  <button class="danger" id="end" hidden>End call</button>
-  <button class="ghost" id="mute">🔊 voice on</button>
-  <span id="state" style="color:var(--mist);font-size:12.5px"></span>
-</header>
-
-<div id="chat"><div class="inner" id="log">
-  <p class="sys">Pack chuniye, "Start call" dabaiye — phir mic se boliye ya neeche type kijiye.<br>
-  Tip: phone 9876543210 daaloge toh returning-caller greeting dikhega.</p>
-</div></div>
-
-<footer>
-  <div id="interim"></div>
-  <div class="bar">
-    <button id="mic" title="hold-free mic — click to talk">🎤</button>
-    <input type="text" id="text" placeholder="…ya yahan type karke Enter">
-    <button class="primary" id="send">Send</button>
+<a class="skip" href="#main">Seedha call pe jao</a>
+<header class="topbar">
+  <a class="wordmark" href="./">HaanJi <span class="dev">हाँजी</span></a>
+  <span id="biz" class="biz"></span>
+  <span id="timer" class="mono timer">00:00</span>
+  <div class="controls">
+    <label class="field"><span>Pack</span><select id="pack" class="input"></select></label>
+    <label class="field"><span>Phone (optional — try 9876543210)</span><input id="phone" class="input" type="tel" inputmode="numeric" maxlength="10" pattern="\d*" placeholder="9876543210"></label>
+    <button type="button" class="btn btn-primary" id="start"><i data-icon="phone"></i>Start call</button>
+    <button type="button" class="btn btn-danger" id="end" hidden><i data-icon="x"></i>Call khatam karo</button>
+    <button type="button" class="btn btn-ghost" id="mute" aria-pressed="false"><i data-icon="speaker"></i><span>Awaaz on</span></button>
   </div>
-  <p class="note">Speech recognition browser me chalta hai (Chrome best). Interim transcripts
-  server ko jaate hain isi liye speculation ko wahi early signal milta hai jo phone par milta.</p>
+</header>
+<div id="notice" class="notice" hidden role="status"></div>
+
+<main id="main" class="talk">
+  <section class="call" aria-label="Call">
+    <div class="transcript" id="log" aria-live="polite">
+      <p class="sys" id="empty">Pack chuniye aur "Start call" dabaiye — phir mic se boliye ya neeche type kijiye.<br>Phone 9876543210 daaloge to returning-caller greeting dikhega.</p>
+    </div>
+    <p class="interim" id="interim"></p>
+  </section>
+
+  <aside class="engine" id="engine" aria-label="Engine ka sheesha">
+    <button type="button" class="btn btn-ghost sheet-toggle" id="sheet-toggle" aria-expanded="false" aria-controls="engine-cards">Engine ka sheesha <i data-icon="chevron"></i></button>
+    <div class="engine-cards" id="engine-cards">
+      <section class="frame ecard" id="panel-bhasha" aria-live="polite">
+        <header><h2>Bhasha Bridge</h2><span class="mono muted" id="bhasha-count">0 repairs</span></header>
+        <div class="ebody" id="bhasha-body"><p class="muted">Call shuru hone pe yahan har sudhaar dikhega — kya suna, kya padha, aur kyun.</p></div>
+      </section>
+      <section class="frame ecard" id="panel-spec" aria-live="polite">
+        <header><h2>Speculation</h2><span class="mono muted" id="spec-count">0 / 0 hits</span></header>
+        <div class="ebody" id="spec-body"><p class="muted">Tool calls aur unka timing yahan — kaunsa jawab poochne se pehle hi taiyaar tha.</p></div>
+      </section>
+      <section class="frame ecard" id="panel-pramaan" aria-live="polite">
+        <header><h2>Pramaan</h2><a href="verify">Verify karo <i data-icon="arrow" class="ic-sm"></i></a></header>
+        <div class="ebody" id="pramaan-body">
+          <div class="chain" id="chain" aria-hidden="true"><i class="empty"></i></div>
+          <p class="muted" id="pramaan-note">Booking hote hi receipt yahan seal hogi — Ed25519 signed, pichhli se chained.</p>
+        </div>
+      </section>
+    </div>
+  </aside>
+</main>
+
+<footer class="bar">
+  <button type="button" class="mic" id="mic" aria-label="Mic — bolne ke liye dabao" aria-pressed="false"><i data-icon="mic"></i></button>
+  <div class="wave" id="wave" aria-hidden="true"></div>
+  <input class="input input-pill" id="text" placeholder="…ya yahan type karke Enter" aria-label="Message">
+  <button type="button" class="btn btn-primary btn-icon" id="send" aria-label="Bhejo"><i data-icon="send"></i></button>
 </footer>
 
+<script src="static/signboard.js"></script>
 <script>
-const $ = id => document.getElementById(id);
-let sid = null, muted = false, recog = null, listening = false;
+(function () {
+  "use strict";
+  const S = window.Signboard;
+  const $ = function (id) { return document.getElementById(id); };
+  let sid = null, muted = false, recog = null, listening = false;
+  let repairsTotal = 0, specHits = 0, specStarted = 0;
+  const receipts = [];
+  const tm = S.timer($("timer"));
+  const wave = S.waveform($("wave"));
+  let audioCtx = null, stream = null;
 
-async function api(path, opts) {
-  const r = await fetch(path, {headers: {"Content-Type": "application/json"}, ...opts});
-  if (!r.ok) throw new Error((await r.text()) || r.status);
-  return r.json();
-}
-
-fetch("/api/status").then(r => r.json()).then(s => {
-  $("pack").innerHTML = s.packs.map(p =>
-    `<option ${p === s.default_pack ? "selected" : ""}>${p}</option>`).join("");
-});
-
-function row(who, text) {
-  const div = document.createElement("div");
-  div.className = "row " + who;
-  div.innerHTML = `<div class="bubble">${text.replace(/</g, "&lt;")}</div>`;
-  $("log").appendChild(div);
-  $("chat").scrollTop = $("chat").scrollHeight;
-  return div.querySelector(".bubble");
-}
-
-function speak(text) {
-  if (muted || !window.speechSynthesis) return;
-  const u = new SpeechSynthesisUtterance(text);
-  const v = speechSynthesis.getVoices().find(v => /hi[-_]IN/i.test(v.lang));
-  if (v) u.voice = v; u.lang = "hi-IN"; u.rate = 1.02;
-  speechSynthesis.speak(u);
-}
-
-function metaChips(t, bubble) {
-  const meta = document.createElement("div"); meta.className = "meta";
-  for (const c of t.corrections || []) {
-    meta.insertAdjacentHTML("beforeend",
-      `<span class="chip fix">Bhasha: <s>${c.from_token}</s> → ${c.to_surface} @${c.asr_confidence}</span>`);
+  async function api(path, opts) {
+    const r = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts || {}));
+    if (!r.ok) throw new Error((await r.text()) || String(r.status));
+    return r.json();
   }
-  for (const tool of t.tools || []) {
-    const spec = (t.speculation_hits || []).includes(tool);
-    meta.insertAdjacentHTML("beforeend",
-      `<span class="chip ${spec ? "spec" : "tool"}">${tool}${spec ? " ⚡ speculated" : ""}</span>`);
+
+  function notice(text) { const n = $("notice"); n.textContent = text || ""; n.hidden = !text; }
+
+  S.status().then(function (s) {
+    if (!s) { notice("Server se connect nahi ho pa raha — thodi der mein dobara try kijiye."); $("pack").disabled = true; $("start").disabled = true; return; }
+    $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+  });
+
+  function row(who, text) {
+    if ($("empty")) $("empty").remove();
+    const b = document.createElement("div");
+    b.className = "bubble " + who;
+    b.textContent = text;
+    $("log").appendChild(b);
+    $("log").scrollTop = $("log").scrollHeight;
+    return b;
   }
-  if (t.guard) meta.insertAdjacentHTML("beforeend", `<span class="chip guard">guardrail: ${t.guard}</span>`);
-  for (const r of t.receipts || []) {
-    meta.insertAdjacentHTML("beforeend", `<span class="chip rcpt">🔏 receipt ${r}</span>`);
+  function sys(text) {
+    const p = document.createElement("p"); p.className = "sys"; p.textContent = text;
+    $("log").appendChild(p); $("log").scrollTop = $("log").scrollHeight;
   }
-  if (t.latency_ms != null) meta.insertAdjacentHTML("beforeend",
-    `<span style="color:#5E7590">${Math.round(t.latency_ms)} ms</span>`);
-  if (meta.children.length) bubble.appendChild(meta);
-}
 
-async function startCall() {
-  const phone = $("phone").value.trim();
-  const res = await api("/api/sessions", {method: "POST",
-    body: JSON.stringify({pack: $("pack").value, phone: phone || null})});
-  sid = res.session_id;
-  $("log").innerHTML = "";
-  document.title = res.business + " — HaanJi";
-  row("agent", res.greeting); speak(res.greeting);
-  $("start").hidden = true; $("end").hidden = false;
-  $("state").textContent = "on call · " + res.business;
-}
-
-async function endCall(silent) {
-  if (sid) await api("/api/sessions/" + sid, {method: "DELETE"}).catch(() => {});
-  sid = null; $("start").hidden = false; $("end").hidden = true;
-  $("state").textContent = "";
-  if (!silent) $("log").insertAdjacentHTML("beforeend", `<p class="sys">call ended</p>`);
-}
-
-async function sendUtterance(text) {
-  if (!text.trim()) return;
-  if (!sid) await startCall();
-  speechSynthesis && speechSynthesis.cancel();          // barge-in
-  row("caller", text);
-  const t = await api(`/api/sessions/${sid}/utterance`, {method: "POST",
-    body: JSON.stringify({text})});
-  const bubble = row("agent", t.reply);
-  metaChips(t, bubble);
-  speak(t.reply);
-  if (t.end_call) { sid = null; $("start").hidden = false; $("end").hidden = true;
-    $("state").textContent = ""; $("log").insertAdjacentHTML("beforeend",
-      `<p class="sys">call ended — outcome ${t.outcome}</p>`); }
-}
-
-function sendPartial(text) {
-  if (sid && text.trim()) {
-    fetch(`/api/sessions/${sid}/partial`, {method: "POST",
-      headers: {"Content-Type": "application/json"}, body: JSON.stringify({text})});
+  function speak(text) {
+    if (muted || !window.speechSynthesis) return;
+    const u = new SpeechSynthesisUtterance(text);
+    const v = speechSynthesis.getVoices().find(function (v) { return /hi[-_]IN/i.test(v.lang); });
+    if (v) u.voice = v;
+    u.lang = "hi-IN"; u.rate = 1.02;
+    speechSynthesis.speak(u);
   }
-}
 
-// ---- microphone (Web Speech API; text box is the universal fallback)
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (SR) {
-  recog = new SR();
-  recog.lang = "hi-IN"; recog.interimResults = true; recog.continuous = false;
-  let finalText = "";
-  recog.onresult = e => {
-    let interim = ""; finalText = "";
-    for (const r of e.results) (r.isFinal ? (finalText += r[0].transcript)
-                                          : (interim += r[0].transcript));
-    $("interim").textContent = interim || finalText;
-    if (interim) sendPartial(interim);
+  function metaFor(t) {
+    const meta = document.createElement("div"); meta.className = "meta";
+    (t.tools || []).forEach(function (tool) {
+      const hit = (t.speculation_hits || []).includes(tool);
+      const c = document.createElement("span");
+      c.className = "chip " + (hit ? "chip-spec" : "chip-tool");
+      c.innerHTML = (hit ? S.icon("bolt") : "") + S.esc(tool) + (hit ? " · speculated" : "");
+      meta.appendChild(c);
+    });
+    if (t.guard) { const g = document.createElement("span"); g.className = "chip chip-guard"; g.innerHTML = S.icon("shield") + "guardrail: " + S.esc(t.guard); meta.appendChild(g); }
+    (t.receipts || []).forEach(function (code) {
+      const st = document.createElement("span"); st.className = "stamp"; st.innerHTML = S.icon("lock") + "RECEIPT " + S.esc(code); st.style.opacity = "0"; meta.appendChild(st);
+    });
+    if (t.latency_ms != null) { const m = document.createElement("span"); m.className = "mono muted"; m.textContent = Math.round(t.latency_ms) + " ms"; meta.appendChild(m); }
+    return meta;
+  }
+
+  function updatePanel(t) {
+    // Bhasha
+    const bb = $("bhasha-body");
+    if (t.corrections && t.corrections.length) {
+      repairsTotal += t.corrections.length;
+      bb.innerHTML = "";
+      t.corrections.forEach(function (c) {
+        const rowEl = document.createElement("div"); rowEl.className = "erow";
+        const r = S.repairNode(c); rowEl.appendChild(r);
+        const k = document.createElement("div"); k.className = "mono keys";
+        const exact = c.key && c.key === c.to_key;
+        k.innerHTML = S.esc(c.key || "") + " = " + S.esc(c.to_key || "") +
+          (exact ? ' <span class="ok">' + S.icon("check", "ic-sm") + "exact</span>" : "") +
+          " · conf " + Number(c.asr_confidence).toFixed(2);
+        rowEl.appendChild(k);
+        bb.appendChild(rowEl);
+        requestAnimationFrame(function () { S.paintRepair(r); });
+      });
+    } else {
+      bb.innerHTML = '<p class="muted">Is turn mein kuch sudhaarna nahi pada.</p>';
+    }
+    $("bhasha-count").textContent = repairsTotal + (repairsTotal === 1 ? " repair" : " repairs");
+
+    // Speculation
+    const sb = $("spec-body");
+    if (t.tools && t.tools.length) {
+      sb.innerHTML = "";
+      t.tools.forEach(function (tool) {
+        const hit = (t.speculation_hits || []).includes(tool);
+        specStarted += 1; if (hit) specHits += 1;
+        const rowEl = document.createElement("div"); rowEl.className = "erow";
+        rowEl.innerHTML =
+          '<div class="row"><b class="mono">' + S.esc(tool) + "</b>" +
+          '<span class="chip ' + (hit ? "chip-spec" : "chip-tool") + '">' + (hit ? S.icon("bolt") + "hit" : "miss") + "</span></div>" +
+          (hit
+            ? '<div class="tl"><i class="on"></i><b>shuru</b><i class="on"></i><b>tayyar</b><i class="on"></i><b>poocha</b><span>— jawab pehle se tha</span></div>'
+            : '<div class="tl"><i class="on"></i><b>shuru</b><i class="on"></i><b>poocha</b><i class="off"></i><b>tayyar</b><span>— poochne ke baad bana</span></div>') +
+          '<div class="mono muted">' + Math.round(t.latency_ms || 0) + " ms</div>";
+        sb.appendChild(rowEl);
+      });
+    }
+    $("spec-count").textContent = specHits + " / " + specStarted + " hits";
+
+    // Pramaan
+    if (t.receipts && t.receipts.length) {
+      t.receipts.forEach(function (code) { receipts.push(code); });
+      const chain = $("chain"); chain.innerHTML = "";
+      receipts.forEach(function () { chain.appendChild(document.createElement("i")); });
+      const empty = document.createElement("i"); empty.className = "empty"; chain.appendChild(empty);
+      const note = $("pramaan-note");
+      note.innerHTML = "";
+      const st = document.createElement("span"); st.className = "stamp"; st.innerHTML = S.icon("lock") + "RECEIPT " + S.esc(receipts[receipts.length - 1]);
+      st.style.opacity = "0"; note.appendChild(st);
+      const line = document.createElement("div"); line.className = "mono muted"; line.style.marginTop = "8px";
+      line.textContent = "seq " + receipts.length + " · sealed · Ed25519 · chained to seq " + (receipts.length - 1);
+      note.appendChild(line);
+      requestAnimationFrame(function () { S.stamp(st); });
+    }
+  }
+
+  function resetPanel() {
+    repairsTotal = 0; specHits = 0; specStarted = 0; receipts.length = 0;
+    $("bhasha-body").innerHTML = '<p class="muted">Call shuru — pehla turn aane do.</p>';
+    $("bhasha-count").textContent = "0 repairs";
+    $("spec-body").innerHTML = '<p class="muted">Tool calls aur unka timing yahan.</p>';
+    $("spec-count").textContent = "0 / 0 hits";
+    $("chain").innerHTML = '<i class="empty"></i>';
+    $("pramaan-note").innerHTML = '<p class="muted">Booking hote hi receipt yahan seal hogi — Ed25519 signed, pichhli se chained.</p>';
+  }
+
+  async function startCall() {
+    const phone = $("phone").value.trim();
+    const res = await api("api/sessions", { method: "POST", body: JSON.stringify({ pack: $("pack").value, phone: phone || null }) });
+    sid = res.session_id;
+    $("log").innerHTML = "";
+    resetPanel();
+    document.title = res.business + " — HaanJi";
+    $("biz").textContent = res.business;
+    row("agent", res.greeting); speak(res.greeting);
+    $("start").hidden = true; $("end").hidden = false;
+    tm.start();
+    $("text").focus();
+  }
+
+  async function endCall(silent) {
+    if (sid) await api("api/sessions/" + sid, { method: "DELETE" }).catch(function () {});
+    sid = null;
+    $("start").hidden = false; $("end").hidden = true;
+    tm.stop();
+    if (!silent) sys("Call khatam");
+    stopMic();
+  }
+
+  async function sendUtterance(text) {
+    if (!text.trim()) return;
+    if (!sid) await startCall();
+    if (window.speechSynthesis) speechSynthesis.cancel();          // barge-in
+    const callerBubble = row("caller", text);
+    const typing = S.typingDots(); $("log").appendChild(typing); $("log").scrollTop = $("log").scrollHeight;
+    let t;
+    try { t = await api("api/sessions/" + sid + "/utterance", { method: "POST", body: JSON.stringify({ text: text }) }); }
+    catch (e) { typing.remove(); sys("Jawab nahi aaya — dobara try kijiye."); return; }
+    typing.remove();
+    if (t.corrections && t.corrections.length) {
+      const meta = document.createElement("div"); meta.className = "meta";
+      t.corrections.forEach(function (c) { meta.appendChild(S.repairNode(c)); });
+      callerBubble.appendChild(meta);
+      meta.querySelectorAll(".repair").forEach(function (r) { S.paintRepair(r); });
+    }
+    const agent = row("agent", t.reply);
+    const meta = metaFor(t);
+    if (meta.children.length) agent.appendChild(meta);
+    meta.querySelectorAll(".stamp").forEach(function (st) { S.stamp(st); });
+    updatePanel(t);
+    speak(t.reply);
+    if (t.end_call) {
+      sid = null; $("start").hidden = false; $("end").hidden = true; tm.stop(); stopMic();
+      sys("Call khatam — outcome " + (t.outcome || "").replace(/_/g, " ").toLowerCase());
+    }
+  }
+
+  function sendPartial(text) {
+    if (sid && text.trim()) {
+      fetch("api/sessions/" + sid + "/partial", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text }) });
+    }
+  }
+
+  // ── microphone: Web Speech API; the text box is the universal fallback.
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) {
+    recog = new SR();
+    recog.lang = "hi-IN"; recog.interimResults = true; recog.continuous = false;
+    let finalText = "";
+    recog.onresult = function (e) {
+      let interim = ""; finalText = "";
+      for (const r of e.results) { if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript; }
+      $("interim").textContent = interim || finalText;
+      if (interim) sendPartial(interim);
+    };
+    recog.onend = function () {
+      listening = false; setMic(false);
+      const text = finalText.trim(); finalText = ""; $("interim").textContent = "";
+      if (text) sendUtterance(text);
+    };
+    recog.onerror = function () { listening = false; setMic(false); $("interim").textContent = "Mic error — type kijiye, ya Chrome try kijiye."; };
+  } else {
+    $("mic").disabled = true;
+    $("mic").title = "Is browser mein mic nahi — type kijiye (Chrome best)";
+  }
+
+  function setMic(on) {
+    $("mic").classList.toggle("live", on);
+    $("mic").setAttribute("aria-pressed", String(on));
+    $("mic").innerHTML = S.icon(on ? "micOff" : "mic");
+    wave.setLive(on);
+  }
+  async function attachAnalyser() {
+    if (audioCtx || !navigator.mediaDevices) return;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const an = audioCtx.createAnalyser(); an.fftSize = 512;
+      audioCtx.createMediaStreamSource(stream).connect(an);
+      wave.attach(an);
+    } catch (e) { /* no analyser: the idle pattern is used instead */ }
+  }
+  function stopMic() {
+    if (listening && recog) { try { recog.stop(); } catch (e) {} }
+    listening = false; setMic(false);
+    wave.detach();
+    if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+    if (audioCtx) { audioCtx.close().catch(function () {}); audioCtx = null; }
+  }
+
+  $("mic").onclick = async function () {
+    if (!recog) return;
+    if (!sid) await startCall();
+    if (listening) { recog.stop(); return; }
+    if (window.speechSynthesis) speechSynthesis.cancel();          // barge-in on the agent
+    listening = true; setMic(true);
+    attachAnalyser();
+    recog.start();
   };
-  recog.onend = () => {
-    listening = false; $("mic").classList.remove("live");
-    const text = finalText.trim(); finalText = ""; $("interim").textContent = "";
-    if (text) sendUtterance(text);
+  $("start").onclick = startCall;
+  $("end").onclick = function () { endCall(false); };
+  $("mute").onclick = function () {
+    muted = !muted;
+    $("mute").setAttribute("aria-pressed", String(muted));
+    $("mute").innerHTML = S.icon(muted ? "speakerOff" : "speaker") + "<span>" + (muted ? "Awaaz off" : "Awaaz on") + "</span>";
+    if (muted && window.speechSynthesis) speechSynthesis.cancel();
   };
-  recog.onerror = () => { listening = false; $("mic").classList.remove("live");
-    $("interim").textContent = "mic error — type kijiye, ya Chrome try kijiye"; };
-} else {
-  $("mic").title = "Is browser me speech API nahi hai — type kijiye";
-}
-
-$("mic").onclick = async () => {
-  if (!recog) return;
-  if (!sid) await startCall();
-  if (listening) { recog.stop(); return; }
-  speechSynthesis && speechSynthesis.cancel();          // barge-in on the agent
-  listening = true; $("mic").classList.add("live");
-  recog.start();
-};
-$("start").onclick = startCall;
-$("end").onclick = () => endCall(false);
-$("mute").onclick = () => { muted = !muted;
-  $("mute").textContent = muted ? "🔇 voice off" : "🔊 voice on";
-  if (muted) speechSynthesis && speechSynthesis.cancel(); };
-$("send").onclick = () => { sendUtterance($("text").value); $("text").value = ""; };
-$("text").addEventListener("keydown", e => {
-  if (e.key === "Enter") { sendUtterance($("text").value); $("text").value = ""; }
-  else if (sid && $("text").value.length % 6 === 5) sendPartial($("text").value);
-});
-window.addEventListener("beforeunload", () => sid && navigator.sendBeacon &&
-  fetch("/api/sessions/" + sid, {method: "DELETE", keepalive: true}));
+  $("send").onclick = function () { sendUtterance($("text").value); $("text").value = ""; };
+  $("text").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { sendUtterance($("text").value); $("text").value = ""; }
+    else if (sid && $("text").value.length % 6 === 5) sendPartial($("text").value);
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && sid) endCall(false); });
+  $("sheet-toggle").onclick = function () {
+    const open = $("engine").classList.toggle("open");
+    $("sheet-toggle").setAttribute("aria-expanded", String(open));
+  };
+  window.addEventListener("beforeunload", function () {
+    if (sid) fetch("api/sessions/" + sid, { method: "DELETE", keepalive: true });
+  });
+})();
 </script>
 </body>
 </html>
