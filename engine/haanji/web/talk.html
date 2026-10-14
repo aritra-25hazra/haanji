@@ -47,8 +47,10 @@
   @media (max-width: 900px) {
     main.talk { grid-template-columns: 1fr; }
     .call { border-right: 0; }
-    .engine { position: fixed; left: 0; right: 0; bottom: 84px; z-index: 5; max-height: 62dvh; border-top: 1px solid rgba(245, 185, 30, .4); border-radius: 16px 16px 0 0; transform: translateY(calc(100% - 56px)); transition: transform var(--t-base) var(--ease-out); }
+    .engine { position: fixed; left: 0; right: 0; bottom: 84px; z-index: 5; max-height: 62dvh; border-top: 1px solid rgba(245, 185, 30, .4); border-radius: 16px 16px 0 0; transform: translateY(calc(100% - 76px)); transition: transform var(--t-base) var(--ease-out); }
     .engine.open { transform: none; }
+    /* The bar sits above the sheet, so the collapsed sheet slides behind it rather than over it. */
+    .bar { position: relative; z-index: 6; background: var(--cobalt); }
     .sheet-toggle { display: inline-flex; width: 100%; justify-content: space-between; margin-bottom: 12px; }
     .sheet-toggle .ic { transition: transform var(--t-base); }
     .engine.open .sheet-toggle .ic { transform: rotate(180deg); }
