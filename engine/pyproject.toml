@@ -18,6 +18,11 @@ live = ["websockets>=12.0", "httpx>=0.27"]
 [project.scripts]
 haanji = "haanji.cli:main"
 
+# Only the package is a package: the demo server writes its SQLite files to
+# ./var, and auto-discovery would otherwise refuse to build once that exists.
+[tool.setuptools.packages.find]
+include = ["haanji*"]
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
