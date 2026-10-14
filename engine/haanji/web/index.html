@@ -162,7 +162,9 @@
 <script src="static/hero-call.js"></script>
 <script>
   Signboard.status().then(function (s) {
-    if (s && s.console_url) {
+    // A localhost console is only reachable when this page is on localhost too.
+    const here = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    if (s && s.console_url && (here || !/localhost|127\.0\.0\.1/.test(s.console_url))) {
       document.getElementById("console-link").href = s.console_url;
       document.getElementById("console-li").hidden = false;
       Signboard.mountIcons(document.getElementById("console-li"));

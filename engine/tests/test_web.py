@@ -65,7 +65,7 @@ def test_the_landing_page_has_its_hero_pillars_and_links(client):
         assert href in html, href
     assert 'href="static/signboard.css"' in html and 'src="static/hero-call.js"' in html
     assert "31.6% → 1.1%" in html and "239 → 137 ms" in html and "80 / 80" in html
-    assert "localhost" not in html
+    assert "http://localhost" not in html
 
 
 def test_the_talk_page_has_the_call_and_the_engine_panel(client):
@@ -74,7 +74,7 @@ def test_the_talk_page_has_the_call_and_the_engine_panel(client):
         assert f'id="{el_id}"' in html, el_id
     assert 'aria-live="polite"' in html
     assert "Start call" in html and "Call khatam karo" in html
-    assert "haanji serve" not in html and "localhost" not in html
+    assert "haanji serve" not in html and "http://localhost" not in html
 
 
 def test_the_whatsapp_page_keeps_its_simulator_controls(client):
