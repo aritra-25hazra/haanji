@@ -119,7 +119,7 @@
   const $ = function (id) { return document.getElementById(id); };
   let sid = null, muted = false, recog = null, listening = false;
   let repairsTotal = 0, specHits = 0, specStarted = 0;
-  const receipts = [];
+  const receipts = [], repairsLog = [];
   const tm = S.timer($("timer"));
   const wave = S.waveform($("wave"));
   let audioCtx = null, stream = null;
@@ -173,7 +173,7 @@
     (t.receipts || []).forEach(function (code) {
       const st = document.createElement("span"); st.className = "stamp"; st.innerHTML = S.icon("lock") + "RECEIPT " + S.esc(code); st.style.opacity = "0"; meta.appendChild(st);
     });
-    if (t.latency_ms != null) { const m = document.createElement("span"); m.className = "mono muted"; m.textContent = Math.round(t.latency_ms) + " ms"; meta.appendChild(m); }
+    if (t.latency_ms != null) { const m = document.createElement("span"); m.className = "mono muted"; m.textContent = (t.latency_ms < 1 ? "<1" : Math.round(t.latency_ms)) + " ms"; meta.appendChild(m); }
     return meta;
   }
 
@@ -182,8 +182,11 @@
     const bb = $("bhasha-body");
     if (t.corrections && t.corrections.length) {
       repairsTotal += t.corrections.length;
+      t.corrections.forEach(function (c) { repairsLog.unshift(c); });
+    }
+    if (repairsLog.length) {
       bb.innerHTML = "";
-      t.corrections.forEach(function (c) {
+      repairsLog.slice(0, 5).forEach(function (c, i) {
         const rowEl = document.createElement("div"); rowEl.className = "erow";
         const r = S.repairNode(c); rowEl.appendChild(r);
         const k = document.createElement("div"); k.className = "mono keys";
@@ -192,11 +195,12 @@
           (exact ? ' <span class="ok">' + S.icon("check", "ic-sm") + "exact</span>" : "") +
           " · conf " + Number(c.asr_confidence).toFixed(2);
         rowEl.appendChild(k);
+        if (i > 0) rowEl.style.opacity = ".7";
         bb.appendChild(rowEl);
         requestAnimationFrame(function () { S.paintRepair(r); });
       });
     } else {
-      bb.innerHTML = '<p class="muted">Is turn mein kuch sudhaarna nahi pada.</p>';
+      bb.innerHTML = '<p class="muted">Ab tak kuch sudhaarna nahi pada — recogniser sure tha.</p>';
     }
     $("bhasha-count").textContent = repairsTotal + (repairsTotal === 1 ? " repair" : " repairs");
 
@@ -214,7 +218,7 @@
           (hit
             ? '<div class="tl"><i class="on"></i><b>shuru</b><i class="on"></i><b>tayyar</b><i class="on"></i><b>poocha</b><span>— jawab pehle se tha</span></div>'
             : '<div class="tl"><i class="on"></i><b>shuru</b><i class="on"></i><b>poocha</b><i class="off"></i><b>tayyar</b><span>— poochne ke baad bana</span></div>') +
-          '<div class="mono muted">' + Math.round(t.latency_ms || 0) + " ms</div>";
+          '<div class="mono muted">' + ((t.latency_ms || 0) < 1 ? "<1" : Math.round(t.latency_ms)) + " ms</div>";
         sb.appendChild(rowEl);
       });
     }
@@ -239,6 +243,7 @@
 
   function resetPanel() {
     repairsTotal = 0; specHits = 0; specStarted = 0; receipts.length = 0;
+    repairsLog.length = 0;
     $("bhasha-body").innerHTML = '<p class="muted">Call shuru — pehla turn aane do.</p>';
     $("bhasha-count").textContent = "0 repairs";
     $("spec-body").innerHTML = '<p class="muted">Tool calls aur unka timing yahan.</p>';

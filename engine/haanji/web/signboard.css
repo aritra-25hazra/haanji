@@ -131,7 +131,7 @@ p { margin: 0; }
 .bubble.caller .repair s { color: rgba(27, 59, 140, .55); }
 .bubble.caller .repair b { color: var(--cobalt); }
 .bubble.caller .repair small { color: rgba(27, 59, 140, .7); }
-.bubble.caller .repair s svg.stroke path { stroke: var(--cobalt); }
+.bubble.caller .repair s svg.stroke path { stroke: var(--cobalt); stroke-width: 2.5; opacity: .7; }
 
 /* ── stamp ────────────────────────────────────────────────────────────── */
 .stamp { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 2px solid var(--sindoor-ink); border-radius: 6px; background: var(--chalk); color: var(--sindoor-ink); font-family: var(--font-mono); font-weight: 500; font-size: 13px; letter-spacing: .06em; transform: rotate(-3deg); }
