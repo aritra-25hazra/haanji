@@ -29,6 +29,7 @@ from pydantic import BaseModel
 
 from .adapters.mock import NullTTS
 from .backend.local import LocalBackend
+from .bhasha.phonetics import phrase_key
 from .insights import compute as compute_insights
 from .pipeline import CallSession
 from .pramaan.ledger import Ledger
@@ -136,7 +137,9 @@ def _turn_payload(record, holder: Holder) -> dict[str, Any]:
         "heard": record.heard,
         "corrected": record.corrected,
         "corrections": [{"from_token": c.from_token, "to_surface": c.to_surface,
-                         "asr_confidence": c.asr_confidence} for c in record.corrections],
+                         "asr_confidence": c.asr_confidence,
+                         "key": phrase_key(c.from_token), "to_key": phrase_key(c.to_surface)}
+                        for c in record.corrections],
         "tools": record.tools,
         "speculation_hits": record.speculation_hits,
         "guard": record.guard,
@@ -419,7 +422,10 @@ async def pack_selftest(pack_id: str):
 async def status():
     return {"name": "HaanJi demo server", "version": app.version,
             "default_pack": DEFAULT_PACK, "packs": list_packs(),
-            "var_dir": VAR_DIR}
+            "var_dir": VAR_DIR,
+            # Where the owner console lives, so the pages can link to it
+            # without hard-coding a host.
+            "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173")}
 
 
 def _page(name: str) -> FileResponse:
@@ -453,5 +459,6 @@ async def static_file(name: str):
     path = os.path.join(WEB_DIR, name)
     if not os.path.exists(path):
         raise HTTPException(404)
-    media = "application/javascript" if name.endswith(".js") else "text/plain"
+    media = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml",
+             ".html": "text/html"}.get(os.path.splitext(name)[1], "text/plain")
     return FileResponse(path, media_type=media)
