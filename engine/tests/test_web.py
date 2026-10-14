@@ -91,3 +91,26 @@ def test_the_verify_page_has_its_verdict_chain_and_register(client):
         assert f'id="{el_id}"' in html, el_id
     assert 'src="static/nacl-fast.min.js"' in html and 'src="static/verifier.js"' in html
     assert 'href="static/signboard.css"' in html
+
+
+EMOJI = re.compile("[\U0001F000-\U0001FAFF☀-➿⬀-⯿️]")
+ROOT_RELATIVE = re.compile(r'(?:href|src|action)="/[^/]|fetch\("/|open\("[A-Z]+",\s*"/')
+
+
+def _web_files():
+    for name in sorted(os.listdir(WEB)):
+        if name.endswith((".html", ".js")) and name not in ("nacl-fast.min.js", "verifier.js"):
+            with open(os.path.join(WEB, name), encoding="utf-8") as f:
+                yield name, f.read()
+
+
+@pytest.mark.parametrize("name,text", list(_web_files()))
+def test_no_emoji_is_used_as_an_icon(name, text):
+    found = EMOJI.findall(text)
+    assert not found, f"{name}: {found[:5]} — use Signboard.icon() instead"
+
+
+@pytest.mark.parametrize("name,text", list(_web_files()))
+def test_every_url_is_relative_so_the_page_works_behind_a_prefix(name, text):
+    hits = ROOT_RELATIVE.findall(text)
+    assert not hits, f"{name}: {hits[:5]} — drop the leading slash"
