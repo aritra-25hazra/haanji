@@ -55,3 +55,14 @@ def test_the_shared_script_exposes_the_signboard_api(client):
                  "timer", "waveform", "status", "esc", "repairNode"]:
         assert name in js, name
     assert 'fetch("api/status")' in js            # relative, never root-relative
+
+
+def test_the_landing_page_has_its_hero_pillars_and_links(client):
+    html = client.get("/").text
+    assert "Phone uthata hai." in html and "सबूत" in html
+    assert 'id="hero-call"' in html and 'id="pillars"' in html
+    for href in ('href="talk"', 'href="whatsapp"', 'href="verify"'):
+        assert href in html, href
+    assert 'href="static/signboard.css"' in html and 'src="static/hero-call.js"' in html
+    assert "31.6% → 1.1%" in html and "239 → 137 ms" in html and "80 / 80" in html
+    assert "localhost" not in html

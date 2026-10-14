@@ -3,74 +3,187 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HaanJi — demo server</title>
+<title>HaanJi — AI receptionist jo Hinglish mein phone uthata hai</title>
+<meta name="description" content="Clinic, salon ya lab ke liye AI voice receptionist. Har call uthata hai, booking likhta hai, aur saabit kar sakta hai ki caller ne kya haan boli.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/signboard.css">
 <style>
-  :root { --ink:#0F1E33; --card:#1B3557; --line:#27466E; --amber:#E8952F; --teal:#2FBFA9;
-          --mist:#9DB2C9; }
-  * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif;
-         background:var(--ink); color:#E8EEF6; min-height:100vh; }
-  .wrap { max-width:980px; margin:0 auto; padding:48px 24px 64px; }
-  h1 { font-size:44px; margin:0; letter-spacing:-.5px; }
-  h1 span { color:var(--amber); }
-  .sub { color:var(--mist); margin:6px 0 8px; }
-  .status { font-size:13px; color:var(--teal); margin-bottom:36px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; }
-  a.card { display:block; background:var(--card); border:1px solid var(--line);
-           border-radius:14px; padding:22px; color:inherit; text-decoration:none;
-           transition:transform .12s ease, border-color .12s ease; }
-  a.card:hover { transform:translateY(-2px); border-color:var(--amber); }
-  .card h2 { margin:0 0 8px; font-size:19px; }
-  .card p { margin:0; color:var(--mist); font-size:13.5px; }
-  .k { display:inline-block; background:rgba(232,149,47,.15); color:var(--amber);
-       border-radius:6px; padding:1px 8px; font-size:11.5px; font-weight:600;
-       letter-spacing:.06em; margin-bottom:12px; }
-  .foot { margin-top:40px; color:#5E7590; font-size:12.5px; }
-  code { background:#122844; padding:2px 7px; border-radius:6px; font-size:12.5px; }
+  .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding: 32px 24px 96px; }
+  .hero-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
+  .hero-copy .chip { height: 32px; }
+  .phone { min-height: 440px; display: flex; flex-direction: column; gap: 14px; }
+  .phone-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; letter-spacing: .1em; color: var(--marigold); }
+  .phone-head .live { display: inline-flex; align-items: center; gap: 8px; }
+  .phone-head .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--leaf); box-shadow: 0 0 0 4px rgba(143, 214, 148, .25); }
+  .phone .transcript { flex: 1; max-height: 420px; overflow: hidden; }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; padding-bottom: 56px; } .phone { min-height: 360px; } }
+
+  .pillars { margin-top: 36px; }
+  .pillar { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 28px; border-radius: var(--r-card); background: rgba(255, 247, 230, .55); border: 1px solid rgba(27, 59, 140, .12); }
+  .pillar .badge { color: var(--cobalt); }
+  .pillar .num { display: flex; flex-direction: column; gap: 2px; }
+  .pillar .num b { font-family: var(--font-display); font-weight: 800; font-size: 32px; letter-spacing: -.02em; color: var(--cobalt); }
+  .pillar .num span { font-size: 13px; color: rgba(20, 33, 61, .7); }
+  .widget { width: 100%; margin-top: 4px; min-height: 36px; }
+  .widget .repair s { color: rgba(20, 33, 61, .45); }
+  .widget .repair b { color: var(--cobalt); }
+  .widget .repair s svg.stroke path { stroke: var(--cobalt); }
+  .widget .repair small { color: rgba(20, 33, 61, .6); }
+  .bars { display: flex; flex-direction: column; gap: 8px; }
+  .bars div { display: grid; grid-template-columns: 44px 1fr 36px; align-items: center; gap: 8px; font-size: 13px; }
+  .bars i { display: block; height: 10px; width: 0; border-radius: 5px; background: var(--cobalt); transition: width 600ms var(--ease-out) 200ms; }
+  .in .bars i { width: var(--w); }
+  .bars div:last-child i { background: #2E8B57; }
+  .bars em { font-style: normal; font-family: var(--font-mono); font-size: 12px; text-align: right; }
+  .widget.chain i { background: var(--cobalt); }
+  .widget.chain i + i::before { background: var(--cobalt); }
+  .widget.chain i.bad { background: var(--cobalt); transition: background 300ms var(--ease-out) 700ms; }
+  .in .widget.chain i.bad { background: var(--sindoor); }
+  .widget.chain i.bad::before { border-top-color: var(--cobalt); transition: border-color 300ms 700ms; }
+  .in .widget.chain i.bad::before { border-top-color: var(--sindoor); }
+
+  .try { display: flex; flex-direction: column; gap: 10px; min-height: 220px; color: var(--chalk); }
+  .try .eyebrow { margin: 0; }
+  .try p { color: var(--haze); font-size: 15px; }
+  .try .go { margin-top: auto; align-self: flex-end; color: var(--marigold); }
+  .open h3 { margin-bottom: 10px; }
+  .open p { color: rgba(20, 33, 61, .78); }
+  .open a { color: var(--cobalt); }
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 28px 24px; border-top: 1px solid rgba(255, 247, 230, .15); font-size: 14px; }
+  .foot a { color: var(--marigold); }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Haan<span>Ji</span></h1>
-  <p class="sub">AI voice receptionist for Indian small businesses — demo server</p>
-  <p class="status" id="status">checking server…</p>
+<a class="skip" href="#main">Seedha content pe jao</a>
+<header class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="wordmark paint" href="./">HaanJi <span class="dev">हाँजी</span></a>
+    <ul>
+      <li><a href="talk">Demo</a></li>
+      <li><a href="whatsapp">WhatsApp</a></li>
+      <li><a href="verify">Verify</a></li>
+      <li><a href="https://github.com/aritra-25hazra/haanji" rel="noopener"><i data-icon="github" class="ic-sm"></i>GitHub</a></li>
+      <li id="console-li" hidden><a id="console-link" href="#" rel="noopener">Console <i data-icon="arrow" class="ic-sm"></i></a></li>
+    </ul>
+  </nav>
+</header>
 
-  <div class="grid">
-    <a class="card" href="/talk">
-      <span class="k">LIVE CALL</span>
-      <h2>Talk to HaanJi</h2>
-      <p>Speak into the mic (or type). Watch Bhasha Bridge repair the transcript,
-         speculation answer before you finish, and a signed receipt appear.</p>
-    </a>
-    <a class="card" href="/whatsapp">
-      <span class="k">WHATSAPP</span>
-      <h2>WhatsApp simulator</h2>
-      <p>The same agent over chat — plus the missed-call recovery flow: a rung-out
-         call becomes a WhatsApp thread that ends in a booking.</p>
-    </a>
-    <a class="card" href="/verify">
-      <span class="k">PRAMAAN</span>
-      <h2>Public receipt verifier</h2>
-      <p>Runs entirely in your browser. Load this server's export, verify every hash
-         and signature, then tamper with a field and watch it break.</p>
-    </a>
-    <a class="card" href="http://localhost:5173" target="_blank" rel="noopener">
-      <span class="k">OWNER CONSOLE</span>
-      <h2>Console (React)</h2>
-      <p>Dashboard with live insights, call history with repairs inline, Pack Studio.
-         Start it with <code>npm run dev</code> in <code>code/console</code>.</p>
-    </a>
-  </div>
+<main id="main">
+  <section class="hero wrap">
+    <div class="hero-copy">
+      <span class="chip" data-reveal>AI receptionist · Hinglish</span>
+      <h1 data-reveal style="--i:1">Phone uthata hai.<br>Hinglish mein.<br><span class="dev">सबूत</span> ke saath.</h1>
+      <p class="lead" data-reveal style="--i:2">Clinic, salon ya lab ke liye. Har call uthata hai, booking likhta hai, aur baad mein saabit kar sakta hai ki caller ne kya haan boli.</p>
+      <div class="row" data-reveal style="--i:3">
+        <a class="btn btn-primary" href="talk">Baat karke dekho <i data-icon="arrow"></i></a>
+        <a class="btn btn-ghost" href="#pillars">Kaise kaam karta hai</a>
+      </div>
+    </div>
+    <div class="frame phone" id="hero-call" tabindex="0" aria-label="Ek asli call ka replay — hover ya focus karne pe rukta hai">
+      <div class="phone-head"><span class="live"><i></i>LIVE CALL · SMILE CARE DENTAL</span><span class="mono timer">00:00</span></div>
+      <div class="transcript" aria-live="polite"></div>
+    </div>
+  </section>
 
-  <p class="foot">Everything on this page runs locally — no API keys. Speech happens in your
-     browser; the dialogue, the correction layer, speculation and the ledger run in the
-     Python engine behind this server.</p>
-</div>
+  <section class="wall section" id="pillars">
+    <div class="wrap">
+      <span class="eyebrow">Teen cheezein jo kahin aur nahi hain</span>
+      <h2>Har ek napi hui hai, likhi nahi.</h2>
+      <div class="grid-3 pillars">
+        <article class="pillar" data-reveal>
+          <span class="badge">Bhasha Bridge</span>
+          <p>Aapke apne catalogue se bana sound-index. Recogniser ko bhi batata hai, aur uski galti bhi sudhaarta hai — sirf tab jab wo khud sure na ho aur awaaz bilkul match kare.</p>
+          <p class="num"><b>31.6% → 1.1%</b><span>galat sune shabd, 30% noise pe · 0 harmful corrections</span></p>
+          <div class="widget" id="w-bhasha"></div>
+        </article>
+        <article class="pillar" data-reveal style="--i:1">
+          <span class="badge">Speculative turns</span>
+          <p>Jab caller bol hi raha hota hai, read-only kaam pehle se shuru ho jaata hai. Jawab tab use hota hai jab asli sawaal byte-by-byte wahi nikle.</p>
+          <p class="num"><b>239 → 137 ms</b><span>read turns pe median · 45.5% hit rate</span></p>
+          <div class="widget bars" id="w-spec">
+            <div><span>pehle</span><i style="--w:100%"></i><em>239</em></div>
+            <div><span>ab</span><i style="--w:57%"></i><em>137</em></div>
+          </div>
+        </article>
+        <article class="pillar" data-reveal style="--i:2">
+          <span class="badge">Pramaan ledger</span>
+          <p>Har booking ek signed, chained receipt mein seal hoti hai — caller ki "haan" ke saath. Koi bhi, kahin bhi, bina humpe bharosa kiye verify kar sakta hai.</p>
+          <p class="num"><b>80 / 80</b><span>chhedchhad pakdi · 0 bina-confirm writes</span></p>
+          <div class="widget chain" id="w-chain" aria-hidden="true"><i></i><i></i><i></i><i class="bad"></i><i class="bad"></i></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <span class="eyebrow">Khud try karo</span>
+      <h2>Koi key nahi, koi signup nahi.</h2>
+      <div class="grid-3" style="margin-top:36px">
+        <a class="frame try" href="talk" data-reveal>
+          <span class="eyebrow">Live call</span>
+          <h3>Talk to HaanJi</h3>
+          <p>Mic se bolo ya type karo. Bhasha repair, speculation aur receipt — sab live, engine ke sheeshe mein.</p>
+          <span class="go"><i data-icon="arrow"></i></span>
+        </a>
+        <a class="frame try" href="whatsapp" data-reveal style="--i:1">
+          <span class="eyebrow">WhatsApp</span>
+          <h3>Same brain, chat pe</h3>
+          <p>Wahi agent, text pe. Aur ek missed call button — jo call chhoot gayi usse WhatsApp pe wapas pakadta hai.</p>
+          <span class="go"><i data-icon="arrow"></i></span>
+        </a>
+        <a class="frame try" href="verify" data-reveal style="--i:2">
+          <span class="eyebrow">Pramaan</span>
+          <h3>Receipt verifier</h3>
+          <p>Har hash aur signature aapke browser mein dobara check hota hai. Ek field chhedo aur dekho chain kaise tootti hai.</p>
+          <span class="go"><i data-icon="arrow"></i></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="wall section">
+    <div class="wrap grid-3 open">
+      <div data-reveal><h3>Ek file = ek business</h3><p>Dental clinic, salon, lab, coaching — har ek ek YAML pack hai: catalogue, hours, persona, guardrails, aur wo calls jo pack ko ship hone se pehle paas karni hain.</p></div>
+      <div data-reveal style="--i:1"><h3>Napa hua, andaaza nahi</h3><p>Upar ka har number <code>python -m haanji.bench</code> se aata hai aur <code>research/results.json</code> mein likha jaata hai. README mein koi estimate nahi hai.</p></div>
+      <div data-reveal style="--i:2"><h3>Khud verify karo</h3><p>Receipts ka export lo aur <a href="verify">browser mein</a> har hash aur signature dobara check karo. Humpe bharosa karna zaroori nahi.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a></span>
+  <span class="mono muted">HaanJi v0.4.0</span>
+</footer>
+
+<script src="static/signboard.js"></script>
+<script src="static/hero-call.js"></script>
 <script>
-  fetch("/api/status").then(r => r.json()).then(s => {
-    document.getElementById("status").textContent =
-      "server up · v" + s.version + " · packs: " + s.packs.join(", ");
-  }).catch(() => document.getElementById("status").textContent = "server not reachable");
+  Signboard.status().then(function (s) {
+    if (s && s.console_url) {
+      document.getElementById("console-link").href = s.console_url;
+      document.getElementById("console-li").hidden = false;
+      Signboard.mountIcons(document.getElementById("console-li"));
+    }
+  });
+  // The Bhasha widget replays three real repairs from the packs.
+  (function () {
+    const w = document.getElementById("w-bhasha");
+    const pairs = [["rut kanal", "root canal", 0.32], ["klining", "cleaning", 0.41], ["sheikh", "Dr Sheikh", 0.55]];
+    let i = 0;
+    function show() {
+      w.innerHTML = "";
+      const p = pairs[i % pairs.length];
+      const r = Signboard.repairNode({ from_token: p[0], to_surface: p[1], asr_confidence: p[2] });
+      w.appendChild(r);
+      requestAnimationFrame(function () { Signboard.paintRepair(r); });
+      i++;
+    }
+    show();
+    if (!Signboard.REDUCED) setInterval(show, 4000);
+  })();
 </script>
 </body>
 </html>
