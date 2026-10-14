@@ -139,7 +139,7 @@ export default function PackStudio() {
               <button className="btn" onClick={doSelftest} disabled={busy !== null}>
                 Run this pack's scenarios
               </button>
-              <a className="btn" href="http://localhost:8090/talk" target="_blank" rel="noopener">
+              <a className="btn" href="/engine/talk" target="_blank" rel="noopener">
                 Try it live ↗
               </a>
               {busy && <span style={{ color: "#8a96a3" }}>{busy}…</span>}

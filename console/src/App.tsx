@@ -30,10 +30,10 @@ export default function App() {
               {label}
             </NavLink>
           ))}
-          <a href="http://localhost:8090/talk" target="_blank" rel="noopener noreferrer">
+          <a href="/engine/talk" target="_blank" rel="noopener noreferrer">
             Talk to HaanJi ↗
           </a>
-          <a href="http://localhost:8090/whatsapp" target="_blank" rel="noopener noreferrer">
+          <a href="/engine/whatsapp" target="_blank" rel="noopener noreferrer">
             WhatsApp demo ↗
           </a>
         </nav>

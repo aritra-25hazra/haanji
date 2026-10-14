@@ -33,3 +33,6 @@ services:
       # directly instead of through the Vercel rewrite.
       - key: HAANJI_CORS_ORIGIN_REGEX
         value: https://.*\.vercel\.app|http://(localhost|127\.0\.0\.1)(:\d+)?
+      # Where the owner console is hosted, so the landing page can link to it.
+      - key: HAANJI_CONSOLE_URL
+        value: https://haanji-kappa.vercel.app

@@ -1,0 +1,17 @@
+# Render's free plan spins the engine down after 15 idle minutes and the next
+# visitor waits ~25 s for it to come back. A request every 10 minutes keeps
+# it warm; one always-on service fits inside the plan's monthly free hours.
+# Delete this file to stop.
+name: keep-awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: touch the engine
+        run: curl -fsS --max-time 60 https://haanji-engine.onrender.com/api/status > /dev/null
