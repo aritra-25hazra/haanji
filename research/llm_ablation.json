@@ -1,0 +1,309 @@
+{
+  "mock": {
+    "scenarios": [
+      {
+        "pack": "clinic_kolkata",
+        "name": "benglish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kalke shokal 10 tay khali ache, Dr Sen er sathe. Ba shokal share 10 tay. Cholbe?",
+          "Shudhu apnar naam ar mobile number ta bolun.",
+          "Ek bar bole nichhi — teeth cleaning, kalke shokal 10 tay Dr Sen er sathe, Rohan Sen er naame. Confirm korbo?",
+          "Hoye gechhe. Kalke shokal 10 tay, Dr Sen er sathe. Confirmation code D03F-BC11. Achha, dekha hobe. Bhalo thakben."
+        ]
+      },
+      {
+        "pack": "clinic_kolkata",
+        "name": "benglish_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Teeth cleaning 1,100 taka, polishing shoho. Aar kichhu jante chan?",
+          "Achha, dekha hobe. Bhalo thakben."
+        ]
+      },
+      {
+        "pack": "clinic_kolkata",
+        "name": "benglish_emergency",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Eta urgent mone hochhe. Ami ekhoni clinic er sathe jog kore dichhi."
+        ]
+      },
+      {
+        "pack": "coaching_institute",
+        "name": "demo_booking",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal subah 10 baje khaali hai, Mr Deshmukh ke saath. Ya phir subah 11 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — demo class, kal subah 10 baje Mr Deshmukh ke saath, Aditya Verma naam se. Confirm kar dun?",
+          "Ho gaya. Kal subah 10 baje, Mr Deshmukh ke saath. Confirmation code 796A-CCF5. Theek hai, counsellor aapse baat karenge."
+        ]
+      },
+      {
+        "pack": "coaching_institute",
+        "name": "fee_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Ek saal ka JEE batch 78,000 rupaye hai, aur teen kisto mein de sakte hain. Aur kuch puchna tha?",
+          "Theek hai, counsellor aapse baat karenge."
+        ]
+      },
+      {
+        "pack": "coaching_institute",
+        "name": "rank_promise_refusal",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Main abhi aapko senior counsellor se joddta hoon."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "booking_with_asr_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Theek hai. Kis din ka time dekhun?",
+          "Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah saade 10 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — root canal, kal subah saade 9 baje Dr Sheikh ke saath, Vijay Sharma naam se. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 44A0-F3BC. Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "price_question_then_book",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Teeth cleaning 1,200 rupaye hai, aur usme polishing shaamil hai. Aur kuch puchna tha?",
+          "Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah 10 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — teeth cleaning, kal subah saade 9 baje Dr Sheikh ke saath, Anita Rao naam se. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 5458-43CA. Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "faq_only",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Hum Monday se Saturday, subah 9:30 se raat 8 baje tak khule hain. Do se saade teen lunch break hota hai. Sunday band rehta hai. Aur kuch puchna tha?",
+          "Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "emergency_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "medical_advice_refusal",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "no_slot_lead_capture",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "LEAD_CAPTURED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 1,
+        "said": [
+          "Us din hum band rehte hain. Aap apna naam aur number de dijiye, hum call karke time set kar denge.",
+          "Aapka number note kar liya hai, humari team call karegi. Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "caller_interrupts",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah 10 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — teeth cleaning, kal subah saade 9 baje Dr Sheikh ke saath, Meera Joshi naam se. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code BF9F-E788. Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "doctor_by_name",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Theek hai. Kis din ka time dekhun?",
+          "Parso subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah 11 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — dental implant, parso subah saade 9 baje Dr Sheikh ke saath, Kabir Nair naam se. Confirm kar dun?",
+          "Ho gaya. Parso subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 19F6-B22E. Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "diagnostic_lab",
+        "name": "fasting_test_booking",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal subah 7 baje khaali hai, Meena ke saath. Ya phir subah sava 7 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — lipid profile, kal subah 7 baje Meena ke saath, Ramesh Gupta naam se. Confirm kar dun?",
+          "Ho gaya. Kal subah 7 baje, Meena ke saath. Confirmation code 92A4-0B83. Ho gaya. Report time par mil jayegi."
+        ]
+      },
+      {
+        "pack": "diagnostic_lab",
+        "name": "report_interpretation_refusal",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Main abhi aapko humare lab in-charge se joddta hoon."
+        ]
+      },
+      {
+        "pack": "diagnostic_lab",
+        "name": "fasting_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Lipid profile aur full body checkup ke liye bara ghante ka fasting chahiye. Baaki tests ke liye nahi. Aur kuch puchna tha?",
+          "Ho gaya. Report time par mil jayegi."
+        ]
+      },
+      {
+        "pack": "salon_spa",
+        "name": "colour_booking",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal subah 10 baje khaali hai, Farhan ke saath. Ya phir dopahar 12 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — global colour, kal subah 10 baje Farhan ke saath, Priya Menon naam se. Confirm kar dun?",
+          "Ho gaya. Kal subah 10 baje, Farhan ke saath. Confirmation code C124-17A0. Perfect, aapka slot lag gaya. Milte hain!"
+        ]
+      },
+      {
+        "pack": "salon_spa",
+        "name": "monday_closed_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "LEAD_CAPTURED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 1,
+        "said": [
+          "Us din hum band rehte hain. Aap apna naam aur number de dijiye, hum call karke time set kar denge.",
+          "Aapka number note kar liya hai, humari team call karegi. Perfect, aapka slot lag gaya. Milte hain!"
+        ]
+      },
+      {
+        "pack": "salon_spa",
+        "name": "price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Haircut 500 rupaye se shuru hai, stylist ke hisaab se badal sakta hai. Aur kuch puchna tha?",
+          "Perfect, aapka slot lag gaya. Milte hain!"
+        ]
+      },
+      {
+        "pack": "salon_spa",
+        "name": "complaint_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye main manager ko de raha hoon, wo abhi baat karengi."
+        ]
+      }
+    ],
+    "passed": 21,
+    "total": 21,
+    "speculation": {
+      "started": 26,
+      "hits": 12
+    },
+    "latency_p50_ms": 32.0,
+    "latency_p95_ms": 175.5,
+    "llm_calls": 81,
+    "fallbacks": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0
+    },
+    "wall_s": 7.2,
+    "model": null,
+    "ran_at": "2026-10-15T05:57:07+00:00"
+  }
+}

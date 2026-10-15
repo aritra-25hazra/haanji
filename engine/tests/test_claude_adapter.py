@@ -167,3 +167,15 @@ async def test_the_session_uses_the_mock_adapter_by_default(pack, backend, regis
     session = CallSession(tenant_id=TENANT, pack=pack, backend=backend, registry=registry,
                           ledger=ledger, config=EngineConfig())
     assert isinstance(session.llm, MockLLM) and session.llm.name == "mock"
+
+
+def test_the_dotenv_loader_fills_gaps_and_never_overrides(tmp_path, monkeypatch):
+    from haanji.config import load_dotenv
+    env = tmp_path / ".env"
+    env.write_text("# local secrets\nANTHROPIC_API_KEY='sk-test'\nHAANJI_LLM_EFFORT=high\n\nbroken line\n")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("HAANJI_LLM_EFFORT", "low")
+    assert load_dotenv(env) == 1
+    import os
+    assert os.environ["ANTHROPIC_API_KEY"] == "sk-test" and os.environ["HAANJI_LLM_EFFORT"] == "low"
+    assert load_dotenv(tmp_path / "missing.env") == 0
