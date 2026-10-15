@@ -8,9 +8,9 @@ Mermaid, so they render on GitHub and in the PDF report.
 
 ```mermaid
 flowchart LR
-  caller([Caller\nHinglish / Benglish\nphone or WhatsApp or browser]) -->|speech / text| haanji[[HaanJi\nvoice receptionist]]
-  owner([Business owner\nclinic, salon, lab, institute]) -->|console| haanji
-  haanji -->|bookings, receipts| cal[(Owner's calendar\nGoogle / iCal)]
+  caller([Caller<br/>Hinglish / Benglish<br/>phone or WhatsApp or browser]) -->|speech / text| haanji[[HaanJi<br/>voice receptionist]]
+  owner([Business owner<br/>clinic, salon, lab, institute]) -->|console| haanji
+  haanji -->|bookings, receipts| cal[(Owner's calendar<br/>Google / iCal)]
   haanji -->|receipt link, digest, OTP| wa[Meta WhatsApp Cloud API]
   haanji -->|audio in/out| tel[Twilio Media Streams]
   haanji -->|transcripts| stt[Deepgram]
@@ -24,9 +24,9 @@ flowchart LR
 ```mermaid
 flowchart TB
   subgraph browser[Browser]
-    talk[/talk — call page\nWeb Speech partials/]
-    console[Owner console — React\nlive feed, insights, packs, ops]
-    verify[/verify — client-side verifier\nTweetNaCl/]
+    talk[/talk — call page<br/>Web Speech partials/]
+    console[Owner console — React<br/>live feed, insights, packs, ops]
+    verify[/verify — client-side verifier<br/>TweetNaCl/]
   end
   subgraph engine[Engine — Python 3.11, FastAPI, one process]
     api[HTTP + SSE + WebSocket API]
@@ -36,13 +36,13 @@ flowchart TB
     policy[Dialogue policy / Claude adapter]
     guard[Guardrails]
     tools[Tool registry]
-    ledger[(Pramaan ledger\nSQLite, Ed25519)]
-    backend[(Tenant backend\nbookings, services, leads)]
-    store[(Demo store\ncalls, WhatsApp threads)]
+    ledger[(Pramaan ledger<br/>SQLite, Ed25519)]
+    backend[(Tenant backend<br/>bookings, services, leads)]
+    store[(Demo store<br/>calls, WhatsApp threads)]
     tele[Telephony bridge]
   end
-  packs[(Vertical packs\nYAML)]
-  core[Core API — Java/Spring\nPostgres, Redis, ledger port]
+  packs[(Vertical packs<br/>YAML)]
+  core[Core API — Java/Spring<br/>Postgres, Redis, ledger port]
   talk --> api
   console --> api
   verify --> api
@@ -132,10 +132,10 @@ flowchart LR
 ```mermaid
 flowchart LR
   subgraph L1[Level 1 — one turn]
-    a[(1.0 recognise)] --> b[(2.0 correct\nBhasha Bridge)]
+    a[(1.0 recognise)] --> b[(2.0 correct<br/>Bhasha Bridge)]
     a -. partials .-> x[(3.0 speculate)]
     b --> g[(4.0 guard)]
-    g --> d[(5.0 decide\npolicy / model)]
+    g --> d[(5.0 decide<br/>policy / model)]
     d --> t[(6.0 execute tools)]
     x --> t
     t -->|write| l[(7.0 seal receipt)]
@@ -143,7 +143,7 @@ flowchart LR
     D1[(lexicon)] --> b
     D2[(backend)] <--> t
     D3[(ledger)] <--> l
-    D4[(call store)] <-- s
+    s --> D4[(call store)]
   end
 ```
 
@@ -157,21 +157,52 @@ classDiagram
     +handle_partial_text(text)
     +handle_text_turn(text, confidence)
     +finish() CallReport
-    -_complete_turn()
-    -_run_tools()
   }
-  class BhashaBridge { +correct(Transcript) CorrectedTranscript  +hints() }
-  class TenantLexicon { +build(**seed)  +candidates(key)  +reinforce() }
-  class SpeculationEngine { +on_partial(text, ctx)  +claim(tool, args)  +on_write() }
-  class IntentPredictor { +predict(partial, ctx) ToolGuess }
-  class DialoguePolicy { +plan(text, ctx) LLMTurn  +after_tools()  +ask_confirmation() }
-  class LLMAdapter { <<protocol>> +respond(system, history, tools) LLMTurn }
+  class BhashaBridge {
+    +correct(Transcript) CorrectedTranscript
+    +hints()
+  }
+  class TenantLexicon {
+    +build(seed)
+    +candidates(key)
+    +reinforce(surface, delta)
+  }
+  class SpeculationEngine {
+    +on_partial(text, ctx)
+    +claim(tool, args)
+    +on_write()
+  }
+  class IntentPredictor {
+    +predict(partial, ctx) ToolGuess
+  }
+  class DialoguePolicy {
+    +plan(text, ctx) LLMTurn
+    +after_tools(text, ctx, results) LLMTurn
+    +ask_confirmation(ctx, action, args) LLMTurn
+  }
+  class LLMAdapter {
+    <<interface>>
+    +respond(system, history, tools) LLMTurn
+  }
   class MockLLM
   class ClaudeLLM
-  class Guard { +check(text) Verdict }
-  class ToolRegistry { +register(Tool)  +execute(name, args)  +is_read_only() }
-  class Ledger { +append(...) Receipt  +receipts()  +anchor_day() }
-  class Receipt { +compute_payload_hash()  +compute_chain_hash() }
+  class Guard {
+    +check(text) Verdict
+  }
+  class ToolRegistry {
+    +register(tool)
+    +execute(name, args)
+    +is_read_only(name)
+  }
+  class Ledger {
+    +append(args) Receipt
+    +receipts(tenant)
+    +anchor_day(tenant, day)
+  }
+  class Receipt {
+    +compute_payload_hash()
+    +compute_chain_hash()
+  }
   CallSession --> BhashaBridge
   CallSession --> SpeculationEngine
   CallSession --> LLMAdapter
@@ -193,10 +224,10 @@ classDiagram
 flowchart LR
   dev[Developer / Codespaces] -->|git push main| gh[GitHub]
   gh -->|CI, CodeQL, gitleaks, SBOM| gh
-  gh -->|auto deploy| render[Render — engine container\nhaanji-engine.onrender.com]
-  gh -->|vercel deploy --prod| vercel[Vercel — console\nhaanji-kappa.vercel.app]
+  gh -->|auto deploy| render[Render — engine container<br/>haanji-engine.onrender.com]
+  gh -->|vercel deploy --prod| vercel[Vercel — console<br/>haanji-kappa.vercel.app]
   vercel -->|/engine/* rewrite| render
-  gh -->|daily workflow| tb[(transparency branch\nsigned daily roots)]
+  gh -->|daily workflow| tb[(transparency branch<br/>signed daily roots)]
   render -->|anchors| tb
   meta[Meta WhatsApp] -->|signed webhook| render
   twilio[Twilio] -->|voice webhook + media stream| render

@@ -32,6 +32,8 @@ blockquote p { margin: 0; }
 code { font-family: Menlo, Consolas, monospace; font-size: 9pt; background: #f1f2f5; padding: 0 2px; }
 pre { font-family: Menlo, Consolas, monospace; font-size: 8.4pt; background: #f1f2f5; padding: 8pt; overflow: hidden; white-space: pre-wrap; border-radius: 3px; }
 pre code { background: none; padding: 0; font-size: inherit; }
+pre.mermaid { background: none; padding: 0; text-align: center; page-break-inside: avoid; }
+pre.mermaid svg { max-width: 100%; height: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 8.2pt; margin: 6pt 0 10pt; page-break-inside: avoid; table-layout: auto; }
 th, td { border: 1px solid #c9cdd6; padding: 3pt 5pt; text-align: left; vertical-align: top; }
 th { background: #eef1f7; font-weight: 700; white-space: normal !important; }
@@ -49,7 +51,24 @@ a { color: #1f4fd8; text-decoration: none; }
 """
 
 
-MERMAID_JS = "https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.1/mermaid.min.js"
+MERMAID_URLS = ["https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js",
+                "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"]
+
+
+def mermaid_js() -> str:
+    """A local copy of mermaid.min.js (downloaded once into ~/.cache), so the
+    PDF build does not depend on a CDN being reachable from the browser."""
+    import urllib.request
+    cache = Path.home() / ".cache" / "haanji" / "mermaid.min.js"
+    if not cache.exists():
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        for url in MERMAID_URLS:
+            try:
+                urllib.request.urlretrieve(url, cache)
+                break
+            except Exception:                              # noqa: BLE001 - try the next mirror
+                continue
+    return cache.resolve().as_uri() if cache.exists() else MERMAID_URLS[0]
 
 
 def build_html(md_text: str, paper: bool = False) -> str:
@@ -61,15 +80,17 @@ def build_html(md_text: str, paper: bool = False) -> str:
         return f"\n\nMERMAIDBLOCK{len(blocks) - 1}\n\n"
     md_text = re.sub(r"```mermaid\n(.*?)```", stash, md_text, flags=re.S)
     body = markdown.markdown(md_text, extensions=["tables", "fenced_code", "toc", "attr_list", "md_in_html"])
+    import html as _html
     for i, code in enumerate(blocks):
-        body = body.replace(f"<p>MERMAIDBLOCK{i}</p>", f'<pre class="mermaid">{code}</pre>')
+        # Escaped, so that <<interface>> and <br/> reach mermaid as text, not as HTML.
+        body = body.replace(f"<p>MERMAIDBLOCK{i}</p>", f'<pre class="mermaid">{_html.escape(code)}</pre>')
     # Figures are referenced as research-relative paths; the HTML sits in research/.
     body = body.replace('src="figures/', 'src="figures/')
     title = re.search(r"<h1[^>]*>(.*?)</h1>", body)
     t = re.sub("<.*?>", "", title.group(1)) if title else "HaanJi report"
     css = CSS + (PAPER_CSS if paper else "")
-    script = (f"<script src='{MERMAID_JS}'></script><script>mermaid.initialize({{startOnLoad: true, theme: 'neutral', "
-              f"securityLevel: 'loose'}});</script>" if blocks else "")
+    script = (f"<script src='{mermaid_js()}'></script><script>mermaid.initialize({{startOnLoad: true, theme: 'neutral', "
+              f"securityLevel: 'loose', flowchart: {{htmlLabels: true}}}});</script>" if blocks else "")
     return (f"<!doctype html><html lang='en'><head><meta charset='utf-8'><title>{t}</title>"
             f"<style>{css}</style></head><body>{body}{script}</body></html>")
 
@@ -107,7 +128,11 @@ def main(argv=None) -> int:
         browser = p.chromium.launch()
         page = browser.new_page()
         page.goto(html.resolve().as_uri(), wait_until="networkidle")
-        page.wait_for_timeout(1500)                        # mermaid renders after load
+        page.wait_for_timeout(2500)                        # mermaid renders after load
+        try:
+            page.wait_for_function("document.querySelectorAll('pre.mermaid:not([data-processed])').length === 0", timeout=20000)
+        except Exception:                                  # noqa: BLE001 - print whatever rendered
+            pass
         page.pdf(path=str(pdf), format="A4", print_background=True,
                  display_header_footer=True,
                  header_template="<div></div>",
