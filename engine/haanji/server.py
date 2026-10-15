@@ -13,6 +13,7 @@ import asyncio
 import base64
 import csv
 import datetime as dt
+import hmac
 import io
 import json
 import os
@@ -40,6 +41,9 @@ from . import collect as collect_mod
 from . import onboard as onboard_mod
 from .auth import AuthStore, Principal, normalise_phone
 from .telemetry import TELEMETRY, TOOL_BUCKETS_MS
+from .devanagari import transliterate
+from . import calendar as cal_mod
+from .gcal import GoogleCalendar
 from .metrics import percentile
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
@@ -157,6 +161,8 @@ async def hardening(request: Request, call_next):
     return response
 
 store = DemoStore(os.path.join(VAR_DIR, "store.sqlite"))
+
+gcal = GoogleCalendar(os.path.join(VAR_DIR, "gcal.sqlite"), redirect_uri=f"{PUBLIC_URL}/api/google/callback")
 
 # ─────────────────────────────────────────────────────────────── auth
 AUTH_ENABLED = os.environ.get("HAANJI_AUTH", "off").lower() in ("on", "1", "true", "yes")
@@ -371,7 +377,7 @@ def _turn_payload(record, holder: Holder) -> dict[str, Any]:
             corrections=[{"from_token": c.from_token, "to_surface": c.to_surface} for c in record.corrections],
             tools=record.tools, speculation_hits=record.speculation_hits, receipts=new_receipts,
             guard=record.guard, latency_ms=round(record.latency_ms, 1), spans=record.spans,
-            outcome=session.ctx.outcome.value if session.ctx.outcome else None)
+            outcome=_provisional_outcome(session))
     return {
         "spans": record.spans,
         "reply": record.said,
@@ -387,8 +393,18 @@ def _turn_payload(record, holder: Holder) -> dict[str, Any]:
         "latency_ms": round(record.latency_ms, 1),
         "receipts": new_receipts,
         "end_call": bool(session.ctx.flags.get("ended")),
-        "outcome": session.ctx.outcome.value if session.ctx.outcome else None,
+        "outcome": _provisional_outcome(session),
     }
+
+
+def _provisional_outcome(session: CallSession) -> str | None:
+    """What finish() will say if the call ended now: a question answered is
+    an FAQ call, which the context only learns at the end."""
+    if session.ctx.outcome:
+        return session.ctx.outcome.value
+    if session.ctx.flags.get("ended") and session.ctx.answered_questions:
+        return "FAQ_ANSWERED"
+    return None
 
 
 def receipt_link(pack_id: str, code: str) -> str:
@@ -399,6 +415,19 @@ def receipt_link(pack_id: str, code: str) -> str:
 def receipt_note(pack_id: str, codes: list[str]) -> str:
     links = "\n".join(receipt_link(pack_id, c) for c in codes)
     return f"Aapki booking ki receipt (kabhi bhi verify kar sakte hain):\n{links}"
+
+
+async def _push_calendar(holder: Holder, codes: list[str]) -> None:
+    """Every sealed booking goes to the owner's Google Calendar, if connected."""
+    pack_id = holder.rt.pack_id
+    if not codes or gcal.link(pack_id) is None:
+        return
+    try:
+        for b in holder.rt.backend.bookings(pack_id):
+            if b.receipt_code in codes and b.status == "CONFIRMED":
+                await gcal.push(pack_id, b.booking_id, cal_mod.google_event(b, holder.rt.pack.persona.business_name, PUBLIC_URL))
+    except Exception as exc:                          # noqa: BLE001 - a mirror, not the booking
+        print(f"google calendar push failed: {exc}", file=sys.stderr)
 
 
 async def _notify_customer(holder: Holder, codes: list[str]) -> None:
@@ -471,6 +500,7 @@ async def session_utterance(sid: str, body: TextIn):
         payload = _turn_payload(record, holder)
         if payload["receipts"]:
             asyncio.ensure_future(_notify_customer(holder, payload["receipts"]))
+            asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
         if payload["end_call"]:
             _finish(sid, holder)
     return payload
@@ -479,9 +509,12 @@ async def session_utterance(sid: str, body: TextIn):
 @app.delete("/api/sessions/{sid}")
 async def close_session(sid: str):
     holder = _sessions.get(sid)
-    if holder is not None:
-        _finish(sid, holder)
-    return {"ok": True}
+    if holder is None:
+        return {"ok": True, "outcome": None, "call_id": None}
+    call_id = holder.session.ctx.conversation_id
+    _finish(sid, holder)
+    row = store.call(holder.rt.pack_id, call_id)
+    return {"ok": True, "outcome": row["outcome"] if row else None, "call_id": call_id}
 
 
 # ─────────────────────────────────────────────────────────── whatsapp channel
@@ -513,6 +546,7 @@ async def _wa_turn(pack_id: str, phone: str, text: str) -> list[dict[str, Any]]:
         text_out = record.said
         if payload["receipts"]:
             text_out = f"{record.said}\n\n{receipt_note(pack_id, payload['receipts'])}"
+            asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
         store.add_wa(pack_id, phone, "out", text_out,
                      meta={"tools": record.tools, "receipts": payload["receipts"],
                            "corrections": payload["corrections"]})
@@ -1129,6 +1163,84 @@ async def auth_users_remove(phone: str, request: Request):
     return {"removed": auth.remove_user(phone)}
 
 
+# ───────────────────────────────────────────────────────── calendar
+PROTECTED.append(("GET", re.compile(r"^/api/calendar/feed-url$"), "owner"))
+PROTECTED.append(("GET|POST|DELETE", re.compile(r"^/api/google/(connect|disconnect|status)$"), "owner"))
+
+
+@app.get("/api/calendar/feed-url")
+async def calendar_feed_url(pack: str = DEFAULT_PACK):
+    if pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {pack}")
+    token = cal_mod.feed_token(auth.secret, pack)
+    return {"pack": pack, "url": f"{PUBLIC_URL}/api/calendar/{pack}.ics?token={token}",
+            "webcal": f"{PUBLIC_URL.replace('https://', 'webcal://').replace('http://', 'webcal://')}/api/calendar/{pack}.ics?token={token}"}
+
+
+@app.get("/api/calendar/{pack}.ics")
+async def calendar_feed(pack: str, token: str = ""):
+    """The tenant's bookings as an iCalendar feed. Subscribe once in any
+    calendar app; the URL carries its own secret because calendar apps
+    cannot send headers."""
+    if pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {pack}")
+    if not hmac.compare_digest(token, cal_mod.feed_token(auth.secret, pack)):
+        raise HTTPException(403, "bad feed token")
+    rt = runtime(pack)
+    body = cal_mod.feed(rt.backend.bookings(pack), rt.pack.persona.business_name, pack, PUBLIC_URL)
+    return Response(body, media_type="text/calendar; charset=utf-8",
+                    headers={"Content-Disposition": f'inline; filename="{pack}.ics"', "Cache-Control": "no-cache"})
+
+
+@app.get("/api/bookings/{pack}/{booking_id}.ics")
+async def booking_ics(pack: str, booking_id: str):
+    """One booking as a calendar file, for the customer's own phone."""
+    rt = runtime(pack)
+    b = next((x for x in rt.backend.bookings(pack) if x.booking_id == booking_id), None)
+    if b is None:
+        raise HTTPException(404, "no such booking")
+    body = cal_mod.feed([b], rt.pack.persona.business_name, pack, PUBLIC_URL)
+    return Response(body, media_type="text/calendar; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="booking-{booking_id}.ics"'})
+
+
+@app.get("/api/google/status")
+async def google_status(pack: str = DEFAULT_PACK):
+    link = gcal.link(pack)
+    return {"configured": gcal.configured, "connected": link is not None,
+            "connected_at": link["connected_at"] if link else None, "redirect_uri": gcal.redirect_uri}
+
+
+@app.get("/api/google/connect")
+async def google_connect(pack: str = DEFAULT_PACK):
+    if not gcal.configured:
+        raise HTTPException(409, "set HAANJI_GOOGLE_CLIENT_ID and HAANJI_GOOGLE_CLIENT_SECRET first")
+    if pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {pack}")
+    return {"url": gcal.connect_url(pack)}
+
+
+@app.get("/api/google/callback")
+async def google_callback(code: str = "", state: str = "", error: str = ""):
+    """Google sends the owner back here; the state ties the code to a pack."""
+    if error:
+        return PlainTextResponse(f"Google said: {error}", status_code=400)
+    pack = gcal.tenant_for_state(state)
+    if pack is None:
+        return PlainTextResponse("This link has expired. Start again from the console.", status_code=400)
+    try:
+        await gcal.finish(pack, code)
+    except Exception as exc:                          # noqa: BLE001
+        return PlainTextResponse(f"Could not connect: {exc}", status_code=502)
+    console = os.environ.get("HAANJI_CONSOLE_URL") or "/"
+    return PlainTextResponse(f"Google Calendar connected for {pack}. You can close this tab and go back to the console: {console}")
+
+
+@app.delete("/api/google/disconnect")
+async def google_disconnect(pack: str = DEFAULT_PACK):
+    return {"disconnected": gcal.disconnect(pack)}
+
+
 # ───────────────────────────────────────────────────── observability
 SLO_TURN_MS = int(os.environ.get("HAANJI_MAX_TURN_LATENCY_MS", "1500"))
 
@@ -1188,6 +1300,19 @@ async def ops(pack: str = DEFAULT_PACK, calls: int = 200):
     }
 
 
+class TextsIn(BaseModel):
+    texts: list[str]
+
+
+@app.post("/api/devanagari")
+async def devanagari(body: TextsIn):
+    """Approximate Devanagari for Hinglish lines, for the owner who reads
+    Hindi faster than Roman letters."""
+    if len(body.texts) > 500:
+        raise HTTPException(413, "at most 500 lines per request")
+    return {"texts": [transliterate(t) for t in body.texts], "approximate": True}
+
+
 @app.get("/api/status")
 async def status():
     return {"name": "HaanJi demo server", "version": app.version,
@@ -1196,6 +1321,7 @@ async def status():
             "public_url": PUBLIC_URL,
             "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
             "auth": {"enabled": AUTH_ENABLED, "dev": AUTH_DEV},
+            "google": {"configured": gcal.configured, "connected": gcal.connected()},
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
             "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),
@@ -1239,6 +1365,11 @@ async def study_page():
 @app.get("/transparency")
 async def transparency_page():
     return _page("transparency.html")
+
+
+@app.get("/design")
+async def design_page():
+    return _page("design.html")
 
 
 @app.get("/static/{name}")

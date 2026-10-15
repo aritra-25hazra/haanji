@@ -1,0 +1,103 @@
+{
+ "generated_at": "2026-10-15T12:59:15+00:00",
+ "machine": "arm64",
+ "python": "3.11.16",
+ "providers": "mock (engine-side only)",
+ "scripts": 21,
+ "levels": [
+  {
+   "concurrency": 5,
+   "calls": 60,
+   "turns": 160,
+   "errors": 0,
+   "error_samples": [],
+   "expected_outcome": 58,
+   "outcome_rate": 0.9667,
+   "mismatches": {
+    "BOOKED->FAQ_ANSWERED": 1,
+    "BOOKED->ABANDONED": 1
+   },
+   "wall_s": 7.7,
+   "calls_per_min": 467.4,
+   "turns_per_s": 20.8,
+   "turn_http_ms": {
+    "p50": 7.0,
+    "p90": 185.9,
+    "p95": 187.0,
+    "max": 190.1,
+    "mean": 51.2
+   }
+  },
+  {
+   "concurrency": 10,
+   "calls": 60,
+   "turns": 160,
+   "errors": 0,
+   "error_samples": [],
+   "expected_outcome": 57,
+   "outcome_rate": 0.95,
+   "mismatches": {
+    "BOOKED->FAQ_ANSWERED": 2,
+    "BOOKED->ABANDONED": 1
+   },
+   "wall_s": 4.0,
+   "calls_per_min": 890.3,
+   "turns_per_s": 39.6,
+   "turn_http_ms": {
+    "p50": 5.0,
+    "p90": 184.6,
+    "p95": 185.2,
+    "max": 189.8,
+    "mean": 49.8
+   }
+  },
+  {
+   "concurrency": 25,
+   "calls": 60,
+   "turns": 154,
+   "errors": 0,
+   "error_samples": [],
+   "expected_outcome": 50,
+   "outcome_rate": 0.8333,
+   "mismatches": {
+    "BOOKED->ABANDONED": 4,
+    "BOOKED->LEAD_CAPTURED": 3,
+    "BOOKED->FAQ_ANSWERED": 3
+   },
+   "wall_s": 2.3,
+   "calls_per_min": 1577.8,
+   "turns_per_s": 67.5,
+   "turn_http_ms": {
+    "p50": 4.6,
+    "p90": 183.5,
+    "p95": 184.6,
+    "max": 193.6,
+    "mean": 51.3
+   }
+  },
+  {
+   "concurrency": 50,
+   "calls": 60,
+   "turns": 154,
+   "errors": 0,
+   "error_samples": [],
+   "expected_outcome": 42,
+   "outcome_rate": 0.7,
+   "mismatches": {
+    "BOOKED->ABANDONED": 13,
+    "BOOKED->LEAD_CAPTURED": 3,
+    "BOOKED->FAQ_ANSWERED": 2
+   },
+   "wall_s": 1.4,
+   "calls_per_min": 2548.0,
+   "turns_per_s": 109.0,
+   "turn_http_ms": {
+    "p50": 6.2,
+    "p90": 184.8,
+    "p95": 185.8,
+    "max": 189.2,
+    "mean": 52.5
+   }
+  }
+ ]
+}

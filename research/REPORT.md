@@ -210,6 +210,23 @@ On the authored scenarios with clean transcripts, every configuration with the b
 
 Three things in the table are reported rather than averaged away. First, write turns are never speculated, so the booking turn itself is not faster: its p90 is 228 ms without speculation and 233 ms with it, and it still waits for the caller's confirmation and the ledger. The p90 over *all* tool turns does fall (349 → 251 ms) only because most tool turns in a booking call are reads. Second, the hit rate is well under 100%: the predictor fires on partials that turn out to want a different date or no tool at all. Third, the two runtime contributions interact: with the bridge off, the hit rate drops to 21.7%, because the predictor derives its arguments from the same mangled entities the policy does, and the real turn then asks for something else. The second and third are the expected shape of a correct speculation scheme, and the second is the quantity a learned predictor trained on real calls would improve.
 
+### 5.3 Concurrency
+
+Speculation and the policy are measured per call above; a receptionist also has to answer several callers at once. `research/harness/load_test.py` starts one engine process (mock providers, rate limiting off) and drives scripted callers through the web-call API with a short random pause between turns, for a ladder of concurrency levels, measuring the HTTP round-trip of each turn — what a browser or a telephony bridge would wait for.
+
+**Table 7 — one process, scripted callers, 21 scripts across the five packs**
+
+| concurrent callers | calls | turns | p50 (ms) | p95 (ms) | max (ms) | calls/min | errors | expected outcome |
+|---|---|---|---|---|---|---|---|---|
+| 5 | 60 | 160 | 7.0 | 187.0 | 190.1 | 467 | 0 | 97% |
+| 10 | 60 | 160 | 5.0 | 185.2 | 189.8 | 890 | 0 | 95% |
+| 25 | 60 | 154 | 4.6 | 184.6 | 193.6 | 1578 | 0 | 83% |
+| 50 | 60 | 154 | 6.2 | 185.8 | 189.2 | 2548 | 0 | 70% |
+
+<figure><img src="figures/fig4_load.svg" alt="Turn latency over HTTP against concurrent callers"><figcaption>Figure 4. Turn latency over HTTP (p50, p95, max) as concurrency rises. One process; the p95 is the booking turn's write and ledger seal.</figcaption></figure>
+
+Latency is flat across the ladder and no request fails; throughput scales with concurrency because the engine's own work per turn is a few milliseconds and the rest is waiting. The expected-outcome rate falls because all callers in a level share one tenant calendar and ask for the same morning: once it is full the agent correctly offers another time or takes a callback, which the fixed script does not follow, so those calls end abandoned or as leads. That is the calendar working, not the engine failing, and it is why the column is reported next to the error count rather than folded into it. The numbers are engine-side; a speech vendor's round trip and a telephony hop will dominate a deployment, and this measurement says only that the engine will not be the bottleneck before them.
+
 ## 6. Pramaan Ledger
 
 ### 6.1 Method

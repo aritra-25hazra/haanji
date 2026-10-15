@@ -2,10 +2,17 @@ import datetime as dt
 import os
 import sqlite3
 import sys
+import tempfile
 
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# The demo server keeps its calendars, ledgers and auth in HAANJI_VAR_DIR;
+# every test session gets a fresh one so a booking made by one test cannot
+# fill the slot another expects. Set before haanji.server is first imported.
+os.environ.setdefault("HAANJI_VAR_DIR", tempfile.mkdtemp(prefix="haanji-test-"))
+os.environ.setdefault("HAANJI_SCHEDULER", "0")
 
 from haanji.clock import set_speed                       # noqa: E402
 from haanji.pramaan.ledger import Ledger                 # noqa: E402

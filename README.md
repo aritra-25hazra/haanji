@@ -336,6 +336,57 @@ below is running code behind `haanji serve`, not a slide:
   a *tamper* button; press it and watch the chain break. A trust claim you can
   only check on our server would not be a trust claim.
 
+### Running it for a real shop
+
+Everything below is in the engine and the console today; most of it is a
+switch in `render.yaml`.
+
+* **Live feed.** The console's *Abhi* panel shows every call as it happens —
+  the caller's words while they are still speaking, each repair, tool,
+  speculation hit and receipt — over server-sent events (`/api/events`), with
+  a polling fallback for proxies that buffer.
+* **Sign-in and staff.** `HAANJI_AUTH=on` puts the owner console behind a
+  WhatsApp one-time code; owners edit, staff read, and each user sees only
+  their packs. The demo stays public. [docs/console-auth.md](docs/console-auth.md).
+* **Onboarding in five answers.** *Nayi dukaan* turns a business name, type,
+  staff, hours and a service list into a complete pack (persona, guardrails
+  for that kind of business, knowledge base, two generated scenarios), runs
+  the scenarios, and opens a test call. Pack Studio can keep editing the YAML.
+* **The customer's own proof.** Every receipt reaches the customer as a link
+  to the public verifier; the day's receipts are sealed as a signed Merkle
+  root (`/api/anchors`) and published every evening to this repository's
+  `transparency` branch. `/transparency` explains how to check one by hand.
+* **The owner's evening WhatsApp.** Calls, bookings, revenue, callbacks and
+  the busiest hour, previewed on the dashboard and sent at
+  `HAANJI_DIGEST_HOUR` to `HAANJI_OWNER_PHONE`.
+* **Ops.** Prometheus metrics at `/metrics` (the names `ops/alerts.yml` pages
+  on), per-turn traces (bhasha, dialogue, each tool, speculated or not), and an
+  *Ops* page with the 1,500 ms objective, a latency histogram and the latest
+  call as a waterfall. Grafana is provisioned in `docker compose`.
+* **Load.** One engine process, mock providers, scripted callers over the
+  web-call API (`research/harness/load_test.py`):
+
+| concurrent callers | turn p50 (ms) | turn p95 (ms) | calls/min | errors |
+|---|---|---|---|---|
+| 5 | 7.0 | 187.0 | 467 | 0 |
+| 10 | 5.0 | 185.2 | 890 | 0 |
+| 25 | 4.6 | 184.6 | 1578 | 0 |
+| 50 | 6.2 | 185.8 | 2548 | 0 |
+
+  Latency does not move with concurrency; the p95 is the booking turn's
+  write and ledger seal. The "expected outcome" rate in
+  [`research/load_test.json`](research/load_test.json) falls from 97% to 70%
+  across the ladder because sixty scripted callers book the same morning in
+  one shared calendar and the script does not take the alternative the agent
+  offers — the calendar filling is correct behaviour, not an error.
+* **Devanagari.** A हिंदी toggle on `/talk` and in the console's call view
+  shows the transcript in Devanagari (an approximate, dictionary-plus-rules
+  transliteration; the engine labels it so).
+* **Design system.** `/design` documents Signboard — the colours, type, icons,
+  motion rules and components every page is built from.
+* **Security.** CodeQL, secret scanning, dependency audits and an SBOM on
+  every push; rate limiting and hardening headers on the demo server.
+
 ### A real model behind the same boundary
 
 `HAANJI_PROVIDER_LLM=claude` puts Claude (`claude-opus-4-8` by default) behind

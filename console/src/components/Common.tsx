@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useApp } from "../state";
+import { engine, devanagariWanted, setDevanagariWanted } from "../engine";
 
 const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -215,5 +216,37 @@ export function Waterfall({ spans, total }: { spans: { name: string; ms: number;
         );
       })}
     </div>
+  );
+}
+
+
+/** Devanagari reading aid: the engine transliterates the given lines when
+ *  the toggle is on; the result is approximate and labelled so. */
+export function useDevanagari(lines: string[]): { on: boolean; toggle: () => void; map: (s: string) => string } {
+  const [on, setOn] = useState<boolean>(devanagariWanted);
+  const [table, setTable] = useState<Record<string, string>>({});
+  const key = lines.join("\u0001");
+  useEffect(() => {
+    if (!on) return;
+    const missing = lines.filter((l) => l && !(l in table));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    engine.devanagari(missing).then((r) => {
+      if (cancelled) return;
+      setTable((t) => { const n = { ...t }; missing.forEach((l, i) => { n[l] = r.texts[i] ?? l; }); return n; });
+    }).catch(() => { /* engine away: show Roman */ });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [on, key]);
+  const toggle = () => { setDevanagariWanted(!on); setOn(!on); };
+  return { on, toggle, map: (s: string) => (on ? table[s] ?? s : s) };
+}
+
+export function DevToggle({ on, toggle }: { on: boolean; toggle: () => void }) {
+  return (
+    <button className={"btn btn-ghost btn-sm dev-toggle" + (on ? " on" : "")} onClick={toggle} aria-pressed={on}
+            title="Transcript Devanagari mein dikhao (approximate)">
+      <span className="dev">हिंदी</span>{on ? " on" : ""}
+    </button>
   );
 }
