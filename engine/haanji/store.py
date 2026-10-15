@@ -73,7 +73,7 @@ class DemoStore:
                                    "asr_confidence": c.asr_confidence, "ngram": c.ngram}
                                   for c in t.corrections],
                   "guard": t.guard, "latency_ms": t.latency_ms,
-                  "interrupted": t.interrupted}
+                  "interrupted": t.interrupted, "spans": getattr(t, "spans", [])}
                  for t in report.turns]
         self.conn.execute(
             "INSERT OR REPLACE INTO calls VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",

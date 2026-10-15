@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { engine, fmtMs, parseReceipts, parseTurns } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Chip, Empty, Icon, Loading, OutcomeChip, Page, Panel, Repair, Stamp, Tile, fmtDate, fmtTime, useData } from "../components/Common";
+import { Chip, Empty, Icon, Loading, OutcomeChip, Page, Panel, Repair, Stamp, Tile, Waterfall, fmtDate, fmtTime, useData } from "../components/Common";
 import type { CallRow } from "../types";
 
 export default function CallDetail() {
@@ -56,6 +56,7 @@ export default function CallDetail() {
                   {t.interrupted && <Chip kind="muted">caller ne beech mein toka</Chip>}
                   <span className="mono muted" style={{ fontSize: 13 }}>{fmtMs(t.latency_ms)}</span>
                 </div>
+                {t.spans && t.spans.length > 0 && <Waterfall spans={t.spans} total={t.latency_ms} />}
               </div>
             </div>
           ))}

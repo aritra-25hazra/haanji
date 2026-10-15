@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: haanji
+    folder: HaanJi
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards

@@ -11,6 +11,7 @@ import type {
   DraftRequest,
   LiveEvent,
   User,
+  Ops,
 } from "./types";
 
 export const ENGINE_BASE = "/engine";
@@ -77,6 +78,7 @@ export const engine = {
   users: () => request<{ users: User[] }>("api/auth/users"),
   addUser: (u: { phone: string; role: string; packs: string[]; name: string }) => request<{ user: User }>("api/auth/users", { method: "POST", body: JSON.stringify(u) }),
   removeUser: (phone: string) => request<{ removed: boolean }>(`api/auth/users/${encodeURIComponent(phone)}`, { method: "DELETE" }),
+  ops: (pack: string) => request<Ops>(`api/ops?${q(pack)}`),
   recentEvents: (pack: string, since: number) =>
     request<{ events: LiveEvent[]; latest: number; live_sessions: number }>(`api/events/recent?${q(pack)}&since=${since}`),
   packYaml: (id: string) => request<{ pack_id: string; yaml: string }>(`api/packs/${encodeURIComponent(id)}`),

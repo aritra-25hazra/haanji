@@ -193,3 +193,27 @@ export function fmtDate(iso: string): string {
   return isNaN(d.getTime()) ? iso.slice(0, 10) : d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 export function fmtInr(n: number): string { return "₹" + Math.round(n).toLocaleString("en-IN"); }
+
+
+/** Where a turn's time went: one bar per span, to scale, speculated tools
+ *  hatched because they cost the caller nothing. */
+export function Waterfall({ spans, total }: { spans: { name: string; ms: number; speculated?: boolean; ok?: boolean; detail?: string }[]; total?: number | null }) {
+  const sum = Math.max(total ?? 0, spans.reduce((a, s) => a + (s.speculated ? 0 : s.ms), 0), 1);
+  let acc = 0;
+  return (
+    <div className="waterfall" role="img" aria-label={spans.map((s) => `${s.name} ${Math.round(s.ms)} ms`).join(", ")}>
+      {spans.map((s, i) => {
+        const left = s.speculated ? acc : acc;
+        if (!s.speculated) acc += s.ms;
+        const w = Math.max(0.6, (s.ms / sum) * 100);
+        return (
+          <div key={i} className="wf-row">
+            <span className="wf-name mono">{s.name.replace("tool:", "")}{s.speculated ? " ⚡" : ""}</span>
+            <span className="wf-track"><i className={"wf-bar" + (s.speculated ? " spec" : "") + (s.ok === false ? " bad" : "")} style={{ left: `${(left / sum) * 100}%`, width: `${w}%` }} /></span>
+            <span className="wf-ms mono">{Math.round(s.ms)} ms{s.detail ? ` · ${s.detail}` : ""}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

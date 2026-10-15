@@ -12,3 +12,6 @@ scrape_configs:
     static_configs: [{ targets: ["engine:8090"] }]
 
 rule_files: ["alerts.yml"]
+
+# Outside Docker, point the engine job at a running demo server instead:
+#   static_configs: [{ targets: ["host.docker.internal:8090"] }]
