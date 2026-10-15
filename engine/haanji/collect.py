@@ -25,7 +25,7 @@ from .models import Token, Transcript
 from .scenario import scenarios_of
 from .vertical import Pack
 
-_PUNCT = re.compile(r"[^\w\s'-]", re.UNICODE)
+_PUNCT = re.compile(r"[^\w\s']", re.UNICODE)
 _SPACES = re.compile(r"\s+")
 
 

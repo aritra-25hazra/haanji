@@ -3,7 +3,7 @@
 [![ci](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml)
 [![engine](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-engine.onrender.com%2Fapi%2Fstatus&label=engine&up_message=live&down_message=waking)](https://haanji-engine.onrender.com)
 [![console](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-kappa.vercel.app&label=console&up_message=live)](https://haanji-kappa.vercel.app)
-![tests](https://img.shields.io/badge/tests-216%20passing-1F6B45)
+![tests](https://img.shields.io/badge/tests-223%20passing-1F6B45)
 ![licence](https://img.shields.io/badge/licence-Apache--2.0-1B3B8C)
 
 <p align="center">
@@ -25,8 +25,8 @@ implemented, measured and testable rather than described:
 
 | | What it is | What it is worth |
 |---|---|---|
-| **Bhasha Bridge** | A per-tenant phonetic index built from the business's own catalogue, used both to bias the recogniser and to repair its output — but only when the recogniser was unsure *and* the sound key matches exactly. | Entity error rate **31.1% → 1.0%** at 30% recognition noise, with **zero** harmful corrections over 3,495 sentences. |
-| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **243 ms → 150 ms**, a 38.4% reduction, with a 46.2% prediction hit rate. |
+| **Bhasha Bridge** | A per-tenant phonetic index built from the business's own catalogue, used both to bias the recogniser and to repair its output — but only when the recogniser was unsure *and* the sound key matches exactly. | Entity error rate **31.1% → 0.9%** at 30% recognition noise, with **zero** harmful corrections over 3,495 sentences. |
+| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **255 ms → 145 ms**, a 43.2% reduction, with a 46.2% prediction hit rate. |
 | **Pramaan Ledger** | Every write is sealed into an Ed25519-signed, hash-chained receipt that binds the action to the caller's recorded confirmation. Daily Merkle anchors; an independent verifier. | **80/80** single-field tampering attempts detected; deletion and forgery detected; **0** unconfirmed writes accepted. |
 
 Every number above was produced by `python -m haanji.bench` on this repository and
@@ -77,7 +77,7 @@ pip install -e ".[dev]"
 
 python -m haanji.cli demo          # one narrated call, at real speaking speed
 python -m haanji.cli selftest      # all 21 packaged scenarios, all five verticals
-pytest -q                          # 216 tests
+pytest -q                          # 223 tests
 python -m haanji.bench             # regenerates research/results.json
 ```
 
@@ -173,7 +173,7 @@ PRAMAAN LEDGER
 │   │   ├── insights.py      outcome/revenue/cost analytics behind /api/insights
 │   │   ├── bench.py         the evaluation harness that produces every number
 │   │   └── cli.py           demo · selftest · bench · verify · serve · packs
-│   └── tests/               216 tests, including the safety properties and the demo pages
+│   └── tests/               223 tests, including the safety properties and the demo pages
 ├── core-api/        Java 21 / Spring Boot 3 control plane
 │   ├── domain repo service web security config pramaan packs
 │   ├── db/migration/        Flyway: schema, ledger, knowledge + lexicon
@@ -216,9 +216,9 @@ Measured over 3,495 independently corrupted sentences at three noise levels:
 
 | noise | entity error, off | entity error, on | reduction | precision | harmful |
 |---|---|---|---|---|---|
-| 15% | 17.9% | 0.36% | 98.0% | 98.9% | 0 |
-| 30% | 31.1% | 0.96% | 96.9% | 99.0% | 0 |
-| 45% | 48.5% | 1.72% | 96.5% | 98.7% | 0 |
+| 15% | 17.9% | 0.31% | 98.2% | 99.1% | 0 |
+| 30% | 31.1% | 0.86% | 97.2% | 99.2% | 0 |
+| 45% | 48.5% | 1.53% | 96.8% | 99.1% | 0 |
 
 Median cost: **0.07 ms** per utterance.
 
@@ -252,10 +252,10 @@ with_speculation_on_and_off` asserts the strong form of this — the transcript 
 the call must be identical whether speculation is on or off, because it is a
 latency optimisation and nothing else.
 
-Measured: **243 ms → 150 ms** median on read turns (38.4% lower), 46.2% hit rate
-over 130 speculations, 212 ms saved per hit. Write turns are never speculated, so
-the booking turn itself is not faster: its p90 is 212 ms without
-speculation and 202 ms with it — reported rather than averaged away.
+Measured: **255 ms → 145 ms** median on read turns (43.2% lower), 46.2% hit rate
+over 130 speculations, 247 ms saved per hit. Write turns are never speculated, so
+the booking turn itself is not faster: its p90 is 229 ms without
+speculation and 232 ms with it — reported rather than averaged away.
 
 ### Pramaan Ledger — proof, not logs
 
@@ -417,7 +417,7 @@ to stop it.
 
 A project report should say what was verified and what was not.
 
-* **The Python engine is fully executed here.** 216 tests, 21 scenarios across
+* **The Python engine is fully executed here.** 223 tests, 21 scenarios across
   five verticals and two languages, and the entire benchmark run on this
   machine. Every number in this README comes from that run.
 * **The React console builds here.** `npm run build` type-checks the whole
@@ -450,9 +450,14 @@ A project report should say what was verified and what was not.
   exists so the limitation cannot be quietly lost.
 * **The corruption model is a model.** It reproduces the substitutions Indian
   English recognisers actually make, but it is not a recording of real callers.
-  Collecting that corpus is the next piece of work, and the harness is built to
-  take it: swap the generator for real (heard, truth) pairs and every table in
-  this README recomputes.
+  A pilot that ran synthetic Indian-English speech through Whisper
+  (`research/collect/`, [`research/real_asr.json`](research/real_asr.json))
+  found the bridge's confidence gate wide open on a real recogniser's
+  probabilities and the layer making harmful corrections; two stated guards
+  fixed that, and on that data the bridge reduces entity errors by about a
+  tenth, not by 97%. The report's §4.5 says why. Volunteer recordings go through
+  the same pipeline (`/record`), and a small user study has its kit at `/study`
+  ([protocol](docs/study/protocol.md)); neither has been run yet.
 
 ---
 

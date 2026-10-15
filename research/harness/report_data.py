@@ -216,7 +216,8 @@ def grouped_bars(path: Path, title: str, groups: list[str], series: list[tuple[s
             if c["ci95"]:
                 cx = x + (bw - 4) / 2
                 body.append(f'<line x1="{cx:.1f}" x2="{cx:.1f}" y1="{y(c["mean"]-c["ci95"]):.1f}" y2="{y(c["mean"]+c["ci95"]):.1f}" stroke="{INK}" stroke-width="1.5"/>')
-            body.append(f'<text x="{x + (bw-4)/2:.1f}" y="{yt-6:.1f}" text-anchor="middle" font-size="11" fill="{INK}">{fmt.format(c["mean"]*scale)}</text>')
+            top_y = min(yt, y(c["mean"] + c["ci95"])) - 6
+            body.append(f'<text x="{x + (bw-4)/2:.1f}" y="{top_y:.1f}" text-anchor="middle" font-size="11" fill="{INK}">{fmt.format(c["mean"]*scale)}</text>')
     lx = L
     for label, colour, _ in series:
         body.append(f'<rect x="{lx}" y="{H-B+34}" width="12" height="12" fill="{colour}" rx="2"/>')
@@ -251,7 +252,12 @@ def main(argv=None) -> int:
     ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--speed", type=float, default=90.0)
+    ap.add_argument("--figures-only", action="store_true", help="redraw the figures from report_data.json")
     args = ap.parse_args(argv)
+    if args.figures_only:
+        agg = json.loads(OUT.read_text(encoding="utf-8"))["aggregate"]
+        print("redrew", ", ".join(figures(agg)))
+        return 0
     set_speed(args.speed)
     packs = [load_pack(p) for p in list_packs()]
     started = time.time()

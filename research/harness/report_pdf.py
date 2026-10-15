@@ -32,9 +32,9 @@ blockquote p { margin: 0; }
 code { font-family: Menlo, Consolas, monospace; font-size: 9pt; background: #f1f2f5; padding: 0 2px; }
 pre { font-family: Menlo, Consolas, monospace; font-size: 8.4pt; background: #f1f2f5; padding: 8pt; overflow: hidden; white-space: pre-wrap; border-radius: 3px; }
 pre code { background: none; padding: 0; font-size: inherit; }
-table { border-collapse: collapse; width: 100%; font-size: 8.8pt; margin: 6pt 0 10pt; page-break-inside: avoid; }
+table { border-collapse: collapse; width: 100%; font-size: 8.2pt; margin: 6pt 0 10pt; page-break-inside: avoid; table-layout: auto; }
 th, td { border: 1px solid #c9cdd6; padding: 3pt 5pt; text-align: left; vertical-align: top; }
-th { background: #eef1f7; font-weight: 700; }
+th { background: #eef1f7; font-weight: 700; white-space: normal !important; }
 td:not(:first-child), th:not(:first-child) { text-align: right; white-space: nowrap; }
 table.text td, table.text th { text-align: left; white-space: normal; }
 img { max-width: 100%; display: block; margin: 8pt auto; page-break-inside: avoid; }
