@@ -60,7 +60,7 @@ jobs:
         run: |
           # The runner's preinstalled setuptools is not ours; audit what we ship.
           pip install -U pip setuptools
-          pip install -e ".[dev,web,llm]" pip-audit
+          pip install -e ".[dev,web,llm]" jellyfish metaphone pip-audit
           pip-audit --progress-spinner off --skip-editable
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
