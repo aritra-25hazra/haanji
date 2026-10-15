@@ -30,6 +30,7 @@ from pydantic import BaseModel
 from .adapters.mock import NullTTS
 from .backend.local import LocalBackend
 from .bhasha.phonetics import phrase_key
+from .bhasha.lexicon import LexEntry, TenantLexicon
 from .insights import compute as compute_insights
 from .pipeline import CallSession
 from .pramaan.ledger import Ledger
@@ -327,6 +328,28 @@ async def conversation(call_id: str, pack: str = DEFAULT_PACK):
         raise HTTPException(404, "no such call")
     return row
 
+
+@app.get("/api/lexicon")
+async def lexicon(pack: str = DEFAULT_PACK, probe: str | None = None):
+    """The tenant's sound-indexed vocabulary, built exactly as the pipeline
+    builds it, and optionally where a heard phrase would land in it."""
+    try:
+        p = load_pack(pack)
+    except Exception:
+        raise HTTPException(404, "no such pack")
+    lex = TenantLexicon.build(version=p.version, **p.lexicon_seed())
+    out: dict[str, Any] = {
+        "pack": pack, "version": lex.version,
+        "entries": [{"surface": e.surface, "entry_type": e.entry_type.value,
+                     "variants": e.variants, "keys": sorted(e.keys()),
+                     "weight": round(e.weight, 2)} for e in lex.entries],
+    }
+    if probe and probe.strip():
+        text = probe.strip()
+        key = LexEntry.key_of(text.lower())
+        out["probe"] = {"text": text, "key": key,
+                        "matches": [c.surface for c in lex.candidates(key)]}
+    return out
 
 # ───────────────────────────────────────────────────────── pramaan endpoints
 @app.get("/api/receipts/export")

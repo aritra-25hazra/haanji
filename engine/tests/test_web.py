@@ -114,3 +114,15 @@ def test_no_emoji_is_used_as_an_icon(name, text):
 def test_every_url_is_relative_so_the_page_works_behind_a_prefix(name, text):
     hits = ROOT_RELATIVE.findall(text)
     assert not hits, f"{name}: {hits[:5]} — drop the leading slash"
+
+
+def test_the_lexicon_endpoint_lists_entries_and_resolves_a_probe(client):
+    body = client.get("/api/lexicon?pack=dental_clinic&probe=rut%20kanal").json()
+    assert body["pack"] == "dental_clinic" and body["entries"]
+    assert all(e["keys"] and e["entry_type"] in ("SERVICE", "STAFF", "PLACE", "BRAND", "PHRASE")
+               for e in body["entries"])
+    assert "root canal" in {e["surface"] for e in body["entries"]}
+    assert body["probe"]["text"] == "rut kanal" and body["probe"]["key"]
+    assert "root canal" in body["probe"]["matches"]
+    assert "probe" not in client.get("/api/lexicon?pack=dental_clinic").json()
+    assert client.get("/api/lexicon?pack=nope").status_code == 404
