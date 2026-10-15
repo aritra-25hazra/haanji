@@ -37,6 +37,7 @@ from .adapters.mock import NullTTS
 from .backend.local import LocalBackend
 from .channels import whatsapp as wa_channel
 from . import collect as collect_mod
+from . import onboard as onboard_mod
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
 from .insights import compute as compute_insights
@@ -530,6 +531,33 @@ def _validate_yaml(text: str) -> tuple[dict, list[str]]:
     except (PackError, KeyError, TypeError, ValueError) as exc:
         raise HTTPException(422, f"not a valid pack: {exc}")
     return data, pack.validate()
+
+
+class DraftIn(BaseModel):
+    business_name: str
+    business_type: str = "other"
+    pack_id: str | None = None
+    display_name: str | None = None
+    language: str = "hinglish"
+    agent_name: str = "Haanji"
+    staff_role: str | None = None
+    greeting: str | None = None
+    closing: str | None = None
+    staff: list[str] = []
+    hours: dict[str, list[str] | None] = {}
+    services: list[dict[str, Any]] = []
+    places: list[str] = []
+
+
+@app.post("/api/packs/draft")
+async def pack_draft(body: DraftIn):
+    """Onboarding: answers in, a complete validated pack out (not saved)."""
+    try:
+        text, problems, data = onboard_mod.draft(body.model_dump())
+    except (PackError, KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(422, f"could not build a pack: {exc}")
+    return {"pack_id": data["pack"], "yaml": text, "problems": problems,
+            "exists": data["pack"] in list_packs()}
 
 
 @app.post("/api/packs/validate")

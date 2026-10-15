@@ -8,10 +8,11 @@ import Ledger from "./pages/Ledger";
 import Lexicon from "./pages/Lexicon";
 import Packs from "./pages/Packs";
 import PackStudio from "./pages/PackStudio";
+import Onboard from "./pages/Onboard";
 
 const LINKS: [string, string][] = [
   ["/dashboard", "Aaj"], ["/calls", "Calls"], ["/ledger", "Pramaan"],
-  ["/lexicon", "Bhasha"], ["/packs", "Packs"], ["/studio", "Studio"],
+  ["/lexicon", "Bhasha"], ["/packs", "Packs"], ["/studio", "Studio"], ["/onboard", "Nayi dukaan"],
 ];
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/lexicon" element={<Lexicon />} />
           <Route path="/packs" element={<Packs />} />
           <Route path="/studio" element={<PackStudio />} />
+          <Route path="/onboard" element={<Onboard />} />
         </Routes>
       </main>
     </>
