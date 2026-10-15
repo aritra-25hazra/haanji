@@ -11,6 +11,7 @@ engine underneath is the same code the telephone path exercises.
 from __future__ import annotations
 import asyncio
 import datetime as dt
+import json
 import os
 import re
 import sqlite3
@@ -18,17 +19,19 @@ import subprocess
 import sys
 import time
 import uuid
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
 import yaml
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 
 from .adapters.mock import NullTTS
 from .backend.local import LocalBackend
+from .channels import whatsapp as wa_channel
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
 from .insights import compute as compute_insights
@@ -266,20 +269,42 @@ async def wa_thread(phone: str, pack: str = DEFAULT_PACK):
 # Real Meta WhatsApp Cloud API webhook — used when HAANJI_WA_TOKEN etc. are
 # configured; the simulator above uses the same _wa_turn.
 @app.get("/wa/webhook")
-async def wa_verify(**params):
-    if params.get("hub.verify_token") == os.environ.get("HAANJI_WA_VERIFY_TOKEN", "haanji"):
-        return PlainTextResponse(params.get("hub.challenge", ""))
+async def wa_verify(request: Request):
+    """Meta's one-time handshake when the webhook is registered."""
+    q = request.query_params
+    expected = os.environ.get("HAANJI_WA_VERIFY_TOKEN") or "haanji"
+    if q.get("hub.mode") == "subscribe" and q.get("hub.verify_token") == expected:
+        return PlainTextResponse(q.get("hub.challenge", ""))
     raise HTTPException(403, "bad verify token")
 
 
+# Message ids Meta has already delivered; it retries anything it did not get a
+# prompt 200 for, and a retried booking must not become two bookings.
+_wa_seen: deque[str] = deque(maxlen=500)
+
+
 @app.post("/wa/webhook")
-async def wa_webhook(payload: dict):
-    from .channels.whatsapp import extract_incoming, send_text
-    for phone, text in extract_incoming(payload):
-        replies = await _wa_turn(DEFAULT_PACK, phone[-10:], text)
+async def wa_webhook(request: Request):
+    raw = await request.body()
+    secret = os.environ.get("HAANJI_WA_APP_SECRET") or None
+    if secret and not wa_channel.verify_signature(secret, raw, request.headers.get("X-Hub-Signature-256")):
+        raise HTTPException(403, "bad signature")
+    try:
+        payload = json.loads(raw or b"{}")
+    except ValueError:
+        raise HTTPException(400, "not json")
+    pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
+    handled = 0
+    for msg_id, phone, text in wa_channel.extract_incoming(payload):
+        if msg_id and msg_id in _wa_seen:
+            continue
+        if msg_id:
+            _wa_seen.append(msg_id)
+        replies = await _wa_turn(pack, phone[-10:], text)
         for r in replies:
-            await send_text(phone, r["text"])
-    return {"ok": True}
+            await wa_channel.send_text(phone, r["text"])
+        handled += 1
+    return {"ok": True, "handled": handled}
 
 
 # ───────────────────────────────────────────────────── missed-call recovery
@@ -448,7 +473,8 @@ async def status():
             "var_dir": VAR_DIR,
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
-            "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173")}
+            "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),
+            "whatsapp": wa_channel.status()}
 
 
 def _page(name: str) -> FileResponse:
