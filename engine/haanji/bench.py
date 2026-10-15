@@ -121,7 +121,9 @@ def noisy(scenario: Scenario, rate: float, rng: random.Random) -> Scenario:
 
 # ----------------------------------------------------------------- one config
 async def run_config(name: str, packs: list[Pack], reps: int,
-                     noise: float | None = None) -> dict[str, Any]:
+                     noise: float | None = None, seed: int = 0) -> dict[str, Any]:
+    """``seed`` shifts every random stream so independent runs can be averaged;
+    ``seed=0`` reproduces ``research/results.json`` exactly."""
     flags = CONFIGS[name]
     cfg = make_config(flags["bhasha"], flags["speculation"])
     metrics = Metrics()
@@ -131,6 +133,7 @@ async def run_config(name: str, packs: list[Pack], reps: int,
     latencies: list[float] = []
     tool_latencies: list[float] = []
     read_latencies: list[float] = []
+    write_latencies: list[float] = []
     spec_started = spec_hits = spec_wasted = 0
     spec_saved = 0.0
     per_pack: dict[str, dict[str, Any]] = {}
@@ -140,7 +143,8 @@ async def run_config(name: str, packs: list[Pack], reps: int,
         index = pack.entity_index()
         pack_gold = pack_err = pack_ok = pack_calls = 0
         for rep in range(reps):
-            rng = random.Random(9000 + rep * 31 + zlib.crc32(pack.pack_id.encode()) % 1000)
+            rng = random.Random(9000 + rep * 31 + zlib.crc32(pack.pack_id.encode()) % 1000
+                                + seed * 100003)
             for base in scenarios_of(pack):
                 scenario = base if noise is None else noisy(base, noise, rng)
                 backend, _ = open_backend(pack, TENANT, today=TODAY)
@@ -148,7 +152,8 @@ async def run_config(name: str, packs: list[Pack], reps: int,
                 registry = build_registry(TENANT, backend, pack, ledger)
                 _, report = await run_scenario(
                     scenario, pack=pack, backend=backend, registry=registry, ledger=ledger,
-                    config=cfg, tenant_id=TENANT, metrics=metrics, seed=100 + rep)
+                    config=cfg, tenant_id=TENANT, metrics=metrics,
+                    seed=100 + rep + seed * 1000)
                 g, e = score_transcripts(report, scenario, index, flags["bhasha"])
                 gold_total += g
                 err_total += e
@@ -162,6 +167,9 @@ async def run_config(name: str, packs: list[Pack], reps: int,
                 latencies.extend(report.latencies)
                 tool_latencies.extend(report.tool_latencies)
                 read_latencies.extend(report.read_latencies)
+                write_latencies.extend(
+                    t.latency_ms for t in report.turns
+                    if t.tools and not all(registry.is_read_only(x) for x in t.tools))
                 for k, v in score_corrections(report, index).items():
                     quality[k] += v
                 spec_started += report.speculation["started"]
@@ -210,6 +218,13 @@ async def run_config(name: str, packs: list[Pack], reps: int,
             "p50": round(percentile(read_latencies, 0.50), 1),
             "p90": round(percentile(read_latencies, 0.90), 1),
             "p95": round(percentile(read_latencies, 0.95), 1),
+        },
+        "write_turn_latency_ms": {
+            "n": len(write_latencies),
+            "mean": round(statistics.fmean(write_latencies), 1) if write_latencies else 0.0,
+            "p50": round(percentile(write_latencies, 0.50), 1),
+            "p90": round(percentile(write_latencies, 0.90), 1),
+            "p95": round(percentile(write_latencies, 0.95), 1),
         },
         "correction_quality": quality,
         "speculation": {
@@ -262,7 +277,7 @@ def corpus_of(pack: Pack) -> list[str]:
 
 
 def transcript_experiment(packs: list[Pack], rates: list[float],
-                          trials: int = 12) -> dict[str, Any]:
+                          trials: int = 12, seed: int = 0) -> dict[str, Any]:
     """Measure the correction layer alone, with no dialogue in the way."""
     from .bhasha.bridge import BhashaBridge
     from .bhasha.lexicon import TenantLexicon
@@ -279,7 +294,7 @@ def transcript_experiment(packs: list[Pack], rates: list[float],
             index = pack.entity_index()
             lexicon = TenantLexicon.build(version=pack.version, **pack.lexicon_seed())
             bridge = BhashaBridge(lexicon, BhashaConfig(enabled=True))
-            rng = random.Random(4242 + int(rate * 100))
+            rng = random.Random(4242 + int(rate * 100) + seed * 100003)
             for truth in corpus_of(pack):
                 for _ in range(trials):
                     heard, low = corrupt(truth, rate, rng)
@@ -483,7 +498,10 @@ async def main_async(reps: int, speed: float, out: str) -> dict[str, Any]:
             "read_turn_p90_with_speculation": p90_on,
             "read_turn_p90_reduction_pct": round(100 * (p90_off - p90_on) / p90_off, 1)
                 if p90_off else 0.0,
-            "write_turn_p90_with_speculation": full["tool_turn_latency_ms"]["p90"],
+            "write_turn_p90_with_speculation": full["write_turn_latency_ms"]["p90"],
+            "write_turn_p90_without_speculation": no_spec["write_turn_latency_ms"]["p90"],
+            "tool_turn_p90_with_speculation": full["tool_turn_latency_ms"]["p90"],
+            "tool_turn_p90_without_speculation": no_spec["tool_turn_latency_ms"]["p90"],
             "speculation_hit_rate": full["speculation"]["hit_rate"],
             "speculations_started": full["speculation"]["started"],
             "wasted_speculations": full["speculation"]["wasted"],
@@ -568,7 +586,8 @@ def print_report(p: dict[str, Any]) -> None:
     print(f"                  hit rate {h['speculation_hit_rate']*100:.1f}% over "
           f"{h['speculations_started']} speculations, "
           f"{h['saved_ms_per_hit']:.0f} ms saved per hit; write turns are never "
-          f"speculated, so the all-tool p90 stays at "
+          f"speculated, so their p90 stays at "
+          f"{h['write_turn_p90_without_speculation']:.0f} -> "
           f"{h['write_turn_p90_with_speculation']:.0f} ms")
     print(f"  Pramaan Ledger  {led['detection_rate']*100:.0f}% of tampering detected, "
           f"{led['unconfirmed_writes_accepted']} unconfirmed writes accepted")

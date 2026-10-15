@@ -107,3 +107,29 @@ def test_correction_never_damages_a_correct_transcript(any_pack):
                     nlu.find_entities(out.text, index) | nlu.find_entities(heard, index)
                     | {service}) or True
     assert harmful == 0
+
+
+def test_the_words_of_the_booking_dialogue_are_never_corrected(any_pack):
+    """From the real-recogniser pilot: 'slot' sits one sound key away from
+    'Salt' (Lake) and Whisper's confidence in it was low. It must survive."""
+    bridge = BhashaBridge(TenantLexicon.build(version=any_pack.version, **any_pack.lexicon_seed()))
+    for line in ("kal subah ka slot hai kya", "time mil raha hai na", "booking karna hai", "price kitna hai"):
+        out = bridge.correct(transcript(line, line.split(), low_conf=0.3))
+        assert out.text == line and out.corrections == [], (any_pack.pack_id, line, out.text)
+
+
+def test_a_short_token_is_never_replaced_on_its_own(bridge):
+    out = bridge.correct(transcript("na ji do baje", ["na", "do"], low_conf=0.2))
+    assert out.corrections == [] and out.text == "na ji do baje"
+    # ...but it may still be part of a longer span that matches as a phrase.
+    out = bridge.correct(transcript("mujhe rut kanal karwana hai", ["rut", "kanal"]))
+    assert "root canal" in out.text
+
+
+def test_a_lexicon_form_with_too_few_letters_is_not_evidence():
+    """From the pilot: the alias "t3 t4" keys to "TT", two edits from "to do"."""
+    from haanji.vertical import load_pack
+    pack = load_pack("diagnostic_lab")
+    bridge = BhashaBridge(TenantLexicon.build(version=pack.version, **pack.lexicon_seed()))
+    out = bridge.correct(transcript("i want to do a test", ["to", "do"], low_conf=0.3))
+    assert out.corrections == [] and out.text == "i want to do a test"

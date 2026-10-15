@@ -134,7 +134,9 @@
 
   S.status().then(function (s) {
     if (!s) { notice("Server se connect nahi ho pa raha — thodi der mein dobara try kijiye."); $("pack").disabled = true; $("start").disabled = true; return; }
-    $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+    const q = new URLSearchParams(location.search), wanted = q.get("pack");
+    $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === (s.packs.indexOf(wanted) >= 0 ? wanted : s.default_pack) ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+    if (q.get("study")) notice("Study task " + q.get("study") + " — kaam poora hone pe study tab mein wapas jaiye.");
   });
 
   function row(who, text) {

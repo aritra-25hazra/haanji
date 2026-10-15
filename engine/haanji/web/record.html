@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HaanJi — Awaaz record karo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/signboard.css">
+<style>
+  body { min-height: 100dvh; display: flex; flex-direction: column; }
+  main { flex: 1; width: min(var(--maxw), 100%); margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) 320px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .prompt { display: flex; flex-direction: column; gap: 18px; }
+  .prompt .frame { padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+  .say { font-family: var(--font-display); font-size: clamp(26px, 4vw, 40px); line-height: 1.15; color: var(--chalk); min-height: 2.3em; }
+  .say.done { color: var(--leaf); }
+  .kind { color: var(--haze); font-size: 13px; font-family: var(--font-mono); }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .rec { width: 64px; height: 64px; border-radius: 50%; border: 0; background: var(--sindoor-ink); color: var(--chalk); display: inline-flex; align-items: center; justify-content: center; }
+  .rec[aria-pressed="true"] { background: var(--sindoor); box-shadow: 0 0 0 8px rgba(226, 85, 58, .25); }
+  .rec svg { width: 28px; height: 28px; }
+  .wave { height: 36px; display: flex; align-items: center; gap: 3px; flex: 1; min-width: 120px; }
+  .wave i { width: 4px; height: 4px; background: var(--marigold); border-radius: 2px; }
+  .meter { height: 6px; background: rgba(255, 247, 230, .15); border-radius: 3px; overflow: hidden; }
+  .meter b { display: block; height: 100%; background: var(--marigold); width: 0; transition: width var(--t-base) var(--ease-out); }
+  .setup { display: flex; flex-direction: column; gap: 12px; }
+  .setup .field { gap: 6px; }
+  .setup .input { width: 100%; }
+  .manifest { font-size: 13px; color: var(--haze); line-height: 1.5; }
+  .manifest b { color: var(--chalk); }
+  .notice { margin: 0 auto; width: min(var(--maxw), 100%); padding: 10px 16px; color: var(--sindoor); font-weight: 600; }
+  .thanks { display: flex; flex-direction: column; gap: 10px; }
+  audio { width: 100%; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Seedha content pe jao</a>
+<header class="wrap nav">
+  <a class="wordmark paint" href="./">HaanJi <span class="dev">हाँजी</span></a>
+  <nav><ul>
+    <li><a href="talk">Demo</a></li>
+    <li><a href="study">Study</a></li>
+    <li><a href="https://github.com/aritra-25hazra/haanji/tree/main/research/collect" rel="noopener">Kyun <i data-icon="arrow" class="ic-sm"></i></a></li>
+  </ul></nav>
+</header>
+<div id="notice" class="notice" hidden role="status"></div>
+<main id="main">
+  <section class="prompt" aria-label="Prompt">
+    <div class="frame">
+      <p class="kind" id="progress">—</p>
+      <p class="say" id="say">Pack chuniye, apna naam likhiye, phir "Shuru karo".</p>
+      <div class="meter" aria-hidden="true"><b id="meter"></b></div>
+      <div class="controls">
+        <button type="button" class="rec" id="rec" aria-pressed="false" aria-label="Record — dabao, boliye, phir dabao" disabled><i data-icon="mic"></i></button>
+        <div class="wave" id="wave" aria-hidden="true"></div>
+        <button type="button" class="btn btn-primary" id="keep" hidden><i data-icon="check"></i>Theek hai, agla</button>
+        <button type="button" class="btn btn-ghost" id="again" hidden><i data-icon="x"></i>Dobara</button>
+        <button type="button" class="btn btn-ghost" id="skip" hidden>Skip</button>
+      </div>
+      <audio id="play" controls hidden></audio>
+    </div>
+    <div class="frame thanks" id="thanks" hidden>
+      <h2>Bas itna hi. Shukriya!</h2>
+      <p>Aapki awaaz sirf is project ke evaluation ke liye use hogi — recogniser kitni galtiyan karta hai aur Bhasha Bridge unme se kitni sudhaarta hai. Naam ya number kahin publish nahi hoga.</p>
+      <a class="btn btn-ghost" href="record">Ek aur pack record karo</a>
+    </div>
+  </section>
+  <aside class="setup frame" aria-label="Setup">
+    <h2>Recording session</h2>
+    <label class="field"><span>Pack</span><select id="pack" class="input"></select></label>
+    <label class="field"><span>Aapka naam ya code (sirf pehchan ke liye)</span><input id="speaker" class="input" placeholder="jaise: P03"></label>
+    <label class="field"><span>Kitne vaakya</span><select id="count" class="input"><option>10</option><option selected>20</option><option>40</option></select></label>
+    <button type="button" class="btn btn-primary" id="start"><i data-icon="mic"></i>Shuru karo</button>
+    <p class="manifest" id="manifest">Ab tak <b>0</b> recordings is server pe.</p>
+    <p class="manifest">Phone ko mooh se ek haath door rakhiye. Vaakya jaise likha hai waise hi, apni normal awaaz mein boliye — saaf bolne ki koshish mat kijiye, galtiyan hi to naapni hain.</p>
+  </aside>
+</main>
+<footer class="wrap foot"><span>Recordings <code>var/recordings/</code> mein save hoti hain; <a href="api/record/manifest">manifest</a> · <a href="api/record/export">export (zip)</a></span></footer>
+<script src="static/signboard.js"></script>
+<script>
+(function () {
+  const S = window.Signboard, $ = function (id) { return document.getElementById(id); };
+  S.mountIcons();
+  const wave = S.waveform($("wave"), 24);
+  let prompts = [], i = 0, chunks = [], recorder = null, stream = null, blob = null, ctx = null;
+
+  function notice(t) { $("notice").textContent = t; $("notice").hidden = !t; }
+  async function api(path, opts) {
+    const r = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts || {}));
+    if (!r.ok) throw new Error(path + " " + r.status);
+    return r.json();
+  }
+  async function refreshManifest() {
+    try { const m = await api("api/record/manifest"); $("manifest").innerHTML = "Ab tak <b>" + m.count + "</b> recordings is server pe."; } catch (e) {}
+  }
+  function show() {
+    const p = prompts[i];
+    if (!p) { $("say").textContent = ""; $("thanks").hidden = false; $("rec").disabled = true; $("progress").textContent = "poora hua"; return; }
+    $("progress").textContent = (i + 1) + " / " + prompts.length + " · " + p.kind + " · " + p.pack;
+    $("say").textContent = p.truth; $("say").classList.remove("done");
+    $("keep").hidden = $("again").hidden = true; $("skip").hidden = false; $("play").hidden = true; blob = null;
+    $("rec").disabled = false;
+  }
+  async function start() {
+    if (!navigator.mediaDevices || !window.MediaRecorder) { notice("Is browser mein recording nahi ho sakti — Chrome ya Safari ka naya version lijiye."); return; }
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { notice("Mic ki permission nahi mili."); return; }
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const an = ctx.createAnalyser(); an.fftSize = 512; ctx.createMediaStreamSource(stream).connect(an); wave.attach(an);
+    } catch (e) {}
+    prompts = await api("api/record/prompts?pack=" + encodeURIComponent($("pack").value) + "&limit=" + $("count").value);
+    i = 0; $("start").disabled = true; $("pack").disabled = true; $("thanks").hidden = true; show();
+  }
+  function mime() {
+    const c = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+    for (const m of c) if (MediaRecorder.isTypeSupported(m)) return m;
+    return "";
+  }
+  function toggle() {
+    if (recorder && recorder.state === "recording") { recorder.stop(); return; }
+    chunks = []; const m = mime();
+    recorder = new MediaRecorder(stream, m ? { mimeType: m } : undefined);
+    recorder.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+    recorder.onstop = function () {
+      blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+      $("rec").setAttribute("aria-pressed", "false"); wave.setLive(false);
+      $("play").src = URL.createObjectURL(blob); $("play").hidden = false;
+      $("keep").hidden = $("again").hidden = false;
+    };
+    recorder.start(); $("rec").setAttribute("aria-pressed", "true"); wave.setLive(true);
+  }
+  async function keep() {
+    if (!blob) return;
+    const p = prompts[i];
+    const b64 = await new Promise(function (res) { const r = new FileReader(); r.onload = function () { res(r.result.split(",")[1]); }; r.readAsDataURL(blob); });
+    $("keep").disabled = true;
+    try {
+      await api("api/record", { method: "POST", body: JSON.stringify({ pack: p.pack, truth: p.truth, kind: p.kind, speaker: $("speaker").value || "anon", mime: blob.type, audio_b64: b64 }) });
+      $("say").classList.add("done"); $("meter").style.width = Math.round(100 * (i + 1) / prompts.length) + "%";
+      refreshManifest(); i += 1; setTimeout(show, 350);
+    } catch (e) { notice("Save nahi hua: " + e.message); }
+    $("keep").disabled = false;
+  }
+  $("start").addEventListener("click", start);
+  $("rec").addEventListener("click", toggle);
+  $("keep").addEventListener("click", keep);
+  $("again").addEventListener("click", function () { $("keep").hidden = $("again").hidden = true; $("play").hidden = true; blob = null; });
+  $("skip").addEventListener("click", function () { i += 1; show(); });
+  S.status().then(function (s) {
+    if (!s) { notice("Server se connect nahi ho pa raha."); return; }
+    $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+    refreshManifest();
+  });
+})();
+</script>
+</body>
+</html>

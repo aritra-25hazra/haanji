@@ -18,9 +18,23 @@ from ..models import Correction, CorrectedTranscript, Token, Transcript
 from .lexicon import TYPE_PRIOR, LexEntry, TenantLexicon
 from .phonetics import edit_distance, phonetic_key, phrase_key
 
-# Tokens that are never corrected: grammar words, and anything that looks like a
-# personal name the caller just introduced.
-STOPWORDS = {
+# Tokens that are never corrected: grammar words, the words of the booking
+# dialogue itself (a "slot" is never a tenant's entity, however close its sound
+# key sits to one), and anything that looks like a personal name the caller
+# just introduced. The second group was added after the real-recogniser pilot
+# (research/collect/), where "slot" became "Salt" six times.
+FRAME_WORDS = {
+    "slot", "slots", "time", "timing", "timings", "book", "booking", "appointment",
+    "branch", "number", "phone", "call", "price", "charge", "rate", "fees", "fee",
+    "raha", "rahi", "rahe", "chahiye", "chahie", "milega", "milegi", "hoga", "hogi",
+    "karna", "karni", "karwana", "karwani", "karana", "lena", "leni", "dena", "deni",
+    "wala", "wali", "wale", "mein", "liye", "saath", "khali", "available",
+}
+# A span of three letters or fewer is never replaced on its own: too little
+# signal to tell a mishearing from a different short word, and the corruption
+# model (haanji/corrupt.py) never corrupts them either.
+MIN_SINGLE_LEN = 4
+STOPWORDS = FRAME_WORDS | {
     "ka", "ki", "ke", "ko", "se", "me", "mein", "par", "hai", "hain", "ho", "hu",
     "hoon", "kya", "kab", "kaun", "kitna", "kitne", "aur", "ya", "nahi", "haan",
     "ji", "aap", "main", "mera", "meri", "kal", "aaj", "parso", "subah", "shaam",
@@ -95,6 +109,8 @@ class BhashaBridge:
             return False                       # condition 1 fails
         if len(span) == 1 and span[0].lower() in STOPWORDS:
             return False
+        if len(span) == 1 and len(span[0]) < MIN_SINGLE_LEN:
+            return False                       # too short to be evidence of anything
         preceding = " ".join(words[max(0, i - 3):i])
         if NAME_INTRO.search(preceding):
             return False                       # never "correct" a personal name
@@ -114,6 +130,8 @@ class BhashaBridge:
             for form in entry.forms_matching(key, n):
                 if form.lower() == phrase.lower():
                     return None                # heard exactly as the tenant spells it
+                if sum(ch.isalpha() for ch in form) < MIN_SINGLE_LEN:
+                    continue                   # "t3 t4" is not evidence for "to do"
                 distance = edit_distance(phrase, form, cap=allowed + 1)
                 if distance > allowed:
                     continue                   # condition 2 fails
