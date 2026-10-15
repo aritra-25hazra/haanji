@@ -1,114 +1,83 @@
-import {
-  Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart,
-  ResponsiveContainer, Tooltip, XAxis, YAxis,
-} from "recharts";
-import { useEffect, useState } from "react";
-import { api } from "../api";
-import { Page, Panel, Stat, useData } from "../components/Common";
-import { live, type LiveInsights } from "../live";
+import { useEffect, type CSSProperties } from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { engine } from "../engine";
+import { sample } from "../sample";
+import { useApp } from "../state";
+import { Loading, Page, Panel, Tile, fmtInr, fmtTime, useData } from "../components/Common";
 
-const OUTCOME_COLOUR: Record<string, string> = {
-  BOOKED: "#0e8f80", FAQ_ANSWERED: "#2c63c4", LEAD_CAPTURED: "#e8952f",
-  HANDED_OFF: "#c0392b", ABANDONED: "#9aa7b4",
+const ORDER = ["BOOKED", "FAQ_ANSWERED", "LEAD_CAPTURED", "HANDED_OFF", "ABANDONED", "IN_PROGRESS"];
+const SWATCH: Record<string, string> = {
+  BOOKED: "var(--leaf-ink)", FAQ_ANSWERED: "var(--cobalt)", LEAD_CAPTURED: "var(--marigold)",
+  HANDED_OFF: "var(--sindoor-ink)", ABANDONED: "var(--ink-2)", IN_PROGRESS: "var(--ink-2)",
 };
 
 export default function Dashboard() {
-  const { data, loading, error } = useData(() => api.dashboard());
-  const [ins, setIns] = useState<LiveInsights | null>(null);
+  const { pack, online } = useApp();
+  const { data, loading, error, reload } = useData(
+    () => (online ? engine.insights(pack) : Promise.resolve(sample.insights())), [pack, online]);
   useEffect(() => {
-    live.status().then((s) => s && live.insights(s.default_pack).then(setIns));
-    const t = setInterval(() => {
-      live.status().then((s) => s && live.insights(s.default_pack).then(setIns));
-    }, 5000);
+    if (!online) return;
+    const t = setInterval(reload, 5000);
     return () => clearInterval(t);
-  }, []);
-  if (loading) return <div className="empty">Loading…</div>;
-  if (error || !data) return <div className="empty">Could not load: {error}</div>;
+  }, [online, reload]);
 
-  const pie = Object.entries(data.outcomes).map(([name, value]) => ({ name, value }));
+  if (loading && !data) return <Loading />;
+  if (!data) {
+    return (
+      <Page title="Aaj">
+        <div className="empty">Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></div>
+      </Page>
+    );
+  }
+
+  const total = Object.values(data.outcomes).reduce((a, b) => a + b, 0) || 1;
+  const peak = data.by_hour.reduce((m, h) => (h.calls > m.calls ? h : m), { hour: "—", calls: 0, booked: 0 });
+  const present = ORDER.filter((o) => data.outcomes[o]);
 
   return (
-    <Page title="Today"
-          sub="Every call the agent handled, and what came of it.">
-      <p style={{ margin: "-14px 0 18px" }}>
-        {ins
-          ? <span className="livechip">● live — engine server connected</span>
-          : <span className="livechip off">sample data — run `haanji serve` for live numbers</span>}
-      </p>
-      {ins && (
-        <Panel title="AI insights (live)"
-               hint={`${ins.calls_total} calls recorded · refreshes every 5 s`}>
-          <div className="body">
-            <div className="cards" style={{ marginBottom: 16 }}>
-              <Stat label="Calls handled" value={ins.calls_total}
-                    foot={`${ins.calls_today} today`} />
-              <Stat label="Bookings on calendar" value={ins.bookings_confirmed}
-                    foot={`worth ₹${ins.revenue_booked_inr.toLocaleString("en-IN")}`} />
-              <Stat label="Missed calls recovered"
-                    value={`${ins.missed_calls.recovered}/${ins.missed_calls.total}`}
-                    foot="via WhatsApp outreach" />
-              <Stat label="Cost per call"
-                    value={`₹${ins.cost.ai_per_call_inr.toFixed(2)}`}
-                    foot={`vs ₹${ins.cost.receptionist_per_call_inr.toFixed(2)} receptionist`} />
-              <Stat label="Words repaired" value={ins.corrections_total}
-                    foot="Bhasha Bridge" />
-              <Stat label="Speculation hit rate"
-                    value={`${(ins.speculation.hit_rate * 100).toFixed(0)}%`}
-                    foot={`${ins.speculation.hits} of ${ins.speculation.started} tool calls`} />
-            </div>
-            {ins.insights.map((line, i) => (
-              <p key={i} style={{ margin: "6px 0", fontSize: 13.5 }}>• {line}</p>
-            ))}
-          </div>
-        </Panel>
-      )}
-      <div className="cards">
-        <Stat label="Calls answered" value={data.calls_today}
-              foot={`${(data.answer_rate * 100).toFixed(0)}% of calls picked up`} />
-        <Stat label="Appointments booked" value={data.bookings_today}
-              foot={`${(data.booking_rate * 100).toFixed(0)}% of calls ended in a booking`} />
-        <Stat label="Leads waiting" value={data.leads_open}
-              foot="callers the agent could not book" />
-        <Stat label="Reply latency" value={`${data.latency.p50} ms`}
-              foot={`p90 ${data.latency.p90} ms · p95 ${data.latency.p95} ms`} />
-        <Stat label="Words repaired" value={data.corrections_today}
-              foot="Bhasha Bridge, today" />
-        <Stat label="Speculation hit rate"
-              value={`${(data.speculation_hit_rate * 100).toFixed(0)}%`}
-              foot="tools finished before they were asked for" />
+    <Page title="Aaj" sub={`${pack.replace(/_/g, " ")} — har call jo agent ne uthayi, aur usse kya nikla.`}>
+      <div className="tiles">
+        <Tile index={0} label="Calls aaj" value={data.calls_today} foot={`${data.calls_total} kul`} />
+        <Tile index={1} label="Bookings" value={data.bookings_confirmed} foot={`${fmtInr(data.revenue_booked_inr)} ki`} />
+        <Tile index={2} label="Missed calls wapas" value={`${data.missed_calls.recovered}/${data.missed_calls.total}`} foot="WhatsApp se" />
+        <Tile index={3} label="₹ per call" value={data.cost.ai_per_call_inr} decimals={2} prefix="₹" mono foot={`receptionist ₹${data.cost.receptionist_per_call_inr.toFixed(2)}`} />
+        <Tile index={4} label="Shabd sudhaare" value={data.corrections_total} foot="Bhasha Bridge" />
+        <Tile index={5} label="Speculation hits" value={Math.round(data.speculation.hit_rate * 100)} suffix="%" foot={`${data.speculation.hits} of ${data.speculation.started} tool calls`} />
       </div>
 
-      <Panel title="Calls through the day" hint="booked calls shown in teal">
+      <Panel title="Din bhar ki calls" hint={`peak ${peak.hour}:00 — ${peak.calls} calls · booked marigold mein`}>
         <div className="body" style={{ height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.by_hour} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
-              <CartesianGrid stroke="#eef2f5" vertical={false} />
-              <XAxis dataKey="hour" tickLine={false} axisLine={{ stroke: "#dce2e8" }}
-                     tick={{ fontSize: 12, fill: "#5b6875" }} />
-              <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#5b6875" }} />
-              <Tooltip cursor={{ fill: "#f6f8fa" }} />
-              <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="calls" name="calls" fill="#2c63c4" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="booked" name="booked" fill="#0e8f80" radius={[3, 3, 0, 0]} />
+              <CartesianGrid stroke="rgba(27,59,140,.14)" vertical={false} />
+              <XAxis dataKey="hour" tickLine={false} axisLine={{ stroke: "rgba(27,59,140,.3)" }} tick={{ fontSize: 12, fill: "rgba(20,33,61,.68)" }} />
+              <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "rgba(20,33,61,.68)" }} allowDecimals={false} />
+              <Tooltip cursor={{ fill: "rgba(27,59,140,.06)" }} contentStyle={{ borderRadius: 8, border: "1px solid rgba(27,59,140,.14)", fontSize: 13 }} />
+              {/* recharts reads attributes, not CSS variables: these are the system's cobalt and marigold. */}
+              <Bar dataKey="calls" name="calls" fill="#1B3B8C" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="booked" name="booked" fill="#F5B91E" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </Panel>
 
-      <Panel title="How calls ended">
-        <div className="body" style={{ height: 250 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={pie} dataKey="value" nameKey="name" innerRadius={58} outerRadius={92}
-                   paddingAngle={2}>
-                {pie.map((slice) => (
-                  <Cell key={slice.name} fill={OUTCOME_COLOUR[slice.name] ?? "#9aa7b4"} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
+      <Panel title="Calls kaise khatam huin" hint={`${total} calls`}>
+        <div className="body">
+          <div className="obar" role="img" aria-label={present.map((o) => `${o.toLowerCase()} ${data.outcomes[o]}`).join(", ")}>
+            {present.map((o) => <i key={o} className={o} style={{ width: `${((data.outcomes[o] ?? 0) / total) * 100}%` }} />)}
+          </div>
+          <div className="legend">
+            {present.map((o) => (
+              <span key={o}><i style={{ background: SWATCH[o] }} />{o.replace(/_/g, " ").toLowerCase()} · {data.outcomes[o]}</span>
+            ))}
+          </div>
+        </div>
+      </Panel>
+
+      <Panel title="Engine ne kya dekha" hint={`${fmtTime(data.generated_at)} pe bana${online ? " · har 5 s refresh" : ""}`}>
+        <div className="body">
+          {data.insights.length === 0 && <p className="muted">Abhi kuch kehne layak nahi — kuch calls hone do.</p>}
+          {data.insights.map((line, i) => <p key={i} data-reveal style={{ "--i": i, margin: "6px 0" } as CSSProperties}>• {line}</p>)}
         </div>
       </Panel>
     </Page>

@@ -1,66 +1,50 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { api } from "../api";
-import { Badge, Page, Panel, fmtDuration, fmtTime, useData } from "../components/Common";
-import { live, type LiveCallRow } from "../live";
+import type { CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
+import { engine, fmtMs } from "../engine";
+import { sample } from "../sample";
+import { useApp } from "../state";
+import { Empty, Icon, Loading, OutcomeChip, Page, Panel, Register, fmtDate, fmtTime, useData } from "../components/Common";
 
 export default function Calls() {
-  const { data, loading, error } = useData(() => api.conversations());
-  const [rows, setRows] = useState<LiveCallRow[] | null>(null);
-  useEffect(() => {
-    live.status().then((s) => s && live.calls(s.default_pack)
-      .then((r) => setRows(r ? r.conversations : null)));
-  }, []);
-  if (loading) return <div className="empty">Loading…</div>;
-  if (error || !data) return <div className="empty">Could not load: {error}</div>;
+  const { pack, online } = useApp();
+  const nav = useNavigate();
+  const { data, loading, error, reload } = useData(
+    () => (online ? engine.calls(pack).then((r) => r.conversations) : Promise.resolve(sample.calls())), [pack, online]);
+
+  if (loading && !data) return <Loading />;
+  if (!data) {
+    return (
+      <Page title="Calls">
+        <Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></Empty>
+      </Page>
+    );
+  }
 
   return (
-    <Page title="Calls" sub="Newest first. Open a call to read the transcript and its receipt.">
-      {rows && rows.length > 0 && (
-        <Panel title="Live calls — this machine" hint={`${rows.length} recorded by the engine server`}>
-          <table>
-            <thead>
-              <tr><th>Time</th><th>Channel</th><th>Caller</th><th>Outcome</th>
-                  <th>Repairs</th><th>Spec hits</th><th /></tr>
-            </thead>
-            <tbody>
-              {rows.map((c) => (
-                <tr key={c.call_id}>
-                  <td>{c.started_at.slice(11, 16)}</td>
-                  <td>{c.channel.toLowerCase()}</td>
-                  <td className="mono">{c.phone ?? "—"}</td>
-                  <td><Badge kind={c.outcome} /></td>
-                  <td>{c.corrections}</td>
-                  <td>{c.spec_hits}</td>
-                  <td><Link to={`/calls/live-${c.call_id}`}>open</Link></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Panel>
-      )}
-      <Panel title={rows && rows.length ? "Sample dataset" : "Recent conversations"}
-             hint={`${data.length} shown`}>
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th><th>Channel</th><th>Caller</th>
-              <th>Outcome</th><th>Length</th><th />
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((c) => (
-              <tr key={c.conversation_id}>
-                <td>{fmtTime(c.started_at)}</td>
+    <Page title="Calls" sub="Nayi pehle. Transcript aur receipt ke liye row kholo.">
+      <Panel title={online ? "Engine ki calls" : "Sample calls"} hint={`${data.length} calls · ${pack.replace(/_/g, " ")}`}>
+        {data.length === 0 ? (
+          <Empty>
+            <p>Abhi koi call nahi.</p>
+            <a className="btn btn-primary" href="/engine/talk" target="_blank" rel="noopener noreferrer">/talk pe ek call karke dekho <Icon name="external" small /></a>
+          </Empty>
+        ) : (
+          <Register head={<><th>Kab</th><th>Channel</th><th>Caller</th><th>Outcome</th><th className="right">Repairs</th><th className="right">Spec hits</th><th className="right">Latency p50</th></>}>
+            {data.map((c, i) => (
+              <tr key={c.call_id} className="click" data-reveal style={{ "--i": i } as CSSProperties}
+                  onClick={() => nav(`/calls/${c.call_id}`)} tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === "Enter") nav(`/calls/${c.call_id}`); }}>
+                <td className="mono">{fmtDate(c.started_at)} {fmtTime(c.started_at)}</td>
                 <td>{c.channel.toLowerCase()}</td>
-                <td className="mono">{c.caller_phone}</td>
-                <td><Badge kind={c.outcome} /></td>
-                <td>{fmtDuration(c.duration_ms)}</td>
-                <td><Link to={`/calls/${c.conversation_id}`}>open</Link></td>
+                <td className="mono">{c.phone ?? "—"}</td>
+                <td><OutcomeChip outcome={c.outcome} /></td>
+                <td className="num right">{c.corrections}</td>
+                <td className="num right">{c.spec_hits}{c.spec_started != null ? `/${c.spec_started}` : ""}</td>
+                <td className="num right">{fmtMs(c.latency_p50)}</td>
               </tr>
             ))}
-          </tbody>
-        </table>
+          </Register>
+        )}
       </Panel>
     </Page>
   );

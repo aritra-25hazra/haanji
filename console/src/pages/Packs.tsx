@@ -1,51 +1,51 @@
-import { api } from "../api";
-import { Page, Panel, useData } from "../components/Common";
-
-const DESCRIPTIONS: Record<string, string> = {
-  dental_clinic: "Dental clinic — treatments, dentists, emergency escalation",
-  salon_spa: "Salon and spa — stylists, long services, Monday closed",
-  diagnostic_lab: "Diagnostic lab — fasting rules, home collection, no result interpretation",
-  coaching_institute: "Coaching institute — demo classes, counsellors, no outcome promises",
-};
+import type { CSSProperties } from "react";
+import { engine } from "../engine";
+import { sample } from "../sample";
+import { useApp } from "../state";
+import { Chip, Empty, Loading, Page, Panel, Register, useData } from "../components/Common";
 
 export default function Packs() {
-  const { data, loading, error } = useData(() => api.packs());
-  if (loading) return <div className="empty">Loading…</div>;
-  if (error || !data) return <div className="empty">Could not load: {error}</div>;
+  const { pack, online, setPack } = useApp();
+  const { data, loading, error, reload } = useData(
+    () => (online ? engine.packs().then((r) => r.packs) : Promise.resolve(sample.packs())), [online]);
+
+  if (loading && !data) return <Loading />;
+  if (!data) {
+    return (
+      <Page title="Packs">
+        <Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></Empty>
+      </Page>
+    );
+  }
 
   return (
-    <Page title="Vertical pack"
-          sub="One file describes what your agent knows, what it refuses, and how it speaks.">
-      <Panel title="Installed packs" hint={`${data.length} available`}>
-        <table>
-          <thead><tr><th>Pack</th><th>Covers</th><th /></tr></thead>
-          <tbody>
-            {data.map((p) => (
-              <tr key={p}>
-                <td><strong>{p.replace(/_/g, " ")}</strong></td>
-                <td style={{ color: "#5b6875" }}>{DESCRIPTIONS[p] ?? "—"}</td>
-                <td>{p === "dental_clinic"
-                  ? <span className="badge BOOKED">in use</span>
-                  : <a href="#switch">switch</a>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <Page title="Vertical packs" sub="Ek file batati hai agent kya jaanta hai, kya mana karta hai, aur kaise bolta hai.">
+      <Panel title="Installed" hint={`${data.length} packs`}>
+        <Register head={<><th>Pack</th><th>Language</th><th className="right">Services</th><th className="right">Staff</th><th className="right">Scenarios</th><th>Health</th><th></th></>}>
+          {data.map((p, i) => (
+            <tr key={p.pack_id} data-reveal style={{ "--i": i } as CSSProperties}>
+              <td><strong>{p.display_name}</strong> <span className="muted mono" style={{ fontSize: 12 }}>v{p.version}</span></td>
+              <td>{p.language}</td>
+              <td className="num right">{p.services}</td>
+              <td className="num right">{p.staff}</td>
+              <td className="num right">{p.scenarios}</td>
+              <td>{p.issues.length === 0 ? <Chip kind="ok">valid</Chip> : <Chip kind="bad">{p.issues.length} issues</Chip>}</td>
+              <td className="right">{p.pack_id === pack ? <Chip kind="warn">in use</Chip> : <button className="btn btn-ghost btn-sm" onClick={() => setPack(p.pack_id)}>Use</button>}</td>
+            </tr>
+          ))}
+        </Register>
       </Panel>
 
-      <Panel title="What a pack contains">
+      <Panel title="Ek pack mein kya hota hai">
         <div className="body">
-          <dl className="kv">
-            <dt>Catalogue</dt><dd>services, durations, prices, who performs each one</dd>
-            <dt>Hours</dt><dd>working days, opening and closing times, breaks</dd>
-            <dt>Persona</dt><dd>the greeting, the tone, how much the agent says at once</dd>
-            <dt>Guardrails</dt>
-            <dd>what the agent refuses outright, and what sends the call to a person</dd>
-            <dt>Vocabulary</dt>
-            <dd>seed words for the sound index — localities, brands, common phrases</dd>
-            <dt>Knowledge</dt><dd>the questions callers actually ask, and your answers</dd>
-            <dt>Scenarios</dt>
-            <dd>the calls this pack must still handle correctly before it ships</dd>
+          <dl style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "8px 16px", margin: 0 }}>
+            <dt className="muted">Catalogue</dt><dd style={{ margin: 0 }}>services, kitna time, daam, kaun karta hai</dd>
+            <dt className="muted">Hours</dt><dd style={{ margin: 0 }}>din, khulne-band hone ka time, breaks</dd>
+            <dt className="muted">Persona</dt><dd style={{ margin: 0 }}>greeting, tone, ek baar mein kitna bolna</dd>
+            <dt className="muted">Guardrails</dt><dd style={{ margin: 0 }}>kya seedha mana karna, kya insaan ko dena</dd>
+            <dt className="muted">Vocabulary</dt><dd style={{ margin: 0 }}>sound-index ke seed shabd — ilaake, brands, aam phrases</dd>
+            <dt className="muted">Knowledge</dt><dd style={{ margin: 0 }}>jo sawaal log sach mein poochte hain, aur jawab</dd>
+            <dt className="muted">Scenarios</dt><dd style={{ margin: 0 }}>wo calls jo pack ko ship hone se pehle paas karni hain</dd>
           </dl>
         </div>
       </Panel>
