@@ -16,3 +16,6 @@ var/
 
 # brainstorming companion sessions
 .superpowers/
+
+# research audio is reproducible from the scripts; only the pairs are kept
+research/collect/data/*/audio/

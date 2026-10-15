@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HaanJi — User study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/signboard.css">
+<style>
+  body { min-height: 100dvh; display: flex; flex-direction: column; }
+  main { flex: 1; width: min(820px, 100%); margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 18px; }
+  .step { display: none; flex-direction: column; gap: 16px; padding: 28px; }
+  .step.on { display: flex; }
+  .step h2 { font-size: 26px; }
+  .step p, .step li { line-height: 1.55; }
+  .steps { display: flex; gap: 6px; font-family: var(--font-mono); font-size: 12px; color: var(--haze); }
+  .steps b { color: var(--marigold); }
+  .task { display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1.5px solid rgba(245, 185, 30, .35); border-radius: var(--r-card); }
+  .task h3 { font-size: 18px; }
+  .task .card-text { font-family: var(--font-display); font-size: 22px; line-height: 1.25; color: var(--chalk); }
+  .task .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .task .mono { color: var(--haze); }
+  .task.done { border-color: var(--leaf); }
+  .task.failed { border-color: var(--sindoor); }
+  .sus { display: flex; flex-direction: column; gap: 10px; }
+  .q { display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255, 247, 230, .12); }
+  .q .scale { display: flex; gap: 4px; }
+  .q .scale label { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--haze); min-width: 34px; }
+  .q .scale input { width: 20px; height: 20px; accent-color: var(--marigold); }
+  .legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--haze); }
+  textarea.input { min-height: 96px; padding: 10px 12px; width: 100%; resize: vertical; }
+  .field .input { width: 100%; }
+  .notice { margin: 0 auto; width: min(820px, 100%); padding: 10px 16px; color: var(--sindoor); font-weight: 600; }
+  @media (max-width: 560px) { .q { grid-template-columns: 1fr; } .step { padding: 18px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Seedha content pe jao</a>
+<header class="wrap nav">
+  <a class="wordmark paint" href="./">HaanJi <span class="dev">हाँजी</span></a>
+  <nav><ul>
+    <li><a href="talk">Demo</a></li>
+    <li><a href="record">Record</a></li>
+    <li><a href="https://github.com/aritra-25hazra/haanji/blob/main/docs/study/protocol.md" rel="noopener">Protocol <i data-icon="arrow" class="ic-sm"></i></a></li>
+  </ul></nav>
+</header>
+<div id="notice" class="notice" hidden role="status"></div>
+<main id="main">
+  <p class="steps" id="steps"></p>
+
+  <section class="frame step on" id="s-consent" aria-label="Consent">
+    <h2>Ek chhoti si study</h2>
+    <p>Aap HaanJi se teen chhote kaam karwayenge — jaise ek clinic mein phone karke appointment lena. Har kaam ke baad batayenge ho gaya ya nahi, aur aakhir mein das sawaal (1 se 5) aur do line apni raay.</p>
+    <p>Lagbhag 10 minute. Aapki awaaz record nahi hoti; sirf transcript, kaam ka natija aur aapke jawab save hote hain, bina naam ke. Aap kabhi bhi band kar sakte hain.</p>
+    <label class="field"><span>Aapka participant code (study chalane wala dega)</span><input id="pid" class="input" placeholder="jaise: P04" autocomplete="off"></label>
+    <label class="field"><span>Pack</span><select id="pack" class="input"></select></label>
+    <label style="display:flex;gap:10px;align-items:flex-start;font-size:14px"><input type="checkbox" id="consent" style="width:20px;height:20px;accent-color:var(--marigold)"> <span>Main samajh gaya/gayi hoon aur hissa lene ko taiyaar hoon.</span></label>
+    <div><button type="button" class="btn btn-primary" id="go" disabled>Shuru karein <i data-icon="arrow"></i></button></div>
+  </section>
+
+  <section class="frame step" id="s-tasks" aria-label="Tasks">
+    <h2>Teen kaam</h2>
+    <p>Har kaam ke liye "Call shuru" dabaiye — demo nayi tab mein khulega. Kaam poora ho jaye (ya na ho paye) to wapas aakar bataiye. Mic ya type, jo aasaan lage.</p>
+    <div id="tasks"></div>
+    <div><button type="button" class="btn btn-primary" id="to-sus" disabled>Aage: das sawaal <i data-icon="arrow"></i></button></div>
+  </section>
+
+  <section class="frame step" id="s-sus" aria-label="Questionnaire">
+    <h2>Das sawaal</h2>
+    <p class="legend"><span>1 = bilkul sehmat nahi</span><span>5 = poori tarah sehmat</span></p>
+    <div class="sus" id="sus"></div>
+    <label class="field"><span>Kya galat ya ajeeb laga? (do line)</span><textarea id="wrong" class="input"></textarea></label>
+    <label class="field"><span>Kya accha laga?</span><textarea id="good" class="input"></textarea></label>
+    <div><button type="button" class="btn btn-primary" id="submit">Jama karo <i data-icon="check"></i></button></div>
+  </section>
+
+  <section class="frame step" id="s-done" aria-label="Done">
+    <h2>Shukriya!</h2>
+    <p>Aapke jawab save ho gaye. Study chalane wala <a href="api/study/export">export</a> se sab natije CSV mein le sakta hai.</p>
+    <p class="mono" id="summary"></p>
+  </section>
+</main>
+<footer class="wrap foot"><span>Protocol aur analysis: <code>docs/study/protocol.md</code> · <code>research/harness/study_analysis.py</code></span></footer>
+<script src="static/signboard.js"></script>
+<script>
+(function () {
+  const S = window.Signboard, $ = function (id) { return document.getElementById(id); };
+  S.mountIcons();
+  const TASKS = [
+    { id: "book", title: "Kaam 1 — Appointment lo", text: "Kal subah ke liye koi bhi service book karo. Apna naam aur ek 10-digit number dena padega (asli dene ki zaroorat nahi).", outcome: "BOOKED" },
+    { id: "price", title: "Kaam 2 — Daam poocho", text: "Kisi ek service ka daam aur kitna time lagega, yeh pata karo. Booking mat karo.", outcome: "FAQ_ANSWERED" },
+    { id: "closed", title: "Kaam 3 — Band din", text: "Ravivaar (Sunday) ke liye time maango. Jab na mile, apna naam-number chhod do taaki wo wapas call karein.", outcome: "LEAD_CAPTURED" },
+  ];
+  const SUS = [
+    "Main is system ko baar-baar use karna chahunga/chahungi.",
+    "System bewajah complicated laga.",
+    "System use karna aasaan tha.",
+    "Isse use karne ke liye kisi technical insaan ki madad lagegi.",
+    "Iske alag-alag hisse achhe se jude hue lage.",
+    "Isme bahut kuch asangat (inconsistent) laga.",
+    "Zyadatar log ise jaldi seekh lenge.",
+    "Ise use karna bahut bojhil laga.",
+    "Ise use karte hue mujhe bharosa laga.",
+    "Shuru karne se pehle bahut kuch seekhna pada.",
+  ];
+  const state = { pid: "", pack: "", tasks: {}, started: Date.now() };
+  function notice(t) { $("notice").textContent = t; $("notice").hidden = !t; }
+  function steps(n) { $("steps").innerHTML = ["Sehmati", "Teen kaam", "Das sawaal", "Shukriya"].map(function (s, i) { return (i === n ? "<b>" : "<span>") + (i + 1) + " " + s + (i === n ? "</b>" : "</span>"); }).join(" · "); }
+  function showStep(id, n) { document.querySelectorAll(".step").forEach(function (e) { e.classList.remove("on"); }); $(id).classList.add("on"); steps(n); window.scrollTo(0, 0); }
+  function renderTasks() {
+    $("tasks").innerHTML = TASKS.map(function (t, i) {
+      return '<div class="task" id="task-' + t.id + '"><h3>' + S.esc(t.title) + '</h3><p class="card-text">' + S.esc(t.text) + '</p>' +
+        '<div class="row"><a class="btn btn-primary" data-start="' + t.id + '" href="talk?pack=' + encodeURIComponent(state.pack) + '&study=' + encodeURIComponent(state.pid + "-" + t.id) + '" target="_blank" rel="noopener"><i data-icon="phone"></i>Call shuru</a>' +
+        '<button type="button" class="btn btn-ghost" data-done="' + t.id + '" disabled><i data-icon="check"></i>Ho gaya</button>' +
+        '<button type="button" class="btn btn-ghost" data-fail="' + t.id + '" disabled><i data-icon="x"></i>Nahi ho paya</button>' +
+        '<span class="mono" id="t-' + t.id + '"></span></div></div>';
+    }).join("");
+    S.mountIcons($("tasks"));
+    document.querySelectorAll("[data-start]").forEach(function (a) { a.addEventListener("click", function () {
+      const id = a.getAttribute("data-start"); state.tasks[id] = { started: Date.now() };
+      document.querySelector('[data-done="' + id + '"]').disabled = document.querySelector('[data-fail="' + id + '"]').disabled = false;
+      $("t-" + id).textContent = "chal raha hai…";
+    }); });
+    function finish(id, ok) {
+      const t = state.tasks[id] || { started: Date.now() }; t.success = ok; t.seconds = Math.round((Date.now() - t.started) / 1000); state.tasks[id] = t;
+      const el = $("task-" + id); el.classList.toggle("done", ok); el.classList.toggle("failed", !ok);
+      $("t-" + id).textContent = (ok ? "ho gaya" : "nahi hua") + " · " + t.seconds + " s";
+      $("to-sus").disabled = TASKS.some(function (x) { return !state.tasks[x.id] || state.tasks[x.id].success === undefined; });
+    }
+    document.querySelectorAll("[data-done]").forEach(function (b) { b.addEventListener("click", function () { finish(b.getAttribute("data-done"), true); }); });
+    document.querySelectorAll("[data-fail]").forEach(function (b) { b.addEventListener("click", function () { finish(b.getAttribute("data-fail"), false); }); });
+  }
+  function renderSus() {
+    $("sus").innerHTML = SUS.map(function (q, i) {
+      return '<div class="q"><span>' + (i + 1) + '. ' + S.esc(q) + '</span><span class="scale">' + [1, 2, 3, 4, 5].map(function (v) {
+        return '<label><input type="radio" name="sus' + i + '" value="' + v + '" required>' + v + '</label>'; }).join("") + '</span></div>';
+    }).join("");
+  }
+  function susAnswers() {
+    const out = [];
+    for (let i = 0; i < SUS.length; i++) { const c = document.querySelector('input[name="sus' + i + '"]:checked'); if (!c) return null; out.push(Number(c.value)); }
+    return out;
+  }
+  function check() { $("go").disabled = !($("consent").checked && $("pid").value.trim()); }
+  $("consent").addEventListener("change", check); $("pid").addEventListener("input", check);
+  $("go").addEventListener("click", function () { state.pid = $("pid").value.trim(); state.pack = $("pack").value; renderTasks(); showStep("s-tasks", 1); });
+  $("to-sus").addEventListener("click", function () { renderSus(); showStep("s-sus", 2); });
+  $("submit").addEventListener("click", async function () {
+    const sus = susAnswers();
+    if (!sus) { notice("Das ke das sawaal ka jawab chahiye."); return; }
+    notice("");
+    const body = { participant: state.pid, pack: state.pack, tasks: TASKS.map(function (t) { const r = state.tasks[t.id] || {}; return { id: t.id, expected: t.outcome, success: !!r.success, seconds: r.seconds || null }; }),
+                   sus: sus, wrong: $("wrong").value, good: $("good").value, duration_s: Math.round((Date.now() - state.started) / 1000) };
+    try {
+      const r = await fetch("api/study", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const d = await r.json();
+      $("summary").textContent = "SUS score: " + d.sus_score + " / 100 · tasks: " + d.tasks_done + " / " + TASKS.length;
+      showStep("s-done", 3);
+    } catch (e) { notice("Jama nahi hua: " + e.message); }
+  });
+  S.status().then(function (s) {
+    if (!s) { notice("Server se connect nahi ho pa raha."); return; }
+    $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+  });
+  steps(0);
+})();
+</script>
+</body>
+</html>
