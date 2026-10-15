@@ -71,3 +71,20 @@ services:
         sync: false
       - key: HAANJI_DIGEST_HOUR
         value: "20"
+      # A real phone number (docs/phone-setup.md): Twilio rings the engine,
+      # Deepgram hears, ElevenLabs speaks. All entered in the dashboard.
+      - key: HAANJI_TWILIO_AUTH_TOKEN
+        sync: false
+      - key: HAANJI_DEEPGRAM_KEY
+        sync: false
+      - key: HAANJI_ELEVENLABS_KEY
+        sync: false
+      - key: HAANJI_ELEVENLABS_VOICE
+        sync: false
+      - key: HAANJI_PHONE_DISPLAY
+        sync: false
+      # Google Calendar (console → Calendar → "Google Calendar jodo").
+      - key: HAANJI_GOOGLE_CLIENT_ID
+        sync: false
+      - key: HAANJI_GOOGLE_CLIENT_SECRET
+        sync: false

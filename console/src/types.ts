@@ -10,6 +10,8 @@ export interface Status {
   whatsapp?: { configured: boolean; number: string | null };
   digest?: { owner_configured: boolean; hour_ist: number };
   auth?: { enabled: boolean; dev: boolean };
+  google?: { configured: boolean; connected: string[] };
+  phone?: { configured: boolean; number: string | null };
 }
 
 export interface User {

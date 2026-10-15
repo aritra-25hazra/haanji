@@ -82,6 +82,8 @@ export default function Dashboard() {
 
       {online && <DigestPanel pack={pack} />}
 
+      {online && <CalendarPanel pack={pack} />}
+
       <Panel title="Engine ne kya dekha" hint={`${fmtTime(data.generated_at)} pe bana${online ? " · har 5 s refresh" : ""}`}>
         <div className="body">
           {data.insights.length === 0 && <p className="muted">Abhi kuch kehne layak nahi — kuch calls hone do.</p>}
@@ -162,6 +164,44 @@ function LivePanel({ pack, onEnded }: { pack: string; onEnded: () => void }) {
             {e.kind === "session.ended" && <span>Call khatam · <OutcomeChip outcome={e.outcome ?? null} /> · {e.turns} turns{typeof e.receipts === "number" && e.receipts > 0 ? ` · ${e.receipts} receipt` : ""}</span>}
           </div>
         ))}
+      </div>
+    </Panel>
+  );
+}
+
+
+/** The bookings on the owner's own calendar: a feed URL any app subscribes
+ *  to, and a Google Calendar connection when credentials are configured. */
+function CalendarPanel({ pack }: { pack: string }) {
+  const feed = useData(() => engine.feedUrl(pack), [pack]);
+  const g = useData(() => engine.googleStatus(pack), [pack]);
+  const [note, setNote] = useState<string | null>(null);
+  const copy = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); setNote("Copy ho gaya — apne calendar app mein 'subscribe by URL' mein paste karo."); }
+    catch { setNote(text); }
+  };
+  const connect = async () => {
+    try { const r = await engine.googleConnect(pack); window.open(r.url, "_blank", "noopener"); setNote("Google ki tab khuli — permission do, phir yahan refresh karo."); }
+    catch (e) { setNote(e instanceof Error ? e.message : String(e)); }
+  };
+  const disconnect = async () => { await engine.googleDisconnect(pack); g.reload(); setNote("Google Calendar hata diya."); };
+  if (!feed.data) return null;
+  return (
+    <Panel title="Calendar" hint="har booking owner ke calendar pe"
+           actions={g.data?.configured
+             ? (g.data.connected
+               ? <button className="btn btn-ghost btn-sm" onClick={disconnect}>Google hatao</button>
+               : <button className="btn btn-primary btn-sm" onClick={connect}>Google Calendar jodo</button>)
+             : <Chip kind="muted">Google: keys set nahi</Chip>}>
+      <div className="body form">
+        <div className="row">
+          <label className="field grow"><span>Subscribe URL (Google / Apple / Outlook — "add by URL")</span>
+            <input className="input mono" readOnly value={feed.data.url} onFocus={(e) => e.currentTarget.select()} /></label>
+          <button className="btn btn-ghost" onClick={() => copy(feed.data!.url)}>Copy</button>
+          <a className="btn btn-ghost" href={feed.data.webcal}>Apple Calendar</a>
+        </div>
+        {g.data?.connected && <p className="muted">Google Calendar juda hai{g.data.connected_at ? ` · ${fmtTime(g.data.connected_at)} se` : ""}. Nayi bookings apne aap event banti hain.</p>}
+        {note && <p className="muted" role="status">{note}</p>}
       </div>
     </Panel>
   );

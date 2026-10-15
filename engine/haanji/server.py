@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import yaml
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel
@@ -44,6 +44,7 @@ from .telemetry import TELEMETRY, TOOL_BUCKETS_MS
 from .devanagari import transliterate
 from . import calendar as cal_mod
 from .gcal import GoogleCalendar
+from .telephony import twilio as twilio_mod
 from .metrics import percentile
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
@@ -101,7 +102,7 @@ app.add_middleware(CORSMiddleware, allow_origin_regex=CORS_ORIGIN_REGEX,
 # scanner expects. The WhatsApp webhook is exempt: it is signed, and Meta
 # retries in bursts.
 RATE_LIMIT_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_PER_MIN", "120"))
-RATE_LIMIT_EXEMPT = ("/wa/webhook", "/api/status")
+RATE_LIMIT_EXEMPT = ("/wa/webhook", "/api/status", "/telephony/")
 _buckets: dict[str, tuple[float, float]] = {}      # client -> (tokens, last refill)
 
 
@@ -1241,6 +1242,73 @@ async def google_disconnect(pack: str = DEFAULT_PACK):
     return {"disconnected": gcal.disconnect(pack)}
 
 
+# ──────────────────────────────────────────────────────────── telephony
+def phone_configured() -> bool:
+    return bool(os.environ.get("HAANJI_DEEPGRAM_KEY") and os.environ.get("HAANJI_ELEVENLABS_KEY")
+                and os.environ.get("HAANJI_ELEVENLABS_VOICE"))
+
+
+def phone_status() -> dict[str, Any]:
+    return {"configured": phone_configured(), "number": os.environ.get("HAANJI_PHONE_DISPLAY") or None,
+            "stream_url": twilio_mod.stream_url(PUBLIC_URL)}
+
+
+@app.post("/telephony/twilio/voice")
+async def twilio_voice(request: Request, pack: str = DEFAULT_PACK):
+    """Twilio asks what to do with the ringing call: stream it to us."""
+    import urllib.parse
+    raw = (await request.body()).decode("utf-8", "replace")
+    form = {k: v[0] for k, v in urllib.parse.parse_qs(raw, keep_blank_values=True).items()}
+    token = os.environ.get("HAANJI_TWILIO_AUTH_TOKEN")
+    if token and not twilio_mod.verify_signature(token, str(request.url), {k: str(v) for k, v in form.items()},
+                                                 request.headers.get("X-Twilio-Signature")):
+        raise HTTPException(403, "bad Twilio signature")
+    if pack not in list_packs():
+        pack = DEFAULT_PACK
+    if not phone_configured():
+        rt = runtime(pack)
+        return Response(twilio_mod.twiml_say(f"{rt.pack.persona.business_name}. The voice bridge is not configured yet."),
+                        media_type="application/xml")
+    caller = str(form.get("From", "")) or None
+    return Response(twilio_mod.twiml_connect(twilio_mod.stream_url(PUBLIC_URL), pack, caller), media_type="application/xml")
+
+
+def _phone_stt_factory(on_text):
+    from .telephony.deepgram import DeepgramStream
+    return DeepgramStream(on_text=on_text)
+
+
+def _phone_tts(text: str):
+    from .telephony.elevenlabs import synth_ulaw
+    return synth_ulaw(text)
+
+
+async def _phone_open(pack: str, caller: str | None):
+    phone = "".join(ch for ch in (caller or "") if ch.isdigit())[-10:] or None
+    return await _new_session(pack, "PHONE", phone)
+
+
+async def _phone_turn(record, holder: Holder) -> None:
+    payload = _turn_payload(record, holder)
+    if payload["receipts"]:
+        asyncio.ensure_future(_notify_customer(holder, payload["receipts"]))
+        asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
+
+
+PHONE_FACTORIES: dict[str, Any] = {"stt": _phone_stt_factory, "tts": _phone_tts}   # tests swap these
+
+
+@app.websocket("/telephony/twilio/stream")
+async def twilio_stream(ws: WebSocket):
+    await ws.accept()
+    bridge = twilio_mod.TwilioBridge(ws, open_session=_phone_open, close_session=_finish,
+                                     stt_factory=PHONE_FACTORIES["stt"], tts=PHONE_FACTORIES["tts"],
+                                     on_turn=_phone_turn,
+                                     on_partial=lambda text, holder: publish("partial", sid=holder_sid(holder),
+                                                                             pack=holder.rt.pack_id, text=text))
+    await bridge.run()
+
+
 # ───────────────────────────────────────────────────── observability
 SLO_TURN_MS = int(os.environ.get("HAANJI_MAX_TURN_LATENCY_MS", "1500"))
 
@@ -1322,6 +1390,7 @@ async def status():
             "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
             "auth": {"enabled": AUTH_ENABLED, "dev": AUTH_DEV},
             "google": {"configured": gcal.configured, "connected": gcal.connected()},
+            "phone": phone_status(),
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
             "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),
