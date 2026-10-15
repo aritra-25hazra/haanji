@@ -36,7 +36,7 @@ p { margin: 0; }
 .icon-sm { width: 14px; height: 14px; flex: none; }
 
 /* ── top bar: the board ─────────────────────────────────────────────── */
-.topbar { position: sticky; top: 0; z-index: 10; background: var(--cobalt); color: var(--chalk); min-height: 64px; display: flex; align-items: center; gap: 18px; padding: 8px 20px; }
+.topbar { position: sticky; top: 0; z-index: 10; overflow-x: clip; background: var(--cobalt); color: var(--chalk); min-height: 64px; display: flex; align-items: center; gap: 18px; padding: 8px 20px; }
 .wordmark { display: inline-flex; align-items: baseline; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -.02em; color: var(--marigold); text-decoration: none; white-space: nowrap; }
 .wordmark .dev { font-family: var(--font-dev); font-weight: 400; font-size: 19px; color: var(--chalk); }
 .nav { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
@@ -48,13 +48,15 @@ p { margin: 0; }
 .tools select { min-height: 40px; padding: 0 10px; border-radius: var(--r-ctl); border: 1.5px solid rgba(255, 247, 230, .35); background: var(--cobalt-deep); color: var(--chalk); max-width: 180px; }
 .tools a { color: var(--chalk); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 10px; border-radius: var(--r-ctl); font-weight: 500; opacity: .9; }
 .tools a:hover { background: rgba(255, 247, 230, .08); }
-.live { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .06em; background: rgba(143, 214, 148, .18); color: var(--leaf); }
+.live { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .06em; background: rgba(255, 247, 230, .12); color: var(--chalk); }
 .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--leaf); box-shadow: 0 0 0 3px rgba(143, 214, 148, .25); }
-.live.off { background: rgba(159, 179, 232, .18); color: var(--haze); }
+.live.off { opacity: .8; }
 .live.off i { background: var(--haze); box-shadow: none; }
 @media (max-width: 720px) {
-  .topbar { gap: 10px; padding: 8px 12px; }
+  .topbar { gap: 8px; padding: 8px 10px; }
   .wordmark .dev { display: none; }
+  .tools { gap: 6px; min-width: 0; }
+  .tools select { max-width: 128px; }
   .tools a span { display: none; }
 }
 

@@ -157,7 +157,7 @@ export function Repair({ c }: { c: { from_token: string; to_surface: string; asr
 
 export function Register({ head, children }: { head: ReactNode; children: ReactNode }) {
   return (
-    <div className="register-wrap">
+    <div className="register-wrap" tabIndex={0} role="region" aria-label="Register — chhoti screen pe side mein scroll hota hai">
       <table className="register">
         <thead><tr>{head}</tr></thead>
         <tbody>{children}</tbody>

@@ -32,7 +32,7 @@ export default function App() {
           <span className={"live" + (online ? "" : " off")} title={online ? "engine se live" : checked ? "sample data" : "checking"}>
             <i />{online ? "LIVE" : checked ? "SAMPLE" : "…"}
           </span>
-          <a href="/engine/talk" target="_blank" rel="noopener noreferrer"><span>Talk</span><Icon name="external" small /></a>
+          <a href="/engine/talk" target="_blank" rel="noopener noreferrer" aria-label="Talk to HaanJi (nayi tab mein)"><span>Talk</span><Icon name="external" small /></a>
         </div>
       </header>
       <main className="main" id="main">
