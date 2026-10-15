@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { engine } from "../engine";
 import { sample } from "../sample";
@@ -77,6 +77,8 @@ export default function Dashboard() {
         </div>
       </Panel>
 
+      {online && <DigestPanel pack={pack} />}
+
       <Panel title="Engine ne kya dekha" hint={`${fmtTime(data.generated_at)} pe bana${online ? " · har 5 s refresh" : ""}`}>
         <div className="body">
           {data.insights.length === 0 && <p className="muted">Abhi kuch kehne layak nahi — kuch calls hone do.</p>}
@@ -84,5 +86,32 @@ export default function Dashboard() {
         </div>
       </Panel>
     </Page>
+  );
+}
+
+
+/** The owner's evening WhatsApp: previewed here, sent by the engine at the
+ *  configured hour, or right now from this button. */
+function DigestPanel({ pack }: { pack: string }) {
+  const { data, reload } = useData(() => engine.digest(pack), [pack]);
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  if (!data) return null;
+  const canSend = data.whatsapp_configured && !!data.to;
+  const send = async () => {
+    setBusy(true); setNote(null);
+    try { const r = await engine.sendDigest(pack); setNote(`Bhej diya · ${r.to}`); }
+    catch (e) { setNote(e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(false); reload(); }
+  };
+  return (
+    <Panel title="Aaj ka digest" hint={`roz ${data.hour_ist}:00 IST pe owner ko WhatsApp${data.to ? ` · ${data.to}` : " · number set nahi"}`}
+           actions={<button className="btn btn-primary btn-sm" onClick={send} disabled={!canSend || busy} title={canSend ? "Abhi bhejo" : "WhatsApp aur HAANJI_OWNER_PHONE chahiye"}>
+             <Icon name="phone" small />{busy ? "Bhej raha…" : "Abhi WhatsApp pe bhejo"}</button>}>
+      <div className="body">
+        <pre className="digest">{data.text}</pre>
+        {note && <p className="muted" role="status">{note}</p>}
+      </div>
+    </Panel>
   );
 }

@@ -167,3 +167,6 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
   [data-reveal] { opacity: 1; transform: none; animation: none; }
   .repair b { opacity: 1; transform: none; }
 }
+
+/* the owner's evening message, as it will read on the phone */
+.digest { white-space: pre-wrap; font-family: var(--font-body); font-size: 14px; line-height: 1.55; margin: 0; padding: 14px 16px; border-radius: var(--r-ctl); background: rgba(27, 59, 140, .06); border: 1px solid rgba(27, 59, 140, .14); }

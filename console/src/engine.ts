@@ -5,6 +5,8 @@
  */
 import type {
   CallRow, Export, Insights, Lexicon, PackSummary, Status, Turn, Verdict,
+  Digest,
+  Anchors,
 } from "./types";
 
 export const ENGINE_BASE = "/engine";
@@ -48,6 +50,9 @@ export const engine = {
   lexicon: (pack: string, probe?: string) =>
     request<Lexicon>(`api/lexicon?${q(pack)}${probe ? `&probe=${encodeURIComponent(probe)}` : ""}`),
   packs: () => request<{ packs: PackSummary[] }>("api/packs"),
+  digest: (pack: string) => request<Digest>(`api/digest?${q(pack)}`),
+  sendDigest: (pack: string) => request<{ sent: boolean; to: string; text: string }>(`api/digest/send?${q(pack)}`, { method: "POST" }),
+  anchors: (pack: string) => request<Anchors>(`api/anchors?${q(pack)}`),
   packYaml: (id: string) => request<{ pack_id: string; yaml: string }>(`api/packs/${encodeURIComponent(id)}`),
   validate: (yaml: string) =>
     request<{ ok: boolean; problems: string[] }>("api/packs/validate",

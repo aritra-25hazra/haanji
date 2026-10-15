@@ -157,6 +157,19 @@ class Ledger:
             "SELECT COUNT(*) c FROM receipts WHERE tenant_id=?", (tenant_id,)).fetchone()["c"]
 
     # ----------------------------------------------------------------- anchors
+    def anchors(self, tenant_id: str) -> list[dict]:
+        """Every day that has been sealed, oldest first."""
+        rows = self.conn.execute(
+            "SELECT tenant_id, day, first_seq, last_seq, merkle_root, signature FROM daily_anchors "
+            "WHERE tenant_id=? ORDER BY day", (tenant_id,)).fetchall()
+        return [dict(r) for r in rows]
+
+    def days_with_receipts(self, tenant_id: str) -> list[str]:
+        rows = self.conn.execute(
+            "SELECT DISTINCT substr(occurred_at, 1, 10) d FROM receipts WHERE tenant_id=? ORDER BY d",
+            (tenant_id,)).fetchall()
+        return [r["d"] for r in rows]
+
     def anchor_day(self, tenant_id: str, day: str | None = None) -> str:
         """Publish a signed Merkle root over one day of receipts."""
         import hashlib

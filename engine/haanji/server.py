@@ -49,17 +49,91 @@ from .vertical import PACK_DIR, PackError, from_dict, list_packs, load_pack
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 VAR_DIR = os.path.abspath(os.environ.get("HAANJI_VAR_DIR", "var"))
 DEFAULT_PACK = os.environ.get("HAANJI_PACK", "dental_clinic")
+# Where this server is reachable from a customer's phone: the receipt link in a
+# WhatsApp message has to be absolute. Render sets RENDER_EXTERNAL_URL itself.
+PUBLIC_URL = (os.environ.get("HAANJI_PUBLIC_URL") or os.environ.get("RENDER_EXTERNAL_URL")
+              or "http://localhost:8090").rstrip("/")
+OWNER_PHONE = os.environ.get("HAANJI_OWNER_PHONE") or None
+DIGEST_HOUR = int(os.environ.get("HAANJI_DIGEST_HOUR", "20"))          # IST
+IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
 SESSION_IDLE_S = 1800
 
 os.makedirs(VAR_DIR, exist_ok=True)
 
-app = FastAPI(title="HaanJi demo server", version="0.4.0")
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    """The evening scheduler (daily anchors, the owner's digest) runs for the
+    life of the process; HAANJI_SCHEDULER=0 keeps it off, e.g. in tests."""
+    task = None
+    if os.environ.get("HAANJI_SCHEDULER", "1") != "0":
+        task = asyncio.ensure_future(_evening_loop())
+    try:
+        yield
+    finally:
+        if task:
+            task.cancel()
+
+
+app = FastAPI(title="HaanJi demo server", version="0.4.0", lifespan=_lifespan)
 # Same-origin in production, because the console is served through a rewrite;
 # the regex is overridable so the engine can also be called directly.
 CORS_ORIGIN_REGEX = os.environ.get(
     "HAANJI_CORS_ORIGIN_REGEX", r"http://(localhost|127\.0\.0\.1)(:\d+)?")
 app.add_middleware(CORSMiddleware, allow_origin_regex=CORS_ORIGIN_REGEX,
                    allow_methods=["*"], allow_headers=["*"])
+
+
+# ───────────────────────────────────────────────────────────── hardening
+# A public demo gets hammered. Writes are rate limited per client (token
+# bucket, in memory, generous), and every response carries the headers a
+# scanner expects. The WhatsApp webhook is exempt: it is signed, and Meta
+# retries in bursts.
+RATE_LIMIT_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_PER_MIN", "120"))
+RATE_LIMIT_EXEMPT = ("/wa/webhook", "/api/status")
+_buckets: dict[str, tuple[float, float]] = {}      # client -> (tokens, last refill)
+
+
+def _client_of(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "?"
+
+
+def rate_limited(client: str, now: float | None = None) -> bool:
+    """One bucket per client: RATE_LIMIT_PER_MIN tokens, refilled continuously."""
+    if RATE_LIMIT_PER_MIN <= 0:
+        return False
+    now = time.monotonic() if now is None else now
+    tokens, last = _buckets.get(client, (float(RATE_LIMIT_PER_MIN), now))
+    tokens = min(float(RATE_LIMIT_PER_MIN), tokens + (now - last) * RATE_LIMIT_PER_MIN / 60.0)
+    if tokens < 1.0:
+        _buckets[client] = (tokens, now)
+        return True
+    _buckets[client] = (tokens - 1.0, now)
+    if len(_buckets) > 10000:                        # never grow without bound
+        for key in list(_buckets)[:5000]:
+            _buckets.pop(key, None)
+    return False
+
+
+@app.middleware("http")
+async def hardening(request: Request, call_next):
+    if request.method in ("POST", "PUT", "DELETE", "PATCH") and \
+            not request.url.path.startswith(RATE_LIMIT_EXEMPT) and rate_limited(_client_of(request)):
+        return JSONResponse({"detail": "too many requests; try again in a minute"}, status_code=429,
+                            headers={"Retry-After": "60"})
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "microphone=(self), camera=(), geolocation=()")
+    if request.headers.get("x-forwarded-proto", request.url.scheme) == "https":
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    return response
 
 store = DemoStore(os.path.join(VAR_DIR, "store.sqlite"))
 
@@ -159,6 +233,26 @@ def _turn_payload(record, holder: Holder) -> dict[str, Any]:
     }
 
 
+def receipt_link(pack_id: str, code: str) -> str:
+    """The customer's own proof: the public verifier, opened on their receipt."""
+    return f"{PUBLIC_URL}/verify?code={code}&pack={pack_id}"
+
+
+def receipt_note(pack_id: str, codes: list[str]) -> str:
+    links = "\n".join(receipt_link(pack_id, c) for c in codes)
+    return f"Aapki booking ki receipt (kabhi bhi verify kar sakte hain):\n{links}"
+
+
+async def _notify_customer(holder: Holder, codes: list[str]) -> None:
+    """A web or phone caller who gave a number gets the receipt link on
+    WhatsApp, if a real number is connected. Never blocks the call."""
+    if codes and holder.phone and holder.channel != "WHATSAPP" and wa_channel.configured():
+        try:
+            await wa_channel.send_text(holder.phone, receipt_note(holder.rt.pack_id, codes))
+        except Exception as exc:                      # noqa: BLE001 - a courtesy, not the call
+            print(f"receipt notification failed: {exc}", file=sys.stderr)
+
+
 def _finish(sid: str, holder: Holder) -> None:
     report = holder.session.finish()
     store.record_call(report, channel=holder.channel, phone=holder.phone)
@@ -205,6 +299,8 @@ async def session_utterance(sid: str, body: TextIn):
     async with holder.lock:
         record = await holder.session.handle_text_turn(body.text)
         payload = _turn_payload(record, holder)
+        if payload["receipts"]:
+            asyncio.ensure_future(_notify_customer(holder, payload["receipts"]))
         if payload["end_call"]:
             _finish(sid, holder)
     return payload
@@ -244,10 +340,13 @@ async def _wa_turn(pack_id: str, phone: str, text: str) -> list[dict[str, Any]]:
     async with holder.lock:
         record = await holder.session.handle_text_turn(text)
         payload = _turn_payload(record, holder)
-        store.add_wa(pack_id, phone, "out", record.said,
+        text_out = record.said
+        if payload["receipts"]:
+            text_out = f"{record.said}\n\n{receipt_note(pack_id, payload['receipts'])}"
+        store.add_wa(pack_id, phone, "out", text_out,
                      meta={"tools": record.tools, "receipts": payload["receipts"],
                            "corrections": payload["corrections"]})
-        replies.append({"text": record.said, **{k: payload[k] for k in
+        replies.append({"text": text_out, **{k: payload[k] for k in
                        ("corrections", "tools", "speculation_hits", "receipts", "latency_ms")}})
         if payload["end_call"]:
             _finish(sid, holder)
@@ -648,11 +747,122 @@ async def study_export():
                     headers={"Content-Disposition": 'attachment; filename="haanji-study.csv"'})
 
 
+# ───────────────────────────────────────── trust: anchors, digest, scheduler
+def _public_key_hex(rt: TenantRuntime) -> str:
+    from cryptography.hazmat.primitives import serialization
+    key_id = rt.ledger.ensure_key(rt.pack_id)
+    return rt.ledger.public_key(key_id).public_bytes(
+        serialization.Encoding.Raw, serialization.PublicFormat.Raw).hex()
+
+
+def seal_pending_days(rt: TenantRuntime) -> list[str]:
+    """Anchor every day that has receipts and no anchor yet, plus today again
+    if it gained receipts since it was last sealed (INSERT OR REPLACE)."""
+    have = {a["day"]: a for a in rt.ledger.anchors(rt.pack_id)}
+    sealed: list[str] = []
+    today = dt.datetime.now(IST).date().isoformat()
+    for day in rt.ledger.days_with_receipts(rt.pack_id):
+        if day not in have or day == today:
+            rt.ledger.anchor_day(rt.pack_id, day)
+            sealed.append(day)
+    return sealed
+
+
+@app.get("/api/anchors")
+async def anchors(pack: str = DEFAULT_PACK):
+    """The tenant's daily Merkle roots and their signatures: everything a
+    third party needs to check that a day's receipts were not rewritten
+    after the fact. Published daily to the repository's transparency branch."""
+    rt = runtime(pack)
+    return {"tenant_id": pack, "algorithm": "Ed25519 over sha256(merkle_root) || day",
+            "public_key": _public_key_hex(rt), "anchors": rt.ledger.anchors(pack),
+            "pending_days": [d for d in rt.ledger.days_with_receipts(pack)
+                             if d not in {a["day"] for a in rt.ledger.anchors(pack)}]}
+
+
+@app.post("/api/anchors/seal")
+async def anchors_seal(pack: str = DEFAULT_PACK):
+    rt = runtime(pack)
+    return {"sealed": seal_pending_days(rt), "anchors": rt.ledger.anchors(pack)}
+
+
+def digest_text(pack_id: str) -> str:
+    """The owner's evening message: what the desk did today, in six lines."""
+    rt = runtime(pack_id)
+    ins = compute_insights(pack_id, store, rt.backend)
+    name = rt.pack.persona.business_name
+    today = dt.datetime.now(IST).strftime("%d %b")
+    booked = ins["outcomes"].get("BOOKED", 0)
+    lines = [f"HaanJi · {name} · {today}",
+             f"Aaj {ins['calls_today']} calls uthayi (kul {ins['calls_total']}).",
+             f"{ins['bookings_confirmed']} bookings calendar pe, lagbhag ₹{ins['revenue_booked_inr']:,} ki.",
+             f"{booked} calls booking bani; {ins['leads_open']} log callback chahte hain."]
+    m = ins["missed_calls"]
+    if m.get("total"):
+        lines.append(f"{m['recovered']} of {m['total']} missed calls WhatsApp pe wapas aayi.")
+    if ins["by_hour"]:
+        busiest = max(ins["by_hour"], key=lambda h: h["calls"])
+        lines.append(f"Sabse busy ghanta: {busiest['hour']}:00 ({busiest['calls']} calls).")
+    lines.append(f"Receipts aur poora hisaab: {PUBLIC_URL}/verify?pack={pack_id}")
+    return "\n".join(lines)
+
+
+@app.get("/api/digest")
+async def digest(pack: str = DEFAULT_PACK):
+    if pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {pack}")
+    return {"pack": pack, "text": digest_text(pack), "to": OWNER_PHONE,
+            "whatsapp_configured": wa_channel.configured(), "hour_ist": DIGEST_HOUR}
+
+
+@app.post("/api/digest/send")
+async def digest_send(pack: str = DEFAULT_PACK, to: str | None = None):
+    if pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {pack}")
+    number = to or OWNER_PHONE
+    text = digest_text(pack)
+    if not number:
+        raise HTTPException(409, "no owner number: set HAANJI_OWNER_PHONE or pass ?to=")
+    if not wa_channel.configured():
+        raise HTTPException(409, "WhatsApp is not connected; the text is in the preview")
+    await wa_channel.send_text(number, text)
+    return {"sent": True, "to": number, "text": text}
+
+
+def seconds_until(hour: int, minute: int = 0, now: dt.datetime | None = None) -> float:
+    """Seconds from ``now`` (IST) to the next occurrence of hour:minute IST."""
+    now = now or dt.datetime.now(IST)
+    target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    if target <= now:
+        target += dt.timedelta(days=1)
+    return (target - now).total_seconds()
+
+
+async def _evening_loop() -> None:
+    """Every evening: seal every pack's day in the ledger, then message the
+    owner. Both are idempotent, so a restart never doubles anything."""
+    while True:
+        await asyncio.sleep(seconds_until(DIGEST_HOUR))
+        for pid in list_packs():
+            try:
+                seal_pending_days(runtime(pid))
+            except Exception as exc:                  # noqa: BLE001 - keep the loop alive
+                print(f"anchor {pid}: {exc}", file=sys.stderr)
+        digest_pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
+        if OWNER_PHONE and wa_channel.configured():
+            try:
+                await wa_channel.send_text(OWNER_PHONE, digest_text(digest_pack))
+            except Exception as exc:                  # noqa: BLE001
+                print(f"digest: {exc}", file=sys.stderr)
+
+
 @app.get("/api/status")
 async def status():
     return {"name": "HaanJi demo server", "version": app.version,
             "default_pack": DEFAULT_PACK, "packs": list_packs(),
             "var_dir": VAR_DIR,
+            "public_url": PUBLIC_URL,
+            "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
             "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),
@@ -691,6 +901,11 @@ async def record_page():
 @app.get("/study")
 async def study_page():
     return _page("study.html")
+
+
+@app.get("/transparency")
+async def transparency_page():
+    return _page("transparency.html")
 
 
 @app.get("/static/{name}")

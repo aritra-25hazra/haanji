@@ -173,7 +173,7 @@
     });
     if (t.guard) { const g = document.createElement("span"); g.className = "chip chip-guard"; g.innerHTML = S.icon("shield") + "guardrail: " + S.esc(t.guard); meta.appendChild(g); }
     (t.receipts || []).forEach(function (code) {
-      const st = document.createElement("span"); st.className = "stamp"; st.innerHTML = S.icon("lock") + "RECEIPT " + S.esc(code); st.style.opacity = "0"; meta.appendChild(st);
+      const st = document.createElement("a"); st.className = "stamp"; st.href = "verify?code=" + encodeURIComponent(code) + "&pack=" + encodeURIComponent($("pack").value); st.target = "_blank"; st.rel = "noopener"; st.title = "Is receipt ko verify karo"; st.innerHTML = S.icon("lock") + "RECEIPT " + S.esc(code); st.style.opacity = "0"; meta.appendChild(st);
     });
     if (t.latency_ms != null) { const m = document.createElement("span"); m.className = "mono muted"; m.textContent = (t.latency_ms < 1 ? "<1" : Math.round(t.latency_ms)) + " ms"; meta.appendChild(m); }
     return meta;
@@ -234,7 +234,7 @@
       const empty = document.createElement("i"); empty.className = "empty"; chain.appendChild(empty);
       const note = $("pramaan-note");
       note.innerHTML = "";
-      const st = document.createElement("span"); st.className = "stamp"; st.innerHTML = S.icon("lock") + "RECEIPT " + S.esc(receipts[receipts.length - 1]);
+      const st = document.createElement("a"); st.className = "stamp"; st.href = "verify?code=" + encodeURIComponent(receipts[receipts.length - 1]) + "&pack=" + encodeURIComponent($("pack").value); st.target = "_blank"; st.rel = "noopener"; st.innerHTML = S.icon("lock") + "RECEIPT " + S.esc(receipts[receipts.length - 1]);
       st.style.opacity = "0"; note.appendChild(st);
       const line = document.createElement("div"); line.className = "mono muted"; line.style.marginTop = "8px";
       line.textContent = "seq " + receipts.length + " · sealed · Ed25519 · chained to seq " + (receipts.length - 1);

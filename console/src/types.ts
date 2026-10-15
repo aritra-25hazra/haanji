@@ -112,3 +112,27 @@ export interface PackSummary {
   scenarios: number;
   issues: string[];
 }
+
+export interface Digest {
+  pack: string;
+  text: string;
+  to: string | null;
+  whatsapp_configured: boolean;
+  hour_ist: number;
+}
+
+export interface Anchor {
+  tenant_id: string;
+  day: string;
+  first_seq: number;
+  last_seq: number;
+  merkle_root: string;
+  signature: string;
+}
+
+export interface Anchors {
+  tenant_id: string;
+  public_key: string;
+  anchors: Anchor[];
+  pending_days: string[];
+}

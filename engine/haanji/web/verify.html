@@ -33,6 +33,13 @@
   .how { margin-top: 36px; padding: 20px 22px; border-radius: var(--r-card); background: var(--chalk); color: var(--ink); font-size: 15px; }
   .how b { color: var(--cobalt); }
   .how i { font-style: italic; font-family: var(--font-mono); font-size: 13px; }
+  .mine { margin: 16px 0; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .mine header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .mine h2 { font-size: 22px; }
+  .mine dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+  .mine dt { color: var(--haze); font-size: 13px; }
+  .mine dd { margin: 0; }
+  tr.mine-row td { background: rgba(245, 185, 30, .18); }
 </style>
 </head>
 <body>
@@ -58,6 +65,11 @@
   <textarea id="json" class="input" aria-label="Export JSON" placeholder='…ya kisi bhi HaanJi export ka JSON yahan paste kijiye ({"tenant_id": …, "public_key": …, "receipts": […]})'></textarea>
 
   <div id="verdict" class="stamp verdict" role="status" aria-live="polite"></div>
+  <section id="mine" class="frame mine" hidden aria-label="Aapki receipt">
+    <header><h2>Aapki receipt</h2><span class="mono" id="mine-code"></span></header>
+    <dl id="mine-body"></dl>
+    <p class="muted">Yeh page aapke browser mein hash aur signature dobara banata hai. Agar upar <b>VALID</b> hai, to yeh booking waise hi hai jaise aapne confirm ki thi — isko koi badal nahi saka.</p>
+  </section>
   <div class="keyline" id="key"></div>
   <div class="chain chainstrip" id="chainstrip" aria-hidden="true"></div>
 
@@ -86,6 +98,10 @@
   S.status().then(function (s) {
     if (!s) return;
     $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+  
+    const q = new URLSearchParams(location.search);
+    if (q.get("pack") && s.packs.indexOf(q.get("pack")) >= 0) $("pack").value = q.get("pack");
+    if (q.get("code")) loadLive(q.get("code"));
   });
 
   function chainStrip(rows, firstBroken) {
@@ -123,12 +139,34 @@
     }
   }
 
-  $("load").onclick = async function () {
+  function showMine(exp, code) {
+    const want = code.replace("-", "").toUpperCase();
+    const r = (exp.receipts || []).find(function (x) { return (x.chain_hash || "").slice(0, 8).toUpperCase() === want; });
+    const box = $("mine");
+    if (!r) { box.hidden = false; $("mine-code").textContent = code; $("mine-body").innerHTML = "<dt>Status</dt><dd>Is server pe is code ki receipt nahi mili. Pack sahi chuna hai?</dd>"; return; }
+    let args = {}, conf = {};
+    try { args = JSON.parse(r.action_args); } catch (e) {}
+    try { conf = JSON.parse(r.confirmation); } catch (e) {}
+    const rows = [["Kaam", r.action.replace(/_/g, " ")], ["Service", args.service], ["Din", args.date], ["Time", args.time],
+                  ["Kiske saath", args.staff], ["Naam", args.customer_name], ["Agent ne poocha", conf.prompt_text],
+                  ["Aapne kaha", conf.reply_text], ["Kab", (r.occurred_at || "").replace("T", " ").slice(0, 16)]];
+    $("mine-code").textContent = code + " · seq " + r.seq;
+    $("mine-body").innerHTML = rows.filter(function (x) { return x[1]; }).map(function (x) { return "<dt>" + S.esc(x[0]) + "</dt><dd>" + S.esc(String(x[1])) + "</dd>"; }).join("");
+    box.hidden = false;
+    document.querySelectorAll("#rows tr").forEach(function (tr) {
+      const td = tr.children[2];
+      if (td && td.textContent.replace("-", "").toUpperCase() === want) { tr.classList.add("mine-row"); tr.scrollIntoView({ block: "center", behavior: "smooth" }); }
+    });
+  }
+
+  async function loadLive(code) {
     const r = await fetch("api/receipts/export?pack=" + encodeURIComponent($("pack").value));
     const exp = await r.json();
     $("json").value = JSON.stringify(exp, null, 1).slice(0, 4000);
-    run(exp, "loaded live from this server");
-  };
+    await run(exp, "loaded live from this server");
+    if (code) showMine(exp, code);
+  }
+  $("load").onclick = function () { loadLive(null); };
   $("paste").onclick = function () {
     try { run(JSON.parse($("json").value), "pasted export"); }
     catch (e) { $("json").setCustomValidity("JSON parse nahi hua: " + e.message); $("json").reportValidity(); setTimeout(function () { $("json").setCustomValidity(""); }, 2500); }
