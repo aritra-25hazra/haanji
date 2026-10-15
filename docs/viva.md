@@ -28,7 +28,7 @@ single-run numbers in the README agree within those intervals.
 
 **10. Your noise is synthetic. What about real recognisers?** We built the pipeline and ran a pilot: synthetic Indian-English speech through faster-whisper. It found a real weakness (confidence not calibrated; `slot`→`Salt`), which three stated guards fixed; on that data the bridge helps about a tenth, not 97 %. Volunteers' recordings go through the same pipeline. *Evidence: REPORT §4.5; `research/real_asr.json`, `real_asr_v0.json`; `research/collect/`.*
 
-**11. Does it generalise beyond Hindi?** The Benglish pack (Kolkata) gains as much as the Hinglish ones from the same key rules; the policy's language is a phrase table and a vocabulary list, no forked code. *Evidence: REPORT Table 3; `packs/clinic_kolkata.yaml`; `engine/haanji/speak.py`.*
+**11. Does it generalise beyond Hindi?** The Benglish pack (Kolkata) gains as much as the Hinglish ones from the same key rules, and a Marathinglish pack (Pune) was added afterwards with one phrase-table row and one YAML file; the policy's language is a phrase table and a vocabulary list, no forked code. *Evidence: REPORT Table 3; `packs/clinic_kolkata.yaml`, `packs/clinic_pune.yaml`; `engine/haanji/speak.py`; `engine/tests/test_marathi.py`.*
 
 **12. Known failure of the key?** /b/ and /p/ merge, so *braces* and *prices* collide; the confidence condition keeps it from mattering, and a test documents it so it cannot be lost. *Evidence: REPORT §4.4; test `test_a_known_collision_is_documented_not_hidden`.*
 
@@ -62,9 +62,9 @@ single-run numbers in the README agree within those intervals.
 
 **24. Confidence intervals overlap in some rows. So?** Then that row is "not separated by this experiment", and the report says so rather than claiming a win. *Evidence: REPORT §8 "Statistical".*
 
-**25. Where is the real data?** Pilot on synthetic speech through a real recogniser (done); public Hindi phone-speech evaluation (done, §4.6); volunteer recordings and the user study need people and are pending with their kits ready. *Evidence: REPORT §4.5–§4.6, §9.*
+**25. Where is the real data?** Pilot on synthetic speech through a real recogniser (done); public Hindi telephone speech through Whisper with a corruption model learned from it (§4.8); volunteer recordings and the user study need people and are pending with their kits ready. *Evidence: REPORT §4.5–§4.6, §9.*
 
-**26. How reproducible is this?** One clean checkout, no network, no key: `pytest` (≈280 tests), `selftest` (21 scenarios), `bench`, and the five-seed harness regenerate every table. CI runs it on every push. *Evidence: REPORT Appendix A; `.github/workflows/ci.yml`.*
+**26. How reproducible is this?** One clean checkout, no network, no key: `pytest` (≈300 tests), `selftest` (21 scenarios), `bench`, and the five-seed harness regenerate every table. CI runs it on every push. *Evidence: REPORT Appendix A; `.github/workflows/ci.yml`.*
 
 **27. What are the threats to validity?** Construct (EER ignores date/number errors), internal (the corruption model was written by us), external (engine-side latency, scripted callers, five packs), statistical (few seeds). Each is listed with what was done about it. *Evidence: REPORT §8.*
 
@@ -110,7 +110,7 @@ single-run numbers in the README agree within those intervals.
 
 **44. Who did what?** Three authors; the repository history and co-author trailers show each change. *Evidence: `git log`.*
 
-**45. How was it tested?** ≈280 unit, property and integration tests; 21 scenario tests; a visual/accessibility pass; a load test; a real-recogniser pilot. *Evidence: REPORT Appendix C.*
+**45. How was it tested?** ≈300 unit, property and integration tests; 24 scenario tests in three languages; a visual/accessibility pass; a load test; a real-recogniser pilot. *Evidence: REPORT Appendix C.*
 
 **46. Why Python for the engine and Java for the core API?** Python for the research iteration and the speech/ML ecosystem; Java (Spring) for the owner-facing API with ArchUnit rules; the ledger is ported to both and the property is tested end to end on the Python side. *Evidence: README "Honest notes".*
 

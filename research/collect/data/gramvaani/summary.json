@@ -1,0 +1,96 @@
+{
+ "generated_at": "2026-10-15T14:38:50+00:00",
+ "source": "OpenSLR 118 Gram Vaani dev (5 h), Hindi telephone speech",
+ "recogniser": "faster-whisper small, language=hi",
+ "utterances": 110,
+ "wer_mean": 0.8035,
+ "wer_median": 0.8,
+ "word_confidence_median": 0.657,
+ "frac_words_below_0_85": 0.876,
+ "learned": {
+  "pairs": 110,
+  "tokens": 2839,
+  "substitution_rate": 0.4406,
+  "drop_rate": 0.2596,
+  "merge_rate": 0.0493,
+  "word_substitutions": 1321,
+  "char_confusions": 320,
+  "top_char_confusions": [
+   {
+    "from": "h",
+    "to": "",
+    "n": 51
+   },
+   {
+    "from": "a",
+    "to": "",
+    "n": 48
+   },
+   {
+    "from": "n",
+    "to": "",
+    "n": 37
+   },
+   {
+    "from": "r",
+    "to": "",
+    "n": 15
+   },
+   {
+    "from": "i",
+    "to": "",
+    "n": 9
+   },
+   {
+    "from": "ee",
+    "to": "i",
+    "n": 9
+   },
+   {
+    "from": "e",
+    "to": "",
+    "n": 8
+   },
+   {
+    "from": "i",
+    "to": "a",
+    "n": 8
+   },
+   {
+    "from": "i",
+    "to": "ee",
+    "n": 7
+   },
+   {
+    "from": "ड़",
+    "to": "r",
+    "n": 7
+   },
+   {
+    "from": "t",
+    "to": "d",
+    "n": 7
+   },
+   {
+    "from": "d",
+    "to": "",
+    "n": 6
+   },
+   {
+    "from": "y",
+    "to": "",
+    "n": 6
+   },
+   {
+    "from": "b",
+    "to": "v",
+    "n": 6
+   },
+   {
+    "from": "d",
+    "to": "t",
+    "n": 6
+   }
+  ]
+ }
+}

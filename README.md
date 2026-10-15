@@ -391,13 +391,14 @@ switch in `render.yaml`.
 
 | concurrent callers | turn p50 (ms) | turn p95 (ms) | calls/min | errors |
 |---|---|---|---|---|
-| 5 | 7.0 | 187.0 | 467 | 0 |
-| 10 | 5.0 | 185.2 | 890 | 0 |
-| 25 | 4.6 | 184.6 | 1578 | 0 |
-| 50 | 6.2 | 185.8 | 2548 | 0 |
+| 5 | 6.9 | 188.5 | 457 | 0 |
+| 10 | 5.6 | 185.0 | 786 | 0 |
+| 25 | 3.9 | 183.8 | 1399 | 0 |
+| 50 | 6.1 | 185.8 | 2146 | 0 |
 
   Latency does not move with concurrency; the p95 is the booking turn's
-  write and ledger seal. The "expected outcome" rate in
+  write and ledger seal. The engine spends 0.0085 CPU-seconds per call,
+  ≈ ₹0.000000 on a ₹600/month instance; the speech vendors are the cost. The "expected outcome" rate in
   [`research/load_test.json`](research/load_test.json) falls from 97% to 70%
   across the ladder because sixty scripted callers book the same morning in
   one shared calendar and the script does not take the alternative the agent

@@ -43,10 +43,10 @@ four letters is never evidence for a replacement. Test: `test_a_lexicon_form_wit
 
 | concurrent callers | expected outcome | what happened instead |
 |---|---|---|
-| 5 | 97% | BOOKED->FAQ_ANSWERED ×1, BOOKED->ABANDONED ×1 |
-| 10 | 95% | BOOKED->FAQ_ANSWERED ×2, BOOKED->ABANDONED ×1 |
-| 25 | 83% | BOOKED->ABANDONED ×4, BOOKED->LEAD_CAPTURED ×3, BOOKED->FAQ_ANSWERED ×3 |
-| 50 | 70% | BOOKED->ABANDONED ×13, BOOKED->LEAD_CAPTURED ×3, BOOKED->FAQ_ANSWERED ×2 |
+| 5 | 98% | BOOKED->FAQ_ANSWERED ×1 |
+| 10 | 97% | BOOKED->ABANDONED ×1, BOOKED->FAQ_ANSWERED ×1 |
+| 25 | 88% | BOOKED->ABANDONED ×5, BOOKED->FAQ_ANSWERED ×2 |
+| 50 | 75% | BOOKED->ABANDONED ×8, BOOKED->LEAD_CAPTURED ×5, BOOKED->FAQ_ANSWERED ×2 |
 
 Sixty scripted callers ask for the same morning in one calendar; once it is full the agent offers
 another time or takes a callback and the fixed script does not follow. BOOKED→LEAD_CAPTURED and

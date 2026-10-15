@@ -1,0 +1,299 @@
+{
+ "generated_at": "2026-10-15T14:38:59+00:00",
+ "results": {
+  "Gram Vaani (real Hindi telephone speech, Whisper hi)": {
+   "learned": {
+    "pairs": 110,
+    "tokens": 2839,
+    "substitution_rate": 0.4406,
+    "drop_rate": 0.2596,
+    "merge_rate": 0.0493,
+    "word_substitutions": 1321,
+    "char_confusions": 320,
+    "top_char_confusions": [
+     {
+      "from": "h",
+      "to": "",
+      "n": 51
+     },
+     {
+      "from": "a",
+      "to": "",
+      "n": 48
+     },
+     {
+      "from": "n",
+      "to": "",
+      "n": 37
+     },
+     {
+      "from": "r",
+      "to": "",
+      "n": 15
+     },
+     {
+      "from": "i",
+      "to": "",
+      "n": 9
+     },
+     {
+      "from": "ee",
+      "to": "i",
+      "n": 9
+     },
+     {
+      "from": "e",
+      "to": "",
+      "n": 8
+     },
+     {
+      "from": "i",
+      "to": "a",
+      "n": 8
+     },
+     {
+      "from": "i",
+      "to": "ee",
+      "n": 7
+     },
+     {
+      "from": "ड़",
+      "to": "r",
+      "n": 7
+     },
+     {
+      "from": "t",
+      "to": "d",
+      "n": 7
+     },
+     {
+      "from": "d",
+      "to": "",
+      "n": 6
+     },
+     {
+      "from": "y",
+      "to": "",
+      "n": 6
+     },
+     {
+      "from": "b",
+      "to": "v",
+      "n": 6
+     },
+     {
+      "from": "d",
+      "to": "t",
+      "n": 6
+     }
+    ]
+   },
+   "native_rate": 0.441,
+   "rates": {
+    "0.15": {
+     "sentences": 2430,
+     "entities": 3303,
+     "entity_error_rate_off": 0.2613,
+     "entity_error_rate_on": 0.1889,
+     "relative_reduction_pct": 27.7,
+     "corrections": {
+      "beneficial": 328,
+      "neutral": 3,
+      "harmful": 0
+     },
+     "precision": 0.9909,
+     "median_correct_ms": 0.006
+    },
+    "0.30": {
+     "sentences": 2430,
+     "entities": 3303,
+     "entity_error_rate_off": 0.4956,
+     "entity_error_rate_on": 0.353,
+     "relative_reduction_pct": 28.8,
+     "corrections": {
+      "beneficial": 616,
+      "neutral": 18,
+      "harmful": 0
+     },
+     "precision": 0.9716,
+     "median_correct_ms": 0.073
+    },
+    "0.44": {
+     "sentences": 2430,
+     "entities": 3303,
+     "entity_error_rate_off": 0.7051,
+     "entity_error_rate_on": 0.5083,
+     "relative_reduction_pct": 27.9,
+     "corrections": {
+      "beneficial": 758,
+      "neutral": 32,
+      "harmful": 0
+     },
+     "precision": 0.9595,
+     "median_correct_ms": 0.089
+    },
+    "0.45": {
+     "sentences": 2430,
+     "entities": 3303,
+     "entity_error_rate_off": 0.7094,
+     "entity_error_rate_on": 0.515,
+     "relative_reduction_pct": 27.4,
+     "corrections": {
+      "beneficial": 728,
+      "neutral": 34,
+      "harmful": 0
+     },
+     "precision": 0.9554,
+     "median_correct_ms": 0.09
+    }
+   }
+  },
+  "pilot (synthetic Indian-English speech, Whisper en)": {
+   "learned": {
+    "pairs": 300,
+    "tokens": 1740,
+    "substitution_rate": 0.4075,
+    "drop_rate": 0.1598,
+    "merge_rate": 0.0437,
+    "word_substitutions": 747,
+    "char_confusions": 81,
+    "top_char_confusions": [
+     {
+      "from": "a",
+      "to": "",
+      "n": 24
+     },
+     {
+      "from": "e",
+      "to": "a",
+      "n": 9
+     },
+     {
+      "from": "a",
+      "to": "o",
+      "n": 9
+     },
+     {
+      "from": "k",
+      "to": "c",
+      "n": 8
+     },
+     {
+      "from": "ee",
+      "to": "i",
+      "n": 8
+     },
+     {
+      "from": "r",
+      "to": "",
+      "n": 8
+     },
+     {
+      "from": "a",
+      "to": "e",
+      "n": 7
+     },
+     {
+      "from": "iy",
+      "to": "",
+      "n": 6
+     },
+     {
+      "from": "n",
+      "to": "",
+      "n": 6
+     },
+     {
+      "from": "h",
+      "to": "",
+      "n": 5
+     },
+     {
+      "from": "i",
+      "to": "",
+      "n": 5
+     },
+     {
+      "from": "w",
+      "to": "v",
+      "n": 5
+     },
+     {
+      "from": "e",
+      "to": "",
+      "n": 4
+     },
+     {
+      "from": "o",
+      "to": "a",
+      "n": 4
+     },
+     {
+      "from": "ing",
+      "to": "",
+      "n": 4
+     }
+    ]
+   },
+   "native_rate": 0.407,
+   "rates": {
+    "0.15": {
+     "sentences": 2430,
+     "entities": 3303,
+     "entity_error_rate_off": 0.2222,
+     "entity_error_rate_on": 0.148,
+     "relative_reduction_pct": 33.4,
+     "corrections": {
+      "beneficial": 336,
+      "neutral": 2,
+      "harmful": 0
+     },
+     "precision": 0.9941,
+     "median_correct_ms": 0.006
+    },
+    "0.30": {
+     "sentences": 2430,
+     "entities": 3303,
+     "entity_error_rate_off": 0.4281,
+     "entity_error_rate_on": 0.2873,
+     "relative_reduction_pct": 32.9,
+     "corrections": {
+      "beneficial": 615,
+      "neutral": 11,
+      "harmful": 0
+     },
+     "precision": 0.9824,
+     "median_correct_ms": 0.067
+    },
+    "0.41": {
+     "sentences": 2430,
+     "entities": 3303,
+     "entity_error_rate_off": 0.5837,
+     "entity_error_rate_on": 0.3969,
+     "relative_reduction_pct": 32.0,
+     "corrections": {
+      "beneficial": 734,
+      "neutral": 26,
+      "harmful": 0
+     },
+     "precision": 0.9658,
+     "median_correct_ms": 0.078
+    },
+    "0.45": {
+     "sentences": 2430,
+     "entities": 3303,
+     "entity_error_rate_off": 0.63,
+     "entity_error_rate_on": 0.4369,
+     "relative_reduction_pct": 30.7,
+     "corrections": {
+      "beneficial": 750,
+      "neutral": 44,
+      "harmful": 0
+     },
+     "precision": 0.9446,
+     "median_correct_ms": 0.082
+    }
+   }
+  }
+ }
+}

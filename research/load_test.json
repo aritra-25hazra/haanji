@@ -1,103 +1,109 @@
 {
- "generated_at": "2026-10-15T12:59:15+00:00",
+ "generated_at": "2026-10-15T14:40:04+00:00",
  "machine": "arm64",
  "python": "3.11.16",
  "providers": "mock (engine-side only)",
- "scripts": 21,
+ "scripts": 24,
  "levels": [
   {
    "concurrency": 5,
    "calls": 60,
-   "turns": 160,
+   "turns": 157,
    "errors": 0,
    "error_samples": [],
-   "expected_outcome": 58,
-   "outcome_rate": 0.9667,
+   "expected_outcome": 59,
+   "outcome_rate": 0.9833,
    "mismatches": {
-    "BOOKED->FAQ_ANSWERED": 1,
-    "BOOKED->ABANDONED": 1
+    "BOOKED->FAQ_ANSWERED": 1
    },
-   "wall_s": 7.7,
-   "calls_per_min": 467.4,
-   "turns_per_s": 20.8,
+   "wall_s": 7.9,
+   "calls_per_min": 457.2,
+   "turns_per_s": 19.9,
    "turn_http_ms": {
-    "p50": 7.0,
-    "p90": 185.9,
-    "p95": 187.0,
-    "max": 190.1,
+    "p50": 6.9,
+    "p90": 185.5,
+    "p95": 188.5,
+    "max": 192.8,
     "mean": 51.2
    }
   },
   {
    "concurrency": 10,
    "calls": 60,
-   "turns": 160,
+   "turns": 157,
    "errors": 0,
    "error_samples": [],
-   "expected_outcome": 57,
-   "outcome_rate": 0.95,
+   "expected_outcome": 58,
+   "outcome_rate": 0.9667,
    "mismatches": {
-    "BOOKED->FAQ_ANSWERED": 2,
-    "BOOKED->ABANDONED": 1
+    "BOOKED->ABANDONED": 1,
+    "BOOKED->FAQ_ANSWERED": 1
    },
-   "wall_s": 4.0,
-   "calls_per_min": 890.3,
-   "turns_per_s": 39.6,
+   "wall_s": 4.6,
+   "calls_per_min": 785.9,
+   "turns_per_s": 34.3,
    "turn_http_ms": {
-    "p50": 5.0,
-    "p90": 184.6,
-    "p95": 185.2,
-    "max": 189.8,
-    "mean": 49.8
+    "p50": 5.6,
+    "p90": 184.2,
+    "p95": 185.0,
+    "max": 189.9,
+    "mean": 50.2
    }
   },
   {
    "concurrency": 25,
    "calls": 60,
-   "turns": 154,
+   "turns": 157,
    "errors": 0,
    "error_samples": [],
-   "expected_outcome": 50,
-   "outcome_rate": 0.8333,
+   "expected_outcome": 53,
+   "outcome_rate": 0.8833,
    "mismatches": {
-    "BOOKED->ABANDONED": 4,
-    "BOOKED->LEAD_CAPTURED": 3,
-    "BOOKED->FAQ_ANSWERED": 3
+    "BOOKED->ABANDONED": 5,
+    "BOOKED->FAQ_ANSWERED": 2
    },
-   "wall_s": 2.3,
-   "calls_per_min": 1577.8,
-   "turns_per_s": 67.5,
+   "wall_s": 2.6,
+   "calls_per_min": 1398.9,
+   "turns_per_s": 61.0,
    "turn_http_ms": {
-    "p50": 4.6,
-    "p90": 183.5,
-    "p95": 184.6,
-    "max": 193.6,
-    "mean": 51.3
+    "p50": 3.9,
+    "p90": 183.3,
+    "p95": 183.8,
+    "max": 185.3,
+    "mean": 49.1
    }
   },
   {
    "concurrency": 50,
    "calls": 60,
-   "turns": 154,
+   "turns": 147,
    "errors": 0,
    "error_samples": [],
-   "expected_outcome": 42,
-   "outcome_rate": 0.7,
+   "expected_outcome": 45,
+   "outcome_rate": 0.75,
    "mismatches": {
-    "BOOKED->ABANDONED": 13,
-    "BOOKED->LEAD_CAPTURED": 3,
+    "BOOKED->ABANDONED": 8,
+    "BOOKED->LEAD_CAPTURED": 5,
     "BOOKED->FAQ_ANSWERED": 2
    },
-   "wall_s": 1.4,
-   "calls_per_min": 2548.0,
-   "turns_per_s": 109.0,
+   "wall_s": 1.7,
+   "calls_per_min": 2146.3,
+   "turns_per_s": 87.6,
    "turn_http_ms": {
-    "p50": 6.2,
-    "p90": 184.8,
+    "p50": 6.1,
+    "p90": 184.6,
     "p95": 185.8,
-    "max": 189.2,
-    "mean": 52.5
+    "max": 196.8,
+    "mean": 54.1
    }
   }
- ]
+ ],
+ "cost": {
+  "engine_cpu_s_total": 2.03,
+  "engine_cpu_s_per_call": 0.0085,
+  "engine_cpu_ms_per_turn": 3.28,
+  "vm_inr_per_month": 600.0,
+  "infra_inr_per_call": 0.0,
+  "note": "mock providers; speech vendors are billed per minute and dominate (see insights.py)"
+ }
 }
