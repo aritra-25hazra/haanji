@@ -3,7 +3,7 @@
 [![ci](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml)
 [![engine](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-engine.onrender.com%2Fapi%2Fstatus&label=engine&up_message=live&down_message=waking)](https://haanji-engine.onrender.com)
 [![console](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-kappa.vercel.app&label=console&up_message=live)](https://haanji-kappa.vercel.app)
-![tests](https://img.shields.io/badge/tests-182%20passing-1F6B45)
+![tests](https://img.shields.io/badge/tests-216%20passing-1F6B45)
 ![licence](https://img.shields.io/badge/licence-Apache--2.0-1B3B8C)
 
 <p align="center">
@@ -25,13 +25,15 @@ implemented, measured and testable rather than described:
 
 | | What it is | What it is worth |
 |---|---|---|
-| **Bhasha Bridge** | A per-tenant phonetic index built from the business's own catalogue, used both to bias the recogniser and to repair its output — but only when the recogniser was unsure *and* the sound key matches exactly. | Entity error rate **31.6% → 1.1%** at 30% recognition noise, with **zero** harmful corrections over 2,940 sentences. |
-| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **239 ms → 137 ms**, a 42.6% reduction, with a 45.5% prediction hit rate. |
+| **Bhasha Bridge** | A per-tenant phonetic index built from the business's own catalogue, used both to bias the recogniser and to repair its output — but only when the recogniser was unsure *and* the sound key matches exactly. | Entity error rate **31.1% → 1.0%** at 30% recognition noise, with **zero** harmful corrections over 3,495 sentences. |
+| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **243 ms → 150 ms**, a 38.4% reduction, with a 46.2% prediction hit rate. |
 | **Pramaan Ledger** | Every write is sealed into an Ed25519-signed, hash-chained receipt that binds the action to the caller's recorded confirmation. Daily Merkle anchors; an independent verifier. | **80/80** single-field tampering attempts detected; deletion and forgery detected; **0** unconfirmed writes accepted. |
 
 Every number above was produced by `python -m haanji.bench` on this repository and
 is written to [`research/results.json`](research/results.json). Nothing in this
-README is an estimate.
+README is an estimate. The full evaluation, with confidence intervals over five
+seeds, related work and threats to validity, is in
+[`research/REPORT.md`](research/REPORT.md) ([PDF](research/REPORT.pdf)).
 
 ## See it live
 
@@ -75,7 +77,7 @@ pip install -e ".[dev]"
 
 python -m haanji.cli demo          # one narrated call, at real speaking speed
 python -m haanji.cli selftest      # all 21 packaged scenarios, all five verticals
-pytest -q                          # 182 tests
+pytest -q                          # 216 tests
 python -m haanji.bench             # regenerates research/results.json
 ```
 
@@ -171,7 +173,7 @@ PRAMAAN LEDGER
 │   │   ├── insights.py      outcome/revenue/cost analytics behind /api/insights
 │   │   ├── bench.py         the evaluation harness that produces every number
 │   │   └── cli.py           demo · selftest · bench · verify · serve · packs
-│   └── tests/               182 tests, including the safety properties and the demo pages
+│   └── tests/               216 tests, including the safety properties and the demo pages
 ├── core-api/        Java 21 / Spring Boot 3 control plane
 │   ├── domain repo service web security config pramaan packs
 │   ├── db/migration/        Flyway: schema, ledger, knowledge + lexicon
@@ -210,15 +212,15 @@ good transcript is worse than no layer at all. Personal names the caller has jus
 introduced are never touched — "mera naam Wijay hai" stays *Wijay*, even though
 *Vijay Nagar* is in the lexicon.
 
-Measured over 2,940 independently corrupted sentences at three noise levels:
+Measured over 3,495 independently corrupted sentences at three noise levels:
 
 | noise | entity error, off | entity error, on | reduction | precision | harmful |
 |---|---|---|---|---|---|
-| 15% | 18.1% | 0.42% | 97.7% | 99.6% | 0 |
-| 30% | 31.6% | 1.14% | 96.4% | 99.4% | 0 |
-| 45% | 48.7% | 2.03% | 95.8% | 99.5% | 0 |
+| 15% | 17.9% | 0.36% | 98.0% | 98.9% | 0 |
+| 30% | 31.1% | 0.96% | 96.9% | 99.0% | 0 |
+| 45% | 48.5% | 1.72% | 96.5% | 98.7% | 0 |
 
-Median cost: **0.19 ms** per utterance.
+Median cost: **0.07 ms** per utterance.
 
 The corruption model in `haanji/corrupt.py` is written independently of the
 lexicon and corrupts words that appear in no lexicon at all, so the harness can
@@ -250,9 +252,10 @@ with_speculation_on_and_off` asserts the strong form of this — the transcript 
 the call must be identical whether speculation is on or off, because it is a
 latency optimisation and nothing else.
 
-Measured: **239 ms → 137 ms** median on read turns (42.6% lower), 45.5% hit rate
-over 110 speculations, 213 ms saved per hit. Write turns are never speculated, so
-the overall tail is unchanged — reported honestly rather than averaged away.
+Measured: **243 ms → 150 ms** median on read turns (38.4% lower), 46.2% hit rate
+over 130 speculations, 212 ms saved per hit. Write turns are never speculated, so
+the booking turn itself is not faster: its p90 is 212 ms without
+speculation and 202 ms with it — reported rather than averaged away.
 
 ### Pramaan Ledger — proof, not logs
 
@@ -414,7 +417,7 @@ to stop it.
 
 A project report should say what was verified and what was not.
 
-* **The Python engine is fully executed here.** 182 tests, 21 scenarios across
+* **The Python engine is fully executed here.** 216 tests, 21 scenarios across
   five verticals and two languages, and the entire benchmark run on this
   machine. Every number in this README comes from that run.
 * **The React console builds here.** `npm run build` type-checks the whole
