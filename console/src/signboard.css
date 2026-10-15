@@ -197,3 +197,18 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 .form .results .bad { color: var(--sindoor-ink); }
 .form .yaml { font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; background: rgba(27, 59, 140, .06); padding: 12px; border-radius: var(--r-ctl); max-height: 420px; overflow: auto; }
 .wizard-nav { display: flex; justify-content: space-between; margin-top: 18px; }
+
+/* live feed */
+.feed { display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; }
+.feed .ev { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: start; font-size: 14px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.feed .ev:last-child { border-bottom: 0; }
+.feed .when { font-size: 12px; color: var(--ink-2); padding-top: 2px; }
+.feed .turn { display: flex; flex-direction: column; gap: 4px; }
+.feed .heard { color: var(--ink-2); }
+.feed .said { color: var(--ink); }
+.feed .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
+.feed .partial { display: flex; gap: 8px; align-items: center; color: var(--cobalt); font-size: 14px; margin: 0; }
+.feed .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sindoor); animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .feed .dot { animation: none; } }
+.feed .session-started, .feed .session-ended { color: var(--ink-2); }

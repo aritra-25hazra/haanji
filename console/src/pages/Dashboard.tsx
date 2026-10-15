@@ -1,9 +1,10 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { engine } from "../engine";
+import { engine, subscribeLive } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Chip, Icon, Loading, Page, Panel, Tile, fmtInr, fmtTime, useData } from "../components/Common";
+import { Chip, Icon, Loading, OutcomeChip, Page, Panel, Repair, Tile, fmtInr, fmtTime, useData } from "../components/Common";
+import type { LiveEvent } from "../types";
 
 const ORDER = ["BOOKED", "FAQ_ANSWERED", "LEAD_CAPTURED", "HANDED_OFF", "ABANDONED", "IN_PROGRESS"];
 const SWATCH: Record<string, string> = {
@@ -77,6 +78,8 @@ export default function Dashboard() {
         </div>
       </Panel>
 
+      {online && <LivePanel pack={pack} onEnded={reload} />}
+
       {online && <DigestPanel pack={pack} />}
 
       <Panel title="Engine ne kya dekha" hint={`${fmtTime(data.generated_at)} pe bana${online ? " · har 5 s refresh" : ""}`}>
@@ -111,6 +114,54 @@ function DigestPanel({ pack }: { pack: string }) {
       <div className="body">
         <pre className="digest">{data.text}</pre>
         {note && <p className="muted" role="status">{note}</p>}
+      </div>
+    </Panel>
+  );
+}
+
+
+/** Calls as they happen: the engine's event stream, newest at the top. */
+function LivePanel({ pack, onEnded }: { pack: string; onEnded: () => void }) {
+  const [events, setEvents] = useState<LiveEvent[]>([]);
+  const [partial, setPartial] = useState<Record<string, string>>({});
+  useEffect(() => {
+    setEvents([]); setPartial({});
+    return subscribeLive(pack, (e) => {
+      if (e.kind === "partial") { setPartial((p) => ({ ...p, [e.sid ?? ""]: e.text ?? "" })); return; }
+      if (e.kind === "turn") setPartial((p) => { const n = { ...p }; delete n[e.sid ?? ""]; return n; });
+      if (e.kind === "session.ended") onEnded();
+      setEvents((cur) => [e, ...cur].slice(0, 14));
+    });
+  }, [pack, onEnded]);
+  const live = Object.entries(partial).filter(([, t]) => t);
+  return (
+    <Panel title="Abhi" hint={events.length ? "engine se live, jaise-jaise call chalti hai" : "koi call aate hi yahan dikhegi"}>
+      <div className="body feed" aria-live="polite">
+        {live.map(([sid, t]) => <p key={sid} className="ev partial"><i className="dot" />bol rahe hain… <span className="muted">{t}</span></p>)}
+        {events.length === 0 && live.length === 0 && (
+          <p className="muted">Ek call karke dekho — <a href="/engine/talk" target="_blank" rel="noopener noreferrer">/talk</a> ya WhatsApp simulator se. Har turn yahan turant aayega.</p>
+        )}
+        {events.map((e) => (
+          <div key={e.seq} className={"ev " + e.kind.replace(".", "-")}>
+            <span className="when mono">{fmtTime(e.at)}</span>
+            {e.kind === "session.started" && <span>Call shuru · {e.channel?.toLowerCase()}{e.phone ? ` · ${e.phone}` : ""} — <em>{e.greeting}</em></span>}
+            {e.kind === "turn" && (
+              <span className="turn">
+                <span className="heard">{e.corrections && e.corrections.length > 0
+                  ? e.corrections.map((c, i) => <Repair key={i} c={c} />)
+                  : <>“{e.corrected || e.heard}”</>}</span>
+                <span className="said">{e.reply}</span>
+                <span className="chips">
+                  {e.tools?.map((t) => <Chip key={t} kind={e.speculation_hits?.includes(t) ? "ok" : undefined} mono>{t}{e.speculation_hits?.includes(t) ? " · speculated" : ""}</Chip>)}
+                  {Array.isArray(e.receipts) && e.receipts.map((r) => <Chip key={r} kind="warn" mono>RECEIPT {r}</Chip>)}
+                  {e.guard && <Chip kind="bad">{e.guard}</Chip>}
+                  {typeof e.latency_ms === "number" && <span className="muted mono">{Math.round(e.latency_ms)} ms</span>}
+                </span>
+              </span>
+            )}
+            {e.kind === "session.ended" && <span>Call khatam · <OutcomeChip outcome={e.outcome ?? null} /> · {e.turns} turns{typeof e.receipts === "number" && e.receipts > 0 ? ` · ${e.receipts} receipt` : ""}</span>}
+          </div>
+        ))}
       </div>
     </Panel>
   );

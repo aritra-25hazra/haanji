@@ -30,7 +30,7 @@ from typing import Any
 import yaml
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
 from .adapters.mock import NullTTS
@@ -193,6 +193,74 @@ _sessions: dict[str, Holder] = {}
 _wa_sessions: dict[tuple[str, str], str] = {}      # (pack, phone) -> session id
 
 
+# ─────────────────────────────────────────────────────────── live event bus
+# Every call publishes what it is doing; the console's live panel subscribes
+# over server-sent events, and keeps a ring buffer for clients that cannot
+# hold a stream open (a proxy that buffers, a phone on a bad link).
+_subscribers: set[asyncio.Queue] = set()
+_recent: deque[dict[str, Any]] = deque(maxlen=200)
+_event_seq = 0
+KEEPALIVE_S = 15.0
+
+
+def publish(kind: str, **data: Any) -> dict[str, Any]:
+    global _event_seq
+    _event_seq += 1
+    event = {"seq": _event_seq, "kind": kind, "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), **data}
+    _recent.append(event)
+    for q in list(_subscribers):
+        try:
+            q.put_nowait(event)
+        except asyncio.QueueFull:                   # a slow reader loses events, never blocks a call
+            pass
+    return event
+
+
+def _sse(event: dict[str, Any]) -> str:
+    return f"id: {event['seq']}\nevent: {event['kind']}\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+
+async def _event_stream(pack: str | None, queue: asyncio.Queue):
+    _subscribers.add(queue)
+    try:
+        yield ": connected\n\n"
+        while True:
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=KEEPALIVE_S)
+            except asyncio.TimeoutError:
+                yield ": keepalive\n\n"              # keeps proxies from closing an idle stream
+                continue
+            if pack and event.get("pack") not in (None, pack):
+                continue
+            yield _sse(event)
+    finally:
+        _subscribers.discard(queue)
+
+
+@app.get("/api/events")
+async def events(pack: str | None = None):
+    return StreamingResponse(_event_stream(pack, asyncio.Queue(maxsize=256)), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/api/events/recent")
+async def events_recent(pack: str | None = None, since: int = 0, limit: int = 50):
+    rows = [e for e in _recent if e["seq"] > since and (not pack or e.get("pack") in (None, pack))]
+    return {"events": rows[-limit:], "latest": _event_seq, "live_sessions": len(_sessions)}
+
+
+def _mask(phone: str | None) -> str | None:
+    """A live feed is seen by everyone in the shop; show the last four digits."""
+    return f"…{phone[-4:]}" if phone and len(phone) >= 4 else phone
+
+
+def holder_sid(holder: Holder) -> str | None:
+    for sid, h in _sessions.items():
+        if h is holder:
+            return sid
+    return None
+
+
 def _gc() -> None:
     cutoff = time.monotonic() - SESSION_IDLE_S
     for sid in [k for k, h in _sessions.items() if h.last_used < cutoff]:
@@ -209,6 +277,8 @@ async def _new_session(pack_id: str, channel: str, phone: str | None) -> tuple[s
     sid = uuid.uuid4().hex[:16]
     holder = Holder(session, rt, channel, phone)
     _sessions[sid] = holder
+    publish("session.started", sid=sid, pack=pack_id, channel=channel, phone=_mask(phone),
+            greeting=session.ctx.last_agent_utterance)
     return sid, holder
 
 
@@ -216,6 +286,12 @@ def _turn_payload(record, holder: Holder) -> dict[str, Any]:
     session = holder.session
     new_receipts = session.receipts[holder.receipts_seen:]
     holder.receipts_seen = len(session.receipts)
+    publish("turn", sid=holder_sid(holder), pack=holder.rt.pack_id, channel=holder.channel,
+            heard=record.heard, corrected=record.corrected, reply=record.said,
+            corrections=[{"from_token": c.from_token, "to_surface": c.to_surface} for c in record.corrections],
+            tools=record.tools, speculation_hits=record.speculation_hits, receipts=new_receipts,
+            guard=record.guard, latency_ms=round(record.latency_ms, 1),
+            outcome=session.ctx.outcome.value if session.ctx.outcome else None)
     return {
         "reply": record.said,
         "heard": record.heard,
@@ -257,6 +333,9 @@ async def _notify_customer(holder: Holder, codes: list[str]) -> None:
 def _finish(sid: str, holder: Holder) -> None:
     report = holder.session.finish()
     store.record_call(report, channel=holder.channel, phone=holder.phone)
+    publish("session.ended", sid=sid, pack=holder.rt.pack_id, channel=holder.channel,
+            outcome=report.outcome.value, call_id=report.conversation_id,
+            receipts=len(report.receipts), turns=len(report.turns))
     if holder.phone and report.receipts and store.has_open_missed(holder.rt.pack_id, holder.phone):
         store.mark_recovered(holder.rt.pack_id, holder.phone, report.receipts[-1])
     _sessions.pop(sid, None)
@@ -288,6 +367,7 @@ async def session_partial(sid: str, body: TextIn):
         raise HTTPException(404, "no such session")
     holder.last_used = time.monotonic()
     await holder.session.handle_partial_text(body.text)
+    publish("partial", sid=sid, pack=holder.rt.pack_id, text=body.text)
     return {"ok": True}
 
 
