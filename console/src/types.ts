@@ -9,6 +9,14 @@ export interface Status {
   public_url?: string;
   whatsapp?: { configured: boolean; number: string | null };
   digest?: { owner_configured: boolean; hour_ist: number };
+  auth?: { enabled: boolean; dev: boolean };
+}
+
+export interface User {
+  phone: string;
+  role: "owner" | "staff" | string;
+  packs: string[];
+  name: string;
 }
 
 export interface DraftRequest {

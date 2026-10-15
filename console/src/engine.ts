@@ -10,6 +10,7 @@ import type {
   Draft,
   DraftRequest,
   LiveEvent,
+  User,
 } from "./types";
 
 export const ENGINE_BASE = "/engine";
@@ -25,11 +26,24 @@ export class EngineError extends Error {
   }
 }
 
+const TOKEN_KEY = "haanji.token";
+export function getToken(): string | null {
+  try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
+}
+export function setToken(token: string | null): void {
+  try { if (token) localStorage.setItem(TOKEN_KEY, token); else localStorage.removeItem(TOKEN_KEY); } catch { /* private mode */ }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
   const r = await fetch(enginePath(path), {
-    headers: { "Content-Type": "application/json" },
     ...init,
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) },
   });
+  if (r.status === 401) {
+    setToken(null);
+    window.dispatchEvent(new Event("haanji:signed-out"));
+  }
   if (!r.ok) throw new EngineError(r.status, (await r.text()) || r.statusText);
   return (await r.json()) as T;
 }
@@ -57,6 +71,12 @@ export const engine = {
   digest: (pack: string) => request<Digest>(`api/digest?${q(pack)}`),
   sendDigest: (pack: string) => request<{ sent: boolean; to: string; text: string }>(`api/digest/send?${q(pack)}`, { method: "POST" }),
   anchors: (pack: string) => request<Anchors>(`api/anchors?${q(pack)}`),
+  requestOtp: (phone: string) => request<{ sent: boolean; channel: string; dev_code?: string }>("api/auth/otp", { method: "POST", body: JSON.stringify({ phone }) }),
+  verifyOtp: (phone: string, code: string) => request<{ token: string; user: User }>("api/auth/verify", { method: "POST", body: JSON.stringify({ phone, code }) }),
+  me: () => request<{ enabled: boolean; user: User | null }>("api/auth/me"),
+  users: () => request<{ users: User[] }>("api/auth/users"),
+  addUser: (u: { phone: string; role: string; packs: string[]; name: string }) => request<{ user: User }>("api/auth/users", { method: "POST", body: JSON.stringify(u) }),
+  removeUser: (phone: string) => request<{ removed: boolean }>(`api/auth/users/${encodeURIComponent(phone)}`, { method: "DELETE" }),
   recentEvents: (pack: string, since: number) =>
     request<{ events: LiveEvent[]; latest: number; live_sessions: number }>(`api/events/recent?${q(pack)}&since=${since}`),
   packYaml: (id: string) => request<{ pack_id: string; yaml: string }>(`api/packs/${encodeURIComponent(id)}`),
@@ -182,7 +202,8 @@ export function subscribeLive(pack: string, onEvent: (e: LiveEvent) => void): ()
   };
   let es: EventSource | null = null;
   if (typeof EventSource !== "undefined") {
-    es = new EventSource(enginePath(`api/events?${q(pack)}`));
+    const token = getToken();
+    es = new EventSource(enginePath(`api/events?${q(pack)}${token ? `&token=${encodeURIComponent(token)}` : ""}`));
     const handle = (ev: MessageEvent) => {
       try { const e = JSON.parse(ev.data as string) as LiveEvent; since = Math.max(since, e.seq); onEvent(e); } catch { /* ignore */ }
     };

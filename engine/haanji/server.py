@@ -38,6 +38,7 @@ from .backend.local import LocalBackend
 from .channels import whatsapp as wa_channel
 from . import collect as collect_mod
 from . import onboard as onboard_mod
+from .auth import AuthStore, Principal, normalise_phone
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
 from .insights import compute as compute_insights
@@ -68,6 +69,7 @@ from contextlib import asynccontextmanager
 async def _lifespan(_app: FastAPI):
     """The evening scheduler (daily anchors, the owner's digest) runs for the
     life of the process; HAANJI_SCHEDULER=0 keeps it off, e.g. in tests."""
+    seed_owner()
     task = None
     if os.environ.get("HAANJI_SCHEDULER", "1") != "0":
         task = asyncio.ensure_future(_evening_loop())
@@ -127,6 +129,18 @@ async def hardening(request: Request, call_next):
             not request.url.path.startswith(RATE_LIMIT_EXEMPT) and rate_limited(_client_of(request)):
         return JSONResponse({"detail": "too many requests; try again in a minute"}, status_code=429,
                             headers={"Retry-After": "60"})
+    if AUTH_ENABLED and request.method != "OPTIONS":
+        need = required_role(request)
+        if need:
+            who = principal_of(request)
+            if who is None:
+                return JSONResponse({"detail": "sign in first"}, status_code=401,
+                                    headers={"WWW-Authenticate": "Bearer"})
+            if ROLE_RANK.get(who.role, 0) < ROLE_RANK[need]:
+                return JSONResponse({"detail": f"{need} role needed"}, status_code=403)
+            if not who.allows(_pack_in(request)):
+                return JSONResponse({"detail": "not your pack"}, status_code=403)
+            request.state.user = who
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
@@ -137,6 +151,50 @@ async def hardening(request: Request, call_next):
     return response
 
 store = DemoStore(os.path.join(VAR_DIR, "store.sqlite"))
+
+# ─────────────────────────────────────────────────────────────── auth
+AUTH_ENABLED = os.environ.get("HAANJI_AUTH", "off").lower() in ("on", "1", "true", "yes")
+AUTH_DEV = os.environ.get("HAANJI_AUTH_DEV", "0").lower() in ("1", "true", "yes", "on")
+auth = AuthStore(os.path.join(VAR_DIR, "auth.sqlite"), os.environ.get("HAANJI_AUTH_SECRET") or None)
+# (method regex, path regex, minimum role). Everything else is public: the
+# demo pages, callers' sessions, the verifier's export, the webhooks.
+PROTECTED: list[tuple[str, re.Pattern, str]] = [
+    ("GET", re.compile(r"^/api/(insights|conversations(/.*)?|lexicon|wa/threads(/.*)?|events(/recent)?|digest)$"), "staff"),
+    ("GET", re.compile(r"^/api/packs/[^/]+$"), "staff"),
+    ("GET", re.compile(r"^/api/(record/(manifest|export)|study/(responses|export))$"), "owner"),
+    ("POST", re.compile(r"^/api/(packs/(draft|validate|[^/]+/selftest)|anchors/seal|digest/send)$"), "owner"),
+    ("PUT", re.compile(r"^/api/packs/[^/]+$"), "owner"),
+    ("GET|POST|DELETE", re.compile(r"^/api/auth/users(/.*)?$"), "owner"),
+]
+ROLE_RANK = {"staff": 1, "owner": 2}
+
+
+def seed_owner() -> None:
+    """A fresh deployment with auth on and no users makes HAANJI_OWNER_PHONE
+    the owner of every pack, so nobody is locked out of their own console."""
+    if AUTH_ENABLED and OWNER_PHONE and auth.count() == 0:
+        auth.upsert_user(OWNER_PHONE, "owner", ["*"], name="Owner")
+
+
+def _pack_in(request: Request) -> str | None:
+    q = request.query_params.get("pack")
+    if q:
+        return q
+    m = re.match(r"^/api/packs/([^/]+)", request.url.path)
+    return m.group(1) if m and m.group(1) not in ("draft", "validate") else None
+
+
+def required_role(request: Request) -> str | None:
+    for methods, pattern, role in PROTECTED:
+        if request.method in methods.split("|") and pattern.match(request.url.path):
+            return role
+    return None
+
+
+def principal_of(request: Request) -> Principal | None:
+    header = request.headers.get("authorization", "")
+    token = header[7:] if header.lower().startswith("bearer ") else request.query_params.get("token")
+    return auth.verify_token(token)
 
 
 # ─────────────────────────────────────────────────────────── tenant runtimes
@@ -964,6 +1022,82 @@ async def _evening_loop() -> None:
                 print(f"digest: {exc}", file=sys.stderr)
 
 
+# ─────────────────────────────────────────────────────── auth endpoints
+class OtpIn(BaseModel):
+    phone: str
+
+
+class VerifyIn(BaseModel):
+    phone: str
+    code: str
+
+
+class UserIn(BaseModel):
+    phone: str
+    role: str = "staff"
+    packs: list[str] = ["*"]
+    name: str = ""
+
+
+@app.post("/api/auth/otp")
+async def auth_otp(body: OtpIn):
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off (HAANJI_AUTH=on to enable)")
+    phone = normalise_phone(body.phone)
+    if len(phone) < 10 or auth.user(phone) is None:
+        # Same answer for unknown numbers: no account enumeration.
+        return {"sent": True, "channel": "whatsapp" if wa_channel.configured() else "dev"}
+    code = auth.issue_otp(phone)
+    if wa_channel.configured():
+        await wa_channel.send_text(phone, f"HaanJi console login code: {code}\nYeh code 5 minute tak chalega. Kisi ko mat batayein.")
+        return {"sent": True, "channel": "whatsapp"}
+    if AUTH_DEV:
+        return {"sent": True, "channel": "dev", "dev_code": code}
+    raise HTTPException(503, "no way to deliver the code: connect WhatsApp or set HAANJI_AUTH_DEV=1")
+
+
+@app.post("/api/auth/verify")
+async def auth_verify(body: VerifyIn):
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off")
+    phone = normalise_phone(body.phone)
+    user = auth.user(phone)
+    if user is None or not auth.check_otp(phone, body.code):
+        raise HTTPException(401, "wrong or expired code")
+    return {"token": auth.token_for(user), "user": user.as_dict()}
+
+
+@app.get("/api/auth/me")
+async def auth_me(request: Request):
+    if not AUTH_ENABLED:
+        return {"enabled": False, "user": None}
+    who = principal_of(request)
+    if who is None:
+        raise HTTPException(401, "sign in first")
+    return {"enabled": True, "user": who.as_dict()}
+
+
+@app.get("/api/auth/users")
+async def auth_users():
+    return {"users": [u.as_dict() for u in auth.users()]}
+
+
+@app.post("/api/auth/users")
+async def auth_users_add(body: UserIn):
+    try:
+        return {"user": auth.upsert_user(body.phone, body.role, body.packs, body.name).as_dict()}
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+
+
+@app.delete("/api/auth/users/{phone}")
+async def auth_users_remove(phone: str, request: Request):
+    me: Principal | None = getattr(request.state, "user", None)
+    if me and normalise_phone(phone) == me.phone:
+        raise HTTPException(409, "you cannot remove yourself")
+    return {"removed": auth.remove_user(phone)}
+
+
 @app.get("/api/status")
 async def status():
     return {"name": "HaanJi demo server", "version": app.version,
@@ -971,6 +1105,7 @@ async def status():
             "var_dir": VAR_DIR,
             "public_url": PUBLIC_URL,
             "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
+            "auth": {"enabled": AUTH_ENABLED, "dev": AUTH_DEV},
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
             "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),

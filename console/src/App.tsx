@@ -9,6 +9,7 @@ import Lexicon from "./pages/Lexicon";
 import Packs from "./pages/Packs";
 import PackStudio from "./pages/PackStudio";
 import Onboard from "./pages/Onboard";
+import Login from "./pages/Login";
 
 const LINKS: [string, string][] = [
   ["/dashboard", "Aaj"], ["/calls", "Calls"], ["/ledger", "Pramaan"],
@@ -16,7 +17,8 @@ const LINKS: [string, string][] = [
 ];
 
 export default function App() {
-  const { online, checked, pack, packs, setPack } = useApp();
+  const { online, checked, pack, packs, setPack, authRequired, user, signOut } = useApp();
+  if (authRequired) return <Login />;
   return (
     <>
       <header className="topbar">
@@ -34,6 +36,11 @@ export default function App() {
             <i />{online ? "LIVE" : checked ? "SAMPLE" : "…"}
           </span>
           <a href="/engine/talk" target="_blank" rel="noopener noreferrer" aria-label="Talk to HaanJi (nayi tab mein)"><span>Talk</span><Icon name="external" small /></a>
+          {user && (
+            <button className="who" onClick={signOut} title={`${user.phone} · ${user.role} · sign out`}>
+              <span>{user.name || user.phone}</span><small>{user.role}</small>
+            </button>
+          )}
         </div>
       </header>
       <main className="main" id="main">
