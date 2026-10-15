@@ -6,7 +6,30 @@ export interface Status {
   default_pack: string;
   packs: string[];
   console_url?: string;
+  public_url?: string;
   whatsapp?: { configured: boolean; number: string | null };
+  digest?: { owner_configured: boolean; hour_ist: number };
+}
+
+export interface DraftRequest {
+  business_name: string;
+  business_type: string;
+  language: string;
+  agent_name: string;
+  staff_role?: string;
+  greeting?: string;
+  closing?: string;
+  staff: string[];
+  hours: Record<string, [string, string] | null>;
+  services: { name: string; duration_min: number; price_inr: number | null; staff: string[]; aliases: string[] }[];
+  places: string[];
+}
+
+export interface Draft {
+  pack_id: string;
+  yaml: string;
+  problems: string[];
+  exists: boolean;
 }
 
 export interface Insights {

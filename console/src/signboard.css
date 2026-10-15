@@ -170,3 +170,30 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 
 /* the owner's evening message, as it will read on the phone */
 .digest { white-space: pre-wrap; font-family: var(--font-body); font-size: 14px; line-height: 1.55; margin: 0; padding: 14px 16px; border-radius: var(--r-ctl); background: rgba(27, 59, 140, .06); border: 1px solid rgba(27, 59, 140, .14); }
+
+/* onboarding wizard */
+.steps { display: flex; gap: 6px; list-style: none; padding: 0; margin: 4px 0 0; flex-wrap: wrap; }
+.steps li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1px solid var(--rule); font-size: 13px; color: var(--ink-2); }
+.steps li span { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--rule); font-weight: 700; font-size: 12px; }
+.steps li.on { border-color: var(--cobalt); color: var(--cobalt); }
+.steps li.on span { background: var(--cobalt); color: #fff; }
+.steps li.done span { background: var(--leaf-ink); color: #fff; }
+.form { display: flex; flex-direction: column; gap: 14px; }
+.form .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.form .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink-2); min-width: 140px; }
+.form .field.grow { flex: 1; }
+.form .input { min-height: 40px; padding: 0 10px; border-radius: var(--r-ctl); border: 1px solid var(--rule); background: #fff; color: var(--ink); font: inherit; }
+.form textarea.input { padding: 8px 10px; min-height: 72px; resize: vertical; }
+.form .check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink); min-width: 92px; }
+.form .check input { width: 18px; height: 18px; accent-color: var(--cobalt); }
+.form .hours { align-items: center; }
+.form .hours .input[type="time"] { width: 120px; }
+.form .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.form .svc { padding: 12px; border: 1px dashed var(--rule); border-radius: var(--r-card); display: flex; flex-direction: column; gap: 10px; }
+.form .note { margin: 0; padding: 8px 12px; border-radius: var(--r-ctl); font-size: 14px; }
+.form .note.ok { background: rgba(31, 107, 69, .1); color: var(--leaf-ink); }
+.form .note.bad { background: rgba(184, 55, 31, .1); color: var(--sindoor-ink); }
+.form .results { margin: 0; padding-left: 18px; font-family: var(--font-mono); font-size: 13px; }
+.form .results .bad { color: var(--sindoor-ink); }
+.form .yaml { font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; background: rgba(27, 59, 140, .06); padding: 12px; border-radius: var(--r-ctl); max-height: 420px; overflow: auto; }
+.wizard-nav { display: flex; justify-content: space-between; margin-top: 18px; }
