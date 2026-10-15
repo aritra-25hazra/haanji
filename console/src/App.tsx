@@ -1,5 +1,6 @@
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
-import { isOffline } from "./api";
+import { Link, NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { Icon } from "./components/Common";
+import { useApp } from "./state";
 import Dashboard from "./pages/Dashboard";
 import Calls from "./pages/Calls";
 import CallDetail from "./pages/CallDetail";
@@ -9,37 +10,32 @@ import Packs from "./pages/Packs";
 import PackStudio from "./pages/PackStudio";
 
 const LINKS: [string, string][] = [
-  ["/dashboard", "Dashboard"],
-  ["/calls", "Calls"],
-  ["/ledger", "Pramaan ledger"],
-  ["/lexicon", "Bhasha lexicon"],
-  ["/packs", "Vertical pack"],
-  ["/studio", "Pack Studio"],
+  ["/dashboard", "Aaj"], ["/calls", "Calls"], ["/ledger", "Pramaan"],
+  ["/lexicon", "Bhasha"], ["/packs", "Packs"], ["/studio", "Studio"],
 ];
 
 export default function App() {
+  const { online, checked, pack, packs, setPack } = useApp();
   return (
-    <div className="shell">
-      <aside className="sidebar">
-        <div className="brand">Haan<span>ji</span></div>
-        <div className="brand-sub">Smile Care Dental</div>
-        <nav className="nav">
+    <>
+      <header className="topbar">
+        <Link className="wordmark" to="/dashboard">HaanJi <span className="dev">हाँजी</span></Link>
+        <nav className="nav" aria-label="Main">
           {LINKS.map(([to, label]) => (
-            <NavLink key={to} to={to}
-              className={({ isActive }) => (isActive ? "active" : undefined)}>
-              {label}
-            </NavLink>
+            <NavLink key={to} to={to} className={({ isActive }) => (isActive ? "active" : undefined)}>{label}</NavLink>
           ))}
-          <a href="/engine/talk" target="_blank" rel="noopener noreferrer">
-            Talk to HaanJi ↗
-          </a>
-          <a href="/engine/whatsapp" target="_blank" rel="noopener noreferrer">
-            WhatsApp demo ↗
-          </a>
         </nav>
-        <footer>v0.4.0 · {isOffline() ? "local demo" : "live"}</footer>
-      </aside>
-      <main className="main">
+        <div className="tools">
+          <select aria-label="Pack" value={pack} onChange={(e) => setPack(e.target.value)}>
+            {packs.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <span className={"live" + (online ? "" : " off")} title={online ? "engine se live" : checked ? "sample data" : "checking"}>
+            <i />{online ? "LIVE" : checked ? "SAMPLE" : "…"}
+          </span>
+          <a href="/engine/talk" target="_blank" rel="noopener noreferrer"><span>Talk</span><Icon name="external" small /></a>
+        </div>
+      </header>
+      <main className="main" id="main">
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -51,6 +47,6 @@ export default function App() {
           <Route path="/studio" element={<PackStudio />} />
         </Routes>
       </main>
-    </div>
+    </>
   );
 }
