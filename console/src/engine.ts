@@ -12,6 +12,7 @@ import type {
   LiveEvent,
   User,
   Ops,
+  CustomerRecord,
 } from "./types";
 
 export const ENGINE_BASE = "/engine";
@@ -79,6 +80,9 @@ export const engine = {
   addUser: (u: { phone: string; role: string; packs: string[]; name: string }) => request<{ user: User }>("api/auth/users", { method: "POST", body: JSON.stringify(u) }),
   removeUser: (phone: string) => request<{ removed: boolean }>(`api/auth/users/${encodeURIComponent(phone)}`, { method: "DELETE" }),
   ops: (pack: string) => request<Ops>(`api/ops?${q(pack)}`),
+  customerRecord: (pack: string, phone: string) => request<CustomerRecord>(`api/privacy/customer/${encodeURIComponent(phone)}?${q(pack)}`),
+  eraseCustomer: (pack: string, phone: string) => request<Record<string, number | boolean>>(`api/privacy/customer/${encodeURIComponent(phone)}?${q(pack)}`, { method: "DELETE" }),
+  privacyPolicy: () => request<{ retention_days: number; consent_line: string | null; vault: { keys: number; shredded: number } }>("api/privacy/policy"),
   feedUrl: (pack: string) => request<{ pack: string; url: string; webcal: string }>(`api/calendar/feed-url?${q(pack)}`),
   googleStatus: (pack: string) => request<{ configured: boolean; connected: boolean; connected_at: string | null; redirect_uri: string }>(`api/google/status?${q(pack)}`),
   googleConnect: (pack: string) => request<{ url: string }>(`api/google/connect?${q(pack)}`),

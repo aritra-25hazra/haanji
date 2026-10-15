@@ -28,3 +28,12 @@ def test_the_endpoint_returns_one_line_per_input():
     r = c.post("/api/devanagari", json={"texts": ["haan ji", "theek hai"]}).json()
     assert r == {"texts": ["हाँ जी", "ठीक है"], "approximate": True}
     assert c.post("/api/devanagari", json={"texts": ["x"] * 501}).status_code == 413
+
+
+def test_devanagari_to_latin_is_consistent_and_hindi_shaped():
+    from haanji.devanagari import to_latin
+    assert to_latin("कल सुबह") == "kal subah" and to_latin("नमस्ते") == "namaste"
+    assert to_latin("हाँ जी, १२ बजे") == "haan jee, 12 baje"
+    out = to_latin("मुझे रूट कैनल करवाना है")
+    assert out.startswith("mujhe root ") and out.endswith(" hai") and out.isascii()
+    assert to_latin(to_latin("डॉक्टर")) == to_latin("डॉक्टर"), "Latin text passes through unchanged"

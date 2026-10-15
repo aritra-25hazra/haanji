@@ -147,12 +147,20 @@
     let args = {}, conf = {};
     try { args = JSON.parse(r.action_args); } catch (e) {}
     try { conf = JSON.parse(r.confirmation); } catch (e) {}
-    const rows = [["Kaam", r.action.replace(/_/g, " ")], ["Service", args.service], ["Din", args.date], ["Time", args.time],
-                  ["Kiske saath", args.staff], ["Naam", args.customer_name], ["Agent ne poocha", conf.prompt_text],
-                  ["Aapne kaha", conf.reply_text], ["Kab", (r.occurred_at || "").replace("T", " ").slice(0, 16)]];
-    $("mine-code").textContent = code + " · seq " + r.seq;
-    $("mine-body").innerHTML = rows.filter(function (x) { return x[1]; }).map(function (x) { return "<dt>" + S.esc(x[0]) + "</dt><dd>" + S.esc(String(x[1])) + "</dd>"; }).join("");
-    box.hidden = false;
+    function paint(fields, erased) {
+      const rows = [["Kaam", r.action.replace(/_/g, " ")], ["Service", fields.service], ["Din", fields.date], ["Time", fields.time],
+                    ["Kiske saath", fields.staff], ["Naam", erased ? "(mita diya gaya)" : fields.customer_name], ["Agent ne poocha", conf.prompt_text],
+                    ["Aapne kaha", conf.reply_text], ["Kab", (r.occurred_at || "").replace("T", " ").slice(0, 16)]];
+      $("mine-code").textContent = code + " · seq " + r.seq;
+      $("mine-body").innerHTML = rows.filter(function (x) { return x[1]; }).map(function (x) { return "<dt>" + S.esc(x[0]) + "</dt><dd>" + S.esc(String(x[1])) + "</dd>"; }).join("");
+      box.hidden = false;
+    }
+    paint(args, false);
+    // Personal fields are encrypted in the receipt; the holder of the code may open them.
+    fetch("api/receipts/" + encodeURIComponent(code) + "/open?pack=" + encodeURIComponent($("pack").value))
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (d) { if (d) paint(Object.assign({}, args, d.fields), d.erased); })
+      .catch(function () {});
     document.querySelectorAll("#rows tr").forEach(function (tr) {
       const td = tr.children[2];
       if (td && td.textContent.replace("-", "").toUpperCase() === want) { tr.classList.add("mine-row"); tr.scrollIntoView({ block: "center", behavior: "smooth" }); }

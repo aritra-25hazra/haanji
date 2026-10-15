@@ -34,8 +34,12 @@ implemented, measured and testable rather than described:
 Every number above was produced by `python -m haanji.bench` on this repository and
 is written to [`research/results.json`](research/results.json). Nothing in this
 README is an estimate. The full evaluation, with confidence intervals over five
-seeds, related work and threats to validity, is in
-[`research/REPORT.md`](research/REPORT.md) ([PDF](research/REPORT.pdf)).
+seeds, baselines, related work and threats to validity, is in
+[`research/REPORT.md`](research/REPORT.md) ([PDF](research/REPORT.pdf)); a
+condensed paper draft is [`research/PAPER.md`](research/PAPER.md). For a viva:
+[docs/viva.md](docs/viva.md) (fifty questions, three-line answers, where the
+evidence is), [docs/competitors.md](docs/competitors.md),
+[docs/diagrams.md](docs/diagrams.md), [docs/failure-gallery.md](docs/failure-gallery.md).
 
 ## See it live
 
@@ -229,6 +233,25 @@ Measured over 3,495 independently corrupted sentences at three noise levels:
 
 Median cost: **0.07 ms** per utterance.
 
+Against the classic keys, with the lexicon, the two-condition rule and the
+edit-distance bound held fixed (entity error *after* correction; synthetic at
+30% noise, and the real-recogniser pilot):
+
+| keyer | synthetic @30% | real pilot | harmful (real) |
+|---|---|---|---|
+| edit distance only | 1.68% | 32.4% | 6 |
+| exact spelling | 32.01% | 33.3% | 0 |
+| Soundex | 3.98% | 30.6% | 0 |
+| Metaphone | 8.04% | 31.5% | 0 |
+| NYSIIS | 3.46% | 32.4% | 0 |
+| Double Metaphone | 6.99% | 31.1% | 0 |
+| Bhasha (ours) | 0.80% | 30.1% | 0 |
+
+Every pairwise McNemar test against ours on the synthetic data has p < 0.001;
+on real recogniser output the keys are within a point of each other and the
+safety rule matters more than the key. The per-rule ablation and the tests
+are in the report (§4.6–4.7, `research/baselines.json`).
+
 The corruption model in `haanji/corrupt.py` is written independently of the
 lexicon and corrupts words that appear in no lexicon at all, so the harness can
 catch the layer doing damage. It never has.
@@ -368,13 +391,14 @@ switch in `render.yaml`.
 
 | concurrent callers | turn p50 (ms) | turn p95 (ms) | calls/min | errors |
 |---|---|---|---|---|
-| 5 | 7.0 | 187.0 | 467 | 0 |
-| 10 | 5.0 | 185.2 | 890 | 0 |
-| 25 | 4.6 | 184.6 | 1578 | 0 |
-| 50 | 6.2 | 185.8 | 2548 | 0 |
+| 5 | 6.9 | 188.5 | 457 | 0 |
+| 10 | 5.6 | 185.0 | 786 | 0 |
+| 25 | 3.9 | 183.8 | 1399 | 0 |
+| 50 | 6.1 | 185.8 | 2146 | 0 |
 
   Latency does not move with concurrency; the p95 is the booking turn's
-  write and ledger seal. The "expected outcome" rate in
+  write and ledger seal. The engine spends 0.0085 CPU-seconds per call,
+  ≈ ₹0.000000 on a ₹600/month instance; the speech vendors are the cost. The "expected outcome" rate in
   [`research/load_test.json`](research/load_test.json) falls from 97% to 70%
   across the ladder because sixty scripted callers book the same morning in
   one shared calendar and the script does not take the alternative the agent
@@ -395,8 +419,16 @@ switch in `render.yaml`.
   event for every sealed booking (OAuth 2.0 in the console's Calendar panel).
 * **Your own domain.** [docs/custom-domain.md](docs/custom-domain.md) lists
   the DNS records and the six places the URL lives.
+* **Privacy (DPDP Act 2023).** Personal fields inside receipts are encrypted
+  per customer; erasure shreds the key, so the ledger stays verifiable and the
+  data unreadable. Access and erasure endpoints, a console button, a consent
+  line, retention purge — [docs/privacy-dpdp.md](docs/privacy-dpdp.md).
 * **Security.** CodeQL, secret scanning, dependency audits and an SBOM on
-  every push; rate limiting and hardening headers on the demo server.
+  every push; rate limiting and hardening headers on the demo server. The
+  ledger's properties and threat model are written down and property-tested
+  ([docs/pramaan-security.md](docs/pramaan-security.md)).
+* **Three languages.** Hinglish, Benglish (Kolkata) and Marathinglish (Pune):
+  a phrase-table row and one YAML file each.
 
 ### A real model behind the same boundary
 

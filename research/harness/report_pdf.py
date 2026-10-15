@@ -32,6 +32,8 @@ blockquote p { margin: 0; }
 code { font-family: Menlo, Consolas, monospace; font-size: 9pt; background: #f1f2f5; padding: 0 2px; }
 pre { font-family: Menlo, Consolas, monospace; font-size: 8.4pt; background: #f1f2f5; padding: 8pt; overflow: hidden; white-space: pre-wrap; border-radius: 3px; }
 pre code { background: none; padding: 0; font-size: inherit; }
+pre.mermaid { background: none; padding: 0; text-align: center; page-break-inside: avoid; }
+pre.mermaid svg { max-width: 100%; height: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 8.2pt; margin: 6pt 0 10pt; page-break-inside: avoid; table-layout: auto; }
 th, td { border: 1px solid #c9cdd6; padding: 3pt 5pt; text-align: left; vertical-align: top; }
 th { background: #eef1f7; font-weight: 700; white-space: normal !important; }
@@ -49,31 +51,96 @@ a { color: #1f4fd8; text-decoration: none; }
 """
 
 
-def build_html(md_text: str) -> str:
+MERMAID_URLS = ["https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js",
+                "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"]
+
+
+def mermaid_js() -> str:
+    """A local copy of mermaid.min.js (downloaded once into ~/.cache), so the
+    PDF build does not depend on a CDN being reachable from the browser."""
+    import urllib.request
+    cache = Path.home() / ".cache" / "haanji" / "mermaid.min.js"
+    if not cache.exists():
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        for url in MERMAID_URLS:
+            try:
+                urllib.request.urlretrieve(url, cache)
+                break
+            except Exception:                              # noqa: BLE001 - try the next mirror
+                continue
+    return cache.resolve().as_uri() if cache.exists() else MERMAID_URLS[0]
+
+
+def build_html(md_text: str, paper: bool = False) -> str:
+    # Mermaid fences are handed to mermaid.js in the page rather than to the Markdown renderer.
+    blocks: list[str] = []
+
+    def stash(m):
+        blocks.append(m.group(1))
+        return f"\n\nMERMAIDBLOCK{len(blocks) - 1}\n\n"
+    md_text = re.sub(r"```mermaid\n(.*?)```", stash, md_text, flags=re.S)
     body = markdown.markdown(md_text, extensions=["tables", "fenced_code", "toc", "attr_list", "md_in_html"])
+    import html as _html
+    for i, code in enumerate(blocks):
+        # Escaped, so that <<interface>> and <br/> reach mermaid as text, not as HTML.
+        body = body.replace(f"<p>MERMAIDBLOCK{i}</p>", f'<pre class="mermaid">{_html.escape(code)}</pre>')
     # Figures are referenced as research-relative paths; the HTML sits in research/.
     body = body.replace('src="figures/', 'src="figures/')
     title = re.search(r"<h1[^>]*>(.*?)</h1>", body)
     t = re.sub("<.*?>", "", title.group(1)) if title else "HaanJi report"
+    css = CSS + (PAPER_CSS if paper else "")
+    script = (f"<script src='{mermaid_js()}'></script><script>mermaid.initialize({{startOnLoad: true, theme: 'neutral', "
+              f"securityLevel: 'loose', flowchart: {{htmlLabels: true}}}});</script>" if blocks else "")
     return (f"<!doctype html><html lang='en'><head><meta charset='utf-8'><title>{t}</title>"
-            f"<style>{CSS}</style></head><body>{body}</body></html>")
+            f"<style>{css}</style></head><body>{body}{script}</body></html>")
 
 
-def main() -> int:
-    HTML.write_text(build_html(SRC.read_text(encoding="utf-8")), encoding="utf-8")
+PAPER_CSS = """
+@page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+html { font-size: 9.6pt; line-height: 1.32; }
+body { max-width: 178mm; }
+h1 { font-size: 17pt; text-align: center; }
+.byline { text-align: center; }
+.abstract { font-size: 9pt; margin: 8pt 14mm 10pt; }
+.cols { column-count: 2; column-gap: 7mm; column-fill: auto; }
+.cols h2 { break-after: avoid; font-size: 11pt; margin-top: 12pt; }
+.cols h3 { break-after: avoid; font-size: 10pt; }
+.cols p, .cols li { text-align: justify; }
+.cols table { font-size: 7.6pt; }
+.cols figure, .cols table, .cols pre { break-inside: avoid; }
+.cols img { max-width: 100%; }
+.refs p { font-size: 8.4pt; }
+"""
+
+
+def main(argv=None) -> int:
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--paper", action="store_true", help="two-column IEEE-style layout of research/PAPER.md")
+    args = ap.parse_args(argv)
+    src, html, pdf, footer = (SRC, HTML, PDF, "HaanJi — evaluation report")
+    if args.paper:
+        src, html, pdf, footer = (ROOT / "research" / "PAPER.md", ROOT / "research" / "PAPER.html",
+                                  ROOT / "research" / "PAPER.pdf", "HaanJi — paper draft")
+    html.write_text(build_html(src.read_text(encoding="utf-8"), paper=args.paper), encoding="utf-8")
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page()
-        page.goto(HTML.resolve().as_uri(), wait_until="load")
-        page.pdf(path=str(PDF), format="A4", print_background=True,
+        page.goto(html.resolve().as_uri(), wait_until="networkidle")
+        page.wait_for_timeout(2500)                        # mermaid renders after load
+        try:
+            page.wait_for_function("document.querySelectorAll('pre.mermaid:not([data-processed])').length === 0", timeout=20000)
+        except Exception:                                  # noqa: BLE001 - print whatever rendered
+            pass
+        page.pdf(path=str(pdf), format="A4", print_background=True,
                  display_header_footer=True,
                  header_template="<div></div>",
-                 footer_template="<div style='font-size:8px;color:#8a8f99;width:100%;text-align:center;font-family:Georgia,serif'>"
-                                 "HaanJi — evaluation report · page <span class='pageNumber'></span> of <span class='totalPages'></span></div>",
+                 footer_template=f"<div style='font-size:8px;color:#8a8f99;width:100%;text-align:center;font-family:Georgia,serif'>"
+                                 f"{footer} · page <span class='pageNumber'></span> of <span class='totalPages'></span></div>",
                  margin={"top": "22mm", "bottom": "24mm", "left": "20mm", "right": "20mm"})
         browser.close()
-    print(f"wrote {PDF.relative_to(ROOT)} ({PDF.stat().st_size // 1024} KB)")
+    print(f"wrote {pdf.relative_to(ROOT)} ({pdf.stat().st_size // 1024} KB)")
     return 0
 
 

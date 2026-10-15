@@ -84,6 +84,8 @@ export default function Dashboard() {
 
       {online && <CalendarPanel pack={pack} />}
 
+      {online && <PrivacyPanel pack={pack} />}
+
       <Panel title="Engine ne kya dekha" hint={`${fmtTime(data.generated_at)} pe bana${online ? " · har 5 s refresh" : ""}`}>
         <div className="body">
           {data.insights.length === 0 && <p className="muted">Abhi kuch kehne layak nahi — kuch calls hone do.</p>}
@@ -201,6 +203,43 @@ function CalendarPanel({ pack }: { pack: string }) {
           <a className="btn btn-ghost" href={feed.data.webcal}>Apple Calendar</a>
         </div>
         {g.data?.connected && <p className="muted">Google Calendar juda hai{g.data.connected_at ? ` · ${fmtTime(g.data.connected_at)} se` : ""}. Nayi bookings apne aap event banti hain.</p>}
+        {note && <p className="muted" role="status">{note}</p>}
+      </div>
+    </Panel>
+  );
+}
+
+
+/** Right of access and right to erasure, by phone number (DPDP Act 2023). */
+function PrivacyPanel({ pack }: { pack: string }) {
+  const policy = useData(() => engine.privacyPolicy(), []);
+  const [phone, setPhone] = useState("");
+  const [rec, setRec] = useState<import("../types").CustomerRecord | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const look = async () => {
+    setBusy(true); setNote(null);
+    try { setRec(await engine.customerRecord(pack, phone)); } catch (e) { setNote(e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(false); }
+  };
+  const erase = async () => {
+    if (!window.confirm(`${phone} ka sab data mita dein? Receipts rahengi, par naam-number kabhi nahi khulenge.`)) return;
+    setBusy(true);
+    try { const r = await engine.eraseCustomer(pack, phone); setNote(`Mita diya: ${JSON.stringify(r)}`); setRec(null); }
+    catch (e) { setNote(e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(false); }
+  };
+  return (
+    <Panel title="Privacy" hint={policy.data ? `retention ${policy.data.retention_days || "off"} din · consent line ${policy.data.consent_line ? "on" : "off"} · ${policy.data.vault.shredded} customers mitaye` : "DPDP Act 2023"}>
+      <div className="body form">
+        <div className="row">
+          <label className="field grow"><span>Customer ka phone number</span><input className="input" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="9876543210" /></label>
+          <button className="btn btn-ghost" onClick={look} disabled={busy || phone.replace(/\D/g, "").length < 10}>Kya rakha hai</button>
+          <button className="btn btn-ghost" onClick={erase} disabled={busy || phone.replace(/\D/g, "").length < 10} style={{ color: "var(--sindoor-ink)" }}>Mita do</button>
+        </div>
+        {rec && (
+          <p className="muted">{rec.erased ? "Yeh customer pehle hi mitaya ja chuka hai. " : ""}{rec.bookings.length} bookings · {rec.calls.length} calls · {rec.whatsapp_messages} WhatsApp messages · {rec.receipts.length} receipts{rec.receipts.length ? ` (${rec.receipts.filter((r) => r.pii_readable).length} readable)` : ""}</p>
+        )}
         {note && <p className="muted" role="status">{note}</p>}
       </div>
     </Panel>

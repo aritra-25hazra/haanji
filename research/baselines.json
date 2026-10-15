@@ -1,0 +1,634 @@
+{
+ "generated_at": "2026-10-15T14:10:45+00:00",
+ "trials": 9,
+ "synthetic": {
+  "edit distance only": {
+   "0.15": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.1733,
+    "entity_error_rate_on": 0.0056,
+    "relative_reduction_pct": 96.8,
+    "corrections": {
+     "beneficial": 660,
+     "neutral": 29,
+     "harmful": 0
+    },
+    "precision": 0.9579,
+    "median_correct_ms": 0.007
+   },
+   "0.30": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.3208,
+    "entity_error_rate_on": 0.0168,
+    "relative_reduction_pct": 94.8,
+    "corrections": {
+     "beneficial": 1166,
+     "neutral": 76,
+     "harmful": 0
+    },
+    "precision": 0.9388,
+    "median_correct_ms": 0.293
+   },
+   "0.45": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.5042,
+    "entity_error_rate_on": 0.0294,
+    "relative_reduction_pct": 94.2,
+    "corrections": {
+     "beneficial": 1682,
+     "neutral": 93,
+     "harmful": 0
+    },
+    "precision": 0.9476,
+    "median_correct_ms": 0.484
+   }
+  },
+  "exact spelling": {
+   "0.15": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.1733,
+    "entity_error_rate_on": 0.173,
+    "relative_reduction_pct": 0.2,
+    "corrections": {
+     "beneficial": 4,
+     "neutral": 0,
+     "harmful": 0
+    },
+    "precision": 1.0,
+    "median_correct_ms": 0.006
+   },
+   "0.30": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.3208,
+    "entity_error_rate_on": 0.3201,
+    "relative_reduction_pct": 0.2,
+    "corrections": {
+     "beneficial": 4,
+     "neutral": 0,
+     "harmful": 0
+    },
+    "precision": 1.0,
+    "median_correct_ms": 0.011
+   },
+   "0.45": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.5042,
+    "entity_error_rate_on": 0.5035,
+    "relative_reduction_pct": 0.1,
+    "corrections": {
+     "beneficial": 4,
+     "neutral": 0,
+     "harmful": 0
+    },
+    "precision": 1.0,
+    "median_correct_ms": 0.014
+   }
+  },
+  "Soundex": {
+   "0.15": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.1733,
+    "entity_error_rate_on": 0.0248,
+    "relative_reduction_pct": 85.7,
+    "corrections": {
+     "beneficial": 578,
+     "neutral": 4,
+     "harmful": 0
+    },
+    "precision": 0.9931,
+    "median_correct_ms": 0.006
+   },
+   "0.30": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.3208,
+    "entity_error_rate_on": 0.0398,
+    "relative_reduction_pct": 87.6,
+    "corrections": {
+     "beneficial": 1048,
+     "neutral": 16,
+     "harmful": 0
+    },
+    "precision": 0.985,
+    "median_correct_ms": 0.018
+   },
+   "0.45": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.5042,
+    "entity_error_rate_on": 0.0709,
+    "relative_reduction_pct": 85.9,
+    "corrections": {
+     "beneficial": 1508,
+     "neutral": 31,
+     "harmful": 0
+    },
+    "precision": 0.9799,
+    "median_correct_ms": 0.031
+   }
+  },
+  "Metaphone": {
+   "0.15": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.1733,
+    "entity_error_rate_on": 0.0377,
+    "relative_reduction_pct": 78.2,
+    "corrections": {
+     "beneficial": 522,
+     "neutral": 5,
+     "harmful": 0
+    },
+    "precision": 0.9905,
+    "median_correct_ms": 0.006
+   },
+   "0.30": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.3208,
+    "entity_error_rate_on": 0.0804,
+    "relative_reduction_pct": 74.9,
+    "corrections": {
+     "beneficial": 901,
+     "neutral": 14,
+     "harmful": 0
+    },
+    "precision": 0.9847,
+    "median_correct_ms": 0.017
+   },
+   "0.45": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.5042,
+    "entity_error_rate_on": 0.1429,
+    "relative_reduction_pct": 71.7,
+    "corrections": {
+     "beneficial": 1241,
+     "neutral": 29,
+     "harmful": 0
+    },
+    "precision": 0.9772,
+    "median_correct_ms": 0.027
+   }
+  },
+  "NYSIIS": {
+   "0.15": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.1733,
+    "entity_error_rate_on": 0.0164,
+    "relative_reduction_pct": 90.5,
+    "corrections": {
+     "beneficial": 612,
+     "neutral": 3,
+     "harmful": 0
+    },
+    "precision": 0.9951,
+    "median_correct_ms": 0.006
+   },
+   "0.30": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.3208,
+    "entity_error_rate_on": 0.0346,
+    "relative_reduction_pct": 89.2,
+    "corrections": {
+     "beneficial": 1075,
+     "neutral": 9,
+     "harmful": 0
+    },
+    "precision": 0.9917,
+    "median_correct_ms": 0.019
+   },
+   "0.45": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.5042,
+    "entity_error_rate_on": 0.0709,
+    "relative_reduction_pct": 85.9,
+    "corrections": {
+     "beneficial": 1514,
+     "neutral": 13,
+     "harmful": 0
+    },
+    "precision": 0.9915,
+    "median_correct_ms": 0.032
+   }
+  },
+  "Double Metaphone": {
+   "0.15": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.1733,
+    "entity_error_rate_on": 0.028,
+    "relative_reduction_pct": 83.9,
+    "corrections": {
+     "beneficial": 556,
+     "neutral": 4,
+     "harmful": 0
+    },
+    "precision": 0.9929,
+    "median_correct_ms": 0.006
+   },
+   "0.30": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.3208,
+    "entity_error_rate_on": 0.0699,
+    "relative_reduction_pct": 78.2,
+    "corrections": {
+     "beneficial": 941,
+     "neutral": 14,
+     "harmful": 0
+    },
+    "precision": 0.9853,
+    "median_correct_ms": 0.048
+   },
+   "0.45": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.5042,
+    "entity_error_rate_on": 0.1097,
+    "relative_reduction_pct": 78.2,
+    "corrections": {
+     "beneficial": 1342,
+     "neutral": 27,
+     "harmful": 0
+    },
+    "precision": 0.9803,
+    "median_correct_ms": 0.074
+   }
+  },
+  "Bhasha (ours)": {
+   "0.15": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.1733,
+    "entity_error_rate_on": 0.0014,
+    "relative_reduction_pct": 99.2,
+    "corrections": {
+     "beneficial": 659,
+     "neutral": 1,
+     "harmful": 0
+    },
+    "precision": 0.9985,
+    "median_correct_ms": 0.006
+   },
+   "0.30": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.3208,
+    "entity_error_rate_on": 0.008,
+    "relative_reduction_pct": 97.5,
+    "corrections": {
+     "beneficial": 1155,
+     "neutral": 11,
+     "harmful": 0
+    },
+    "precision": 0.9906,
+    "median_correct_ms": 0.072
+   },
+   "0.45": {
+    "sentences": 2097,
+    "entities": 2862,
+    "entity_error_rate_off": 0.5042,
+    "entity_error_rate_on": 0.021,
+    "relative_reduction_pct": 95.8,
+    "corrections": {
+     "beneficial": 1666,
+     "neutral": 18,
+     "harmful": 0
+    },
+    "precision": 0.9893,
+    "median_correct_ms": 0.111
+   }
+  }
+ },
+ "real": {
+  "edit distance only": {
+   "utterances": 300,
+   "entities": 219,
+   "entity_error_rate_off": 0.3379,
+   "entity_error_rate_on": 0.3242,
+   "relative_reduction_pct": 4.1,
+   "corrections": {
+    "beneficial": 32,
+    "neutral": 38,
+    "harmful": 6
+   },
+   "precision": 0.4211,
+   "word_error_rate": 0.8869,
+   "median_correct_ms": 0.713
+  },
+  "exact spelling": {
+   "utterances": 300,
+   "entities": 219,
+   "entity_error_rate_off": 0.3379,
+   "entity_error_rate_on": 0.3333,
+   "relative_reduction_pct": 1.4,
+   "corrections": {
+    "beneficial": 1,
+    "neutral": 0,
+    "harmful": 0
+   },
+   "precision": 1.0,
+   "word_error_rate": 0.8869,
+   "median_correct_ms": 0.018
+  },
+  "Soundex": {
+   "utterances": 300,
+   "entities": 219,
+   "entity_error_rate_off": 0.3379,
+   "entity_error_rate_on": 0.3059,
+   "relative_reduction_pct": 9.5,
+   "corrections": {
+    "beneficial": 13,
+    "neutral": 6,
+    "harmful": 0
+   },
+   "precision": 0.6842,
+   "word_error_rate": 0.8869,
+   "median_correct_ms": 0.025
+  },
+  "Metaphone": {
+   "utterances": 300,
+   "entities": 219,
+   "entity_error_rate_off": 0.3379,
+   "entity_error_rate_on": 0.3151,
+   "relative_reduction_pct": 6.8,
+   "corrections": {
+    "beneficial": 11,
+    "neutral": 6,
+    "harmful": 0
+   },
+   "precision": 0.6471,
+   "word_error_rate": 0.8869,
+   "median_correct_ms": 0.023
+  },
+  "NYSIIS": {
+   "utterances": 300,
+   "entities": 219,
+   "entity_error_rate_off": 0.3379,
+   "entity_error_rate_on": 0.3242,
+   "relative_reduction_pct": 4.1,
+   "corrections": {
+    "beneficial": 9,
+    "neutral": 2,
+    "harmful": 0
+   },
+   "precision": 0.8182,
+   "word_error_rate": 0.8869,
+   "median_correct_ms": 0.025
+  },
+  "Double Metaphone": {
+   "utterances": 300,
+   "entities": 219,
+   "entity_error_rate_off": 0.3379,
+   "entity_error_rate_on": 0.3105,
+   "relative_reduction_pct": 8.1,
+   "corrections": {
+    "beneficial": 12,
+    "neutral": 6,
+    "harmful": 0
+   },
+   "precision": 0.6667,
+   "word_error_rate": 0.8869,
+   "median_correct_ms": 0.081
+  },
+  "Bhasha (ours)": {
+   "utterances": 300,
+   "entities": 219,
+   "entity_error_rate_off": 0.3379,
+   "entity_error_rate_on": 0.3014,
+   "relative_reduction_pct": 10.8,
+   "corrections": {
+    "beneficial": 12,
+    "neutral": 8,
+    "harmful": 0
+   },
+   "precision": 0.6,
+   "word_error_rate": 0.8869,
+   "median_correct_ms": 0.13
+  }
+ },
+ "per_rule": [
+  {
+   "rule": 0,
+   "label": "long a shortens (aa→a)",
+   "pattern": "aa+h?",
+   "replacement": "a",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 1,
+   "label": "ee/ie/ii/iy→i",
+   "pattern": "(ee|ie|ii|iy)",
+   "replacement": "i",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 2,
+   "label": "oo/uu→u",
+   "pattern": "(oo|uu)",
+   "replacement": "u",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 3,
+   "label": "ph→f",
+   "pattern": "ph",
+   "replacement": "f",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 4,
+   "label": "v/w merge",
+   "pattern": "[vw]",
+   "replacement": "V",
+   "eer_on": 0.0252,
+   "precision": 0.9849,
+   "harmful": 0,
+   "delta_eer_points": 1.72
+  },
+  {
+   "rule": 5,
+   "label": "s/sh/z merge",
+   "pattern": "(sh|s|z)",
+   "replacement": "S",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 6,
+   "label": "ch/chh merge",
+   "pattern": "(chh|ch|c(?=[hiey]))",
+   "replacement": "C",
+   "eer_on": 0.0052,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": -0.28
+  },
+  {
+   "rule": 7,
+   "label": "t/d/th/dh collapse",
+   "pattern": "(th|dh|[td])",
+   "replacement": "T",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 8,
+   "label": "k/kh/q/c merge",
+   "pattern": "(kh|[kqx]|c(?=[aou]))",
+   "replacement": "K",
+   "eer_on": 0.0297,
+   "precision": 0.9899,
+   "harmful": 0,
+   "delta_eer_points": 2.17
+  },
+  {
+   "rule": 9,
+   "label": "surviving c→k",
+   "pattern": "c",
+   "replacement": "K",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 10,
+   "label": "g/gh/j-cluster merge",
+   "pattern": "(gh|g|j(?=[^aeiou]))",
+   "replacement": "G",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 11,
+   "label": "b/bh/p merge",
+   "pattern": "(bh|b|p)",
+   "replacement": "P",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 12,
+   "label": "j",
+   "pattern": "j",
+   "replacement": "J",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 13,
+   "label": "n/m merge",
+   "pattern": "[nm]",
+   "replacement": "N",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 14,
+   "label": "l/r merge",
+   "pattern": "[lr]",
+   "replacement": "R",
+   "eer_on": 0.008,
+   "precision": 0.9906,
+   "harmful": 0,
+   "delta_eer_points": 0.0
+  },
+  {
+   "rule": 15,
+   "label": "h/y dropped",
+   "pattern": "[hy]",
+   "replacement": "",
+   "eer_on": 0.0119,
+   "precision": 0.9904,
+   "harmful": 0,
+   "delta_eer_points": 0.39
+  }
+ ],
+ "mcnemar_30": {
+  "edit distance only": {
+   "b": 32,
+   "c": 7,
+   "statistic": 14.769,
+   "p": 0.0001215019756430813,
+   "n_discordant": 39
+  },
+  "exact spelling": {
+   "b": 807,
+   "c": 0,
+   "statistic": 805.001,
+   "p": 4.412715327754896e-177,
+   "n_discordant": 807
+  },
+  "Soundex": {
+   "b": 97,
+   "c": 7,
+   "statistic": 76.163,
+   "p": 2.6112900606557634e-18,
+   "n_discordant": 104
+  },
+  "Metaphone": {
+   "b": 203,
+   "c": 0,
+   "statistic": 201.005,
+   "p": 1.2604836256974427e-45,
+   "n_discordant": 203
+  },
+  "NYSIIS": {
+   "b": 82,
+   "c": 7,
+   "statistic": 61.528,
+   "p": 4.3647165609053815e-15,
+   "n_discordant": 89
+  },
+  "Double Metaphone": {
+   "b": 175,
+   "c": 0,
+   "statistic": 173.006,
+   "p": 1.6320043148058357e-39,
+   "n_discordant": 175
+  },
+  "off vs ours": {
+   "b": 809,
+   "c": 0,
+   "statistic": 807.001,
+   "p": 1.6213418686570166e-177,
+   "n_discordant": 809
+  }
+ }
+}

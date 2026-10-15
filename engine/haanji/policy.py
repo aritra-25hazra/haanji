@@ -24,7 +24,8 @@ from .speak import phrase, spoken_date, spoken_time
 from .vertical import Pack
 
 GOODBYE = {"bye", "byee", "dhanyavaad", "dhanyawad", "thanks", "thank", "shukriya",
-           "alvida", "bas", "itna", "yahi", "khatam", "dhonnobad", "thak", "eituku"}
+           "alvida", "bas", "itna", "yahi", "khatam", "dhonnobad", "thak", "eituku",
+           "dhanyavad", "evdhach", "evadhach", "itkach", "purey"}
 MORE_HELP = "Aur kuch puchna tha?"
 
 
@@ -287,8 +288,8 @@ class DialoguePolicy:
                 "customer_name": ctx.customer_name, "phone": ctx.customer_phone,
                 "staff": ctx.staff}
         ctx.pending_confirmation = {"action": "book_appointment", "args": args}
-        if self.lang in ("benglish",):
-            who = f" {ctx.staff} er sathe" if ctx.staff else ""
+        if self._p("confirm", ""):
+            who = self._p("with", " {staff} er sathe").format(staff=ctx.staff) if ctx.staff else ""
             say = self._p("confirm", "").format(
                 what=ctx.service,
                 when=f"{_spoken_date(ctx.date, self.backend, self.lang)} "

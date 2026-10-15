@@ -149,15 +149,31 @@ def main(argv=None) -> int:
                   f"{r['calls_per_min']:6.1f} calls/min  errors {r['errors']}  outcomes {r['outcome_rate']:.0%}  "
                   f"mismatches {r['mismatches']}", flush=True)
     finally:
+        cpu_s = None
         if proc:
             proc.terminate()
             try:
                 proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 proc.kill()
+            import resource
+            ru = resource.getrusage(resource.RUSAGE_CHILDREN)
+            cpu_s = ru.ru_utime + ru.ru_stime
+    total_calls = sum(r["calls"] for r in results)
+    total_turns = sum(r["turns"] for r in results)
+    # Engine compute per call, and what it costs on a small cloud VM
+    # (Render starter, $7/month ≈ ₹600, one shared vCPU): the "infra" line of
+    # the README's cost model, now measured instead of assumed.
+    vm_inr_per_cpu_s = 600.0 / (30 * 24 * 3600)
+    cost = None
+    if cpu_s is not None and total_calls:
+        cost = {"engine_cpu_s_total": round(cpu_s, 2), "engine_cpu_s_per_call": round(cpu_s / total_calls, 4),
+                "engine_cpu_ms_per_turn": round(1000 * cpu_s / max(total_turns, 1), 2),
+                "vm_inr_per_month": 600.0, "infra_inr_per_call": round(cpu_s / total_calls * vm_inr_per_cpu_s, 5),
+                "note": "mock providers; speech vendors are billed per minute and dominate (see insights.py)"}
     payload = {"generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                "machine": os.uname().machine if hasattr(os, "uname") else "", "python": sys.version.split()[0],
-               "providers": "mock (engine-side only)", "scripts": len(scripts), "levels": results}
+               "providers": "mock (engine-side only)", "scripts": len(scripts), "levels": results, "cost": cost}
     OUT.write_text(json.dumps(payload, indent=1) + "\n")
     grouped_bars(FIG, "Turn latency over HTTP vs concurrent callers (one process, mock providers)",
                  [str(r["concurrency"]) for r in results],
@@ -170,6 +186,9 @@ def main(argv=None) -> int:
     for r in results:
         t = r["turn_http_ms"]
         print(f"| {r['concurrency']} | {r['calls']} | {r['turns']} | {t['p50']} | {t['p95']} | {t['max']} | {r['calls_per_min']} | {r['errors']} | {r['outcome_rate']:.0%} |")
+    if cost:
+        print(f"\nengine compute: {cost['engine_cpu_s_per_call']} CPU-s per call, {cost['engine_cpu_ms_per_turn']} CPU-ms per turn, "
+              f"≈ ₹{cost['infra_inr_per_call']:.5f} per call on a ₹600/month VM")
     print(f"\nwrote {OUT.relative_to(ROOT)} and {FIG.relative_to(ROOT)}")
     return 0
 

@@ -45,6 +45,7 @@ from .devanagari import transliterate
 from . import calendar as cal_mod
 from .gcal import GoogleCalendar
 from .telephony import twilio as twilio_mod
+from .pramaan.vault import Vault, normalise_phone as _norm_phone
 from .metrics import percentile
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
@@ -164,6 +165,10 @@ async def hardening(request: Request, call_next):
 store = DemoStore(os.path.join(VAR_DIR, "store.sqlite"))
 
 gcal = GoogleCalendar(os.path.join(VAR_DIR, "gcal.sqlite"), redirect_uri=f"{PUBLIC_URL}/api/google/callback")
+# Personal data in receipts is encrypted per customer (docs/privacy-dpdp.md).
+vault = Vault(os.path.join(VAR_DIR, "vault.sqlite"))
+CONSENT_LINE = os.environ.get("HAANJI_CONSENT_LINE") or ""
+RETENTION_DAYS = int(os.environ.get("HAANJI_RETENTION_DAYS", "0"))        # 0 = keep
 
 # ─────────────────────────────────────────────────────────────── auth
 AUTH_ENABLED = os.environ.get("HAANJI_AUTH", "off").lower() in ("on", "1", "true", "yes")
@@ -243,7 +248,7 @@ def runtime(pack_id: str) -> TenantRuntime:
         backend.seed_customer(pack_id, *demo[:2], last_service=demo[2])
     ledger = Ledger(sqlite3.connect(os.path.join(VAR_DIR, f"ledger-{pack_id}.sqlite"),
                                     check_same_thread=False))
-    registry = build_registry(pack_id, backend, pack, ledger)
+    registry = build_registry(pack_id, backend, pack, ledger, vault=vault)
     _runtimes[pack_id] = TenantRuntime(pack_id, pack, backend, ledger, registry)
     return _runtimes[pack_id]
 
@@ -346,6 +351,10 @@ async def _new_session(pack_id: str, channel: str, phone: str | None) -> tuple[s
     session = CallSession(tenant_id=pack_id, pack=rt.pack, backend=rt.backend,
                           registry=rt.registry, ledger=rt.ledger, tts=NullTTS())
     await session.open(phone=phone)
+    if CONSENT_LINE:                                   # notice at the start of every call
+        session.ctx.last_agent_utterance = f"{session.ctx.last_agent_utterance} {CONSENT_LINE}".strip()
+        if session.ctx.turns:
+            session.ctx.turns[-1].text = session.ctx.last_agent_utterance
     sid = uuid.uuid4().hex[:16]
     holder = Holder(session, rt, channel, phone)
     _sessions[sid] = holder
@@ -1080,6 +1089,10 @@ async def _evening_loop() -> None:
                 seal_pending_days(runtime(pid))
             except Exception as exc:                  # noqa: BLE001 - keep the loop alive
                 print(f"anchor {pid}: {exc}", file=sys.stderr)
+        try:
+            purge_old_records(RETENTION_DAYS)
+        except Exception as exc:                      # noqa: BLE001
+            print(f"retention: {exc}", file=sys.stderr)
         digest_pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
         if OWNER_PHONE and wa_channel.configured():
             try:
@@ -1309,6 +1322,98 @@ async def twilio_stream(ws: WebSocket):
     await bridge.run()
 
 
+# ──────────────────────────────────────────────────────────── privacy
+PROTECTED.append(("GET|DELETE", re.compile(r"^/api/privacy/customer/.*$"), "owner"))
+
+
+def customer_record(pack: str, phone: str) -> dict[str, Any]:
+    """Everything the platform holds about one number (right of access)."""
+    rt = runtime(pack)
+    p = _norm_phone(phone)
+    bookings = [b.as_dict() for b in rt.backend.bookings(pack) if _norm_phone(b.phone) == p]
+    leads = [dict(r) for r in rt.backend.conn.execute("SELECT * FROM leads WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}"))]
+    calls = [{"call_id": c["call_id"], "started_at": c["started_at"], "outcome": c["outcome"]}
+             for c in store.calls(pack, limit=1000) if _norm_phone(c.get("phone")) == p]
+    wa = store.conn.execute("SELECT COUNT(*) c FROM wa_messages WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).fetchone()["c"]
+    receipts = []
+    for r in rt.ledger.receipts(pack):
+        if r.action_args.get("subject") == vault.subject(p):
+            receipts.append({"code": r.short_code(), "action": r.action, "occurred_at": r.occurred_at,
+                             "pii_readable": not vault.is_shredded(p)})
+    return {"pack": pack, "phone": p, "bookings": bookings, "leads": leads, "calls": calls, "whatsapp_messages": wa,
+            "receipts": receipts, "erased": vault.is_shredded(p)}
+
+
+def erase_customer(pack: str, phone: str) -> dict[str, int | bool]:
+    """Right to erasure: shred the receipt key, anonymise bookings, delete the
+    rest. Receipts stay sealed and verifiable; their personal fields become
+    unreadable."""
+    rt = runtime(pack)
+    p = _norm_phone(phone)
+    shredded = vault.forget(p)
+    with rt.backend.conn:
+        b = rt.backend.conn.execute("UPDATE bookings SET customer_name='erased', phone=NULL WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
+        l = rt.backend.conn.execute("DELETE FROM leads WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
+        rt.backend.conn.execute("DELETE FROM customers WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}"))
+    with store.conn:
+        c = store.conn.execute("DELETE FROM calls WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
+        w = store.conn.execute("DELETE FROM wa_messages WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
+        m = store.conn.execute("DELETE FROM missed_calls WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
+    _wa_sessions.pop((pack, p), None)
+    publish("privacy.erased", pack=pack, phone=_mask(p))
+    return {"key_shredded": shredded, "bookings_anonymised": b, "leads_deleted": l, "calls_deleted": c,
+            "whatsapp_messages_deleted": w, "missed_calls_deleted": m}
+
+
+def purge_old_records(days: int, now: dt.datetime | None = None) -> dict[str, int]:
+    """Storage limitation: call records and messages older than ``days`` go;
+    bookings and receipts (the business's records) stay."""
+    if days <= 0:
+        return {"calls": 0, "whatsapp_messages": 0, "missed_calls": 0}
+    cutoff = ((now or dt.datetime.now(dt.timezone.utc)) - dt.timedelta(days=days)).isoformat(timespec="seconds")
+    with store.conn:
+        c = store.conn.execute("DELETE FROM calls WHERE started_at < ?", (cutoff,)).rowcount
+        w = store.conn.execute("DELETE FROM wa_messages WHERE at < ?", (cutoff,)).rowcount
+        m = store.conn.execute("DELETE FROM missed_calls WHERE at < ?", (cutoff,)).rowcount
+    return {"calls": c, "whatsapp_messages": w, "missed_calls": m}
+
+
+@app.get("/api/privacy/policy")
+async def privacy_policy():
+    return {"retention_days": RETENTION_DAYS, "consent_line": CONSENT_LINE or None, "vault": vault.count(),
+            "pii_in_receipts": "encrypted per customer; erasure shreds the key",
+            "logs": "phone numbers masked to the last four digits in the live feed"}
+
+
+@app.get("/api/privacy/customer/{phone}")
+async def privacy_customer(phone: str, pack: str = DEFAULT_PACK):
+    if pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {pack}")
+    return customer_record(pack, phone)
+
+
+@app.delete("/api/privacy/customer/{phone}")
+async def privacy_erase(phone: str, pack: str = DEFAULT_PACK):
+    if pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {pack}")
+    return erase_customer(pack, phone)
+
+
+@app.get("/api/receipts/{code}/open")
+async def receipt_open(code: str, pack: str = DEFAULT_PACK):
+    """The personal fields of one receipt, for whoever holds its code (the
+    customer's link). Null once the customer has been forgotten."""
+    rt = runtime(pack)
+    r = rt.ledger.by_code(pack, code.replace("-", "")) or rt.ledger.by_code(pack, code)
+    if r is None:
+        raise HTTPException(404, "no such receipt")
+    opened = vault.open_args(r.action_args)
+    return {"code": r.short_code(), "action": r.action, "occurred_at": r.occurred_at,
+            "fields": {k: opened.get(k) for k in ("service", "date", "time", "staff", "customer_name", "phone", "name", "reason")},
+            "erased": opened.get("pii") == "erased" or (bool(r.action_args.get("subject")) and all(
+                opened.get(f) is None for f in ("customer_name", "phone", "name") if f"{f}_enc" in r.action_args))}
+
+
 # ───────────────────────────────────────────────────── observability
 SLO_TURN_MS = int(os.environ.get("HAANJI_MAX_TURN_LATENCY_MS", "1500"))
 
@@ -1391,6 +1496,7 @@ async def status():
             "auth": {"enabled": AUTH_ENABLED, "dev": AUTH_DEV},
             "google": {"configured": gcal.configured, "connected": gcal.connected()},
             "phone": phone_status(),
+            "privacy": {"retention_days": RETENTION_DAYS, "consent": bool(CONSENT_LINE)},
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
             "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),

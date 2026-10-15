@@ -277,19 +277,27 @@ def corpus_of(pack: Pack) -> list[str]:
 
 
 def transcript_experiment(packs: list[Pack], rates: list[float],
-                          trials: int = 12, seed: int = 0) -> dict[str, Any]:
-    """Measure the correction layer alone, with no dialogue in the way."""
+                          trials: int = 12, seed: int = 0, detail: bool = False,
+                          corruptor=None) -> dict[str, Any]:
+    """Measure the correction layer alone, with no dialogue in the way.
+
+    With ``detail`` each rate also carries per-sentence outcomes (did the
+    sentence have any entity error, before and after), which is what a paired
+    test between two correction layers needs."""
     from .bhasha.bridge import BhashaBridge
     from .bhasha.lexicon import TenantLexicon
     from .config import BhashaConfig
     from .models import Token, Transcript
 
+    corruptor = corruptor or corrupt
     results: dict[str, Any] = {}
     for rate in rates:
         gold_off = err_off = gold_on = err_on = 0
         beneficial = neutral = harmful = 0
         sentences = 0
         elapsed: list[float] = []
+        wrong_off: list[bool] = []
+        wrong_on: list[bool] = []
         for pack in packs:
             index = pack.entity_index()
             lexicon = TenantLexicon.build(version=pack.version, **pack.lexicon_seed())
@@ -297,7 +305,7 @@ def transcript_experiment(packs: list[Pack], rates: list[float],
             rng = random.Random(4242 + int(rate * 100) + seed * 100003)
             for truth in corpus_of(pack):
                 for _ in range(trials):
-                    heard, low = corrupt(truth, rate, rng)
+                    heard, low = corruptor(truth, rate, rng)
                     sentences += 1
                     low_set = {w.lower() for w in low}
                     tokens = [Token(w, 0.42 if w.lower() in low_set else 0.94)
@@ -310,6 +318,9 @@ def transcript_experiment(packs: list[Pack], rates: list[float],
                     g2, e2 = entity_errors(truth, corrected.text, index)
                     gold_on += g2
                     err_on += e2
+                    if detail:
+                        wrong_off.append(e > 0)
+                        wrong_on.append(e2 > 0)
                     truth_padded = f" {truth.lower()} "
                     gold_entities = nlu.find_entities(truth, index)
                     for c in corrected.corrections:
@@ -331,6 +342,9 @@ def transcript_experiment(packs: list[Pack], rates: list[float],
                 if (beneficial + neutral + harmful) else 0.0,
             "median_correct_ms": round(statistics.median(elapsed), 3) if elapsed else 0.0,
         }
+        if detail:
+            results[f"{rate:.2f}"]["wrong_off"] = wrong_off
+            results[f"{rate:.2f}"]["wrong_on"] = wrong_on
     return results
 
 

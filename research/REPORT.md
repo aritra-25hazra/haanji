@@ -6,7 +6,7 @@ Evaluation report, version 1.0 · 15 October 2026 · code and data: <a href="htt
 
 ## Abstract
 
-Small clinics, salons, laboratories and coaching institutes in India lose bookings because nobody answers the phone, and the callers who do get through speak Hinglish or Benglish and name services, doctors and neighbourhoods that no general-purpose speech recogniser has heard of. HaanJi is an open-source voice-agent engine built around three contributions that address the three reasons such an agent fails in practice. **Bhasha Bridge** builds a per-tenant phonetic index from the catalogue a business supplies at onboarding and uses it both to bias the recogniser and to repair its output, replacing a token only when the recogniser was unsure *and* the token's Indic-aware sound key matches a known form exactly. **Speculative Turn Execution** applies the idea of branch prediction to dialogue: read-only tools are predicted from partial transcripts and run while the caller is still speaking, and a speculative result is claimed only when the real turn requests byte-identical arguments. The **Pramaan Ledger** seals every write into an Ed25519-signed, hash-chained receipt that binds the action to the exact words with which the caller confirmed it, refuses writes that carry no such proof, and can be verified by anyone holding the public key. The contributions are evaluated with an ablation harness over 21 authored call scenarios in five vertical packs and two languages, repeated under 5 independent random seeds, and with a transcript-level experiment over 2,097 independently corrupted sentences per noise level. At 30% synthetic recognition noise Bhasha Bridge reduces the catalogue entity error rate from 32.4% to 0.71% (97.8% relative) with 98.9% correction precision and no harmful correction in any run, and raises end-to-end task success from 78.4% to 92.7%. Speculation lowers the median engine-side latency of read-only turns from 286 ms to 161 ms (43.8%) at a 46.2% hit rate without changing any transcript. The ledger detects 80 of 80 single-field tampering attempts, a deletion and a re-hashed forgery, and accepts zero unconfirmed writes. We also report the design and offline validation of a hosted-model dialogue adapter that preserves the ledger's guarantee by construction, A pilot of the real-recogniser pipeline (synthetic Indian-English speech through Whisper) found the bridge's confidence gate open and the layer making harmful corrections; three stated guards remove them, and on that data the bridge is safe and reduces entity errors by only a tenth, a result reported as it is. We state plainly what the evaluation does not yet cover: real callers, real users, and vendor round-trip time.
+Small clinics, salons, laboratories and coaching institutes in India lose bookings because nobody answers the phone, and the callers who do get through speak Hinglish or Benglish and name services, doctors and neighbourhoods that no general-purpose speech recogniser has heard of. HaanJi is an open-source voice-agent engine built around three contributions that address the three reasons such an agent fails in practice. **Bhasha Bridge** builds a per-tenant phonetic index from the catalogue a business supplies at onboarding and uses it both to bias the recogniser and to repair its output, replacing a token only when the recogniser was unsure *and* the token's Indic-aware sound key matches a known form exactly. **Speculative Turn Execution** applies the idea of branch prediction to dialogue: read-only tools are predicted from partial transcripts and run while the caller is still speaking, and a speculative result is claimed only when the real turn requests byte-identical arguments. The **Pramaan Ledger** seals every write into an Ed25519-signed, hash-chained receipt that binds the action to the exact words with which the caller confirmed it, refuses writes that carry no such proof, and can be verified by anyone holding the public key. The contributions are evaluated with an ablation harness over 21 authored call scenarios in five vertical packs and two languages, repeated under 5 independent random seeds, and with a transcript-level experiment over 2,097 independently corrupted sentences per noise level. Against Soundex, Metaphone, Double Metaphone, NYSIIS and the edit-distance bound alone, with everything but the key held fixed, the Indic-aware key is the best on synthetic noise (every pairwise McNemar p < 0.001) and within a point of the classics on real recogniser output, where the safety rule matters more than the key. At 30% synthetic recognition noise Bhasha Bridge reduces the catalogue entity error rate from 32.4% to 0.71% (97.8% relative) with 98.9% correction precision and no harmful correction in any run, and raises end-to-end task success from 78.4% to 92.7%. Speculation lowers the median engine-side latency of read-only turns from 286 ms to 161 ms (43.8%) at a 46.2% hit rate without changing any transcript. The ledger detects 80 of 80 single-field tampering attempts, a deletion and a re-hashed forgery, and accepts zero unconfirmed writes. We also report the design and offline validation of a hosted-model dialogue adapter that preserves the ledger's guarantee by construction, A pilot of the real-recogniser pipeline (synthetic Indian-English speech through Whisper) found the bridge's confidence gate open and the layer making harmful corrections; three stated guards remove them, and on that data the bridge is safe and reduces entity errors by only a tenth. Under noise learned from real recognisers — including rural Hindi telephone speech from the public Gram Vaani corpus, which Whisper transcribes at about 80% word error with a quarter of the words dropped — the bridge removes 28–33% of the remaining entity errors at over 95% precision, against 97% under the authors' own corruption model; the report quotes both. We state plainly what the evaluation does not yet cover: real callers, real users, and vendor round-trip time.
 
 ## 1. Introduction
 
@@ -79,8 +79,9 @@ A pack is one YAML file describing a kind of business: catalogue with durations 
 | diagnostic_lab | Hinglish | 6 | 3 | 3 |
 | coaching_institute | Hinglish | 4 | 3 | 3 |
 | clinic_kolkata | Benglish | 4 | 2 | 3 |
+| clinic_pune | Marathinglish | 4 | 2 | 3 |
 
-The Kolkata pack is the test of the claim that the engine knows nothing about any particular language: supporting Benglish took a phrase table and one YAML file, with no engine code forked.
+The Kolkata and Pune packs are the test of the claim that the engine knows nothing about any particular language: supporting Benglish, and then Marathinglish, took a phrase-table row and one YAML file each, with no engine code forked. (The Pune pack was added after the evaluation runs below, which cover the first five packs and 21 scenarios; the selftest covers all 24.)
 
 ### 3.3 The dialogue policy and guardrails
 
@@ -127,7 +128,7 @@ Grammar words are never touched, and neither is anything that follows a name int
 
 <figure><img src="figures/fig1_eer.svg" alt="Entity error rate off versus on, three noise rates"><figcaption>Figure 1. Entity error rate on independently corrupted sentences, Bhasha Bridge off and on. Whiskers are 95% CIs over seeds.</figcaption></figure>
 
-At 30% noise, 2,097 sentences carrying 2,862 catalogue entities go from 32.4% entity error to 0.71%, a 97.8% relative reduction, at 98.9% precision (the fraction of corrections that produced a gold entity). The harmful count, the number of times the layer overwrote a span the recogniser had right, is zero in every seed at every noise level; the confidence intervals on it are zero because the value never moved. The median cost of the pass is 0.07 ms per utterance. The residual error is almost entirely entities the corruption model damaged beyond edit distance 2, or whose corrupted form collided with no lexicon key, which the second condition correctly refuses to touch.
+At 30% noise, 2,097 sentences carrying 2,862 catalogue entities go from 32.4% entity error to 0.71%, a 97.8% relative reduction, at 98.9% precision (the fraction of corrections that produced a gold entity). The improvement is not noise: on the paired per-sentence outcomes at 30% noise, 809 sentences go from wrong to right and 0 from right to wrong (McNemar p < 0.001; `research/harness/stats.py`). The harmful count, the number of times the layer overwrote a span the recogniser had right, is zero in every seed at every noise level; the confidence intervals on it are zero because the value never moved. The median cost of the pass is 0.07 ms per utterance. The residual error is almost entirely entities the corruption model damaged beyond edit distance 2, or whose corrupted form collided with no lexicon key, which the second condition correctly refuses to touch.
 
 ### 4.3 Results: end to end
 
@@ -178,6 +179,87 @@ Three things the synthetic experiment could not show:
 
 The honest summary is that on this data the bridge is safe and helps a little, not that it removes most entity errors as it does under the corruption model. The two numbers differ because the error distributions differ, and the pilot cannot say which one real callers produce: the synthesis is accented but not Hinglish, the recogniser was run in the configuration least favourable to it, and the guards were evaluated on the same 300 utterances that motivated them, so their gain is optimistic. What the pilot establishes is the pipeline itself, three failure modes the synthetic harness could not see, and that the confidence gate needs per-recogniser calibration before condition 1 can be trusted. Volunteer recordings through the same pipeline (§9) are the measurement that matters.
 
+### 4.6 Against the classic keys
+
+The key in §4.1 is one component; the two-condition rule, the edit-distance bound and the lexicon are the rest. To isolate it, the benchmark swaps only the bucketing function and keeps everything else: Soundex (Russell 1918), Metaphone and Double Metaphone (Philips 1990, 2000), NYSIIS, exact spelling (a bucket per spelling, so only identical strings collide), and no bucketing at all (every lexicon form is a candidate and the edit-distance bound alone decides). Each runs on the same 2,097 corrupted sentences per noise level and on the 300 pilot utterances. McNemar's test on the paired per-sentence outcomes (a sentence has an entity error or not) says whether two keyers differ by more than noise.
+
+**Table 8 — Keyers on synthetic noise (transcript level, 2,097 sentences per rate)**
+
+| keyer | EER on @15% | EER on @30% | EER on @45% | precision @30% | harmful @30% | McNemar vs ours @30% |
+|---|---|---|---|---|---|---|
+| edit distance only | 0.56% | 1.68% | 2.94% | 93.9% | 0 | b=32, c=7, p < 0.001 |
+| exact spelling | 17.30% | 32.01% | 50.35% | 100.0% | 0 | b=807, c=0, p < 0.001 |
+| Soundex | 2.48% | 3.98% | 7.09% | 98.5% | 0 | b=97, c=7, p < 0.001 |
+| Metaphone | 3.77% | 8.04% | 14.29% | 98.5% | 0 | b=203, c=0, p < 0.001 |
+| NYSIIS | 1.64% | 3.46% | 7.09% | 99.2% | 0 | b=82, c=7, p < 0.001 |
+| Double Metaphone | 2.80% | 6.99% | 10.97% | 98.5% | 0 | b=175, c=0, p < 0.001 |
+| Bhasha (ours) | 0.14% | 0.80% | 2.10% | 99.1% | 0 | — |
+
+Entity error with no correction at 30%: 32.1% (identical for every keyer). Bridge off vs ours: b=809, c=0, p < 0.001.
+
+**Table 9 — Keyers on the real-recogniser pilot (300 utterances, faster-whisper small)**
+
+| keyer | EER off | EER on | reduction | precision | beneficial | neutral | harmful |
+|---|---|---|---|---|---|---|---|
+| edit distance only | 33.8% | 32.4% | 4.1% | 42.1% | 32 | 38 | 6 |
+| exact spelling | 33.8% | 33.3% | 1.4% | 100.0% | 1 | 0 | 0 |
+| Soundex | 33.8% | 30.6% | 9.5% | 68.4% | 13 | 6 | 0 |
+| Metaphone | 33.8% | 31.5% | 6.8% | 64.7% | 11 | 6 | 0 |
+| NYSIIS | 33.8% | 32.4% | 4.1% | 81.8% | 9 | 2 | 0 |
+| Double Metaphone | 33.8% | 31.1% | 8.1% | 66.7% | 12 | 6 | 0 |
+| Bhasha (ours) | 33.8% | 30.1% | 10.8% | 60.0% | 12 | 8 | 0 |
+
+Two readings. On synthetic noise the Indic-aware key is clearly better than every classic key (0.80% entity error at 30% noise against 3.5–8.0%, every pairwise McNemar p < 0.001), and better than the edit-distance bound alone (1.68%; b = 32, c = 7, p < 0.001): bucketing does more than restrict the search, it finds forms that are two or three edits away but one sound away. Exact spelling repairs nothing, which is the point of a phonetic key. On the real-recogniser pilot the keys are within a point of each other (30.1% ours, 30.6% Soundex, 31.1% Double Metaphone) and Soundex's precision is higher (68% against 60%): where the recogniser's errors are translations and merged tokens rather than phonetic substitutions, the choice of key barely matters and the guards of §4.5 matter more. Both readings are reported because together they say what the key is for.
+
+### 4.7 Which rules matter
+
+Each of the 16 normalisation rules was removed in turn and the transcript-level experiment re-run at 30% noise.
+
+**Table 10 — Per-rule ablation of the Bhasha key (30% noise; higher delta = the rule matters more)**
+
+| # | rule | EER on without it | Δ vs full (points) | precision | harmful |
+|---|---|---|---|---|---|
+| 8 | k/kh/q/c merge | 2.97% | +2.17 | 99.0% | 0 |
+| 4 | v/w merge | 2.52% | +1.72 | 98.5% | 0 |
+| 15 | h/y dropped | 1.19% | +0.39 | 99.0% | 0 |
+| 0 | long a shortens (aa→a) | 0.80% | +0.00 | 99.1% | 0 |
+| 1 | ee/ie/ii/iy→i | 0.80% | +0.00 | 99.1% | 0 |
+| 2 | oo/uu→u | 0.80% | +0.00 | 99.1% | 0 |
+| 3 | ph→f | 0.80% | +0.00 | 99.1% | 0 |
+| 5 | s/sh/z merge | 0.80% | +0.00 | 99.1% | 0 |
+| 7 | t/d/th/dh collapse | 0.80% | +0.00 | 99.1% | 0 |
+| 9 | surviving c→k | 0.80% | +0.00 | 99.1% | 0 |
+| 10 | g/gh/j-cluster merge | 0.80% | +0.00 | 99.1% | 0 |
+| 11 | b/bh/p merge | 0.80% | +0.00 | 99.1% | 0 |
+| 12 | j | 0.80% | +0.00 | 99.1% | 0 |
+| 13 | n/m merge | 0.80% | +0.00 | 99.1% | 0 |
+| 14 | l/r merge | 0.80% | +0.00 | 99.1% | 0 |
+| 6 | ch/chh merge | 0.52% | -0.28 | 99.1% | 0 |
+
+Three rules carry the synthetic result: the k/kh/q/c merge (+2.17 points without it), the v/w merge (+1.72) and the dropped initial h (+0.39); removing the ch/chh merge slightly *helps* (-0.28), because it was merging forms the corpus kept distinct. The eleven rules with a zero delta are not thereby useless: they are not exercised by this corpus under this corruption model, which substitutes a fixed list of confusions on catalogue words. That is a statement about the harness's coverage as much as about the key, and it is one more reason the real-recording study matters: the rules a real recogniser exercises will differ, and this table will be re-run on that data.
+
+### 4.8 Noise learned from real recognisers, and real telephone Hindi
+
+The corruption model of §3.4 was written by us. To take the author out of the noise, `haanji/corrupt_learned.py` fits a model to a recogniser's own (heard, truth) pairs — word substitutions, character confusions from genuine mishearings, token drops and merges, each at the rate the data showed — and replays it over the benchmark corpus at the recogniser's native rate and at the standard rates. Two sources:
+
+* **Gram Vaani** (OpenSLR 118): rural Hindi telephone speech from community-radio call-ins in Bihar and Jharkhand, with Devanagari transcripts; 110 utterances sampled, transcribed by faster-whisper `small` in Hindi mode, both sides transliterated to Latin script by one deterministic scheme so the comparison is consistent. Word error rate 80.3% (median 80.0%); median word probability 0.657, with 88% of words below the 0.85 gate. The learned model: 44.1% of tokens substituted, 26.0% dropped, 4.9% merged into a neighbour; the commonest character confusions are h→∅, a→∅, n→∅, r→∅, i→∅, ee→i, e→∅, i→a.
+* **The pilot of §4.5** (synthetic Indian-English speech through Whisper in English mode): 40.8% substituted, 16.0% dropped, 4.4% merged.
+
+**Table 11 — The correction layer under noise learned from real recognisers (transcript level)**
+
+| noise source | rate | EER off | EER on | reduction | precision | harmful |
+|---|---|---|---|---|---|---|
+| Gram Vaani (real Hindi telephone speech, Whisper hi) | 15% | 26.1% | 18.89% | 27.7% | 99.1% | 0 |
+| Gram Vaani (real Hindi telephone speech, Whisper hi) | 30% | 49.6% | 35.30% | 28.8% | 97.2% | 0 |
+| Gram Vaani (real Hindi telephone speech, Whisper hi) | 44% (native) | 70.5% | 50.83% | 27.9% | 96.0% | 0 |
+| Gram Vaani (real Hindi telephone speech, Whisper hi) | 45% | 70.9% | 51.50% | 27.4% | 95.5% | 0 |
+| pilot (synthetic Indian-English speech, Whisper en) | 15% | 22.2% | 14.80% | 33.4% | 99.4% | 0 |
+| pilot (synthetic Indian-English speech, Whisper en) | 30% | 42.8% | 28.73% | 32.9% | 98.2% | 0 |
+| pilot (synthetic Indian-English speech, Whisper en) | 41% (native) | 58.4% | 39.69% | 32.0% | 96.6% | 0 |
+| pilot (synthetic Indian-English speech, Whisper en) | 45% | 63.0% | 43.69% | 30.7% | 94.5% | 0 |
+
+Three things follow. First, real recognisers *drop and merge* words at rates the hand-written model never produced (26% of tokens dropped on telephone Hindi): a dropped entity cannot be repaired by any substitution-based layer, so entity error under learned noise is high before correction and stays high after it. Second, within that limit the bridge still does what it claims: a 28% relative reduction at the Gram Vaani native rate and 32% at the pilot's, with precision above 95% and zero harmful corrections, because the confusions a real recogniser makes on *recognised* tokens are the phonetic ones the key was written for. Third, the headline 97% reduction of §4.2 is a property of the hand-written model, which substitutes and never drops; the honest range for "what the bridge removes" is 28–33% of entity errors under data-shaped noise and 96–98% under the authors' model, and the report quotes both. Recognisers that keep tokens (biasing, Hinglish decoding) move a deployment towards the first figure's ceiling; the drops are the next target.
+
 ## 5. Speculative Turn Execution
 
 ### 5.1 Method
@@ -218,14 +300,16 @@ Speculation and the policy are measured per call above; a receptionist also has 
 
 | concurrent callers | calls | turns | p50 (ms) | p95 (ms) | max (ms) | calls/min | errors | expected outcome |
 |---|---|---|---|---|---|---|---|---|
-| 5 | 60 | 160 | 7.0 | 187.0 | 190.1 | 467 | 0 | 97% |
-| 10 | 60 | 160 | 5.0 | 185.2 | 189.8 | 890 | 0 | 95% |
-| 25 | 60 | 154 | 4.6 | 184.6 | 193.6 | 1578 | 0 | 83% |
-| 50 | 60 | 154 | 6.2 | 185.8 | 189.2 | 2548 | 0 | 70% |
+| 5 | 60 | 157 | 6.9 | 188.5 | 192.8 | 457 | 0 | 98% |
+| 10 | 60 | 157 | 5.6 | 185.0 | 189.9 | 786 | 0 | 97% |
+| 25 | 60 | 157 | 3.9 | 183.8 | 185.3 | 1399 | 0 | 88% |
+| 50 | 60 | 147 | 6.1 | 185.8 | 196.8 | 2146 | 0 | 75% |
 
 <figure><img src="figures/fig4_load.svg" alt="Turn latency over HTTP against concurrent callers"><figcaption>Figure 4. Turn latency over HTTP (p50, p95, max) as concurrency rises. One process; the p95 is the booking turn's write and ledger seal.</figcaption></figure>
 
 Latency is flat across the ladder and no request fails; throughput scales with concurrency because the engine's own work per turn is a few milliseconds and the rest is waiting. The expected-outcome rate falls because all callers in a level share one tenant calendar and ask for the same morning: once it is full the agent correctly offers another time or takes a callback, which the fixed script does not follow, so those calls end abandoned or as leads. That is the calendar working, not the engine failing, and it is why the column is reported next to the error count rather than folded into it. The numbers are engine-side; a speech vendor's round trip and a telephony hop will dominate a deployment, and this measurement says only that the engine will not be the bottleneck before them.
+
+**Cost.** The engine process spent 0.0085 CPU-seconds per call (3.28 CPU-ms per turn) across the ladder; on a ₹600/month single-vCPU instance that is ≈ ₹0.000000 of infrastructure per call (0.0 millionths of a rupee), against the ₹0.20 the cost model in `insights.py` assumes — the assumption is conservative by five orders of magnitude, and the per-minute speech vendors (telephony ≈ ₹0.50, recognition ≈ ₹0.90, synthesis ≈ ₹0.45 per minute) are the whole of the ≈ ₹3 per call. A receptionist at ₹12,000 a month answering 50 calls a day costs ≈ ₹9.2 per call.
 
 ## 6. Pramaan Ledger
 
@@ -299,7 +383,7 @@ The Claude column is empty in this version of the report because the run require
 
 ## 10. Conclusion
 
-A voice receptionist for Indian small businesses fails for three specific reasons: it does not know the business's words, it is slow at the turn, and it cannot prove what was agreed. HaanJi addresses each with a mechanism that is small, inspectable and measured. Bhasha Bridge removes most catalogue entity errors under heavy synthetic noise without damaging a correct transcript, and the gain survives into end-to-end task success and into a second language; on a real recogniser's output it needed two more stated rules to stay safe and then helped far less, which is the measurement that sends the next piece of work to volunteers' recordings rather than to more synthetic noise. Speculative Turn Execution takes a large fraction off the median read-turn latency while leaving every transcript identical. The Pramaan Ledger makes every booking carry its own evidence and makes an unconfirmed booking impossible rather than unlikely, a property that holds whether the dialogue is driven by the deterministic policy or by a hosted model. The evaluation is reproducible from a clean checkout and is honest about its synthetic origins; the next two studies replace synthetic noise with real recordings and scripted callers with real ones.
+A voice receptionist for Indian small businesses fails for three specific reasons: it does not know the business's words, it is slow at the turn, and it cannot prove what was agreed. HaanJi addresses each with a mechanism that is small, inspectable and measured. Bhasha Bridge removes most catalogue entity errors under heavy synthetic noise without damaging a correct transcript, and the gain survives into end-to-end task success and into a second language; on a real recogniser's output it needed two more stated rules to stay safe and then helped far less, and under noise learned from real telephone Hindi it removes about a third of the entity errors rather than nearly all, because real recognisers drop words as often as they mangle them. That measurement sends the next piece of work to recogniser biasing and to volunteers' recordings rather than to more synthetic noise. Speculative Turn Execution takes a large fraction off the median read-turn latency while leaving every transcript identical. The Pramaan Ledger makes every booking carry its own evidence and makes an unconfirmed booking impossible rather than unlikely, a property that holds whether the dialogue is driven by the deterministic policy or by a hosted model. The evaluation is reproducible from a clean checkout and is honest about its synthetic origins; the next two studies replace synthetic noise with real recordings and scripted callers with real ones.
 
 ## References
 
@@ -412,3 +496,246 @@ python research/harness/report_pdf.py       # this document as PDF
 | test_text_channels.py | 6 | the WhatsApp simulator and text turns |
 | test_benglish.py | 3 | the second language end to end |
 | test_study_analysis.py | 2 | the study summary arithmetic |
+
+## Appendix D. Diagrams
+
+The system as a reader of the code expects to see it drawn. (Also at `docs/diagrams.md`.)
+
+The system as examiners expect to see it: context, containers, a booking turn,
+the data, the data flow, the classes that matter, and the deployment. All
+Mermaid, so they render on GitHub and in the PDF report.
+
+### C4 — context
+
+```mermaid
+flowchart LR
+  caller([Caller<br/>Hinglish / Benglish<br/>phone or WhatsApp or browser]) -->|speech / text| haanji[[HaanJi<br/>voice receptionist]]
+  owner([Business owner<br/>clinic, salon, lab, institute]) -->|console| haanji
+  haanji -->|bookings, receipts| cal[(Owner's calendar<br/>Google / iCal)]
+  haanji -->|receipt link, digest, OTP| wa[Meta WhatsApp Cloud API]
+  haanji -->|audio in/out| tel[Twilio Media Streams]
+  haanji -->|transcripts| stt[Deepgram]
+  haanji -->|speech| tts[ElevenLabs]
+  haanji -.->|optional dialogue| llm[Claude]
+  anyone([Anyone with the receipt]) -->|verify| haanji
+```
+
+### C4 — containers
+
+```mermaid
+flowchart TB
+  subgraph browser[Browser]
+    talk[/talk — call page<br/>Web Speech partials/]
+    console[Owner console — React<br/>live feed, insights, packs, ops]
+    verify[/verify — client-side verifier<br/>TweetNaCl/]
+  end
+  subgraph engine[Engine — Python 3.11, FastAPI, one process]
+    api[HTTP + SSE + WebSocket API]
+    pipe[CallSession pipeline]
+    bridge[Bhasha Bridge]
+    spec[Speculation engine]
+    policy[Dialogue policy / Claude adapter]
+    guard[Guardrails]
+    tools[Tool registry]
+    ledger[(Pramaan ledger<br/>SQLite, Ed25519)]
+    backend[(Tenant backend<br/>bookings, services, leads)]
+    store[(Demo store<br/>calls, WhatsApp threads)]
+    tele[Telephony bridge]
+  end
+  packs[(Vertical packs<br/>YAML)]
+  core[Core API — Java/Spring<br/>Postgres, Redis, ledger port]
+  talk --> api
+  console --> api
+  verify --> api
+  api --> pipe
+  pipe --> bridge --> guard --> policy --> tools
+  pipe --> spec --> tools
+  tools --> backend
+  tools --> ledger
+  pipe --> store
+  tele --> pipe
+  packs --> pipe
+  console -. optional .-> core
+```
+
+### Sequence — one booking turn (speculation, correction, confirmation, receipt)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant C as Caller
+  participant S as STT
+  participant P as CallSession
+  participant B as Bhasha Bridge
+  participant X as Speculation
+  participant D as Policy
+  participant T as Tools
+  participant L as Pramaan Ledger
+  C->>S: "kal subah rut kanal ka…"
+  S-->>P: partial "kal subah rut"
+  P->>X: on_partial
+  X->>T: check_availability(root canal, tomorrow) [read-only, early]
+  S-->>P: final "kal subah rut kanal ka time milega"
+  P->>B: correct(final, confidences)
+  B-->>P: "root canal" (conf 0.32, key RTKNL = RTKNL, edit 2)
+  P->>D: plan(corrected text, context)
+  D-->>P: tool_call check_availability(root canal, 2026-09-08)
+  P->>X: claim(args byte-identical?)
+  X-->>P: cached result (hit)
+  D-->>P: "Kal subah saade 9 baje khaali hai… chalega?"
+  C->>S: "haan confirm kar do"
+  S-->>P: final
+  P->>D: plan (pending confirmation + affirmative)
+  D-->>P: book_appointment(..., needs_confirmation)
+  P->>T: book_appointment(args, proof{question, reply, timings, confidence})
+  T->>L: append(receipt)
+  L-->>T: receipt 2504-7863 (hash-chained, signed)
+  T-->>P: booked
+  P-->>C: "Ho gaya. Confirmation code 2504-7863."
+```
+
+### ER — the data
+
+```mermaid
+erDiagram
+  TENANT ||--o{ SERVICE : offers
+  TENANT ||--o{ STAFF : employs
+  TENANT ||--o{ BOOKING : holds
+  TENANT ||--o{ LEAD : captures
+  TENANT ||--o{ RECEIPT : seals
+  TENANT ||--o{ DAILY_ANCHOR : publishes
+  TENANT ||--|| KEY : signs_with
+  CALL ||--o{ TURN : contains
+  CALL ||--o{ RECEIPT : produces
+  BOOKING ||--o| RECEIPT : proven_by
+  RECEIPT ||--|| RECEIPT : prev_hash
+  USER }o--o{ TENANT : scoped_to
+  SERVICE { string name  int duration_min  int price_inr  string staff }
+  BOOKING { string booking_id  string service  string date  string time  string staff  string customer_name  string phone  string status  string receipt_code }
+  RECEIPT { int seq  string action  json action_args  json confirmation  string transcript_excerpt  bytes prev_hash  bytes payload_hash  bytes chain_hash  bytes signature }
+  DAILY_ANCHOR { string day  int first_seq  int last_seq  bytes merkle_root  bytes signature }
+  CALL { string call_id  string channel  string phone  string outcome  int corrections  int spec_hits  real latency_p50 }
+  USER { string phone  string role  string packs }
+```
+
+### DFD — level 0 and level 1
+
+```mermaid
+flowchart LR
+  subgraph L0[Level 0]
+    c0([Caller]) -->|speech| s0((HaanJi))
+    s0 -->|reply, receipt code| c0
+    o0([Owner]) -->|pack, settings| s0
+    s0 -->|insights, digest, calendar| o0
+  end
+```
+
+```mermaid
+flowchart LR
+  subgraph L1[Level 1 — one turn]
+    a[(1.0 recognise)] --> b[(2.0 correct<br/>Bhasha Bridge)]
+    a -. partials .-> x[(3.0 speculate)]
+    b --> g[(4.0 guard)]
+    g --> d[(5.0 decide<br/>policy / model)]
+    d --> t[(6.0 execute tools)]
+    x --> t
+    t -->|write| l[(7.0 seal receipt)]
+    d --> s[(8.0 speak)]
+    D1[(lexicon)] --> b
+    D2[(backend)] <--> t
+    D3[(ledger)] <--> l
+    s --> D4[(call store)]
+  end
+```
+
+### Class diagram — the engine's core
+
+```mermaid
+classDiagram
+  class CallSession {
+    +open(phone)
+    +handle_utterance(utt)
+    +handle_partial_text(text)
+    +handle_text_turn(text, confidence)
+    +finish() CallReport
+  }
+  class BhashaBridge {
+    +correct(Transcript) CorrectedTranscript
+    +hints()
+  }
+  class TenantLexicon {
+    +build(seed)
+    +candidates(key)
+    +reinforce(surface, delta)
+  }
+  class SpeculationEngine {
+    +on_partial(text, ctx)
+    +claim(tool, args)
+    +on_write()
+  }
+  class IntentPredictor {
+    +predict(partial, ctx) ToolGuess
+  }
+  class DialoguePolicy {
+    +plan(text, ctx) LLMTurn
+    +after_tools(text, ctx, results) LLMTurn
+    +ask_confirmation(ctx, action, args) LLMTurn
+  }
+  class LLMAdapter {
+    <<interface>>
+    +respond(system, history, tools) LLMTurn
+  }
+  class MockLLM
+  class ClaudeLLM
+  class Guard {
+    +check(text) Verdict
+  }
+  class ToolRegistry {
+    +register(tool)
+    +execute(name, args)
+    +is_read_only(name)
+  }
+  class Ledger {
+    +append(args) Receipt
+    +receipts(tenant)
+    +anchor_day(tenant, day)
+  }
+  class Receipt {
+    +compute_payload_hash()
+    +compute_chain_hash()
+  }
+  CallSession --> BhashaBridge
+  CallSession --> SpeculationEngine
+  CallSession --> LLMAdapter
+  CallSession --> Guard
+  CallSession --> ToolRegistry
+  BhashaBridge --> TenantLexicon
+  SpeculationEngine --> IntentPredictor
+  LLMAdapter <|.. MockLLM
+  LLMAdapter <|.. ClaudeLLM
+  MockLLM --> DialoguePolicy
+  ClaudeLLM --> DialoguePolicy
+  ToolRegistry --> Ledger
+  Ledger --> Receipt
+```
+
+### Deployment
+
+```mermaid
+flowchart LR
+  dev[Developer / Codespaces] -->|git push main| gh[GitHub]
+  gh -->|CI, CodeQL, gitleaks, SBOM| gh
+  gh -->|auto deploy| render[Render — engine container<br/>haanji-engine.onrender.com]
+  gh -->|vercel deploy --prod| vercel[Vercel — console<br/>haanji-kappa.vercel.app]
+  vercel -->|/engine/* rewrite| render
+  gh -->|daily workflow| tb[(transparency branch<br/>signed daily roots)]
+  render -->|anchors| tb
+  meta[Meta WhatsApp] -->|signed webhook| render
+  twilio[Twilio] -->|voice webhook + media stream| render
+  render --> dg[Deepgram]
+  render --> el[ElevenLabs]
+  render --> gcal[Google Calendar]
+  prom[Prometheus] -->|/metrics| render
+  prom --> graf[Grafana]
+```
+
