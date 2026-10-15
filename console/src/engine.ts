@@ -9,6 +9,7 @@ import type {
   Anchors,
   Draft,
   DraftRequest,
+  LiveEvent,
 } from "./types";
 
 export const ENGINE_BASE = "/engine";
@@ -56,6 +57,8 @@ export const engine = {
   digest: (pack: string) => request<Digest>(`api/digest?${q(pack)}`),
   sendDigest: (pack: string) => request<{ sent: boolean; to: string; text: string }>(`api/digest/send?${q(pack)}`, { method: "POST" }),
   anchors: (pack: string) => request<Anchors>(`api/anchors?${q(pack)}`),
+  recentEvents: (pack: string, since: number) =>
+    request<{ events: LiveEvent[]; latest: number; live_sessions: number }>(`api/events/recent?${q(pack)}&since=${since}`),
   packYaml: (id: string) => request<{ pack_id: string; yaml: string }>(`api/packs/${encodeURIComponent(id)}`),
   validate: (yaml: string) =>
     request<{ ok: boolean; problems: string[] }>("api/packs/validate",
@@ -157,4 +160,36 @@ export async function verifyExport(exp: Export): Promise<Verdict> {
   }
   if (!window.PramaanVerifier || !window.nacl) throw new Error("verifier not available");
   return window.PramaanVerifier.verifyChain(exp, window.nacl);
+}
+
+
+/** Subscribe to the engine's live feed. Server-sent events first; if the
+ *  stream cannot be held open (a buffering proxy), fall back to polling the
+ *  ring buffer every two seconds. Returns an unsubscribe function. */
+export function subscribeLive(pack: string, onEvent: (e: LiveEvent) => void): () => void {
+  let closed = false;
+  let since = 0;
+  let poll: ReturnType<typeof setInterval> | null = null;
+  const startPolling = () => {
+    if (poll || closed) return;
+    poll = setInterval(async () => {
+      try {
+        const r = await engine.recentEvents(pack, since);
+        for (const e of r.events) { since = Math.max(since, e.seq); onEvent(e); }
+        if (since === 0) since = r.latest;
+      } catch { /* engine away; keep trying */ }
+    }, 2000);
+  };
+  let es: EventSource | null = null;
+  if (typeof EventSource !== "undefined") {
+    es = new EventSource(enginePath(`api/events?${q(pack)}`));
+    const handle = (ev: MessageEvent) => {
+      try { const e = JSON.parse(ev.data as string) as LiveEvent; since = Math.max(since, e.seq); onEvent(e); } catch { /* ignore */ }
+    };
+    for (const kind of ["session.started", "partial", "turn", "session.ended"]) es.addEventListener(kind, handle as EventListener);
+    es.onerror = () => { es?.close(); es = null; startPolling(); };
+  } else {
+    startPolling();
+  }
+  return () => { closed = true; es?.close(); if (poll) clearInterval(poll); };
 }

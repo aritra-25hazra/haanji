@@ -159,3 +159,27 @@ export interface Anchors {
   anchors: Anchor[];
   pending_days: string[];
 }
+
+export interface LiveEvent {
+  seq: number;
+  kind: "session.started" | "partial" | "turn" | "session.ended" | string;
+  at: string;
+  sid?: string;
+  pack?: string;
+  channel?: string;
+  phone?: string | null;
+  greeting?: string;
+  text?: string;
+  heard?: string;
+  corrected?: string;
+  reply?: string;
+  corrections?: { from_token: string; to_surface: string }[];
+  tools?: string[];
+  speculation_hits?: string[];
+  receipts?: string[] | number;
+  guard?: string;
+  latency_ms?: number;
+  outcome?: string | null;
+  call_id?: string;
+  turns?: number;
+}
