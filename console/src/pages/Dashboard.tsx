@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { engine } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Loading, Page, Panel, Tile, fmtInr, fmtTime, useData } from "../components/Common";
+import { Chip, Icon, Loading, Page, Panel, Tile, fmtInr, fmtTime, useData } from "../components/Common";
 
 const ORDER = ["BOOKED", "FAQ_ANSWERED", "LEAD_CAPTURED", "HANDED_OFF", "ABANDONED", "IN_PROGRESS"];
 const SWATCH: Record<string, string> = {
@@ -12,7 +12,7 @@ const SWATCH: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { pack, online } = useApp();
+  const { pack, online, status } = useApp();
   const { data, loading, error, reload } = useData(
     () => (online ? engine.insights(pack) : Promise.resolve(sample.insights())), [pack, online]);
   useEffect(() => {
@@ -35,7 +35,10 @@ export default function Dashboard() {
   const present = ORDER.filter((o) => data.outcomes[o]);
 
   return (
-    <Page title="Aaj" sub={`${pack.replace(/_/g, " ")} — har call jo agent ne uthayi, aur usse kya nikla.`}>
+    <Page title="Aaj" sub={`${pack.replace(/_/g, " ")} — har call jo agent ne uthayi, aur usse kya nikla.`}
+          actions={status?.whatsapp?.configured
+            ? <Chip kind="ok"><Icon name="phone" small />Asli WhatsApp juda hai{status.whatsapp.number ? ` · ${status.whatsapp.number}` : ""}</Chip>
+            : undefined}>
       <div className="tiles">
         <Tile index={0} label="Calls aaj" value={data.calls_today} foot={`${data.calls_total} kul`} />
         <Tile index={1} label="Bookings" value={data.bookings_confirmed} foot={`${fmtInr(data.revenue_booked_inr)} ki`} />

@@ -6,6 +6,7 @@ export interface Status {
   default_pack: string;
   packs: string[];
   console_url?: string;
+  whatsapp?: { configured: boolean; number: string | null };
 }
 
 export interface Insights {

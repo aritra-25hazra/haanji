@@ -36,3 +36,18 @@ services:
       # Where the owner console is hosted, so the landing page can link to it.
       - key: HAANJI_CONSOLE_URL
         value: https://haanji-kappa.vercel.app
+      # A real WhatsApp number (Meta Cloud API). The values are entered in the
+      # Render dashboard, never here — docs/whatsapp-setup.md walks through it.
+      # Left empty, the simulator keeps working and the webhook stays dormant.
+      - key: HAANJI_WA_TOKEN
+        sync: false
+      - key: HAANJI_WA_PHONE_ID
+        sync: false
+      - key: HAANJI_WA_VERIFY_TOKEN
+        sync: false
+      - key: HAANJI_WA_APP_SECRET
+        sync: false
+      - key: HAANJI_WA_DISPLAY_NUMBER
+        sync: false
+      - key: HAANJI_WA_PACK
+        value: dental_clinic

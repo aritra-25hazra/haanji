@@ -17,6 +17,8 @@
   aside .head a.back { color: var(--haze); font-size: 13px; text-decoration: none; }
   .newthread { display: flex; gap: 8px; padding: 12px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); }
   .newthread .input { flex: 1; min-width: 0; }
+  .wa-live { padding: 10px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .wa-live p { font-size: 12.5px; }
   .missed { padding: 12px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); display: flex; flex-direction: column; gap: 8px; }
   .missed .btn { width: 100%; }
   .missed p { color: var(--haze); font-size: 13px; }
@@ -107,6 +109,15 @@
   S.status().then(function (s) {
     if (!s) return;
     $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+    if (s.whatsapp && s.whatsapp.configured) {
+      // A real number is connected: say so, and which one, above the simulator.
+      const live = document.createElement("div");
+      live.className = "wa-live";
+      live.innerHTML = '<span class="chip chip-spec">' + S.icon("phone") + "Asli number juda hai" +
+        (s.whatsapp.number ? " · " + S.esc(s.whatsapp.number) : "") + "</span>" +
+        '<p class="muted">Is number pe WhatsApp karo — wahi engine, wahi ledger. Neeche wala simulator alag chalta hai.</p>';
+      document.querySelector("aside .head").insertAdjacentElement("afterend", live);
+    }
     loadThreads();
   });
 
