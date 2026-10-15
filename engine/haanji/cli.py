@@ -51,11 +51,20 @@ def cmd_scenarios(args) -> int:
     return 0
 
 
+def _pick_llm(args) -> None:
+    """``--llm`` wins over the environment; the config reads the environment."""
+    if getattr(args, "llm", None):
+        import os
+        os.environ["HAANJI_PROVIDER_LLM"] = args.llm
+
+
 def cmd_demo(args) -> int:
+    _pick_llm(args)
     return demo_mod.main(args.pack, args.scenario, args.speed)
 
 
 def cmd_call(args) -> int:
+    _pick_llm(args)
     return demo_mod.main(args.pack, args.scenario, args.speed)
 
 
@@ -95,6 +104,8 @@ def cmd_serve(args) -> int:
 
 def cmd_selftest(args) -> int:
     """Run every packaged scenario and report which reach their expected outcome."""
+    _pick_llm(args)
+
     async def go() -> int:
         set_speed(args.speed)
         failures = 0
@@ -138,6 +149,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("demo", help="run one narrated call")
     p.add_argument("--pack", default="dental_clinic")
     p.add_argument("--scenario", default=None)
+    p.add_argument("--llm", choices=["mock", "claude"], default=None,
+                   help="dialogue provider (default: $HAANJI_PROVIDER_LLM or mock)")
     p.add_argument("--speed", type=float, default=1.0,
                    help="simulated time scale; 1.0 runs the call at real speed")
     p.set_defaults(func=cmd_demo)
@@ -145,6 +158,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("call", help="alias of demo")
     p.add_argument("--pack", default="dental_clinic")
     p.add_argument("--scenario", default=None)
+    p.add_argument("--llm", choices=["mock", "claude"], default=None)
     p.add_argument("--speed", type=float, default=1.0)
     p.set_defaults(func=cmd_call)
 
@@ -163,6 +177,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("selftest", help="run every packaged scenario")
     p.add_argument("--speed", type=float, default=40.0)
     p.add_argument("--pack", default=None, help="limit to one pack")
+    p.add_argument("--llm", choices=["mock", "claude"], default=None,
+                   help="dialogue provider (default: $HAANJI_PROVIDER_LLM or mock)")
     p.set_defaults(func=cmd_selftest)
 
     p = sub.add_parser("serve", help="run the demo web server (web call, WhatsApp, insights)")

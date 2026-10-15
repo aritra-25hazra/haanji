@@ -21,6 +21,15 @@ services:
         value: mock
       - key: HAANJI_PROVIDER_LLM
         value: mock
+      # Flip HAANJI_PROVIDER_LLM to "claude" and paste the key in the Render
+      # dashboard to put a real model behind the dialogue boundary. Every
+      # booking still goes through the engine's own read-back and the ledger.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: HAANJI_LLM_MODEL
+        value: claude-opus-4-8
+      - key: HAANJI_LLM_EFFORT
+        value: low
       - key: HAANJI_PROVIDER_TTS
         value: mock
       - key: HAANJI_PACK

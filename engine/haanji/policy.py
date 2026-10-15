@@ -258,6 +258,30 @@ class DialoguePolicy:
             return LLMTurn(say=self._p("ask_name", "Kis naam se booking karun?"))
         return self._ask_confirmation(ctx)
 
+    def ask_confirmation(self, ctx: ConversationContext, action: str,
+                         args: dict[str, Any]) -> LLMTurn:
+        """Park a write behind the caller's yes. Public so that a hosted model's
+        request to book or cancel becomes the same read-back question the
+        deterministic policy asks — the words the ledger will later bind the
+        caller's reply to are never the model's own."""
+        if action == "book_appointment":
+            for field_name, key in (("service", "service"), ("date", "date"), ("time", "time"),
+                                    ("staff", "staff"), ("customer_name", "customer_name"),
+                                    ("customer_phone", "phone")):
+                if args.get(key):
+                    setattr(ctx, field_name, args[key])
+            return self._ask_confirmation(ctx)
+        if action == "cancel_appointment":
+            if args.get("phone"):
+                ctx.customer_phone = args["phone"]
+            if not ctx.customer_phone:
+                return LLMTurn(say="Zaroor. Jis number se booking hui thi wo bata dijiye.")
+            ctx.pending_confirmation = {"action": "cancel_appointment",
+                                        "args": {"phone": ctx.customer_phone}}
+            return LLMTurn(say="Aapki booking cancel kar dun? Haan ya na bol dijiye.",
+                           needs_confirmation=True)
+        raise ValueError(f"{action} does not take a confirmation")
+
     def _ask_confirmation(self, ctx: ConversationContext) -> LLMTurn:
         args = {"service": ctx.service, "date": ctx.date, "time": ctx.time,
                 "customer_name": ctx.customer_name, "phone": ctx.customer_phone,

@@ -326,6 +326,26 @@ below is running code behind `haanji serve`, not a slide:
   a *tamper* button; press it and watch the chain break. A trust claim you can
   only check on our server would not be a trust claim.
 
+### A real model behind the same boundary
+
+`HAANJI_PROVIDER_LLM=claude` puts Claude (`claude-opus-4-8` by default) behind
+the dialogue boundary instead of the deterministic policy. The model decides
+what to say and which read-only tools to run; it never decides when something
+is written. A request to book or cancel is turned into the pack's own read-back
+question, and the caller's *yes* is handled by the deterministic policy — the
+only path that produces a tool call the ledger will accept. If the API is
+unreachable, that turn falls back to the policy and the call carries on.
+
+```bash
+pip install -e ".[dev,web,llm]"
+echo "ANTHROPIC_API_KEY=..." > engine/.env     # gitignored; never committed
+haanji selftest --llm claude                  # the 21 scenarios, with a model talking
+```
+
+`research/harness/llm_ablation.py` runs the scenarios under both providers and
+reports outcome, latency, speculation hit rate, fallbacks and token use side
+by side. The guarantees do not depend on which one answers.
+
 ---
 
 ## Architecture
@@ -415,10 +435,11 @@ A project report should say what was verified and what was not.
   estimates it from its lexicon on that path. Chrome/Edge required for the mic;
   the type-a-line fallback works everywhere.
 * **Providers are mocked by default.** Swapping in a hosted recogniser or model
-  means replacing one adapter class; the engine imports no vendor SDK anywhere.
-  The latency figures are therefore engine-side: they measure what HaanJi adds
-  and what speculation removes, not what a particular vendor charges in
-  round-trip time.
+  means replacing one adapter class; the engine imports no vendor SDK outside
+  its adapters, and the one it ships (`adapters/claude.py`) is an optional
+  extra that is only imported when it is configured. The latency figures are
+  therefore engine-side: they measure what HaanJi adds and what speculation
+  removes, not what a particular vendor charges in round-trip time.
 * **A known collision is recorded rather than hidden.** /b/ and /p/ merge for many
   speakers, so *braces* and *prices* land in one phonetic bucket and the edit
   distance does not separate them either. The confidence condition is what keeps
