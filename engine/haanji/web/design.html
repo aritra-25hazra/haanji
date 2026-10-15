@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HaanJi — Signboard design system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/signboard.css">
+<style>
+  main { width: min(var(--maxw), 100%); margin: 0 auto; padding: 24px 16px 64px; display: flex; flex-direction: column; gap: 28px; }
+  .lede { max-width: 760px; line-height: 1.55; }
+  section.ds { display: flex; flex-direction: column; gap: 14px; }
+  section.ds h2 { font-size: 24px; }
+  section.ds p { max-width: 760px; line-height: 1.5; }
+  .swatches { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .sw { border-radius: var(--r-card); padding: 14px; min-height: 96px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; box-shadow: inset 0 0 0 1px rgba(255, 247, 230, .18); }
+  .sw b { font-size: 20px; }
+  .sw code { font-size: 12px; }
+  .type-sample { display: grid; gap: 10px; }
+  .type-sample > div { display: grid; grid-template-columns: 180px 1fr; gap: 14px; align-items: baseline; border-bottom: 1px solid rgba(255, 247, 230, .12); padding: 8px 0; }
+  .type-sample code { font-size: 13px; color: var(--chalk); }
+  .t-display { font-family: var(--font-display); font-size: 36px; line-height: 1.05; }
+  .t-dev { font-family: var(--font-dev); font-size: 30px; }
+  .t-body { font-family: var(--font-body); font-size: 16px; }
+  .t-mono { font-family: var(--font-mono); font-size: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .icons { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .icons div { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px; border-radius: var(--r-ctl); background: var(--cobalt-deep); font-family: var(--font-mono); font-size: 11px; }
+  .icons i { width: 24px; height: 24px; display: inline-flex; }
+  .icons svg { width: 24px; height: 24px; }
+  .rules { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .rules .frame { padding: 16px 18px; }
+  .rules h3 { font-size: 16px; margin-bottom: 6px; }
+  .rules p { font-size: 14px; color: var(--haze); }
+  .motion { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .motion .stamp { cursor: pointer; }
+  pre { background: var(--cobalt-deep); padding: 12px 14px; border-radius: var(--r-ctl); overflow-x: auto; font-size: 12.5px; max-width: 760px; }
+  .frame.sample { padding: 20px; display: flex; flex-direction: column; gap: 12px; max-width: 520px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Seedha content pe jao</a>
+<header class="wrap nav">
+  <a class="wordmark paint" href="./">HaanJi <span class="dev">हाँजी</span></a>
+  <nav><ul>
+    <li><a href="talk">Demo</a></li>
+    <li><a href="https://github.com/aritra-25hazra/haanji/tree/main/docs/superpowers/specs" rel="noopener">Design spec <i data-icon="arrow" class="ic-sm"></i></a></li>
+    <li><a href="https://github.com/aritra-25hazra/haanji" rel="noopener"><i data-icon="github" class="ic-sm"></i>GitHub</a></li>
+  </ul></nav>
+</header>
+<main id="main">
+  <div>
+    <span class="eyebrow">Design system</span>
+    <h1>Signboard <span class="dev">साइनबोर्ड</span></h1>
+    <p class="lede">Har Indian dukaan ka ek hand-painted sign hota hai: cobalt pe marigold, moti bilingual lettering, ek laal mohar. HaanJi ki poori UI — demo pages, owner console, receipts — isi ek bhasha mein hai. Yeh page <code>static/signboard.css</code> ke tokens aur components ko jaise-ke-waise dikhata hai; jo yahan dikhta hai wahi code hai.</p>
+  </div>
+
+  <section class="ds" aria-labelledby="colour">
+    <h2 id="colour">Rang</h2>
+    <p>Do primary (cobalt, marigold), ek paper (chalk), ek ink, aur do signal rang — sindoor galat/khatre ke liye, leaf sahi/verified ke liye. Console pe wahi rang light paper pe ulte chalte hain. Har pair WCAG 2 AA contrast paas karta hai (Playwright + axe pass test mein hai).</p>
+    <div class="swatches" id="swatches"></div>
+  </section>
+
+  <section class="ds" aria-labelledby="type">
+    <h2 id="type">Type</h2>
+    <p>Display heading ke liye Bricolage Grotesque (bold, condensed, signboard jaisa); Devanagari ke liye Yatra One (brush); body Instrument Sans; numbers aur codes JetBrains Mono — receipt codes, latency, phone numbers hamesha mono mein.</p>
+    <div class="type-sample">
+      <div><code>--font-display</code><span class="t-display">Haanji, Smile Care Dental.</span></div>
+      <div><code>--font-dev</code><span class="t-dev">हाँजी · सबूत · पक्का</span></div>
+      <div><code>--font-body</code><span class="t-body">Ek baar dohra deta hoon — root canal, kal subah saade 9 baje, Vijay Sharma naam se. Confirm kar dun?</span></div>
+      <div><code>--font-mono</code><span class="t-mono">RECEIPT 2504-7863 · 137 ms · 98765 43210</span></div>
+    </div>
+  </section>
+
+  <section class="ds" aria-labelledby="components">
+    <h2 id="components">Components</h2>
+    <div class="row">
+      <button type="button" class="btn btn-primary"><i data-icon="phone"></i>Start call</button>
+      <button type="button" class="btn btn-ghost">Ghost</button>
+      <button type="button" class="btn btn-danger"><i data-icon="x"></i>Call khatam karo</button>
+      <button type="button" class="btn btn-primary btn-icon" aria-label="Bhejo"><i data-icon="send"></i></button>
+    </div>
+    <div class="row">
+      <span class="chip">chip</span>
+      <span class="chip chip-spec"><i data-icon="bolt" class="ic-sm"></i>speculated</span>
+      <span class="chip chip-guard"><i data-icon="shield" class="ic-sm"></i>guardrail</span>
+      <span class="chip chip-tool">check_availability</span>
+      <span class="chip chip-rcpt">2504-7863</span>
+      <span class="stamp" id="stamp"><i data-icon="lock" class="ic-sm"></i>RECEIPT 2504-7863</span>
+    </div>
+    <div class="frame sample">
+      <div class="repair"><s>rut kanal</s> <b>root canal</b> <span class="mono muted" style="font-size:12px">RTKNL = RTKNL · conf 0.32</span></div>
+      <label class="field"><span>Phone (optional)</span><input class="input" placeholder="9876543210"></label>
+      <div class="row"><input class="input input-pill" placeholder="…ya yahan type karke Enter"><button type="button" class="btn btn-primary btn-icon" aria-label="Bhejo"><i data-icon="send"></i></button></div>
+    </div>
+    <p>Frames (<code>.frame</code>) teen-line painted border hain — cobalt ke andar marigold — har card ko sign jaisa banate hain. Receipt ki mohar (<code>.stamp</code>) hamesha 3° tilt pe, sindoor ink, mono text: yeh "seal" ka ek hi roop hai, demo se console tak.</p>
+  </section>
+
+  <section class="ds" aria-labelledby="icons">
+    <h2 id="icons">Icons</h2>
+    <p>Sab SVG, 24px grid, 2px stroke, <code>Signboard.icon(name)</code> se. UI mein emoji kabhi nahi — test <code>test_no_emoji_is_used_as_an_icon</code> har page ko check karta hai.</p>
+    <div class="icons" id="icons"></div>
+  </section>
+
+  <section class="ds" aria-labelledby="motion">
+    <h2 id="motion">Motion</h2>
+    <p>Teen durations: micro 160 ms (hover, press), base 240 ms (reveal, panel), paint 400 ms (repair ka "paint over", stamp ka girna). Sab <code>prefers-reduced-motion</code> ka sammaan karte hain — tab animation turant apni aakhri state pe. Motion sirf un cheezon pe jo sach mein hui hain: ek sudhaar, ek seal, ek tool jo pehle se taiyaar tha.</p>
+    <div class="motion">
+      <span class="stamp" id="stamp2" title="click: stamp girti hai"><i data-icon="lock" class="ic-sm"></i>RECEIPT 9F2A-11C0</span>
+      <button type="button" class="btn btn-ghost" id="replay">Stamp dobara</button>
+      <span class="mono muted" style="font-size:12px">--t-micro 160ms · --t-base 240ms · --t-paint 400ms · ease-out cubic-bezier(.2,.8,.2,1)</span>
+    </div>
+  </section>
+
+  <section class="ds" aria-labelledby="rules">
+    <h2 id="rules">Niyam</h2>
+    <div class="rules">
+      <div class="frame"><h3>Bilingual, bina mazaak ke</h3><p>Devanagari sirf wahan jahan shabd ka weight ho — wordmark, section ka naam, mohar. Body text Hinglish, jaise log bolte hain.</p></div>
+      <div class="frame"><h3>Numbers mono</h3><p>Har code, latency, number, time — mono. Aankh turant pakad leti hai ki yeh "data" hai, "baat" nahi.</p></div>
+      <div class="frame"><h3>Relative URLs</h3><p>Har link relative hai, taaki page kisi bhi prefix ke peeche chale (Vercel rewrite, nginx). Test isko pakadta hai.</p></div>
+      <div class="frame"><h3>Dark on demo, paper on console</h3><p>Demo cobalt pe (sign), console chalk paper pe (register). Tokens same, roles ulte.</p></div>
+      <div class="frame"><h3>44px touch targets</h3><p>Har button aur input kam se kam 44px — phone pe angoothe ke liye. 390px pe horizontal scroll kabhi nahi.</p></div>
+      <div class="frame"><h3>Honest states</h3><p>Loading, empty, offline — har page ke paas teeno hain, aur offline pe sample data saaf label ke saath.</p></div>
+    </div>
+  </section>
+
+  <section class="ds" aria-labelledby="use">
+    <h2 id="use">Use karna</h2>
+<pre tabindex="0">&lt;link rel="stylesheet" href="static/signboard.css"&gt;
+&lt;script src="static/signboard.js"&gt;&lt;/script&gt;
+&lt;i data-icon="phone"&gt;&lt;/i&gt;            &lt;!-- Signboard.mountIcons() inhe SVG bana deta hai --&gt;
+&lt;span class="stamp"&gt;RECEIPT 2504-7863&lt;/span&gt;   Signboard.stamp(el)   // mohar girti hai
+Signboard.repairNode("rut kanal", "root canal")   // paint-over repair</pre>
+    <p>Console (React) same tokens <code>console/src/signboard.css</code> mein rakhta hai; components <code>Common.tsx</code> mein — Chip, Stamp, Repair, Register, Tile, Waterfall.</p>
+  </section>
+</main>
+<footer class="wrap foot"><span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a></span></footer>
+<script src="static/signboard.js"></script>
+<script>
+(function () {
+  const S = window.Signboard, $ = function (id) { return document.getElementById(id); };
+  const TOKENS = [["cobalt", "--cobalt"], ["cobalt deep", "--cobalt-deep"], ["marigold", "--marigold"], ["chalk", "--chalk"], ["ink", "--ink"], ["haze", "--haze"], ["sindoor", "--sindoor"], ["sindoor ink", "--sindoor-ink"], ["leaf", "--leaf"], ["leaf ink", "--leaf-ink"]];
+  const css = getComputedStyle(document.documentElement);
+  $("swatches").innerHTML = TOKENS.map(function (t) {
+    const v = css.getPropertyValue(t[1]).trim();
+    const dark = ["--marigold", "--chalk", "--haze", "--leaf", "--sindoor"].indexOf(t[1]) >= 0;
+    return '<div class="sw" style="background:' + v + ';color:' + (dark ? "var(--ink)" : "var(--chalk)") + '"><b>' + S.esc(t[0]) + "</b><code>" + S.esc(t[1]) + " " + S.esc(v) + "</code></div>";
+  }).join("");
+  const names = ["phone", "phoneMissed", "mic", "micOff", "speaker", "speakerOff", "bolt", "shield", "lock", "arrow", "check", "x", "chevron", "send", "github"];
+  $("icons").innerHTML = names.map(function (n) { return "<div>" + S.icon(n) + "<span>" + n + "</span></div>"; }).join("");
+  S.mountIcons();
+  function drop(el) { el.style.opacity = "0"; requestAnimationFrame(function () { S.stamp(el); }); }
+  $("stamp2").addEventListener("click", function () { drop($("stamp2")); });
+  $("replay").addEventListener("click", function () { drop($("stamp2")); });
+  S.stamp($("stamp"));
+})();
+</script>
+</body>
+</html>

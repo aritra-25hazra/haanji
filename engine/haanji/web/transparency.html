@@ -43,7 +43,7 @@
   <section class="how">
     <h2>Khud check karo</h2>
     <p>Export lo (<code>api/receipts/export?pack=…</code>), us din ki receipts ke <code>chain_hash</code> le kar pairwise sha256 karo (akela bacha hua apne aap se pair hota hai), root milna chahiye; phir signature <code>root || day</code> pe public key se verify karo:</p>
-<pre>import hashlib, json, urllib.request
+<pre tabindex="0">import hashlib, json, urllib.request
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 base, pack, day = "https://haanji-engine.onrender.com", "dental_clinic", "2026-10-15"
 exp = json.load(urllib.request.urlopen(f"{base}/api/receipts/export?pack={pack}"))

@@ -16,9 +16,10 @@ BASE = os.environ.get("HAANJI_BASE", "http://127.0.0.1:8090")
 CONSOLE = os.environ.get("CONSOLE_BASE")
 OUT = os.environ.get("SHOTS", os.path.join(os.path.dirname(__file__), "..", "..", ".superpowers", "shots"))
 AXE = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js"
-PAGES = [(BASE, "", "landing"), (BASE, "talk", "talk"), (BASE, "whatsapp", "whatsapp"), (BASE, "verify", "verify")]
+PAGES = [(BASE, "", "landing"), (BASE, "talk", "talk"), (BASE, "whatsapp", "whatsapp"), (BASE, "verify", "verify"),
+         (BASE, "record", "record"), (BASE, "study", "study"), (BASE, "transparency", "transparency"), (BASE, "design", "design")]
 if CONSOLE:
-    PAGES += [(CONSOLE, p, "console-" + p) for p in ("dashboard", "calls", "ledger", "lexicon", "packs", "studio")]
+    PAGES += [(CONSOLE, p, "console-" + p) for p in ("dashboard", "calls", "ledger", "lexicon", "packs", "studio", "onboard", "ops")]
 SIZES = {"desktop": (1440, 900), "mobile": (390, 844)}
 
 os.makedirs(OUT, exist_ok=True)
@@ -26,7 +27,11 @@ problems = []
 
 
 def settle(page, base, path):
-    page.goto(f"{base}/{path}", wait_until="networkidle")
+    # The console holds a live event stream open, so the network is never
+    # idle there; wait for load and give the data a moment instead.
+    page.goto(f"{base}/{path}", wait_until="networkidle" if base == BASE else "load")
+    if base != BASE:
+        time.sleep(1.5)
     page.evaluate("document.fonts.ready")
     if base == BASE and path == "":
         try:

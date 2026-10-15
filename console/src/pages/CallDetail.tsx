@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { engine, fmtMs, parseReceipts, parseTurns } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Chip, Empty, Icon, Loading, OutcomeChip, Page, Panel, Repair, Stamp, Tile, Waterfall, fmtDate, fmtTime, useData } from "../components/Common";
+import { Chip, DevToggle, Empty, Icon, Loading, OutcomeChip, Page, Panel, Repair, Stamp, Tile, Waterfall, fmtDate, fmtTime, useData, useDevanagari } from "../components/Common";
 import type { CallRow } from "../types";
 
 export default function CallDetail() {
@@ -11,6 +11,8 @@ export default function CallDetail() {
   const { pack, online } = useApp();
   const { data, loading, error } = useData<CallRow | null>(
     () => (online ? engine.call(pack, id) : Promise.resolve(sample.call(id))), [pack, online, id]);
+  // Hooks before any early return: the transliteration table follows the data.
+  const dev = useDevanagari(data ? parseTurns(data.turns_json).flatMap((t) => [t.heard, t.said]) : []);
 
   if (loading && !data) return <Loading />;
   if (!data) {
@@ -27,7 +29,7 @@ export default function CallDetail() {
 
   return (
     <Page title="Call" sub={`${data.channel.toLowerCase()} · ${data.phone ?? "number nahi"} · ${fmtDate(data.started_at)} ${fmtTime(data.started_at)}`}
-          actions={<Link className="btn btn-ghost btn-sm" to="/calls">Saari calls</Link>}>
+          actions={<><DevToggle on={dev.on} toggle={dev.toggle} /><Link className="btn btn-ghost btn-sm" to="/calls">Saari calls</Link></>}>
       <div className="tiles">
         <Tile index={0} label="Outcome" value={<OutcomeChip outcome={data.outcome} />} />
         <Tile index={1} label="Shabd sudhaare" value={repairs} foot="tenant ki apni vocabulary se" />
@@ -36,17 +38,17 @@ export default function CallDetail() {
               foot={receipts.length ? "signed aur chained" : "kuch likha nahi gaya"} />
       </div>
 
-      <Panel title="Transcript" hint="jo suna gaya, aur agent ne kya padha aur bola">
+      <Panel title="Transcript" hint={dev.on ? "Devanagari approximate hai — naam aur English shabd galat ho sakte hain" : "jo suna gaya, aur agent ne kya padha aur bola"}>
         <div className="body transcript">
           {turns.length === 0 && <p className="muted">Is call ke turns record nahi hue.</p>}
           {turns.map((t, i) => (
             <div key={i} style={{ display: "contents" }}>
               <div className="bubble caller" data-reveal style={{ "--i": i * 2 } as CSSProperties}>
-                {t.heard}
+                {dev.map(t.heard)}
                 {t.corrections.length > 0 && <div className="meta">{t.corrections.map((c, j) => <Repair key={j} c={c} />)}</div>}
               </div>
               <div className="bubble agent" data-reveal style={{ "--i": i * 2 + 1 } as CSSProperties}>
-                {t.said}
+                {dev.map(t.said)}
                 <div className="meta">
                   {t.tools.map((tool) => {
                     const hit = t.speculation_hits.includes(tool);

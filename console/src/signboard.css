@@ -235,3 +235,6 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 .trace-head { margin: 0 0 2px; font-size: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
 .counters { flex-wrap: wrap; gap: 8px; }
 .bubble .waterfall { margin-top: 10px; }
+
+.dev-toggle .dev { font-family: var(--font-dev); font-size: 15px; }
+.dev-toggle.on { border-color: var(--cobalt); color: var(--cobalt); }

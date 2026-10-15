@@ -70,6 +70,7 @@
     <button type="button" class="btn btn-primary" id="start"><i data-icon="phone"></i>Start call</button>
     <button type="button" class="btn btn-danger" id="end" hidden><i data-icon="x"></i>Call khatam karo</button>
     <button type="button" class="btn btn-ghost" id="mute" aria-pressed="false"><i data-icon="speaker"></i><span>Awaaz on</span></button>
+    <button type="button" class="btn btn-ghost" id="dev" aria-pressed="false" title="Transcript Devanagari mein (approximate)"><span class="dev">हिंदी</span></button>
   </div>
 </header>
 <div id="notice" class="notice" hidden role="status"></div>
@@ -116,6 +117,30 @@
 (function () {
   "use strict";
   const S = window.Signboard;
+  // Devanagari reading aid: approximate, from the engine, cached per line.
+  let devOn = false;
+  try { devOn = localStorage.getItem("haanji.devanagari") === "1"; } catch (e) {}
+  const devCache = {};
+  async function devanagari(text) {
+    if (!text) return text;
+    if (devCache[text]) return devCache[text];
+    try {
+      const r = await fetch("api/devanagari", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ texts: [text] }) });
+      const d = await r.json(); devCache[text] = d.texts[0] || text; return devCache[text];
+    } catch (e) { return text; }
+  }
+  function paintDev(el, text) {
+    el.dataset.roman = text;
+    if (!devOn) return;
+    devanagari(text).then(function (t) { if (el.dataset.roman === text && el.firstChild) el.firstChild.nodeValue = t; });
+  }
+  function repaintAll() {
+    document.querySelectorAll("#log .bubble").forEach(function (el) {
+      const roman = el.dataset.roman; if (!roman || !el.firstChild) return;
+      if (devOn) devanagari(roman).then(function (t) { el.firstChild.nodeValue = t; });
+      else el.firstChild.nodeValue = roman;
+    });
+  }
   const $ = function (id) { return document.getElementById(id); };
   let sid = null, muted = false, recog = null, listening = false;
   let repairsTotal = 0, specHits = 0, specStarted = 0;
@@ -144,6 +169,7 @@
     const b = document.createElement("div");
     b.className = "bubble " + who;
     b.textContent = text;
+    paintDev(b, text);
     $("log").appendChild(b);
     $("log").scrollTop = $("log").scrollHeight;
     return b;
@@ -369,6 +395,12 @@
   };
   $("start").onclick = startCall;
   $("end").onclick = function () { endCall(false); };
+  $("dev").setAttribute("aria-pressed", devOn ? "true" : "false");
+  $("dev").addEventListener("click", function () {
+    devOn = !devOn; $("dev").setAttribute("aria-pressed", devOn ? "true" : "false");
+    try { localStorage.setItem("haanji.devanagari", devOn ? "1" : "0"); } catch (e) {}
+    repaintAll();
+  });
   $("mute").onclick = function () {
     muted = !muted;
     $("mute").setAttribute("aria-pressed", String(muted));

@@ -115,7 +115,7 @@ p { margin: 0; }
 /* ── chips ────────────────────────────────────────────────────────────── */
 .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgba(245, 185, 30, .16); color: var(--marigold); white-space: nowrap; }
 .chip .ic, .chip svg { width: 14px; height: 14px; }
-.chip-spec { background: rgba(143, 214, 148, .16); color: var(--leaf); }
+.chip-spec { background: rgba(143, 214, 148, .2); color: #D4F5D7; }   /* lighter than --leaf: AA on cobalt */
 .chip-guard { background: rgba(226, 85, 58, .2); color: #FFB3A3; }
 .chip-tool { background: rgba(255, 247, 230, .1); color: var(--chalk); }
 .chip-rcpt { font-family: var(--font-mono); }
