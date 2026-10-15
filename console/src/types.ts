@@ -1,84 +1,113 @@
+/** The engine's JSON, exactly as /engine/api/* returns it. */
+
+export interface Status {
+  name: string;
+  version: string;
+  default_pack: string;
+  packs: string[];
+  console_url?: string;
+}
+
+export interface Insights {
+  tenant_id: string;
+  generated_at: string;
+  calls_total: number;
+  calls_today: number;
+  outcomes: Record<string, number>;
+  by_hour: { hour: string; calls: number; booked: number }[];
+  bookings_confirmed: number;
+  revenue_booked_inr: number;
+  leads_open: number;
+  missed_calls: { total: number; recovered: number };
+  corrections_total: number;
+  speculation: { started: number; hits: number; hit_rate: number };
+  cost: { ai_per_call_inr: number; receptionist_per_call_inr: number };
+  insights: string[];
+}
+
 export type Outcome =
   | "BOOKED" | "FAQ_ANSWERED" | "LEAD_CAPTURED" | "HANDED_OFF" | "ABANDONED" | "IN_PROGRESS";
 
-export type Channel = "PHONE" | "WHATSAPP" | "WEB";
+/** One row of the engine's `calls` table. */
+export interface CallRow {
+  call_id: string;
+  tenant_id?: string;
+  channel: string;
+  phone: string | null;
+  started_at: string;
+  ended_at?: string | null;
+  outcome: string | null;
+  corrections: number;
+  spec_started?: number;
+  spec_hits: number;
+  latency_p50: number | null;
+  turns_json: string;
+  receipts_json: string;
+}
 
 export interface Correction {
   from_token: string;
   to_surface: string;
   asr_confidence: number;
-  ngram: number;
+  ngram?: number;
+  key?: string;
+  to_key?: string;
 }
 
+/** One element of `turns_json`. */
 export interface Turn {
-  seq: number;
-  speaker: "caller" | "agent";
-  text: string;
-  raw_text: string | null;
-  corrections: Correction[];
-  tool_calls: string[];
-  speculation_hits?: string[];
+  heard: string;
+  corrected: string;
+  said: string;
+  tools: string[];
+  speculation_hits: string[];
+  guard: string | null;
   latency_ms: number | null;
   interrupted: boolean;
+  corrections: Correction[];
 }
 
-export interface Receipt {
+export interface ExportReceipt {
   seq: number;
-  short_code: string;
   action: string;
-  action_args: Record<string, unknown>;
-  confirmation: {
-    prompt_text?: string;
-    reply_text?: string;
-    asr_confidence?: number;
-    audio_offset_ms?: number;
-  };
-  transcript_excerpt: string;
-  occurred_at: string;
-  chain_hash: string;
+  action_args: string;
+  short_code?: string;
+  transcript_excerpt?: string;
+  [key: string]: unknown;
 }
 
-export interface ConversationSummary {
-  conversation_id: string;
-  channel: Channel;
-  caller_phone: string;
-  started_at: string;
-  outcome: Outcome;
-  duration_ms: number;
-}
-
-export interface ConversationDetail extends ConversationSummary {
-  ended_at: string | null;
-  turns: Turn[];
-  receipts: Receipt[];
-}
-
-export interface Dashboard {
-  calls_today: number;
-  bookings_today: number;
-  leads_open: number;
-  answer_rate: number;
-  booking_rate: number;
-  outcomes: Record<string, number>;
-  latency: { p50: number; p90: number; p95: number };
-  corrections_today: number;
-  speculation_hit_rate: number;
-  by_hour: { hour: string; calls: number; booked: number }[];
-}
-
-export interface Verification {
-  ok: boolean;
-  checked: number;
-  first_broken_seq: number | null;
-  reason: string | null;
+export interface Export {
+  tenant_id: string;
+  algorithm: string;
   public_key: string;
+  exported_at: string;
+  receipts: ExportReceipt[];
 }
 
-export interface LexiconEntry {
+export interface VerdictRow { seq: number; action: string; code: string; ok: boolean | null; reason: string | null }
+export interface Verdict { ok: boolean; checked: number; firstBrokenSeq: number | null; reason: string | null; rows: VerdictRow[] }
+
+export interface LexEntry {
   surface: string;
   entry_type: "SERVICE" | "STAFF" | "PLACE" | "BRAND" | "PHRASE";
   variants: string[];
-  phonetic_key: string;
+  keys: string[];
   weight: number;
-  repairs_30d: number;
+}
+export interface Lexicon {
+  pack: string;
+  version: number;
+  entries: LexEntry[];
+  probe?: { text: string; key: string; matches: string[] };
+}
+
+export interface PackSummary {
+  pack_id: string;
+  display_name: string;
+  version: number;
+  language: string;
+  services: number;
+  staff: number;
+  scenarios: number;
+  issues: string[];
 }
