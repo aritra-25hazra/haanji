@@ -212,3 +212,12 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 @keyframes pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .feed .dot { animation: none; } }
 .feed .session-started, .feed .session-ended { color: var(--ink-2); }
+
+/* sign in */
+.login { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--cobalt); }
+.login-card { width: min(440px, 100%); background: var(--paper); border-radius: var(--r-card); padding: 28px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--frame); }
+.login-card h1 { font-size: 28px; }
+.login-card .small { font-size: 12px; }
+.who { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0; background: none; border: 1px solid var(--rule); border-radius: var(--r-ctl); padding: 4px 10px; cursor: pointer; font: inherit; color: var(--ink); line-height: 1.15; }
+.who small { font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .06em; }
+.who:hover { border-color: var(--cobalt); }
