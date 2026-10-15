@@ -1,0 +1,65 @@
+name: transparency log
+
+# Every evening, after the engine has sealed the day, copy each tenant's
+# signed Merkle root into the `transparency` branch of this repository. The
+# branch is append-only by convention and public by construction: a root that
+# was published here cannot later be changed on the server without the two
+# disagreeing. See /transparency on the engine for how to check one by hand.
+on:
+  schedule:
+    - cron: "45 15 * * *"       # 21:15 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  ENGINE: https://haanji-engine.onrender.com
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: switch to the transparency branch (create it empty the first time)
+        run: |
+          git config user.name "haanji-transparency[bot]"
+          git config user.email "transparency@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin transparency; then
+            git checkout transparency
+          else
+            git checkout --orphan transparency
+            git rm -rf --quiet . || true
+            printf '# HaanJi transparency log\n\nOne JSON line per sealed day per tenant: the Merkle root over that day'"'"'s receipts and its Ed25519 signature. Appended by a scheduled workflow; verify any line against `/api/receipts/export` as described at `/transparency` on the engine.\n' > README.md
+            git add README.md && git commit -qm "transparency: start the log"
+          fi
+      - name: fetch today's anchors and append the new ones
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, pathlib
+          base = os.environ["ENGINE"]
+          status = json.load(urllib.request.urlopen(f"{base}/api/status", timeout=60))
+          out = pathlib.Path("anchors"); out.mkdir(exist_ok=True)
+          added = 0
+          for pack in status["packs"]:
+              a = json.load(urllib.request.urlopen(f"{base}/api/anchors?pack={pack}", timeout=60))
+              path = out / f"{pack}.jsonl"
+              have = set()
+              if path.exists():
+                  have = {json.loads(l)["day"] for l in path.read_text().splitlines() if l.strip()}
+              with path.open("a") as fh:
+                  for x in a["anchors"]:
+                      if x["day"] in have:
+                          continue
+                      fh.write(json.dumps({**x, "public_key": a["public_key"], "engine": base}, sort_keys=True) + "\n")
+                      added += 1
+          print(f"appended {added} anchors")
+          pathlib.Path(".added").write_text(str(added))
+          PY
+      - name: commit and push
+        run: |
+          git add anchors
+          if git diff --cached --quiet; then echo "nothing new today"; exit 0; fi
+          git commit -qm "transparency: $(date -u +%F) — $(cat .added) new anchor(s)"
+          git push origin transparency

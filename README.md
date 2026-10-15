@@ -4,6 +4,8 @@
 [![engine](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-engine.onrender.com%2Fapi%2Fstatus&label=engine&up_message=live&down_message=waking)](https://haanji-engine.onrender.com)
 [![console](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-kappa.vercel.app&label=console&up_message=live)](https://haanji-kappa.vercel.app)
 ![tests](https://img.shields.io/badge/tests-223%20passing-1F6B45)
+[![security](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/aritra-25hazra/haanji?quickstart=1)
 ![licence](https://img.shields.io/badge/licence-Apache--2.0-1B3B8C)
 
 <p align="center">
@@ -70,6 +72,11 @@ The engine runs on a free instance; the first visit after a quiet spell can take
 ---
 
 ## Try it in one minute
+
+**Zero install:** [open the repository in GitHub Codespaces](https://codespaces.new/aritra-25hazra/haanji?quickstart=1).
+The dev container installs the engine and the console, starts both, and
+forwards the demo (port 8090) and the console (port 5173) to your browser.
+
 
 ```bash
 cd engine

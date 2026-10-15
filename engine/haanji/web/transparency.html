@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HaanJi — Transparency log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/signboard.css">
+<style>
+  main { width: min(var(--maxw), 100%); margin: 0 auto; padding: 24px 16px 56px; display: flex; flex-direction: column; gap: 18px; }
+  .lede { max-width: 760px; line-height: 1.55; }
+  .packs { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .pk { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .pk h2 { font-size: 20px; }
+  .pk .key { font-family: var(--font-mono); font-size: 11px; color: var(--haze); word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid rgba(255, 247, 230, .12); vertical-align: top; }
+  td.mono { font-family: var(--font-mono); font-size: 11.5px; word-break: break-all; }
+  .how { max-width: 760px; }
+  .how pre { background: var(--cobalt-deep); padding: 12px 14px; border-radius: var(--r-ctl); overflow-x: auto; font-size: 12px; }
+  .pending { color: var(--marigold); font-size: 13px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Seedha content pe jao</a>
+<header class="wrap nav">
+  <a class="wordmark paint" href="./">HaanJi <span class="dev">हाँजी</span></a>
+  <nav><ul>
+    <li><a href="verify">Verify</a></li>
+    <li><a href="talk">Demo</a></li>
+    <li><a href="https://github.com/aritra-25hazra/haanji/tree/transparency" rel="noopener"><i data-icon="github" class="ic-sm"></i>Log on GitHub <i data-icon="arrow" class="ic-sm"></i></a></li>
+  </ul></nav>
+</header>
+<main id="main">
+  <div>
+    <span class="eyebrow">Pramaan ledger</span>
+    <h1>Transparency <span class="dev">लॉग</span></h1>
+    <p class="lede">Har shaam har pack ke us din ki receipts ka ek <b>Merkle root</b> banta hai aur tenant ki Ed25519 key se sign hota hai. Woh root yahan dikhta hai aur roz GitHub ke <code>transparency</code> branch pe bhi commit hota hai — jise hum khud baad mein nahi badal sakte. Certificate Transparency jaisa, par bookings ke liye: agar kal koi receipt badli ya hataayi gayi, to aaj ka root use pakad lega.</p>
+  </div>
+  <div class="packs" id="packs"></div>
+  <section class="how">
+    <h2>Khud check karo</h2>
+    <p>Export lo (<code>api/receipts/export?pack=…</code>), us din ki receipts ke <code>chain_hash</code> le kar pairwise sha256 karo (akela bacha hua apne aap se pair hota hai), root milna chahiye; phir signature <code>root || day</code> pe public key se verify karo:</p>
+<pre>import hashlib, json, urllib.request
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+base, pack, day = "https://haanji-engine.onrender.com", "dental_clinic", "2026-10-15"
+exp = json.load(urllib.request.urlopen(f"{base}/api/receipts/export?pack={pack}"))
+anc = json.load(urllib.request.urlopen(f"{base}/api/anchors?pack={pack}"))
+layer = [bytes.fromhex(r["chain_hash"]) for r in exp["receipts"] if r["occurred_at"].startswith(day)]
+while len(layer) &gt; 1:
+    layer = [hashlib.sha256(layer[i] + (layer[i+1] if i+1 &lt; len(layer) else layer[i])).digest() for i in range(0, len(layer), 2)]
+a = next(x for x in anc["anchors"] if x["day"] == day)
+assert layer[0].hex() == a["merkle_root"]
+Ed25519PublicKey.from_public_bytes(bytes.fromhex(anc["public_key"])).verify(bytes.fromhex(a["signature"]), layer[0] + day.encode())
+print("anchor valid")</pre>
+  </section>
+</main>
+<footer class="wrap foot"><span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a></span></footer>
+<script src="static/signboard.js"></script>
+<script>
+(function () {
+  const S = window.Signboard, $ = function (id) { return document.getElementById(id); };
+  S.mountIcons();
+  async function card(pack) {
+    const a = await (await fetch("api/anchors?pack=" + encodeURIComponent(pack))).json();
+    const rows = a.anchors.slice().reverse().map(function (x) {
+      return "<tr><td>" + S.esc(x.day) + "</td><td>" + x.first_seq + "–" + x.last_seq + "</td><td class=\"mono\">" + S.esc(x.merkle_root) + "</td></tr>";
+    }).join("");
+    const pending = a.pending_days.length ? '<p class="pending">' + a.pending_days.length + " din abhi seal hone baaki (aaj shaam " + S.esc(String(window.__digestHour || 20)) + ":00 IST pe)</p>" : "";
+    return '<section class="frame pk"><h2>' + S.esc(pack) + '</h2><p class="key">public key · ' + S.esc(a.public_key) + "</p>" +
+      (rows ? '<table><thead><tr><th>Din</th><th>Receipts</th><th>Merkle root</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">Abhi koi din seal nahi hua — pehli booking ke baad shaam ko hoga.</p>') + pending + "</section>";
+  }
+  S.status().then(async function (s) {
+    if (!s) return;
+    window.__digestHour = s.digest ? s.digest.hour_ist : 20;
+    const cards = await Promise.all(s.packs.map(card));
+    $("packs").innerHTML = cards.join("");
+  });
+})();
+</script>
+</body>
+</html>
