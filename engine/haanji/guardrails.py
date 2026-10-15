@@ -39,12 +39,12 @@ def _rx(pattern: str) -> re.Pattern:
 # (rule id, action, subject pattern, qualifier pattern or None)
 RULES: list[tuple[str, Action, re.Pattern, re.Pattern | None]] = [
     ("emergency.bleeding", Action.ESCALATE,
-     _rx(r"\b(khoon|blood|bleeding|rakt|rokto)\b"),
+     _rx(r"\b(khoon|blood|bleeding|rakt\w*|rokto)\b"),
      _rx(r"(aa rah|nahi ruk|ruk nahi|band nahi|bahut|zyada|non ?stop|porche|"
-         r"bondho hochhe na|khub|besh)")),
+         r"bondho hochhe na|khub|besh|khup|yet aahe|thambat nahi)")),
     ("emergency.acute", Action.ESCALATE,
      _rx(r"\b(accident|fracture|behosh|faint|chakkar|saans nahi|emergency|"
-         r"unbearable|bardasht nahi|asahniya)\b"), None),
+         r"unbearable|bardasht nahi|asahniya|asahya|shwas yet nahi)\b"), None),
     ("emergency.swelling", Action.ESCALATE,
      _rx(r"\b(sujan|swelling|sooj)\w*\b"), _rx(r"(bukhar|fever|dard|pain)")),
     ("commercial.refund", Action.ESCALATE,

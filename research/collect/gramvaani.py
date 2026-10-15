@@ -62,8 +62,20 @@ def main(argv=None) -> int:
     print(f"model loaded in {time.time() - t0:.0f}s; {len(chosen)} of {len(clean)} clean utterances", flush=True)
     pairs_path = DATA / "pairs.jsonl"
     wers, rows = [], []
-    with pairs_path.open("w", encoding="utf-8") as fh:
+    done: dict[str, dict] = {}
+    if pairs_path.exists():                       # resume: keep what an earlier run transcribed
+        for line in pairs_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                d = json.loads(line)
+                done[d["id"]] = d
+    for d in done.values():
+        if d["id"] in chosen:
+            rows.append(d); wers.append(d["wer"])
+    print(f"resuming with {len(rows)} already transcribed", flush=True)
+    with pairs_path.open("a", encoding="utf-8") as fh:
         for i, utt in enumerate(chosen, 1):
+            if utt in done:
+                continue
             segments, _ = model.transcribe(str(SET / "Audio" / f"{utt}.mp3"), language="hi", beam_size=5,
                                            word_timestamps=True, vad_filter=False, condition_on_previous_text=False)
             words, confs = [], []

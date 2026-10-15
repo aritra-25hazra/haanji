@@ -1,0 +1,106 @@
+# Vertical Pack — a dental clinic in Pune, speaking Marathinglish
+# (Marathi in Latin script mixed with English). The third language: one
+# file plus a phrase table, no engine code forked.
+pack: clinic_pune
+display_name: Dental clinic (Pune, Marathinglish)
+version: 1
+language: marathinglish
+
+persona:
+  agent_name: Haanji
+  business_name: Smile Dental Pune
+  greeting: "Namaskar, Smile Dental Pune. Mi kashi madat karu?"
+  closing: "Dhanyavad, tumcha divas chhan jao."
+  style: "Warm, brief Marathinglish. Confirms the dentist by name. Never diagnoses."
+
+guardrails:
+  never_quote_outside_catalogue: true
+  max_discount_pct: 0
+  refuse:
+    - diagnosing a symptom
+    - recommending a medicine or a dose
+  escalate_on:
+    - severe pain or bleeding
+    - an accident or emergency
+  refusal_line: "He doctor baghun sangtil; mi tumchi appointment lavun deto."
+  escalation_line: "He urgent vatatay — mi tumhala clinic chya staff shi jodto."
+
+staff_role: dentist
+staff:
+  - Dr Kulkarni
+  - Dr Joshi
+
+hours:
+  mon-sat: ["09:30", "20:00", "13:30", "15:00"]
+  sun: null
+
+services:
+  - name: root canal
+    duration_min: 60
+    price_inr: 6000
+    staff: [Dr Kulkarni]
+    aliases: [rct]
+  - name: teeth cleaning
+    duration_min: 30
+    price_inr: 1200
+    staff: [Dr Kulkarni, Dr Joshi]
+    aliases: [cleaning, scaling, daat saaf]
+  - name: tooth extraction
+    duration_min: 30
+    price_inr: 1500
+    staff: [Dr Joshi]
+    aliases: [extraction, daat kadhne, daat kadhane]
+  - name: braces consultation
+    duration_min: 20
+    price_inr: 500
+    staff: [Dr Joshi]
+    aliases: [braces, clips, tarr]
+
+lexicon:
+  places: [Kothrud, Deccan, Shivajinagar, Karve Nagar, Aundh]
+  brands: [Smile Dental Pune, Colgate]
+  phrases: [cashless insurance, home visit]
+  variants:
+    Kothrud: [Kothrood, Kotrud]
+    Dr Kulkarni: [Doctor Kulkarni, Kulkarni madam]
+
+knowledge:
+  - q: "Clinic kadhi ughade aste?"
+    a: "Aamhi Monday te Saturday, sakali sade nau te ratri aath paryant ughade asto. Dupari dedh te teen lunch. Sunday band."
+    tags: [kadhi, ughade, timing, timings, band, hours, kevha, open, vel]
+  - q: "Cleaning la kiti charge aahe?"
+    a: "Teeth cleaning 1,200 rupaye, polishing dharun."
+    tags: [cleaning, kiti, charge, charges, price, rupaye, kitna]
+  - q: "Clinic kuthe aahe?"
+    a: "Aamhi Kothrud madhe aahot, Karve Road var, first floor."
+    tags: [kuthe, address, location, pata, kahan]
+  - q: "Root canal cha kharcha kiti?"
+    a: "Root canal 6,000 rupaye pasun suru hoto. Doctor baghun nakki sangtil."
+    tags: [root, canal, kiti, kharcha, price, charge, rct]
+
+scenarios:
+  - name: marathi_booking_with_noise
+    expect: BOOKED
+    note: "A Marathinglish caller; the recogniser mangles the service, the pack repairs it."
+    turns:
+      - heard: "udya sakali rut kanal cha slot milel ka?"
+        truth: "udya sakali root canal cha slot milel ka?"
+        low_conf: [rut, kanal]
+      - heard: "ho barobar"
+        truth: "ho barobar"
+      - heard: "Rohan Patil 9822012345"
+        truth: "Rohan Patil 9822012345"
+      - heard: "ho confirm kara"
+        truth: "ho confirm kara"
+  - name: marathi_price_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "cleaning la kiti charge aahe?"
+        truth: "cleaning la kiti charge aahe?"
+      - heard: "nahi evdhach dhanyavad"
+        truth: "nahi evdhach dhanyavad"
+  - name: marathi_emergency
+    expect: HANDED_OFF
+    turns:
+      - heard: "khup rakta yet aahe daatatun"
+        truth: "khup rakta yet aahe daatatun"

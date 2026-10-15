@@ -16,18 +16,22 @@ import re
 DATE_WORDS = {"kal", "aaj", "parso", "today", "tomorrow", "somvar", "mangalvar", "budhvar",
               "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
               "tarikh", "date",
-              "kalke", "aajke", "porshu", "tarikhe"}
+              "kalke", "aajke", "porshu", "tarikhe",
+              "udya", "parva", "tarikh"}
 TIME_WORDS = {"baje", "subah", "shaam", "dopahar", "raat", "morning", "evening",
               "afternoon", "night", "am", "pm", "bje",
-              "shokale", "shokal", "bikele", "shondhe", "raate", "tay", "ta"}
+              "shokale", "shokal", "bikele", "shondhe", "raate", "tay", "ta",
+              "sakali", "sakalchi", "dupari", "sandhyakali", "ratri", "vajta", "vaajta", "vajata"}
 BOOKING_VERBS = {"milega", "milegi", "chahiye", "book", "booking", "appointment",
                  "slot", "lagwana", "dikhana", "aana", "aaunga", "aungi", "aaungi", "time",
                  "khaali", "free", "karwana", "karana",
-                 "chai", "lagbe", "hobe", "korate", "korbo", "korano", "nebo"}
+                 "chai", "lagbe", "hobe", "korate", "korbo", "korano", "nebo",
+                 "pahije", "hava", "havi", "hvay", "milel", "kara", "karaychi", "karayche", "karaycha"}
 QUESTION_WORDS = {"kitna", "kitne", "kitni", "kya", "kaunsa", "kaun", "kab", "kaise",
                   "charge", "charges", "fees", "fee", "price", "rate", "cost", "how",
                   "what", "when", "timing", "timings", "khulta", "band",
-                  "koto", "kokhon", "kothay", "khola", "daam"}
+                  "koto", "kokhon", "kothay", "khola", "daam",
+                  "kiti", "kadhi", "kuthe", "kay", "kasa", "kashi", "kevha"}
 IDENTITY_WORDS = {"mera", "meri", "naam", "number", "purani", "pehle", "last", "previous",
                   "my", "name", "registered"}
 CANCEL_WORDS = {"cancel", "reschedule", "postpone", "aage", "badalna", "change", "hata"}
@@ -35,8 +39,9 @@ HANDOFF_WORDS = {"insaan", "aadmi", "human", "manager", "owner", "sir", "madam",
                  "transfer", "connect"}
 YES_WORDS = {"haan", "haanji", "ha", "ji", "yes", "yep", "yeah", "ok", "okay", "theek",
              "thik", "sahi", "bilkul", "confirm", "kardo", "kar", "do", "chalo", "pakka",
-             "hyan", "ache", "achha", "hobe", "koro", "korun"}
-NO_WORDS = {"nahi", "nahin", "na", "no", "nope", "mat", "ruko", "galat", "cancel", "nhi"}
+             "hyan", "ache", "achha", "hobe", "koro", "korun",
+             "ho", "hoy", "barobar", "chalel", "nakki", "kara"}
+NO_WORDS = {"nahi", "nahin", "na", "no", "nope", "mat", "ruko", "galat", "cancel", "nhi", "naahi", "nako"}
 
 _WORD = re.compile(r"[a-zA-Zऀ-ॿ]+")
 _DIGITS = re.compile(r"\d")
@@ -64,9 +69,9 @@ def words(text: str) -> set[str]:
 def normalise_date(text: str, fallback: str | None = None) -> str:
     """Map date language onto the canonical tokens the availability tool takes."""
     w = words(text)
-    if "parso" in w or "porshu" in w or ("day" in w and "after" in w):
+    if "parso" in w or "porshu" in w or "parva" in w or ("day" in w and "after" in w):
         return "day_after_tomorrow"
-    if "kal" in w or "kalke" in w or "tomorrow" in w:
+    if "kal" in w or "kalke" in w or "udya" in w or "tomorrow" in w:
         return "tomorrow"
     if "aaj" in w or "aajke" in w or "today" in w:
         return "today"
@@ -79,7 +84,7 @@ def normalise_date(text: str, fallback: str | None = None) -> str:
 def normalise_time(text: str) -> str | None:
     """'11 baje subah' -> '11:00', 'shaam 5 baje' -> '17:00'."""
     t = text.lower()
-    m = re.search(r"\b(\d{1,2})[:. ]?(\d{2})?\s*(am|pm|baje|bje)?", t)
+    m = re.search(r"\b(\d{1,2})[:. ]?(\d{2})?\s*(am|pm|baje|bje|vajta|vaajta|vajata)?", t)
     if not m:
         return None
     hour = int(m.group(1))
@@ -87,8 +92,8 @@ def normalise_time(text: str) -> str | None:
     if hour > 23 or minute > 59:
         return None
     evening = any(k in t for k in ("pm", "shaam", "raat", "evening", "night",
-                                   "bikele", "shondhe", "raate"))
-    morning = any(k in t for k in ("am", "subah", "morning", "shokal"))
+                                   "bikele", "shondhe", "raate", "sandhyakali", "ratri"))
+    morning = any(k in t for k in ("am", "subah", "morning", "shokal", "sakali", "sakalchi"))
     if evening and hour < 12:
         hour += 12
     elif morning and hour == 12:
