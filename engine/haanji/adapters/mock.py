@@ -111,5 +111,11 @@ class MockLLM:
         self.calls = 0
 
     async def respond(self, system: str, history: list[dict], tools: list[dict]) -> LLMTurn:
+        """The last history entry carries the caller's text and the call's
+        context; when it also carries ``results`` the turn is the second half
+        of a tool round and the policy decides what to say about them."""
         self.calls += 1
-        return self.policy.plan(history[-1]["content"], history[-1]["context"])
+        last = history[-1]
+        if last.get("results") is not None:
+            return self.policy.after_tools(last["content"], last["context"], last["results"])
+        return self.policy.plan(last["content"], last["context"])

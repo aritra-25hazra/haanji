@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .adapters import LLMTurn
+from .adapters.factory import make_llm
 from .adapters.mock import MockSTT, MockTTS
 from .backend.local import LocalBackend
 from .bhasha.bridge import BhashaBridge
@@ -95,7 +96,7 @@ class CallSession:
                  registry: ToolRegistry, ledger: Ledger | None = None,
                  config: EngineConfig | None = None, stt: MockSTT | None = None,
                  tts: MockTTS | None = None, metrics: Metrics | None = None,
-                 lexicon: TenantLexicon | None = None):
+                 lexicon: TenantLexicon | None = None, llm=None):
         self.cfg = config or EngineConfig()
         self.tenant_id = tenant_id
         self.pack = pack
@@ -108,6 +109,10 @@ class CallSession:
         self.bhasha = BhashaBridge(self.lexicon, self.cfg.bhasha)
         self.guard = Guard(pack)
         self.policy = DialoguePolicy(pack, backend, tenant_id)
+        # The dialogue boundary. The mock adapter is the policy itself; a
+        # hosted model sits on top of the policy and hands it every
+        # confirmation, so the write path is the same either way.
+        self.llm = llm or make_llm(self.cfg.llm, self.policy, pack, registry)
         self.stt = stt or MockSTT()
         self.tts = tts or MockTTS()
         self.stt.set_hints(self.bhasha.hints())
@@ -116,6 +121,8 @@ class CallSession:
         self.speculation = SpeculationEngine(
             tenant_id, self._execute_tool, registry.is_read_only, self.cfg.speculation,
             IntentPredictor(services=pack.service_aliases()))
+        self.llm_system: str = getattr(self.llm, "system", "")
+        self.llm_tools: list[dict] = getattr(self.llm, "tools", [])
         self.turns: list[TurnRecord] = []
         self.receipts: list[str] = []
         self._seq = 0
@@ -297,14 +304,17 @@ class CallSession:
             record.guard = verdict.rule
             turn = LLMTurn(tool_calls=[ToolCall("handoff", {"reason": verdict.rule})])
         else:
-            turn = self.policy.plan(corrected.text, self.ctx)
+            turn = await self.llm.respond(self.llm_system, [
+                {"content": corrected.text, "context": self.ctx}], self.llm_tools)
 
         rounds = 0
         while turn.tool_calls and rounds < MAX_TOOL_ROUNDS:
             rounds += 1
             results = await self._run_tools(turn.tool_calls, corrected.text,
                                             caller_confidence, caller_started_ms, record)
-            turn = self.policy.after_tools(corrected.text, self.ctx, results)
+            turn = await self.llm.respond(self.llm_system, [
+                {"content": corrected.text, "context": self.ctx, "results": results}],
+                self.llm_tools)
 
         if verdict.action is not Action.ALLOW and not turn.say:
             turn = LLMTurn(say=verdict.line, end_call=True)
