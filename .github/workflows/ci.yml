@@ -14,7 +14,7 @@ jobs:
         with: { python-version: "3.11" }
       - name: install
         working-directory: engine
-        run: pip install -e ".[dev,web,llm]"
+        run: pip install -e ".[dev,web,llm]" jellyfish metaphone
       - name: unit and property tests
         working-directory: engine
         run: pytest -q

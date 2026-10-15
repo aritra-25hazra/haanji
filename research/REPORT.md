@@ -440,7 +440,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 ```bash
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev,web,llm]"
+pip install -e ".[dev,web,llm,research]"
 pytest -q                                   # 223 tests, about 4 s
 python -m haanji.cli selftest               # 21 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
