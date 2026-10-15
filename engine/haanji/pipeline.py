@@ -58,6 +58,7 @@ class TurnRecord:
     latency_ms: float = 0.0
     interrupted: bool = False
     all_read_only: bool = False
+    spans: list[dict[str, Any]] = field(default_factory=list)   # where the turn's time went
 
 
 @dataclass
@@ -304,17 +305,27 @@ class CallSession:
             record.guard = verdict.rule
             turn = LLMTurn(tool_calls=[ToolCall("handoff", {"reason": verdict.rule})])
         else:
+            t_llm = time.perf_counter()
             turn = await self.llm.respond(self.llm_system, [
                 {"content": corrected.text, "context": self.ctx}], self.llm_tools)
+            record.spans.append({"name": "dialogue", "ms": round(CLOCK.nominal((time.perf_counter() - t_llm) * 1000), 2)})
+        record.spans.insert(0, {"name": "bhasha", "ms": round(CLOCK.nominal(corrected.elapsed_ms), 2),
+                                "detail": f"{len(corrected.corrections)} repairs"})
 
         rounds = 0
         while turn.tool_calls and rounds < MAX_TOOL_ROUNDS:
             rounds += 1
             results = await self._run_tools(turn.tool_calls, corrected.text,
                                             caller_confidence, caller_started_ms, record)
+            for r in results:
+                record.spans.append({"name": f"tool:{r.name}", "ms": float(getattr(r, "duration_ms", 0) or 0),
+                                     "speculated": bool(getattr(r, "from_speculation", False)),
+                                     "ok": bool(getattr(r, "ok", True))})
+            t_llm = time.perf_counter()
             turn = await self.llm.respond(self.llm_system, [
                 {"content": corrected.text, "context": self.ctx, "results": results}],
                 self.llm_tools)
+            record.spans.append({"name": "dialogue", "ms": round(CLOCK.nominal((time.perf_counter() - t_llm) * 1000), 2)})
 
         if verdict.action is not Action.ALLOW and not turn.say:
             turn = LLMTurn(say=verdict.line, end_call=True)

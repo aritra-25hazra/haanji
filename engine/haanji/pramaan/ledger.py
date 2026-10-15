@@ -104,6 +104,8 @@ class Ledger:
                require_confirmation: bool = True) -> Receipt:
         """Seal one action. Refuses a write action that has no confirmation proof."""
         if require_confirmation and confirmation is None:
+            from ..telemetry import TELEMETRY
+            TELEMETRY.inc("ledger_unconfirmed_refused_total", pack=tenant_id)
             raise LedgerError(
                 f"action '{action}' has no confirmation proof; the ledger refuses "
                 f"to record an unconfirmed write")

@@ -221,3 +221,17 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 .who { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0; background: none; border: 1px solid var(--rule); border-radius: var(--r-ctl); padding: 4px 10px; cursor: pointer; font: inherit; color: var(--ink); line-height: 1.15; }
 .who small { font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .06em; }
 .who:hover { border-color: var(--cobalt); }
+
+/* traces */
+.waterfall { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
+.wf-row { display: grid; grid-template-columns: 120px 1fr 120px; gap: 8px; align-items: center; font-size: 12px; }
+.wf-name { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wf-track { position: relative; height: 10px; background: rgba(27, 59, 140, .08); border-radius: 5px; overflow: hidden; }
+.wf-bar { position: absolute; top: 0; bottom: 0; background: var(--cobalt); border-radius: 5px; }
+.wf-bar.spec { background: repeating-linear-gradient(45deg, var(--leaf-ink) 0 4px, rgba(31, 107, 69, .35) 4px 8px); }
+.wf-bar.bad { background: var(--sindoor-ink); }
+.wf-ms { color: var(--ink-2); text-align: right; }
+.traces { display: flex; flex-direction: column; gap: 14px; }
+.trace-head { margin: 0 0 2px; font-size: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.counters { flex-wrap: wrap; gap: 8px; }
+.bubble .waterfall { margin-top: 10px; }

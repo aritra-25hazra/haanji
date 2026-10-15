@@ -1,0 +1,307 @@
+{
+ "title": "HaanJi \u2014 engine",
+ "uid": "haanji-engine",
+ "schemaVersion": 39,
+ "version": 1,
+ "editable": true,
+ "time": {
+  "from": "now-6h",
+  "to": "now"
+ },
+ "refresh": "30s",
+ "tags": [
+  "haanji"
+ ],
+ "panels": [
+  {
+   "id": 1,
+   "title": "Turn latency p50 / p90 / p95 (ms)",
+   "type": "timeseries",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "histogram_quantile(0.5, sum(rate(haanji_turn_latency_ms_bucket[5m])) by (le))",
+     "legendFormat": "p50",
+     "refId": "A"
+    },
+    {
+     "expr": "histogram_quantile(0.9, sum(rate(haanji_turn_latency_ms_bucket[5m])) by (le))",
+     "legendFormat": "p90",
+     "refId": "B"
+    },
+    {
+     "expr": "histogram_quantile(0.95, sum(rate(haanji_turn_latency_ms_bucket[5m])) by (le))",
+     "legendFormat": "p95",
+     "refId": "C"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "ms"
+    },
+    "overrides": []
+   },
+   "options": {
+    "thresholds": {
+     "mode": "absolute",
+     "steps": [
+      {
+       "color": "green"
+      },
+      {
+       "color": "red",
+       "value": 1500
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": 2,
+   "title": "Calls per minute by outcome",
+   "type": "timeseries",
+   "gridPos": {
+    "x": 12,
+    "y": 0,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum(rate(haanji_calls_total[5m])) by (outcome) * 60",
+     "legendFormat": "{{outcome}}",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   },
+   "options": {}
+  },
+  {
+   "id": 3,
+   "title": "Speculation: hit rate",
+   "type": "gauge",
+   "gridPos": {
+    "x": 0,
+    "y": 8,
+    "w": 8,
+    "h": 6
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum(rate(haanji_speculation_hits_total[15m])) / clamp_min(sum(rate(haanji_speculation_started_total[15m])), 0.001)",
+     "legendFormat": "hit rate",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit"
+    },
+    "overrides": []
+   },
+   "options": {}
+  },
+  {
+   "id": 4,
+   "title": "Bhasha Bridge repairs per minute",
+   "type": "timeseries",
+   "gridPos": {
+    "x": 8,
+    "y": 8,
+    "w": 8,
+    "h": 6
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum(rate(haanji_bhasha_corrections_total[5m])) * 60",
+     "legendFormat": "repairs",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   },
+   "options": {}
+  },
+  {
+   "id": 5,
+   "title": "Unconfirmed writes refused (should stay 0)",
+   "type": "stat",
+   "gridPos": {
+    "x": 16,
+    "y": 8,
+    "w": 8,
+    "h": 6
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum(haanji_ledger_unconfirmed_refused_total)",
+     "legendFormat": "refused",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "background"
+   }
+  },
+  {
+   "id": 6,
+   "title": "Tool time p90 by tool (ms)",
+   "type": "timeseries",
+   "gridPos": {
+    "x": 0,
+    "y": 14,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "histogram_quantile(0.9, sum(rate(haanji_tool_ms_bucket[5m])) by (le, tool, speculated))",
+     "legendFormat": "{{tool}} speculated={{speculated}}",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "ms"
+    },
+    "overrides": []
+   },
+   "options": {}
+  },
+  {
+   "id": 7,
+   "title": "Live sessions / 429s / auth denials",
+   "type": "timeseries",
+   "gridPos": {
+    "x": 12,
+    "y": 14,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "haanji_live_sessions",
+     "legendFormat": "live sessions",
+     "refId": "A"
+    },
+    {
+     "expr": "sum(rate(haanji_http_rate_limited_total[5m])) * 60",
+     "legendFormat": "429 per min",
+     "refId": "B"
+    },
+    {
+     "expr": "sum(rate(haanji_auth_denied_total[5m])) * 60",
+     "legendFormat": "401/403 per min",
+     "refId": "C"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   },
+   "options": {}
+  },
+  {
+   "id": 8,
+   "title": "Guardrail stops by rule",
+   "type": "barchart",
+   "gridPos": {
+    "x": 0,
+    "y": 22,
+    "w": 12,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum(increase(haanji_guardrail_total[1h])) by (rule)",
+     "legendFormat": "{{rule}}",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   },
+   "options": {}
+  },
+  {
+   "id": 9,
+   "title": "Hosted-model fallbacks to the policy",
+   "type": "stat",
+   "gridPos": {
+    "x": 12,
+    "y": 22,
+    "w": 12,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum(increase(haanji_adapter_fallbacks_total[1h]))",
+     "legendFormat": "fallbacks (1h)",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   },
+   "options": {}
+  }
+ ],
+ "templating": {
+  "list": []
+ },
+ "annotations": {
+  "list": []
+ }
+}

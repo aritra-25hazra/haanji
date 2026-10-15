@@ -39,6 +39,8 @@ from .channels import whatsapp as wa_channel
 from . import collect as collect_mod
 from . import onboard as onboard_mod
 from .auth import AuthStore, Principal, normalise_phone
+from .telemetry import TELEMETRY, TOOL_BUCKETS_MS
+from .metrics import percentile
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
 from .insights import compute as compute_insights
@@ -127,6 +129,7 @@ def rate_limited(client: str, now: float | None = None) -> bool:
 async def hardening(request: Request, call_next):
     if request.method in ("POST", "PUT", "DELETE", "PATCH") and \
             not request.url.path.startswith(RATE_LIMIT_EXEMPT) and rate_limited(_client_of(request)):
+        TELEMETRY.inc("http_rate_limited_total")
         return JSONResponse({"detail": "too many requests; try again in a minute"}, status_code=429,
                             headers={"Retry-After": "60"})
     if AUTH_ENABLED and request.method != "OPTIONS":
@@ -134,11 +137,14 @@ async def hardening(request: Request, call_next):
         if need:
             who = principal_of(request)
             if who is None:
+                TELEMETRY.inc("auth_denied_total", status="401")
                 return JSONResponse({"detail": "sign in first"}, status_code=401,
                                     headers={"WWW-Authenticate": "Bearer"})
             if ROLE_RANK.get(who.role, 0) < ROLE_RANK[need]:
+                TELEMETRY.inc("auth_denied_total", status="403")
                 return JSONResponse({"detail": f"{need} role needed"}, status_code=403)
             if not who.allows(_pack_in(request)):
+                TELEMETRY.inc("auth_denied_total", status="403")
                 return JSONResponse({"detail": "not your pack"}, status_code=403)
             request.state.user = who
     response = await call_next(request)
@@ -266,6 +272,7 @@ def publish(kind: str, **data: Any) -> dict[str, Any]:
     _event_seq += 1
     event = {"seq": _event_seq, "kind": kind, "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), **data}
     _recent.append(event)
+    TELEMETRY.inc("events_published_total", kind=kind)
     for q in list(_subscribers):
         try:
             q.put_nowait(event)
@@ -344,13 +351,29 @@ def _turn_payload(record, holder: Holder) -> dict[str, Any]:
     session = holder.session
     new_receipts = session.receipts[holder.receipts_seen:]
     holder.receipts_seen = len(session.receipts)
-    publish("turn", sid=holder_sid(holder), pack=holder.rt.pack_id, channel=holder.channel,
+    pack_id = holder.rt.pack_id
+    TELEMETRY.inc("turns_total", pack=pack_id)
+    TELEMETRY.observe("turn_latency_ms", record.latency_ms, pack=pack_id)
+    if record.corrections:
+        TELEMETRY.inc("bhasha_corrections_total", len(record.corrections), pack=pack_id)
+    if record.guard:
+        TELEMETRY.inc("guardrail_total", pack=pack_id, rule=record.guard)
+    if new_receipts:
+        TELEMETRY.inc("ledger_receipts_total", len(new_receipts), pack=pack_id)
+    for sp in record.spans:
+        if sp["name"].startswith("tool:"):
+            TELEMETRY.observe("tool_ms", sp["ms"], buckets=TOOL_BUCKETS_MS, tool=sp["name"][5:],
+                              speculated=str(sp.get("speculated", False)).lower())
+    if record.speculation_hits:
+        TELEMETRY.inc("speculation_hits_total", len(record.speculation_hits), pack=pack_id)
+    publish("turn", sid=holder_sid(holder), pack=pack_id, channel=holder.channel,
             heard=record.heard, corrected=record.corrected, reply=record.said,
             corrections=[{"from_token": c.from_token, "to_surface": c.to_surface} for c in record.corrections],
             tools=record.tools, speculation_hits=record.speculation_hits, receipts=new_receipts,
-            guard=record.guard, latency_ms=round(record.latency_ms, 1),
+            guard=record.guard, latency_ms=round(record.latency_ms, 1), spans=record.spans,
             outcome=session.ctx.outcome.value if session.ctx.outcome else None)
     return {
+        "spans": record.spans,
         "reply": record.said,
         "heard": record.heard,
         "corrected": record.corrected,
@@ -391,9 +414,17 @@ async def _notify_customer(holder: Holder, codes: list[str]) -> None:
 def _finish(sid: str, holder: Holder) -> None:
     report = holder.session.finish()
     store.record_call(report, channel=holder.channel, phone=holder.phone)
+    TELEMETRY.inc("calls_total", pack=holder.rt.pack_id, channel=holder.channel.lower(), outcome=report.outcome.value)
+    spec = report.speculation
+    TELEMETRY.inc("speculation_started_total", spec.get("started", 0), pack=holder.rt.pack_id)
+    TELEMETRY.inc("speculation_wasted_total", spec.get("wasted", 0), pack=holder.rt.pack_id)
+    fallbacks = getattr(holder.session.llm, "fallbacks", 0)
+    if fallbacks:
+        TELEMETRY.inc("adapter_fallbacks_total", fallbacks, pack=holder.rt.pack_id)
     publish("session.ended", sid=sid, pack=holder.rt.pack_id, channel=holder.channel,
             outcome=report.outcome.value, call_id=report.conversation_id,
             receipts=len(report.receipts), turns=len(report.turns))
+    TELEMETRY.gauge("live_sessions", max(0, len(_sessions) - 1))
     if holder.phone and report.receipts and store.has_open_missed(holder.rt.pack_id, holder.phone):
         store.mark_recovered(holder.rt.pack_id, holder.phone, report.receipts[-1])
     _sessions.pop(sid, None)
@@ -1096,6 +1127,65 @@ async def auth_users_remove(phone: str, request: Request):
     if me and normalise_phone(phone) == me.phone:
         raise HTTPException(409, "you cannot remove yourself")
     return {"removed": auth.remove_user(phone)}
+
+
+# ───────────────────────────────────────────────────── observability
+SLO_TURN_MS = int(os.environ.get("HAANJI_MAX_TURN_LATENCY_MS", "1500"))
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus scrape target; ops/prometheus.yml points here."""
+    TELEMETRY.gauge("live_sessions", len(_sessions))
+    return PlainTextResponse(TELEMETRY.render(), media_type="text/plain; version=0.0.4; charset=utf-8")
+
+
+@app.get("/api/ops")
+async def ops(pack: str = DEFAULT_PACK, calls: int = 200):
+    """The service-level view the console's Ops page draws: the latency
+    objective against what callers actually got, where the time went, and
+    the counters a pager would watch."""
+    rows = store.calls(pack, limit=calls)
+    turns = [t for r in rows for t in json.loads(r["turns_json"] or "[]")]
+    lat = [float(t["latency_ms"]) for t in turns if t.get("latency_ms")]
+    tool_turns = [t for t in turns if t.get("tools")]
+    spans: dict[str, list[float]] = {}
+    for t in turns:
+        for sp in t.get("spans", []) or []:
+            spans.setdefault(sp["name"], []).append(float(sp["ms"]))
+    edges = [50, 100, 200, 400, 800, 1500, 3000]
+    hist = []
+    lo = 0
+    for e in edges:
+        hist.append({"bucket": f"≤{e}", "turns": sum(1 for v in lat if lo < v <= e)})
+        lo = e
+    hist.append({"bucket": f">{edges[-1]}", "turns": sum(1 for v in lat if v > edges[-1])})
+    latest = rows[0] if rows else None
+    return {
+        "pack": pack, "calls": len(rows), "turns": len(lat),
+        "slo": {"target_ms": SLO_TURN_MS,
+                "p50": round(percentile(lat, 0.5), 1), "p90": round(percentile(lat, 0.9), 1),
+                "p95": round(percentile(lat, 0.95), 1), "max": round(max(lat), 1) if lat else 0.0,
+                "within": round(sum(1 for v in lat if v <= SLO_TURN_MS) / len(lat), 4) if lat else 1.0,
+                "tool_turn_p90": round(percentile([float(t["latency_ms"]) for t in tool_turns if t.get("latency_ms")], 0.9), 1)},
+        "histogram": hist,
+        "spans": [{"name": k, "n": len(v), "p50": round(percentile(v, 0.5), 1), "p90": round(percentile(v, 0.9), 1)}
+                  for k, v in sorted(spans.items(), key=lambda kv: -sum(kv[1]))],
+        "speculation": {"started": int(TELEMETRY.counter("speculation_started_total", pack=pack)),
+                        "hits": int(TELEMETRY.counter("speculation_hits_total", pack=pack)),
+                        "wasted": int(TELEMETRY.counter("speculation_wasted_total", pack=pack))},
+        "counters": {"rate_limited": int(TELEMETRY.total("http_rate_limited_total")),
+                     "auth_denied": int(TELEMETRY.total("auth_denied_total")),
+                     "unconfirmed_refused": int(TELEMETRY.total("ledger_unconfirmed_refused_total")),
+                     "adapter_fallbacks": int(TELEMETRY.total("adapter_fallbacks_total")),
+                     "events": int(TELEMETRY.total("events_published_total"))},
+        "live_sessions": len(_sessions),
+        "uptime_s": round(time.time() - TELEMETRY.started),
+        "providers": {"stt": os.environ.get("HAANJI_PROVIDER_STT", "mock"), "llm": os.environ.get("HAANJI_PROVIDER_LLM", "mock"),
+                      "tts": os.environ.get("HAANJI_PROVIDER_TTS", "mock")},
+        "latest_call": {"call_id": latest["call_id"], "started_at": latest["started_at"], "outcome": latest["outcome"],
+                        "turns": json.loads(latest["turns_json"] or "[]")} if latest else None,
+    }
 
 
 @app.get("/api/status")

@@ -10,10 +10,11 @@ import Packs from "./pages/Packs";
 import PackStudio from "./pages/PackStudio";
 import Onboard from "./pages/Onboard";
 import Login from "./pages/Login";
+import Ops from "./pages/Ops";
 
 const LINKS: [string, string][] = [
   ["/dashboard", "Aaj"], ["/calls", "Calls"], ["/ledger", "Pramaan"],
-  ["/lexicon", "Bhasha"], ["/packs", "Packs"], ["/studio", "Studio"], ["/onboard", "Nayi dukaan"],
+  ["/lexicon", "Bhasha"], ["/packs", "Packs"], ["/studio", "Studio"], ["/onboard", "Nayi dukaan"], ["/ops", "Ops"],
 ];
 
 export default function App() {
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/packs" element={<Packs />} />
           <Route path="/studio" element={<PackStudio />} />
           <Route path="/onboard" element={<Onboard />} />
+          <Route path="/ops" element={<Ops />} />
         </Routes>
       </main>
     </>

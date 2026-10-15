@@ -97,6 +97,30 @@ export interface Turn {
   latency_ms: number | null;
   interrupted: boolean;
   corrections: Correction[];
+  spans?: Span[];
+}
+
+export interface Span {
+  name: string;
+  ms: number;
+  speculated?: boolean;
+  ok?: boolean;
+  detail?: string;
+}
+
+export interface Ops {
+  pack: string;
+  calls: number;
+  turns: number;
+  slo: { target_ms: number; p50: number; p90: number; p95: number; max: number; within: number; tool_turn_p90: number };
+  histogram: { bucket: string; turns: number }[];
+  spans: { name: string; n: number; p50: number; p90: number }[];
+  speculation: { started: number; hits: number; wasted: number };
+  counters: { rate_limited: number; auth_denied: number; unconfirmed_refused: number; adapter_fallbacks: number; events: number };
+  live_sessions: number;
+  uptime_s: number;
+  providers: { stt: string; llm: string; tts: string };
+  latest_call: { call_id: string; started_at: string; outcome: string | null; turns: Turn[] } | null;
 }
 
 export interface ExportReceipt {
