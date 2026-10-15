@@ -217,3 +217,14 @@ export interface LiveEvent {
   call_id?: string;
   turns?: number;
 }
+
+export interface CustomerRecord {
+  pack: string;
+  phone: string;
+  bookings: { booking_id: string; service: string; date: string; time: string; status: string }[];
+  leads: unknown[];
+  calls: { call_id: string; started_at: string; outcome: string | null }[];
+  whatsapp_messages: number;
+  receipts: { code: string; action: string; occurred_at: string; pii_readable: boolean }[];
+  erased: boolean;
+}

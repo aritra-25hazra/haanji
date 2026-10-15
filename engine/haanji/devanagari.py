@@ -91,3 +91,79 @@ def transliterate(text: str) -> str:
     def repl(m: re.Match) -> str:
         return _word(m.group(0))
     return re.sub(r"[A-Za-z]+", repl, text)
+
+
+# ------------------------------------------------------------- the other way
+# Devanagari -> Latin, for scoring public Hindi corpora whose transcripts are
+# in Devanagari against the engine's Latin-script lexicon. A plain,
+# deterministic scheme (close to ITRANS without case tricks); it is used on
+# both the truth and the recogniser's output, so it cancels out of the
+# comparison as long as it is consistent.
+_DEV_VOWEL_INIT = {"अ": "a", "आ": "aa", "इ": "i", "ई": "ee", "उ": "u", "ऊ": "oo", "ए": "e", "ऐ": "ai",
+                   "ओ": "o", "औ": "au", "ऋ": "ri", "ऑ": "o", "ऍ": "e"}
+_DEV_MATRA = {"ा": "aa", "ि": "i", "ी": "ee", "ु": "u", "ू": "oo", "े": "e", "ै": "ai", "ो": "o", "ौ": "au",
+              "ृ": "ri", "ॉ": "o", "ॅ": "e"}
+_DEV_CONS = {"क": "k", "ख": "kh", "ग": "g", "घ": "gh", "ङ": "n", "च": "ch", "छ": "chh", "ज": "j", "झ": "jh", "ञ": "n",
+             "ट": "t", "ठ": "th", "ड": "d", "ढ": "dh", "ण": "n", "त": "t", "थ": "th", "द": "d", "ध": "dh", "न": "n",
+             "प": "p", "फ": "ph", "ब": "b", "भ": "bh", "म": "m", "य": "y", "र": "r", "ल": "l", "व": "v", "श": "sh",
+             "ष": "sh", "स": "s", "ह": "h", "क़": "q", "ख़": "kh", "ग़": "g", "ज़": "z", "ड़": "r", "ढ़": "rh", "फ़": "f", "य़": "y"}
+_NUKTA = "़"
+_VIRAMA = "्"
+_ANUSVARA, _CHANDRABINDU, _VISARGA = "ं", "ँ", "ः"
+
+
+def to_latin(text: str) -> str:
+    """Devanagari to Latin letters, word by word; everything else passes through."""
+    out: list[str] = []
+    i = 0
+    n = len(text)
+    pending_cons = False                      # a consonant without an explicit vowel yet
+    while i < n:
+        ch = text[i]
+        nxt = text[i + 1] if i + 1 < n else ""
+        if ch in _DEV_CONS or (ch + nxt) in _DEV_CONS:
+            if (ch + nxt) in _DEV_CONS:
+                base = _DEV_CONS[ch + nxt]; i += 2
+            else:
+                base = _DEV_CONS[ch]; i += 1
+                if i < n and text[i] == _NUKTA:
+                    i += 1
+            if pending_cons:
+                out.append("a")               # inherent vowel of the previous consonant
+            out.append(base)
+            pending_cons = True
+            continue
+        if ch == _VIRAMA:
+            pending_cons = False; i += 1; continue
+        if ch in _DEV_MATRA:
+            out.append(_DEV_MATRA[ch]); pending_cons = False; i += 1; continue
+        if ch in _DEV_VOWEL_INIT:
+            if pending_cons:
+                out.append("a")
+            out.append(_DEV_VOWEL_INIT[ch]); pending_cons = False; i += 1; continue
+        if ch in (_ANUSVARA, _CHANDRABINDU):
+            if pending_cons:
+                out.append("a"); pending_cons = False
+            out.append("n"); i += 1; continue
+        if ch == _VISARGA:
+            if pending_cons:
+                out.append("a"); pending_cons = False
+            out.append("h"); i += 1; continue
+        if "\u0966" <= ch <= "\u096f":          # Devanagari digits
+            if pending_cons:
+                out.append("a"); pending_cons = False
+            out.append(str(ord(ch) - 0x966)); i += 1; continue
+        # anything else (space, Latin, punctuation): close the syllable
+        if pending_cons:
+            out.append("a"); pending_cons = False
+        out.append(ch); i += 1
+    if pending_cons:
+        out.append("a")
+    # word-final inherent 'a' is silent in Hindi: "kal", not "kala"
+    words = "".join(out).split(" ")
+    fixed = []
+    for w in words:
+        if len(w) > 2 and w.endswith("a") and not w.endswith("aa") and any("\u0900" <= c <= "\u097f" for c in w) is False:
+            w = w[:-1]
+        fixed.append(w)
+    return " ".join(fixed)

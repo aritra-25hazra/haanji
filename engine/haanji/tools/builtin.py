@@ -19,7 +19,7 @@ from . import Tool, ToolRegistry
 
 def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
                    ledger: Ledger | None = None, *,
-                   require_confirmation: bool = True) -> ToolRegistry:
+                   require_confirmation: bool = True, vault=None) -> ToolRegistry:
     reg = ToolRegistry()
     lang = pack.language
 
@@ -76,6 +76,8 @@ def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
               excerpt: str, conversation_id: str, needs_proof: bool) -> str | None:
         if ledger is None:
             return None
+        if vault is not None:
+            args = vault.seal_args(args)          # names and numbers go in encrypted
         receipt = ledger.append(tenant_id=tenant_id, conversation_id=conversation_id,
                                 action=action, action_args=args, confirmation=proof,
                                 transcript_excerpt=excerpt,

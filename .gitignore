@@ -21,3 +21,5 @@ var/
 research/collect/data/*/audio/
 research/REPORT.html
 engine/var-load/
+research/collect/data/gramvaani/GV_Dev_5h/
+research/collect/data/gramvaani/*.tar.gz

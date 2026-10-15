@@ -277,7 +277,8 @@ def corpus_of(pack: Pack) -> list[str]:
 
 
 def transcript_experiment(packs: list[Pack], rates: list[float],
-                          trials: int = 12, seed: int = 0, detail: bool = False) -> dict[str, Any]:
+                          trials: int = 12, seed: int = 0, detail: bool = False,
+                          corruptor=None) -> dict[str, Any]:
     """Measure the correction layer alone, with no dialogue in the way.
 
     With ``detail`` each rate also carries per-sentence outcomes (did the
@@ -288,6 +289,7 @@ def transcript_experiment(packs: list[Pack], rates: list[float],
     from .config import BhashaConfig
     from .models import Token, Transcript
 
+    corruptor = corruptor or corrupt
     results: dict[str, Any] = {}
     for rate in rates:
         gold_off = err_off = gold_on = err_on = 0
@@ -303,7 +305,7 @@ def transcript_experiment(packs: list[Pack], rates: list[float],
             rng = random.Random(4242 + int(rate * 100) + seed * 100003)
             for truth in corpus_of(pack):
                 for _ in range(trials):
-                    heard, low = corrupt(truth, rate, rng)
+                    heard, low = corruptor(truth, rate, rng)
                     sentences += 1
                     low_set = {w.lower() for w in low}
                     tokens = [Token(w, 0.42 if w.lower() in low_set else 0.94)
