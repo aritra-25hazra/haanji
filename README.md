@@ -384,6 +384,17 @@ switch in `render.yaml`.
   transliteration; the engine labels it so).
 * **Design system.** `/design` documents Signboard — the colours, type, icons,
   motion rules and components every page is built from.
+* **A real phone number.** `engine/haanji/telephony/` bridges Twilio Media
+  Streams to the engine: Deepgram hears the caller (partials feed
+  speculation, finals the policy, as in the browser), ElevenLabs speaks the
+  reply as telephone audio, and a caller who talks over the agent clears the
+  line (barge-in). Tested end to end with fake vendors; three keys make it
+  real — [docs/phone-setup.md](docs/phone-setup.md).
+* **Calendars.** A per-tenant iCalendar feed any calendar app subscribes to,
+  a `.ics` for each booking, and a Google Calendar connection that creates an
+  event for every sealed booking (OAuth 2.0 in the console's Calendar panel).
+* **Your own domain.** [docs/custom-domain.md](docs/custom-domain.md) lists
+  the DNS records and the six places the URL lives.
 * **Security.** CodeQL, secret scanning, dependency audits and an SBOM on
   every push; rate limiting and hardening headers on the demo server.
 
