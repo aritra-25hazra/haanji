@@ -56,3 +56,13 @@ Task 2 price    self: done / not   observed outcome: ________  notes:
 Task 3 closed   self: done / not   observed outcome: ________  notes:
 Debrief answer:
 ```
+
+## Sample size and power
+
+This study is formative, and its numbers are read as such:
+
+* **Task success.** With n = 10 participants and an observed 8/10, the Wilson 95 % interval is 49–94 %. No pass/fail claim can rest on that; the study's product is the failure list, not the rate.
+* **SUS.** The population SD of SUS scores is about 12 points (Bangor, Kortum & Miller 2008). With n = 10 the 95 % half-width is ≈ 8.6 points, enough to place the system in a band (below 68 = below average; above 80 = good), not to compare two versions.
+* **A comparative study** (for example, bridge on vs off with real callers, within-subject) detecting a 10-point SUS difference at α = 0.05 with 80 % power needs n ≈ 13 participants with a paired design (d ≈ 0.83); detecting a 20-point difference in task success between two versions at the same power needs n ≈ 90 per arm (two-proportion test, 70 % vs 90 %). Those are the numbers to quote when asked why ten people is "enough": it is enough to find what breaks, and we say what it is not enough for.
+
+`research/harness/study_analysis.py` prints the intervals; the power figures above come from the standard formulas (normal approximation; `research/harness/stats.py` has the distributions).

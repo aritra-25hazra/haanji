@@ -42,19 +42,19 @@ def _strip_diacritics(s: str) -> str:
                    if not unicodedata.combining(c))
 
 
-def phonetic_key(token: str, length: int = 8) -> str:
+def haanji_key(token: str, length: int = 8, rules: list[tuple[str, str]] | None = None) -> str:
     """Return the phonetic bucket for one token.
 
-    >>> phonetic_key("Vijay") == phonetic_key("Wijay")
+    >>> haanji_key("Vijay") == haanji_key("Wijay")
     True
-    >>> phonetic_key("shukla") == phonetic_key("sukla")
+    >>> haanji_key("shukla") == haanji_key("sukla")
     True
     """
     t = _strip_diacritics(token.lower().strip())
     t = _NONALPHA.sub("", t)
     if not t:
         return ""
-    for pattern, repl in RULES:
+    for pattern, repl in (RULES if rules is None else rules):
         t = re.sub(pattern, repl, t)
     t = _REPEAT.sub(r"\1", t)
     head, tail = t[:1], t[1:]
@@ -67,9 +67,45 @@ def phonetic_key(token: str, length: int = 8) -> str:
     return (head + tail)[:length]
 
 
-def phrase_key(phrase: str, length: int = 16) -> str:
+def haanji_phrase_key(phrase: str, length: int = 16) -> str:
     """Phonetic key for a multi-word entity such as ``root canal``."""
-    return "".join(phonetic_key(w, 6) for w in phrase.split())[:length]
+    return "".join(haanji_key(w, 6) for w in phrase.split())[:length]
+
+
+# The active keyer. Everything in the engine calls phonetic_key/phrase_key;
+# the benchmark swaps the implementation to compare against Soundex,
+# Metaphone and friends on exactly the same data and matching rules.
+_ACTIVE: dict[str, object] = {"token": haanji_key, "phrase": haanji_phrase_key, "name": "haanji"}
+
+
+def phonetic_key(token: str, length: int = 8) -> str:
+    return _ACTIVE["token"](token, length)            # type: ignore[operator]
+
+
+def phrase_key(phrase: str, length: int = 16) -> str:
+    return _ACTIVE["phrase"](phrase, length)          # type: ignore[operator]
+
+
+def active_keyer() -> str:
+    return str(_ACTIVE["name"])
+
+
+class use_keyer:
+    """``with use_keyer("soundex", token_fn, phrase_fn): ...`` — for experiments."""
+
+    def __init__(self, name: str, token_fn, phrase_fn=None):
+        self.new = {"token": token_fn, "name": name,
+                    "phrase": phrase_fn or (lambda phrase, length=16: "".join(token_fn(w, 6) for w in phrase.split())[:length])}
+        self.old: dict[str, object] = {}
+
+    def __enter__(self):
+        self.old = dict(_ACTIVE)
+        _ACTIVE.update(self.new)
+        return self
+
+    def __exit__(self, *exc):
+        _ACTIVE.update(self.old)
+        return False
 
 
 def edit_distance(a: str, b: str, cap: int = 4) -> int:
