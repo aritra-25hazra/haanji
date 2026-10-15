@@ -76,7 +76,7 @@ export default function Ledger() {
             </div>
             <div className="chain" aria-hidden="true">
               {rows.map((r) => <i key={r.seq} className={firstBroken != null && r.seq >= firstBroken ? "bad" : undefined} />)}
-              <i className="empty" />
+              <i className="next" />
             </div>
             <div className="mono muted" style={{ fontSize: 12, wordBreak: "break-all" }}>public key (Ed25519): {data.public_key || "—"}</div>
             <p className="muted" style={{ fontSize: 13 }}>"Chhedo" wala button sirf aapke browser ki copy badalta hai — server pe kuch nahi jaata.</p>

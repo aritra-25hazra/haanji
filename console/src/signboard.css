@@ -53,7 +53,8 @@ p { margin: 0; }
 .live.off { opacity: .8; }
 .live.off i { background: var(--haze); box-shadow: none; }
 @media (max-width: 720px) {
-  .topbar { gap: 8px; padding: 8px 10px; }
+  .topbar { gap: 8px; padding: 8px 10px; flex-wrap: wrap; }
+  .nav { order: 3; flex-basis: 100%; }
   .wordmark .dev { display: none; }
   .tools { gap: 6px; min-width: 0; }
   .tools select { max-width: 128px; }
@@ -113,14 +114,14 @@ p { margin: 0; }
 .repair { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 8px; font-size: 15px; }
 .repair s { position: relative; text-decoration: none; color: var(--ink-2); padding: 0 2px; }
 .repair s svg { position: absolute; left: -3px; top: 0; width: calc(100% + 6px); height: 100%; overflow: visible; pointer-events: none; }
-.repair s svg path { stroke: var(--cobalt); stroke-width: 2.5; fill: none; stroke-linecap: round; opacity: .75; }
+.repair s svg path { stroke: var(--cobalt); stroke-width: 2; fill: none; stroke-linecap: round; opacity: .55; }
 .repair b { color: var(--cobalt); font-weight: 600; opacity: 0; transform: translateY(4px); transition: opacity var(--t-base) var(--ease-out) 80ms, transform var(--t-base) var(--ease-out) 80ms; }
 .repair.in b { opacity: 1; transform: none; }
 .repair small { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
 .chain { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .chain i { position: relative; width: 34px; height: 14px; background: var(--cobalt); border-radius: 3px; }
 .chain i + i::before { content: ""; position: absolute; left: -6px; top: 6px; width: 6px; height: 2px; background: var(--cobalt); }
-.chain i.empty { background: transparent; border: 2px dashed rgba(27, 59, 140, .4); }
+.chain i.next { background: transparent; border: 2px dashed rgba(27, 59, 140, .4); }
 .chain i.bad { background: var(--sindoor-ink); }
 .chain i.bad::before { background: transparent; border-top: 2px dashed var(--sindoor-ink); height: 0; }
 
