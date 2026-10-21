@@ -1,0 +1,539 @@
+{
+ "generated_at": "2026-10-21T13:44:22+00:00",
+ "label": "synthetic Indian-English speech through faster-whisper small, English decoding, WITH the pack vocabulary as initial prompt (biasing)",
+ "sources": [
+  "research/collect/data/synthetic/pairs_biased.jsonl"
+ ],
+ "recognisers": [
+  "faster-whisper:small:en:biased"
+ ],
+ "synthetic_speech": true,
+ "pairs": 300,
+ "overall": {
+  "utterances": 300,
+  "entities": 219,
+  "entity_error_rate_off": 0.1507,
+  "entity_error_rate_on": 0.1416,
+  "relative_reduction_pct": 6.1,
+  "corrections": {
+   "beneficial": 3,
+   "neutral": 6,
+   "harmful": 0
+  },
+  "precision": 0.3333,
+  "word_error_rate": 0.6852,
+  "median_correct_ms": 0.185
+ },
+ "per_pack": {
+  "clinic_kolkata": {
+   "utterances": 60,
+   "entities": 54,
+   "entity_error_rate_off": 0.0556,
+   "entity_error_rate_on": 0.037,
+   "relative_reduction_pct": 33.3,
+   "corrections": {
+    "beneficial": 1,
+    "neutral": 2,
+    "harmful": 0
+   },
+   "precision": 0.3333,
+   "word_error_rate": 0.6053,
+   "median_correct_ms": 0.205
+  },
+  "coaching_institute": {
+   "utterances": 60,
+   "entities": 51,
+   "entity_error_rate_off": 0.098,
+   "entity_error_rate_on": 0.0784,
+   "relative_reduction_pct": 20.0,
+   "corrections": {
+    "beneficial": 1,
+    "neutral": 2,
+    "harmful": 0
+   },
+   "precision": 0.3333,
+   "word_error_rate": 0.5879,
+   "median_correct_ms": 0.22
+  },
+  "dental_clinic": {
+   "utterances": 60,
+   "entities": 12,
+   "entity_error_rate_off": 0.25,
+   "entity_error_rate_on": 0.1667,
+   "relative_reduction_pct": 33.3,
+   "corrections": {
+    "beneficial": 1,
+    "neutral": 0,
+    "harmful": 0
+   },
+   "precision": 1.0,
+   "word_error_rate": 0.9845,
+   "median_correct_ms": 0.155
+  },
+  "diagnostic_lab": {
+   "utterances": 60,
+   "entities": 51,
+   "entity_error_rate_off": 0.2941,
+   "entity_error_rate_on": 0.3137,
+   "relative_reduction_pct": -6.7,
+   "corrections": {
+    "beneficial": 0,
+    "neutral": 1,
+    "harmful": 0
+   },
+   "precision": 0.0,
+   "word_error_rate": 0.566,
+   "median_correct_ms": 0.213
+  },
+  "salon_spa": {
+   "utterances": 60,
+   "entities": 51,
+   "entity_error_rate_off": 0.1373,
+   "entity_error_rate_on": 0.1373,
+   "relative_reduction_pct": 0.0,
+   "corrections": {
+    "beneficial": 0,
+    "neutral": 1,
+    "harmful": 0
+   },
+   "precision": 0.0,
+   "word_error_rate": 0.6825,
+   "median_correct_ms": 0.176
+  }
+ },
+ "per_speaker": {
+  "say:Rishi": {
+   "utterances": 100,
+   "entities": 73,
+   "entity_error_rate_off": 0.0822,
+   "entity_error_rate_on": 0.0822,
+   "relative_reduction_pct": 0.0,
+   "corrections": {
+    "beneficial": 0,
+    "neutral": 0,
+    "harmful": 0
+   },
+   "precision": 0.0,
+   "word_error_rate": 0.6894,
+   "median_correct_ms": 0.207
+  },
+  "say:Aman": {
+   "utterances": 100,
+   "entities": 73,
+   "entity_error_rate_off": 0.1233,
+   "entity_error_rate_on": 0.0822,
+   "relative_reduction_pct": 33.3,
+   "corrections": {
+    "beneficial": 3,
+    "neutral": 2,
+    "harmful": 0
+   },
+   "precision": 0.6,
+   "word_error_rate": 0.6954,
+   "median_correct_ms": 0.172
+  },
+  "say:Tara": {
+   "utterances": 100,
+   "entities": 73,
+   "entity_error_rate_off": 0.2466,
+   "entity_error_rate_on": 0.2603,
+   "relative_reduction_pct": -5.6,
+   "corrections": {
+    "beneficial": 0,
+    "neutral": 4,
+    "harmful": 0
+   },
+   "precision": 0.0,
+   "word_error_rate": 0.6709,
+   "median_correct_ms": 0.179
+  }
+ },
+ "examples": [
+  {
+   "id": "clinic_kolkata-006-tara",
+   "pack": "clinic_kolkata",
+   "speaker": "say:Tara",
+   "truth": "khub rokto porche dat theke",
+   "heard": "Hubrahto parchhe daatheke.",
+   "corrected": "hubrahto parchhe saath ke",
+   "corrections": [
+    {
+     "from": "daatheke",
+     "to": "saath ke"
+    }
+   ],
+   "entity_errors_off": 0,
+   "entity_errors_on": 0
+  },
+  {
+   "id": "clinic_kolkata-008-aman",
+   "pack": "clinic_kolkata",
+   "speaker": "say:Aman",
+   "truth": "kal subah root canal ke liye time chahiye",
+   "heard": "KAL SUBH ROOT KANAL KE LAY TIME CHAHE.",
+   "corrected": "kal subh root canal ke lay time chahe",
+   "corrections": [
+    {
+     "from": "root kanal",
+     "to": "root canal"
+    }
+   ],
+   "entity_errors_off": 1,
+   "entity_errors_on": 0
+  },
+  {
+   "id": "clinic_kolkata-014-aman",
+   "pack": "clinic_kolkata",
+   "speaker": "say:Aman",
+   "truth": "kal subah tooth extraction ke liye time chahiye",
+   "heard": "KAL SUBAR TOoth EXTRACKSH ke liye time chahe.",
+   "corrected": "kal subar tooth extracksh ke liye time chahe",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "clinic_kolkata-019-rishi",
+   "pack": "clinic_kolkata",
+   "speaker": "say:Rishi",
+   "truth": "kal subah teeth cleaning ke liye time chahiye",
+   "heard": "Kaal Subah Teeth Clean -In ke liye time chahiye.",
+   "corrected": "kaal subah teeth clean in ke liye time chahiye",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "clinic_kolkata-019-tara",
+   "pack": "clinic_kolkata",
+   "speaker": "say:Tara",
+   "truth": "kal subah teeth cleaning ke liye time chahiye",
+   "heard": "Call Subavteet Cleaning ke liye time chahiye.",
+   "corrected": "call subah teeth cleaning ke liye time chahiye",
+   "corrections": [
+    {
+     "from": "subavteet",
+     "to": "subah teeth"
+    }
+   ],
+   "entity_errors_off": 0,
+   "entity_errors_on": 0
+  },
+  {
+   "id": "coaching_institute-000-aman",
+   "pack": "coaching_institute",
+   "speaker": "say:Aman",
+   "truth": "demo class ka slot chahiye kal",
+   "heard": "Democlass Kasla Chahee Kul",
+   "corrected": "demo class kasla chahee kul",
+   "corrections": [
+    {
+     "from": "democlass",
+     "to": "demo class"
+    }
+   ],
+   "entity_errors_off": 1,
+   "entity_errors_on": 0
+  },
+  {
+   "id": "coaching_institute-000-tara",
+   "pack": "coaching_institute",
+   "speaker": "say:Tara",
+   "truth": "demo class ka slot chahiye kal",
+   "heard": "Demo class kaslaa chahe kulkarni.",
+   "corrected": "demo class kaslaa chahe kulkarni",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "coaching_institute-008-aman",
+   "pack": "coaching_institute",
+   "speaker": "say:Aman",
+   "truth": "kal subah counselling session ke liye time chahiye",
+   "heard": "We need time for the counselling session tomorrow.",
+   "corrected": "we NEET time for the counselling session tomorrow",
+   "corrections": [
+    {
+     "from": "need",
+     "to": "NEET"
+    }
+   ],
+   "entity_errors_off": 0,
+   "entity_errors_on": 0
+  },
+  {
+   "id": "coaching_institute-009-tara",
+   "pack": "coaching_institute",
+   "speaker": "say:Tara",
+   "truth": "Bhawarkuan wali branch mein counselling session ka slot hai kya",
+   "heard": "Is Bhawarkuan's branch the slot for the main counselling session?",
+   "corrected": "is bhawarkuan's branch the slot for the main counselling session",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "coaching_institute-011-rishi",
+   "pack": "coaching_institute",
+   "speaker": "say:Rishi",
+   "truth": "Bhawarkuan mein aap log hain na",
+   "heard": "Bhawakuan may upload Hannah.",
+   "corrected": "bhawakuan may upload hannah",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "coaching_institute-014-aman",
+   "pack": "coaching_institute",
+   "speaker": "say:Aman",
+   "truth": "kal subah campus visit ke liye time chahiye",
+   "heard": "We need time for the campus visit tomorrow morning.",
+   "corrected": "we NEET time for the campus visit tomorrow morning",
+   "corrections": [
+    {
+     "from": "need",
+     "to": "NEET"
+    }
+   ],
+   "entity_errors_off": 0,
+   "entity_errors_on": 0
+  },
+  {
+   "id": "coaching_institute-019-aman",
+   "pack": "coaching_institute",
+   "speaker": "say:Aman",
+   "truth": "kal subah demo class ke liye time chahiye",
+   "heard": "Kulkarni wants time for the demo class tomorrow morning.",
+   "corrected": "kulkarni wants time for the demo class tomorrow morning",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "dental_clinic-000-aman",
+   "pack": "dental_clinic",
+   "speaker": "say:Aman",
+   "truth": "haan ji mujhe root canal karwana tha",
+   "heard": "Han Ji Mujhe Root Kanal Karwana Tha.",
+   "corrected": "han ji mujhe root canal karwana tha",
+   "corrections": [
+    {
+     "from": "root kanal",
+     "to": "root canal"
+    }
+   ],
+   "entity_errors_off": 1,
+   "entity_errors_on": 0
+  },
+  {
+   "id": "dental_clinic-005-rishi",
+   "pack": "dental_clinic",
+   "speaker": "say:Rishi",
+   "truth": "cleaning ke kitne charges hain",
+   "heard": "Clean in cake, it may charge his hand.",
+   "corrected": "clean in cake it may charge his hand",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "dental_clinic-008-tara",
+   "pack": "dental_clinic",
+   "speaker": "say:Tara",
+   "truth": "Anita Rao 9812345678",
+   "heard": "Anita Rau 981 crore, 23 lakh, 45 ,006 ,7 ,8.",
+   "corrected": "anita rau 981 crore 23 lakh 45 006 7 8",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "diagnostic_lab-012-tara",
+   "pack": "diagnostic_lab",
+   "speaker": "say:Tara",
+   "truth": "Scheme 54 mein aap log hain na",
+   "heard": "Scheme 54, Meena, Aap log Hai Na.",
+   "corrected": "scheme 54 meena aap log hai na",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "diagnostic_lab-015-rishi",
+   "pack": "diagnostic_lab",
+   "speaker": "say:Rishi",
+   "truth": "Bhawarkuan mein aap log hain na",
+   "heard": "Bhawakuan may upload Hannah.",
+   "corrected": "bhawakuan may upload hannah",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "diagnostic_lab-015-tara",
+   "pack": "diagnostic_lab",
+   "speaker": "say:Tara",
+   "truth": "Bhawarkuan mein aap log hain na",
+   "heard": "Bhawarkuan, Meena, Arvind, Salma, Vijay Nagar, Bhawarkuan, Rau, Annapurna, Scheme 54, Sanjeevani Diagnostics, NABL, Ayushman.",
+   "corrected": "bhawarkuan meena arvind salma vijay nagar bhawarkuan rau annapurna scheme 54 sanjeevani diagnostics nabl ayushman",
+   "corrections": [],
+   "entity_errors_off": 7,
+   "entity_errors_on": 7
+  },
+  {
+   "id": "diagnostic_lab-017-aman",
+   "pack": "diagnostic_lab",
+   "speaker": "say:Aman",
+   "truth": "kal subah vitamin d test ke liye time chahiye",
+   "heard": "Tomorrow morning, we need time for the vitamin test.",
+   "corrected": "tomorrow morning we need time for the vitamin test",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "diagnostic_lab-017-tara",
+   "pack": "diagnostic_lab",
+   "speaker": "say:Tara",
+   "truth": "kal subah vitamin d test ke liye time chahiye",
+   "heard": "Call Subba vitamin test ke liye time chahiye.",
+   "corrected": "call subba vitamin test ke liye time chahiye",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "diagnostic_lab-018-aman",
+   "pack": "diagnostic_lab",
+   "speaker": "say:Aman",
+   "truth": "vitamin d test karwana hai kal",
+   "heard": "Vitamin test karwana hai kal.",
+   "corrected": "vitamin test karwana hai kal",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "diagnostic_lab-018-tara",
+   "pack": "diagnostic_lab",
+   "speaker": "say:Tara",
+   "truth": "vitamin d test karwana hai kal",
+   "heard": "Vitamin test karwana hai kaal.",
+   "corrected": "vitamin test karwana hai kaal",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "diagnostic_lab-019-aman",
+   "pack": "diagnostic_lab",
+   "speaker": "say:Aman",
+   "truth": "Annapurna wali branch mein vitamin d test ka slot hai kya",
+   "heard": "What is the vitamin test class in Annapurna branch?",
+   "corrected": "what is the vitamin test class in annapurna branch",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "diagnostic_lab-019-tara",
+   "pack": "diagnostic_lab",
+   "speaker": "say:Tara",
+   "truth": "Annapurna wali branch mein vitamin d test ka slot hai kya",
+   "heard": "Annapurna Wali branch, Meen, Vitamin test, Kalaist, Hekya.",
+   "corrected": "annapurna wali branch Meena vitamin test kalaist hekya",
+   "corrections": [
+    {
+     "from": "meen",
+     "to": "Meena"
+    }
+   ],
+   "entity_errors_off": 1,
+   "entity_errors_on": 2
+  },
+  {
+   "id": "salon_spa-000-tara",
+   "pack": "salon_spa",
+   "speaker": "say:Tara",
+   "truth": "global colour karwana hai kal",
+   "heard": "Blue Book Hala Karwana Hai Kaul.",
+   "corrected": "blue book hala karwana hai kaul",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "salon_spa-006-rishi",
+   "pack": "salon_spa",
+   "speaker": "say:Rishi",
+   "truth": "haircut ka kitna charge hai",
+   "heard": "Hey, you're a cut cut it na charge hai.",
+   "corrected": "hey you're a cut cut it na charge hai",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "salon_spa-006-aman",
+   "pack": "salon_spa",
+   "speaker": "say:Aman",
+   "truth": "haircut ka kitna charge hai",
+   "heard": "Hairpatka, Kitna, Chaaj Hai.",
+   "corrected": "hairpatka kitna chaaj hai",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "salon_spa-006-tara",
+   "pack": "salon_spa",
+   "speaker": "say:Tara",
+   "truth": "haircut ka kitna charge hai",
+   "heard": "Hair pod ka kithna charge hai.",
+   "corrected": "hair pod ka kithna charge hai",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "salon_spa-014-rishi",
+   "pack": "salon_spa",
+   "speaker": "say:Rishi",
+   "truth": "Ritu ke saath haircut book karna hai",
+   "heard": "Ritu Ke Saath He Yara Kaat Bookan Hai.",
+   "corrected": "ritu ke saath he yara kaat bookan hai",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "salon_spa-014-tara",
+   "pack": "salon_spa",
+   "speaker": "say:Tara",
+   "truth": "Ritu ke saath haircut book karna hai",
+   "heard": "Ritu ke saath harapad book karna hai.",
+   "corrected": "ritu ke saath harapad book karna hai",
+   "corrections": [],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  },
+  {
+   "id": "salon_spa-015-tara",
+   "pack": "salon_spa",
+   "speaker": "say:Tara",
+   "truth": "Palasia mein aap log hain na",
+   "heard": "Palatiaming aap log hain na.",
+   "corrected": "wala timing aap log hain na",
+   "corrections": [
+    {
+     "from": "palatiaming",
+     "to": "wala timing"
+    }
+   ],
+   "entity_errors_off": 1,
+   "entity_errors_on": 1
+  }
+ ]
+}

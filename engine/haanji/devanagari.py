@@ -167,3 +167,13 @@ def to_latin(text: str) -> str:
             w = w[:-1]
         fixed.append(w)
     return " ".join(fixed)
+
+
+_DEVANAGARI = re.compile(r"[\u0900-\u097f]")
+
+
+def latinise(text: str) -> str:
+    """If a recogniser sent Devanagari, bring it into the engine's Latin
+    script; Latin text passes through untouched. The pipeline's lexicon,
+    extractor and policy all work on Latin-script Hinglish."""
+    return to_latin(text) if text and _DEVANAGARI.search(text) else text

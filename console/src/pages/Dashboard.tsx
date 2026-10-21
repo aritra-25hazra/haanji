@@ -1,14 +1,14 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { engine, subscribeLive } from "../engine";
+import { engine, subscribeLive, enablePush } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
 import { Chip, Icon, Loading, OutcomeChip, Page, Panel, Repair, Tile, fmtInr, fmtTime, useData } from "../components/Common";
 import type { LiveEvent } from "../types";
 
-const ORDER = ["BOOKED", "FAQ_ANSWERED", "LEAD_CAPTURED", "HANDED_OFF", "ABANDONED", "IN_PROGRESS"];
+const ORDER = ["BOOKED", "RESCHEDULED", "FAQ_ANSWERED", "LEAD_CAPTURED", "HANDED_OFF", "ABANDONED", "IN_PROGRESS"];
 const SWATCH: Record<string, string> = {
-  BOOKED: "var(--leaf-ink)", FAQ_ANSWERED: "var(--cobalt)", LEAD_CAPTURED: "var(--marigold)",
+  BOOKED: "var(--leaf-ink)", RESCHEDULED: "var(--leaf)", FAQ_ANSWERED: "var(--cobalt)", LEAD_CAPTURED: "var(--marigold)",
   HANDED_OFF: "var(--sindoor-ink)", ABANDONED: "var(--ink-2)", IN_PROGRESS: "var(--ink-2)",
 };
 
@@ -128,19 +128,52 @@ function DigestPanel({ pack }: { pack: string }) {
 function LivePanel({ pack, onEnded }: { pack: string; onEnded: () => void }) {
   const [events, setEvents] = useState<LiveEvent[]>([]);
   const [partial, setPartial] = useState<Record<string, string>>({});
+  const [sessions, setSessions] = useState<import("../types").LiveSession[]>([]);
+  const [reply, setReply] = useState("");
+  const [pushNote, setPushNote] = useState<string | null>(null);
+  const refreshSessions = useCallback(() => { engine.liveSessions(pack).then((r) => setSessions(r.sessions)).catch(() => undefined); }, [pack]);
   useEffect(() => {
-    setEvents([]); setPartial({});
-    return subscribeLive(pack, (e) => {
+    setEvents([]); setPartial({}); refreshSessions();
+    const t = setInterval(refreshSessions, 4000);
+    const off = subscribeLive(pack, (e) => {
       if (e.kind === "partial") { setPartial((p) => ({ ...p, [e.sid ?? ""]: e.text ?? "" })); return; }
       if (e.kind === "turn") setPartial((p) => { const n = { ...p }; delete n[e.sid ?? ""]; return n; });
       if (e.kind === "session.ended") onEnded();
+      if (e.kind === "session.started" || e.kind === "session.ended" || e.kind === "session.takeover" || e.kind === "session.handback") refreshSessions();
       setEvents((cur) => [e, ...cur].slice(0, 14));
     });
-  }, [pack, onEnded]);
+    return () => { off(); clearInterval(t); };
+  }, [pack, onEnded, refreshSessions]);
   const live = Object.entries(partial).filter(([, t]) => t);
+  const mine = sessions.find((s) => s.human);
+  const send = async () => {
+    if (!mine || !reply.trim()) return;
+    await engine.humanReply(mine.sid, reply.trim()); setReply("");
+  };
   return (
-    <Panel title="Abhi" hint={events.length ? "engine se live, jaise-jaise call chalti hai" : "koi call aate hi yahan dikhegi"}>
+    <Panel title="Abhi" hint={events.length ? "engine se live, jaise-jaise call chalti hai" : "koi call aate hi yahan dikhegi"}
+           actions={<button className="btn btn-ghost btn-sm" onClick={() => enablePush(pack).then(setPushNote).catch((e) => setPushNote(String(e)))} title="Nayi booking pe phone pe notification">Notifications on</button>}>
       <div className="body feed" aria-live="polite">
+        {pushNote && <p className="muted" role="status">{pushNote}</p>}
+        {sessions.length > 0 && (
+          <div className="live-sessions">
+            {sessions.map((s) => (
+              <div key={s.sid} className={"ls" + (s.human ? " mine" : "")}>
+                <span className="mono">{s.channel.toLowerCase()}{s.phone ? ` · ${s.phone}` : ""} · {s.turns} turns</span>
+                <span className="muted">{s.last_caller ? `“${s.last_caller}”` : "—"}</span>
+                {s.human
+                  ? <button className="btn btn-ghost btn-sm" onClick={() => engine.handback(s.sid).then(refreshSessions)}>Wapas agent ko</button>
+                  : <button className="btn btn-primary btn-sm" onClick={() => engine.takeover(s.sid).then(refreshSessions)}>Mujhe do</button>}
+              </div>
+            ))}
+            {mine && (
+              <form className="row" onSubmit={(e) => { e.preventDefault(); void send(); }}>
+                <input className="input grow" value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Caller ko kya bolna hai… (Enter)" aria-label="Human reply" />
+                <button className="btn btn-primary btn-sm" type="submit" disabled={!reply.trim()}>Bolo</button>
+              </form>
+            )}
+          </div>
+        )}
         {live.map(([sid, t]) => <p key={sid} className="ev partial"><i className="dot" />bol rahe hain… <span className="muted">{t}</span></p>)}
         {events.length === 0 && live.length === 0 && (
           <p className="muted">Ek call karke dekho — <a href="/engine/talk" target="_blank" rel="noopener noreferrer">/talk</a> ya WhatsApp simulator se. Har turn yahan turant aayega.</p>
@@ -149,6 +182,9 @@ function LivePanel({ pack, onEnded }: { pack: string; onEnded: () => void }) {
           <div key={e.seq} className={"ev " + e.kind.replace(".", "-")}>
             <span className="when mono">{fmtTime(e.at)}</span>
             {e.kind === "session.started" && <span>Call shuru · {e.channel?.toLowerCase()}{e.phone ? ` · ${e.phone}` : ""} — <em>{e.greeting}</em></span>}
+            {e.kind === "session.takeover" && <span><Chip kind="warn">insaan ne call li</Chip> {e.by}</span>}
+            {e.kind === "session.handback" && <span><Chip kind="ok">wapas agent ke paas</Chip></span>}
+            {e.kind === "turn" && e.awaiting_human && <span className="muted"> · aapka jawab chahiye</span>}
             {e.kind === "turn" && (
               <span className="turn">
                 <span className="heard">{e.corrections && e.corrections.length > 0

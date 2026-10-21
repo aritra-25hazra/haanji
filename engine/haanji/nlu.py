@@ -34,7 +34,10 @@ QUESTION_WORDS = {"kitna", "kitne", "kitni", "kya", "kaunsa", "kaun", "kab", "ka
                   "kiti", "kadhi", "kuthe", "kay", "kasa", "kashi", "kevha"}
 IDENTITY_WORDS = {"mera", "meri", "naam", "number", "purani", "pehle", "last", "previous",
                   "my", "name", "registered"}
-CANCEL_WORDS = {"cancel", "reschedule", "postpone", "aage", "badalna", "change", "hata"}
+CANCEL_WORDS = {"cancel", "hata", "hatao", "cancle", "radd"}
+RESCHEDULE_WORDS = {"reschedule", "postpone", "aage", "badalna", "badalni", "badalo", "badal", "badlo", "badli",
+                    "badle", "badlna", "change", "shift", "move", "prepone", "peeche", "dusre", "doosre", "alag",
+                    "bodlate", "bodlao", "badla", "badlun"}
 HANDOFF_WORDS = {"insaan", "aadmi", "human", "manager", "owner", "sir", "madam", "baat",
                  "transfer", "connect"}
 YES_WORDS = {"haan", "haanji", "ha", "ji", "yes", "yep", "yeah", "ok", "okay", "theek",

@@ -196,7 +196,7 @@ export interface Anchors {
 
 export interface LiveEvent {
   seq: number;
-  kind: "session.started" | "partial" | "turn" | "session.ended" | string;
+  kind: "session.started" | "partial" | "turn" | "session.ended" | "session.takeover" | "session.handback" | string;
   at: string;
   sid?: string;
   pack?: string;
@@ -216,6 +216,9 @@ export interface LiveEvent {
   outcome?: string | null;
   call_id?: string;
   turns?: number;
+  human?: boolean;
+  awaiting_human?: boolean;
+  by?: string;
 }
 
 export interface CustomerRecord {
@@ -227,4 +230,15 @@ export interface CustomerRecord {
   whatsapp_messages: number;
   receipts: { code: string; action: string; occurred_at: string; pii_readable: boolean }[];
   erased: boolean;
+}
+
+export interface LiveSession {
+  sid: string;
+  pack: string;
+  channel: string;
+  phone: string | null;
+  human: boolean;
+  turns: number;
+  last_caller: string;
+  idle_s: number;
 }

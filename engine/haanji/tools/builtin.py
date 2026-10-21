@@ -138,6 +138,48 @@ def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
                                                                "receipt_code": code},
                           spoken=f"Aapki {when} ki booking cancel kar di hai.")
 
+    async def reschedule_appointment(booking_id: str, service: str, date: str, time: str,
+                                     phone: str, customer_name: str | None = None,
+                                     staff: str | None = None,
+                                     proof: ConfirmationProof | None = None,
+                                     excerpt: str = "", conversation_id: str = "") -> ToolResult:
+        """Move a booking: the new slot is taken first, the old one released
+        after, and one receipt records both so the chain shows the move."""
+        old = next((b for b in backend.bookings(tenant_id) if b.booking_id == booking_id and b.status == "CONFIRMED"), None)
+        if old is None:
+            return ToolResult("reschedule_appointment", ok=False, error="no such booking",
+                              spoken="Wo booking ab nahi mili.")
+        try:
+            new = backend.book(tenant_id=tenant_id, service=service, date=date, time=time, staff=staff,
+                               customer_name=customer_name or old.customer_name, phone=phone)
+        except BackendError as exc:
+            return ToolResult("reschedule_appointment", ok=False, error=str(exc),
+                              spoken=_p("slot_gone", "Wo slot abhi nahi mil raha, doosra dekh lete hain."))
+        try:
+            code = _seal("reschedule_appointment",
+                         {"service": service, "date": date, "time": time, "staff": new.staff,
+                          "customer_name": customer_name or old.customer_name, "phone": phone,
+                          "booking_id": new.booking_id, "previous_booking_id": old.booking_id,
+                          "previous_receipt": old.receipt_code, "previous_slot": f"{old.date} {old.time}"},
+                         proof, excerpt, conversation_id, True)
+        except LedgerError as exc:
+            backend.cancel(tenant_id, new.booking_id)
+            return ToolResult("reschedule_appointment", ok=False, error=str(exc),
+                              spoken="Badalne se pehle ek baar haan bol dijiye.")
+        backend.cancel(tenant_id, old.booking_id)
+        if code:
+            backend.conn.execute("UPDATE bookings SET receipt_code=? WHERE tenant_id=? AND booking_id=?",
+                                 (code, tenant_id, new.booking_id))
+            backend.conn.commit()
+        when = f"{spoken_date(date, backend.today, backend.resolve_date, lang)} {spoken_time(time, lang)}"
+        spoken = _p("rescheduled", "Badal diya. Ab aapki booking {when}, {staff} ke saath.").format(when=when, staff=new.staff)
+        if code:
+            spoken += _p("booked_code", " Confirmation code {code}.").format(code=code)
+        return ToolResult("reschedule_appointment", ok=True,
+                          data={"booking_id": new.booking_id, "previous_booking_id": old.booking_id,
+                                "receipt_code": code, "date": date, "time": time, "staff": new.staff},
+                          spoken=spoken)
+
     async def capture_lead(intent: str, name: str | None = None, phone: str | None = None,
                            note: str = "", proof: ConfirmationProof | None = None,
                            excerpt: str = "", conversation_id: str = "") -> ToolResult:
@@ -190,6 +232,13 @@ def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
                       {"phone": "ten digit phone number"},
                       cancel_appointment, read_only=False, requires_confirmation=True,
                       ledgered=True, nominal_ms=210, required=["phone"]))
+    reg.register(Tool("reschedule_appointment",
+                      "Move an existing booking to a new slot; the old slot is released.",
+                      {"booking_id": "the booking to move", "service": "service name", "date": "YYYY-MM-DD",
+                       "time": "HH:MM", "phone": "ten digit phone number", "customer_name": "caller's name",
+                       "staff": "staff member"},
+                      reschedule_appointment, read_only=False, requires_confirmation=True, ledgered=True, nominal_ms=280,
+                      required=["booking_id", "service", "date", "time", "phone"]))
     reg.register(Tool("capture_lead",
                       "Record a caller the agent could not book, for a human to call back.",
                       {"intent": "what they wanted", "name": "caller's name",

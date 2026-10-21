@@ -55,7 +55,8 @@ class TwilioBridge:
 
     def __init__(self, ws, *, open_session, close_session, stt_factory: STTFactory, tts: TTSFactory,
                  on_turn: Callable[[Any, Any], Awaitable[None]] | None = None,
-                 on_partial: Callable[[str, Any], Any] | None = None):
+                 on_partial: Callable[[str, Any], Any] | None = None,
+                 human_hook: Callable[[Any, Any, str], bool] | None = None):
         self.ws = ws
         self.open_session = open_session          # async (pack, caller) -> (sid, holder)
         self.close_session = close_session        # (sid, holder) -> None
@@ -63,6 +64,7 @@ class TwilioBridge:
         self.tts = tts
         self.on_turn = on_turn
         self.on_partial = on_partial
+        self.human_hook = human_hook
         self.stream_sid: str | None = None
         self.sid = None
         self.holder = None
@@ -122,6 +124,8 @@ class TwilioBridge:
                 self.on_partial(text, self.holder)
             return
         async with self._turn_lock:
+            if self.human_hook and self.human_hook(self.sid, self.holder, text):
+                return                                     # a person answers from the console
             confidence = min(confs) if confs else None
             record = await session.handle_text_turn(text, confidence=confidence)
             if self.on_turn:
@@ -165,6 +169,7 @@ class TwilioBridge:
         pack = params.get("pack") or os.environ.get("HAANJI_PHONE_PACK") or os.environ.get("HAANJI_PACK", "dental_clinic")
         caller = params.get("caller") or None
         self.sid, self.holder = await self.open_session(pack, caller)
+        self.holder.speak = self.say                           # lets a human reply be spoken on the line
         self.stt = self.stt_factory(self.on_text)
         await self.stt.start()
         await self.say(self.holder.session.ctx.last_agent_utterance)

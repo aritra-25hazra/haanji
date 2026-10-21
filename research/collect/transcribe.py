@@ -27,6 +27,8 @@ def main(argv=None) -> int:
     ap.add_argument("--model", default="small", help="faster-whisper model size: tiny, base, small, medium")
     ap.add_argument("--language", default="en", help="decode as this language; en mirrors a general English recogniser")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--bias", action="store_true",
+                    help="give the recogniser each clip's pack vocabulary as an initial prompt (biasing)")
     args = ap.parse_args(argv)
     try:
         from faster_whisper import WhisperModel
@@ -35,6 +37,14 @@ def main(argv=None) -> int:
         return 2
     manifest = Path(args.manifest)
     base = manifest.parent
+    prompts: dict[str, str] = {}
+    if args.bias:
+        sys.path.insert(0, str(ROOT / "engine"))
+        from haanji.vertical import list_packs, load_pack
+        for pid in list_packs():
+            pk = load_pack(pid)
+            words = [s.name for s in pk.services] + pk.staff + pk.places + pk.brands
+            prompts[pid] = f"{pk.persona.business_name}. " + ", ".join(words) + "."
     rows = [json.loads(l) for l in manifest.read_text(encoding="utf-8").splitlines() if l.strip()]
     if args.limit:
         rows = rows[:args.limit]
@@ -52,7 +62,8 @@ def main(argv=None) -> int:
                 continue
             segments, _info = model.transcribe(str(path), language=args.language, beam_size=5,
                                                word_timestamps=True, vad_filter=False,
-                                               condition_on_previous_text=False)
+                                               condition_on_previous_text=False,
+                                               initial_prompt=prompts.get(r["pack"]) if args.bias else None)
             words, confs = [], []
             for seg in segments:
                 for w in (seg.words or []):
@@ -63,7 +74,7 @@ def main(argv=None) -> int:
                 "id": r["id"], "pack": r["pack"], "truth": r["truth"], "heard": heard,
                 "confidences": confs, "speaker": r.get("speaker", ""), "kind": r.get("kind", ""),
                 "synthetic": bool(r.get("synthetic", False)),
-                "recogniser": f"faster-whisper:{args.model}:{args.language}",
+                "recogniser": f"faster-whisper:{args.model}:{args.language}" + (":biased" if args.bias else ""),
             }, ensure_ascii=False) + "\n")
             n += 1
             if n % 25 == 0:

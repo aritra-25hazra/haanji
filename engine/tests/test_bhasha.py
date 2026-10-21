@@ -133,3 +133,16 @@ def test_a_lexicon_form_with_too_few_letters_is_not_evidence():
     bridge = BhashaBridge(TenantLexicon.build(version=pack.version, **pack.lexicon_seed()))
     out = bridge.correct(transcript("i want to do a test", ["to", "do"], low_conf=0.3))
     assert out.corrections == [] and out.text == "i want to do a test"
+
+
+def test_a_merged_low_confidence_token_is_split_when_both_halves_are_known(bridge):
+    out = bridge.correct(transcript("kal subhahroot kanal ke liye time chahiye", ["subhahroot", "kanal"], low_conf=0.4))
+    assert "subah root canal" in out.text, out.text
+    assert any(c.from_token == "subhahroot" and c.to_surface == "subah root" for c in out.corrections)
+
+
+def test_long_unknown_tokens_and_confident_tokens_are_never_split(bridge):
+    out = bridge.correct(transcript("mujhe jadavpuvali branch chahiye", ["jadavpuvali"], low_conf=0.3))
+    assert "jadavpuvali" in out.text, "no split: 'jadavpu' and 'vali' are not both known words"
+    out = bridge.correct(transcript("kal subhahroot kanal", [], high=0.97))
+    assert "subhahroot" in out.text, "confident tokens are left alone"

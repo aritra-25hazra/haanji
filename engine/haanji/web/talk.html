@@ -117,6 +117,28 @@
 (function () {
   "use strict";
   const S = window.Signboard;
+  // If a person at the console takes the call, their replies arrive on the
+  // live event stream rather than in the utterance response.
+  let humanSource = null;
+  function listenForHuman() {
+    if (!("EventSource" in window) || humanSource) return;
+    try {
+      humanSource = new EventSource("api/events?pack=" + encodeURIComponent($("pack").value));
+      humanSource.addEventListener("turn", function (ev) {
+        try {
+          const e = JSON.parse(ev.data);
+          if (e.sid === sid && e.human && e.reply) { row("agent", e.reply); speak(e.reply); }
+        } catch (err) {}
+      });
+      humanSource.addEventListener("session.takeover", function (ev) {
+        try { const e = JSON.parse(ev.data); if (e.sid === sid) sys("Ek insaan ne call li hai — ab wo jawab denge."); } catch (err) {}
+      });
+      humanSource.addEventListener("session.handback", function (ev) {
+        try { const e = JSON.parse(ev.data); if (e.sid === sid) sys("Agent wapas aa gaya."); } catch (err) {}
+      });
+    } catch (e) { humanSource = null; }
+  }
+  function stopListening() { if (humanSource) { humanSource.close(); humanSource = null; } }
   // Devanagari reading aid: approximate, from the engine, cached per line.
   let devOn = false;
   try { devOn = localStorage.getItem("haanji.devanagari") === "1"; } catch (e) {}
@@ -289,12 +311,14 @@
     document.title = res.business + " — HaanJi";
     $("biz").textContent = res.business;
     row("agent", res.greeting); speak(res.greeting);
+    listenForHuman();
     $("start").hidden = true; $("end").hidden = false;
     tm.start();
     $("text").focus();
   }
 
   async function endCall(silent) {
+    stopListening();
     if (sid) await api("api/sessions/" + sid, { method: "DELETE" }).catch(function () {});
     sid = null;
     $("start").hidden = false; $("end").hidden = true;
@@ -319,6 +343,7 @@
       callerBubble.appendChild(meta);
       meta.querySelectorAll(".repair").forEach(function (r) { S.paintRepair(r); });
     }
+    if (t.human) { if (!window.__humanNoted) { sys("Aapki baat ek insaan tak pahunch gayi — jawab ka intezaar…"); window.__humanNoted = true; } return; }
     const agent = row("agent", t.reply);
     const meta = metaFor(t);
     if (meta.children.length) agent.appendChild(meta);
