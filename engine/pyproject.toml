@@ -38,7 +38,7 @@ Report = "https://github.com/aritra-25hazra/haanji/blob/main/research/REPORT.md"
 
 [project.optional-dependencies]
 dev  = ["pytest>=8.0", "pytest-asyncio>=0.23", "httpx>=0.27", "hypothesis>=6.0"]
-web  = ["fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27"]
+web  = ["fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27", "pywebpush>=2.0"]
 live = ["websockets>=12.0", "httpx>=0.27"]
 llm  = ["anthropic>=0.50"]
 # The research harness: classic phonetic keys for the baselines, Markdown for the PDF report.
