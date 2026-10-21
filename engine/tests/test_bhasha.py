@@ -8,6 +8,7 @@ from haanji.bhasha.bridge import BhashaBridge
 from haanji.bhasha.lexicon import EntryType, LexEntry, TenantLexicon
 from haanji.config import BhashaConfig
 from haanji.corrupt import corrupt
+from haanji.vertical import load_pack
 from haanji.models import Token, Transcript
 from haanji import nlu
 
@@ -133,3 +134,33 @@ def test_a_lexicon_form_with_too_few_letters_is_not_evidence():
     bridge = BhashaBridge(TenantLexicon.build(version=pack.version, **pack.lexicon_seed()))
     out = bridge.correct(transcript("i want to do a test", ["to", "do"], low_conf=0.3))
     assert out.corrections == [] and out.text == "i want to do a test"
+
+
+def test_a_merged_low_confidence_token_is_split_when_both_halves_are_known(bridge):
+    out = bridge.correct(transcript("kal subhahroot kanal ke liye time chahiye", ["subhahroot", "kanal"], low_conf=0.4))
+    assert "subah root canal" in out.text, out.text
+    assert any(c.from_token == "subhahroot" and c.to_surface == "subah root" for c in out.corrections)
+
+
+def test_a_token_the_lexicon_explains_as_a_whole_is_repaired_not_split():
+    # "koolkarni" is one sound key and two edits from Kulkarni; the grammar
+    # words "ko" and "karni" must not take it first.
+    pack = load_pack("coaching_institute")
+    coaching = BhashaBridge(TenantLexicon.build(version=pack.version, **pack.lexicon_seed()))
+    out = coaching.correct(transcript("Ms Koolkarni kal available hain kya", ["Koolkarni"], low_conf=0.3))
+    assert "Kulkarni" in out.text, out.text
+    assert not any(" " in c.to_surface and c.entry_weight == 0.0 for c in out.corrections)
+
+
+def test_two_glued_grammar_words_are_left_alone(bridge):
+    # The dental pack knows no Kulkarni: "koolkarni" could only become the
+    # grammar words "ko karni", which frees no catalogue word.
+    out = bridge.correct(transcript("Dr Koolkarni kal available hain kya", ["Koolkarni"], low_conf=0.3))
+    assert "Koolkarni" in out.text, out.text
+
+
+def test_long_unknown_tokens_and_confident_tokens_are_never_split(bridge):
+    out = bridge.correct(transcript("mujhe jadavpuvali branch chahiye", ["jadavpuvali"], low_conf=0.3))
+    assert "jadavpuvali" in out.text, "no split: 'jadavpu' and 'vali' are not both known words"
+    out = bridge.correct(transcript("kal subhahroot kanal", [], high=0.97))
+    assert "subhahroot" in out.text, "confident tokens are left alone"

@@ -136,6 +136,36 @@ class DialoguePolicy:
                                         "args": {"phone": ctx.customer_phone}}
             return LLMTurn(say="Aapki booking cancel kar dun? Haan ya na bol dijiye.")
 
+        # 4b. Rescheduling: find the booking, then run the ordinary slot flow
+        #     with the write parked behind reschedule_appointment.
+        wants_move = bool(w_all := nlu.words(text)) and bool(w_all & nlu.RESCHEDULE_WORDS) and \
+            ("booking" in w_all or "appointment" in w_all or "slot" in w_all or "time" in w_all
+             or ctx.flags.get("await_reschedule") or ctx.flags.get("reschedule_booking_id"))
+        if (wants_move or ctx.flags.get("await_reschedule")) and not ctx.flags.get("reschedule_booking_id") \
+                and not ctx.flags.get("await_details"):
+            if not ctx.customer_phone:
+                ctx.flags["await_reschedule"] = True
+                return LLMTurn(say=self._p("ask_booking_number", "Zaroor. Jis number se booking hui thi wo bata dijiye."))
+            ctx.flags.pop("await_reschedule", None)
+            booking = self.backend.find_booking(self.tenant_id, ctx.customer_phone)
+            if booking is None:
+                return LLMTurn(say=self._p("no_booking", "Is number par koi booking nahi mili. Nayi booking kar dun?"))
+            ctx.flags["reschedule_booking_id"] = booking.booking_id
+            ctx.flags["reschedule_from"] = f"{booking.date} {booking.time}"
+            ctx.service, ctx.staff = booking.service, booking.staff
+            ctx.date, ctx.time, ctx.last_offered_slots = None, None, []
+            if not ctx.customer_name:
+                ctx.customer_name = booking.customer_name
+            self.absorb(text, ctx)                     # the caller may have named the new day already
+            when = f"{_spoken_date(booking.date, self.backend, self.lang)} {_spoken_time(booking.time, self.lang)}"
+            lead = self._p("found_booking", "Aapki {when} ki {service} booking mili.").format(when=when, service=booking.service)
+            nxt = self._advance_booking(ctx)
+            if nxt.say:
+                nxt.say = f"{lead} {nxt.say}"
+            else:
+                ctx.flags["reschedule_lead"] = lead      # said once the slots come back
+            return nxt
+
         # 5. The caller accepted a slot we offered.
         if ctx.last_offered_slots and not ctx.time:
             chosen = self._chosen_slot(text, ctx)
@@ -162,6 +192,14 @@ class DialoguePolicy:
     # ------------------------------------------------------- after tool calls
     def after_tools(self, text: str, ctx: ConversationContext,
                     results: list[ToolResult]) -> LLMTurn:
+        lead = ctx.flags.pop("reschedule_lead", None)
+        turn = self._after_tools(text, ctx, results)
+        if lead and turn.say:
+            turn.say = f"{lead} {turn.say}"
+        return turn
+
+    def _after_tools(self, text: str, ctx: ConversationContext,
+                     results: list[ToolResult]) -> LLMTurn:
         by_name = {r.name: r for r in results}
 
         if "book_appointment" in by_name:
@@ -173,6 +211,17 @@ class DialoguePolicy:
             ctx.time = None
             ctx.last_offered_slots = []
             return LLMTurn(say=r.spoken or "Wo slot abhi nahi ho paya, doosra dekh lete hain.")
+
+        if "reschedule_appointment" in by_name:
+            r = by_name["reschedule_appointment"]
+            ctx.pending_confirmation = None
+            if r.ok:
+                ctx.outcome = Outcome.RESCHEDULED
+                ctx.flags.pop("reschedule_booking_id", None)
+                return LLMTurn(say=f"{r.spoken} {self.closing()}", end_call=True)
+            ctx.time = None
+            ctx.last_offered_slots = []
+            return LLMTurn(say=r.spoken or "Wo slot nahi ho paya, doosra dekh lete hain.")
 
         if "cancel_appointment" in by_name:
             r = by_name["cancel_appointment"]
@@ -287,7 +336,11 @@ class DialoguePolicy:
         args = {"service": ctx.service, "date": ctx.date, "time": ctx.time,
                 "customer_name": ctx.customer_name, "phone": ctx.customer_phone,
                 "staff": ctx.staff}
-        ctx.pending_confirmation = {"action": "book_appointment", "args": args}
+        action = "book_appointment"
+        if ctx.flags.get("reschedule_booking_id"):
+            action = "reschedule_appointment"
+            args["booking_id"] = ctx.flags["reschedule_booking_id"]
+        ctx.pending_confirmation = {"action": action, "args": args}
         if self._p("confirm", ""):
             who = self._p("with", " {staff} er sathe").format(staff=ctx.staff) if ctx.staff else ""
             say = self._p("confirm", "").format(

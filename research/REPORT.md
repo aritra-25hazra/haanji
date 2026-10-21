@@ -6,7 +6,7 @@ Evaluation report, version 1.0 · 15 October 2026 · code and data: <a href="htt
 
 ## Abstract
 
-Small clinics, salons, laboratories and coaching institutes in India lose bookings because nobody answers the phone, and the callers who do get through speak Hinglish or Benglish and name services, doctors and neighbourhoods that no general-purpose speech recogniser has heard of. HaanJi is an open-source voice-agent engine built around three contributions that address the three reasons such an agent fails in practice. **Bhasha Bridge** builds a per-tenant phonetic index from the catalogue a business supplies at onboarding and uses it both to bias the recogniser and to repair its output, replacing a token only when the recogniser was unsure *and* the token's Indic-aware sound key matches a known form exactly. **Speculative Turn Execution** applies the idea of branch prediction to dialogue: read-only tools are predicted from partial transcripts and run while the caller is still speaking, and a speculative result is claimed only when the real turn requests byte-identical arguments. The **Pramaan Ledger** seals every write into an Ed25519-signed, hash-chained receipt that binds the action to the exact words with which the caller confirmed it, refuses writes that carry no such proof, and can be verified by anyone holding the public key. The contributions are evaluated with an ablation harness over 21 authored call scenarios in five vertical packs and two languages, repeated under 5 independent random seeds, and with a transcript-level experiment over 2,097 independently corrupted sentences per noise level. Against Soundex, Metaphone, Double Metaphone, NYSIIS and the edit-distance bound alone, with everything but the key held fixed, the Indic-aware key is the best on synthetic noise (every pairwise McNemar p < 0.001) and within a point of the classics on real recogniser output, where the safety rule matters more than the key. At 30% synthetic recognition noise Bhasha Bridge reduces the catalogue entity error rate from 32.4% to 0.71% (97.8% relative) with 98.9% correction precision and no harmful correction in any run, and raises end-to-end task success from 78.4% to 92.7%. Speculation lowers the median engine-side latency of read-only turns from 286 ms to 161 ms (43.8%) at a 46.2% hit rate without changing any transcript. The ledger detects 80 of 80 single-field tampering attempts, a deletion and a re-hashed forgery, and accepts zero unconfirmed writes. We also report the design and offline validation of a hosted-model dialogue adapter that preserves the ledger's guarantee by construction, A pilot of the real-recogniser pipeline (synthetic Indian-English speech through Whisper) found the bridge's confidence gate open and the layer making harmful corrections; three stated guards remove them, and on that data the bridge is safe and reduces entity errors by only a tenth. Under noise learned from real recognisers — including rural Hindi telephone speech from the public Gram Vaani corpus, which Whisper transcribes at about 80% word error with a quarter of the words dropped — the bridge removes 28–33% of the remaining entity errors at over 95% precision, against 97% under the authors' own corruption model; the report quotes both. We state plainly what the evaluation does not yet cover: real callers, real users, and vendor round-trip time.
+Small clinics, salons, laboratories and coaching institutes in India lose bookings because nobody answers the phone, and the callers who do get through speak Hinglish or Benglish and name services, doctors and neighbourhoods that no general-purpose speech recogniser has heard of. HaanJi is an open-source voice-agent engine built around three contributions that address the three reasons such an agent fails in practice. **Bhasha Bridge** builds a per-tenant phonetic index from the catalogue a business supplies at onboarding and uses it both to bias the recogniser and to repair its output, replacing a token only when the recogniser was unsure *and* the token's Indic-aware sound key matches a known form exactly. **Speculative Turn Execution** applies the idea of branch prediction to dialogue: read-only tools are predicted from partial transcripts and run while the caller is still speaking, and a speculative result is claimed only when the real turn requests byte-identical arguments. The **Pramaan Ledger** seals every write into an Ed25519-signed, hash-chained receipt that binds the action to the exact words with which the caller confirmed it, refuses writes that carry no such proof, and can be verified by anyone holding the public key. The contributions are evaluated with an ablation harness over 24 authored call scenarios in six vertical packs and three languages, repeated under 5 independent random seeds, and with a transcript-level experiment over 2,430 independently corrupted sentences per noise level. Against Soundex, Metaphone, Double Metaphone, NYSIIS and the edit-distance bound alone, with everything but the key held fixed, the Indic-aware key is the best on synthetic noise (every pairwise McNemar p < 0.001) and within a point of the classics on real recogniser output, where the safety rule matters more than the key. At 30% synthetic recognition noise Bhasha Bridge reduces the catalogue entity error rate from 32.6% to 0.82% (97.5% relative) with 99.1% correction precision and no harmful correction in any run, and raises end-to-end task success from 76.4% to 90.8%. Speculation lowers the median engine-side latency of read-only turns from 246 ms to 142 ms (42.3%) at a 41.9% hit rate without changing any transcript. The ledger detects 80 of 80 single-field tampering attempts, a deletion and a re-hashed forgery, and accepts zero unconfirmed writes. We also report the design and offline validation of a hosted-model dialogue adapter that preserves the ledger's guarantee by construction, A pilot of the real-recogniser pipeline (synthetic Indian-English speech through Whisper) found the bridge's confidence gate open and the layer making harmful corrections; three stated guards remove them, and on that data the bridge is safe and reduces entity errors by about an eighth. Handing the pack vocabulary to the recogniser as its prompt halves entity error before any repair, which makes biasing the lever and the bridge the safety net behind it; calibrating the bridge's confidence gate per recogniser does not help, and a sweep shows why: on Whisper's probabilities the gate contributes nothing to safety, the stated guards do. Under noise learned from real recognisers — including rural Hindi telephone speech from the public Gram Vaani corpus, which Whisper transcribes at about 80% word error with a quarter of the words dropped — the bridge removes 28–33% of the remaining entity errors at over 95% precision, against 97% under the authors' own corruption model; the report quotes both. We state plainly what the evaluation does not yet cover: real callers, real users, and vendor round-trip time.
 
 ## 1. Introduction
 
@@ -122,13 +122,13 @@ Grammar words are never touched, and neither is anything that follows a name int
 
 | noise rate | sentences | entities | EER off (%) | EER on (%) | reduction (%) | precision (%) | harmful |
 |---|---|---|---|---|---|---|---|
-| 15% | 2097 | 2862 | 16.7 ± 1.5 | 0.26 ± 0.14 | 98.5 ± 0.8 | 99.1 ± 0.7 | 0.0 |
-| 30% | 2097 | 2862 | 32.4 ± 0.5 | 0.71 ± 0.17 | 97.8 ± 0.6 | 98.9 ± 0.3 | 0.0 |
-| 45% | 2097 | 2862 | 48.5 ± 2.9 | 1.87 ± 0.19 | 96.1 ± 0.3 | 99.0 ± 0.1 | 0.0 |
+| 15% | 2430 | 3303 | 16.8 ± 1.7 | 0.37 ± 0.14 | 97.8 ± 0.9 | 99.2 ± 0.6 | 0.0 |
+| 30% | 2430 | 3303 | 32.6 ± 0.7 | 0.82 ± 0.13 | 97.5 ± 0.4 | 99.1 ± 0.3 | 0.0 |
+| 45% | 2430 | 3303 | 48.7 ± 2.9 | 1.93 ± 0.17 | 96.0 ± 0.4 | 99.1 ± 0.1 | 0.0 |
 
 <figure><img src="figures/fig1_eer.svg" alt="Entity error rate off versus on, three noise rates"><figcaption>Figure 1. Entity error rate on independently corrupted sentences, Bhasha Bridge off and on. Whiskers are 95% CIs over seeds.</figcaption></figure>
 
-At 30% noise, 2,097 sentences carrying 2,862 catalogue entities go from 32.4% entity error to 0.71%, a 97.8% relative reduction, at 98.9% precision (the fraction of corrections that produced a gold entity). The improvement is not noise: on the paired per-sentence outcomes at 30% noise, 809 sentences go from wrong to right and 0 from right to wrong (McNemar p < 0.001; `research/harness/stats.py`). The harmful count, the number of times the layer overwrote a span the recogniser had right, is zero in every seed at every noise level; the confidence intervals on it are zero because the value never moved. The median cost of the pass is 0.07 ms per utterance. The residual error is almost entirely entities the corruption model damaged beyond edit distance 2, or whose corrupted form collided with no lexicon key, which the second condition correctly refuses to touch.
+At 30% noise, 2,430 sentences carrying 3,303 catalogue entities go from 32.6% entity error to 0.82%, a 97.5% relative reduction, at 99.1% precision (the fraction of corrections that produced a gold entity). The improvement is not noise: on the paired per-sentence outcomes at 30% noise, 936 sentences go from wrong to right and 0 from right to wrong (McNemar p < 0.001; `research/harness/stats.py`). The harmful count, the number of times the layer overwrote a span the recogniser had right, is zero in every seed at every noise level; the confidence intervals on it are zero because the value never moved. The median cost of the pass is 0.07 ms per utterance. The residual error is almost entirely entities the corruption model damaged beyond edit distance 2, or whose corrupted form collided with no lexicon key, which the second condition correctly refuses to touch.
 
 ### 4.3 Results: end to end
 
@@ -136,25 +136,26 @@ At 30% noise, 2,097 sentences carrying 2,862 catalogue entities go from 32.4% en
 
 | noise rate | calls | EER off (%) | EER on (%) | task success off (%) | task success on (%) | beneficial | neutral | harmful |
 |---|---|---|---|---|---|---|---|---|
-| 15% | 63 | 16.4 ± 8.3 | 0.0 ± 0.0 | 88.2 ± 5.9 | 96.5 ± 0.9 | 8.0 | 0.8 | 0.0 |
-| 30% | 63 | 32.3 ± 8.0 | 0.0 ± 0.0 | 78.4 ± 8.7 | 92.7 ± 7.0 | 15.6 | 2.6 | 0.0 |
-| 45% | 63 | 47.7 ± 2.9 | 0.0 ± 0.0 | 62.2 ± 4.5 | 84.4 ± 2.6 | 21.4 | 3.4 | 0.0 |
+| 15% | 72 | 16.9 ± 6.6 | 0.0 ± 0.0 | 87.5 ± 4.4 | 95.8 ± 1.7 | 9.2 | 0.8 | 0.0 |
+| 30% | 72 | 33.8 ± 9.2 | 0.0 ± 0.0 | 76.4 ± 9.4 | 90.8 ± 7.1 | 18.2 | 2.8 | 0.0 |
+| 45% | 72 | 50.2 ± 3.7 | 0.0 ± 0.0 | 59.7 ± 5.2 | 81.1 ± 3.4 | 25.4 | 3.4 | 0.0 |
 
 <figure><img src="figures/fig2_task.svg" alt="Task success off versus on, three noise rates"><figcaption>Figure 2. Calls reaching their expected outcome under the same noise, Bhasha Bridge off and on.</figcaption></figure>
 
-In full calls the same noise is applied to every caller turn and the dialogue has to survive it. Without the bridge, task success falls with noise, from 88.2% at 15% to 62.2% at 45%, because a mangled service name sends the policy down the wrong path or into a clarification the scripted caller does not answer. With it, success stays at 92.7% at 30% noise and 84.4% at 45%. The calls that still fail with the bridge on are ones where the corruption hit a word outside the lexicon that the policy nonetheless needed (a date word, a number), which the bridge rightly leaves alone; §9 discusses this.
+In full calls the same noise is applied to every caller turn and the dialogue has to survive it. Without the bridge, task success falls with noise, from 87.5% at 15% to 59.7% at 45%, because a mangled service name sends the policy down the wrong path or into a clarification the scripted caller does not answer. With it, success stays at 90.8% at 30% noise and 81.1% at 45%. The calls that still fail with the bridge on are ones where the corruption hit a word outside the lexicon that the policy nonetheless needed (a date word, a number), which the bridge rightly leaves alone; §9 discusses this.
 
 **Table 3 — Per pack at 30% noise**
 
 | pack | language | calls | task success off (%) | task success on (%) | EER off (%) | EER on (%) |
 |---|---|---|---|---|---|---|
 | clinic_kolkata | benglish | 9 | 75.6 ± 15.1 | 88.9 ± 16.9 | 36.7 ± 9.3 | 0.0 ± 0.0 |
+| clinic_pune | marathinglish | 9 | 62.2 ± 15.8 | 77.8 ± 13.8 | 43.3 ± 23.6 | 0.0 ± 0.0 |
 | coaching_institute | hinglish | 9 | 82.2 ± 15.7 | 91.1 ± 15.1 | 26.7 ± 34.6 | 0.0 ± 0.0 |
 | dental_clinic | hinglish | 24 | 70.0 ± 17.3 | 90.0 ± 8.6 | 34.4 ± 17.8 | 0.0 ± 0.0 |
 | diagnostic_lab | hinglish | 9 | 91.1 ± 6.2 | 97.8 ± 6.2 | 20.0 ± 22.7 | 0.0 ± 0.0 |
 | salon_spa | hinglish | 12 | 85.0 ± 8.7 | 98.3 ± 4.6 | 31.1 ± 15.1 | 0.0 ± 0.0 |
 
-The per-pack view at 30% noise shows the mechanism is not tuned to the dental pack the demo uses: the Benglish pack gains as much as the Hinglish ones, from a lexicon that contains Bengali-English surface forms and the same key rules.
+The per-pack view at 30% noise shows the mechanism is not tuned to the dental pack the demo uses: the Benglish pack gains as much as the Hinglish ones, from a lexicon that contains Bengali-English surface forms and the same key rules, and the Marathinglish pack, the hardest row because its scenarios carry the most entities per call, gains fifteen points from one phrase-table row and its own YAML.
 
 ### 4.4 A recorded limitation
 
@@ -170,6 +171,7 @@ The corruption model is the weakest link in the argument above, so the pipeline 
 |---|---|---|---|---|---|---|---|---|
 | as evaluated in §4.2 | 88.7 | 33.8 | 30.6 | 9.5 | 47.1 | 16 | 10 | **8** |
 | with the guards below | 88.7 | 33.8 | 30.1 | 10.8 | 60.0 | 12 | 8 | **0** |
+| with the guards and the merged-token rule of §4.9 | 88.7 | 33.8 | 29.2 | 13.5 | 60.9 | 14 | 9 | **0** |
 
 Three things the synthetic experiment could not show:
 
@@ -181,35 +183,35 @@ The honest summary is that on this data the bridge is safe and helps a little, n
 
 ### 4.6 Against the classic keys
 
-The key in §4.1 is one component; the two-condition rule, the edit-distance bound and the lexicon are the rest. To isolate it, the benchmark swaps only the bucketing function and keeps everything else: Soundex (Russell 1918), Metaphone and Double Metaphone (Philips 1990, 2000), NYSIIS, exact spelling (a bucket per spelling, so only identical strings collide), and no bucketing at all (every lexicon form is a candidate and the edit-distance bound alone decides). Each runs on the same 2,097 corrupted sentences per noise level and on the 300 pilot utterances. McNemar's test on the paired per-sentence outcomes (a sentence has an entity error or not) says whether two keyers differ by more than noise.
+The key in §4.1 is one component; the two-condition rule, the edit-distance bound and the lexicon are the rest. To isolate it, the benchmark swaps only the bucketing function and keeps everything else: Soundex (Russell 1918), Metaphone and Double Metaphone (Philips 1990, 2000), NYSIIS, exact spelling (a bucket per spelling, so only identical strings collide), and no bucketing at all (every lexicon form is a candidate and the edit-distance bound alone decides). Each runs on the same 2,430 corrupted sentences per noise level (the §4.2 corpus over all six packs) and on the 300 pilot utterances. McNemar's test on the paired per-sentence outcomes (a sentence has an entity error or not) says whether two keyers differ by more than noise.
 
-**Table 8 — Keyers on synthetic noise (transcript level, 2,097 sentences per rate)**
+**Table 8 — Keyers on synthetic noise (transcript level, 2,430 sentences per rate)**
 
 | keyer | EER on @15% | EER on @30% | EER on @45% | precision @30% | harmful @30% | McNemar vs ours @30% |
 |---|---|---|---|---|---|---|
-| edit distance only | 0.56% | 1.68% | 2.94% | 93.9% | 0 | b=32, c=7, p < 0.001 |
-| exact spelling | 17.30% | 32.01% | 50.35% | 100.0% | 0 | b=807, c=0, p < 0.001 |
-| Soundex | 2.48% | 3.98% | 7.09% | 98.5% | 0 | b=97, c=7, p < 0.001 |
-| Metaphone | 3.77% | 8.04% | 14.29% | 98.5% | 0 | b=203, c=0, p < 0.001 |
-| NYSIIS | 1.64% | 3.46% | 7.09% | 99.2% | 0 | b=82, c=7, p < 0.001 |
-| Double Metaphone | 2.80% | 6.99% | 10.97% | 98.5% | 0 | b=175, c=0, p < 0.001 |
-| Bhasha (ours) | 0.14% | 0.80% | 2.10% | 99.1% | 0 | — |
+| edit distance only | 0.48% | 1.45% | 2.54% | 94.2% | 0 | b=32, c=13, p = 0.007 |
+| exact spelling | 17.47% | 32.18% | 50.65% | 100.0% | 0 | b=936, c=0, p < 0.001 |
+| Soundex | 2.48% | 4.15% | 7.72% | 98.5% | 0 | b=118, c=13, p < 0.001 |
+| Metaphone | 3.88% | 8.08% | 13.99% | 98.6% | 0 | b=234, c=0, p < 0.001 |
+| NYSIIS | 1.51% | 3.24% | 6.81% | 99.2% | 0 | b=90, c=13, p < 0.001 |
+| Double Metaphone | 2.91% | 6.78% | 10.63% | 98.6% | 0 | b=193, c=0, p < 0.001 |
+| Bhasha (ours) | 0.36% | 0.88% | 2.06% | 99.2% | 0 | — |
 
-Entity error with no correction at 30%: 32.1% (identical for every keyer). Bridge off vs ours: b=809, c=0, p < 0.001.
+Entity error with no correction at 30%: 32.2% (identical for every keyer). Bridge off vs ours: b=938, c=0, p < 0.001.
 
 **Table 9 — Keyers on the real-recogniser pilot (300 utterances, faster-whisper small)**
 
 | keyer | EER off | EER on | reduction | precision | beneficial | neutral | harmful |
 |---|---|---|---|---|---|---|---|
-| edit distance only | 33.8% | 32.4% | 4.1% | 42.1% | 32 | 38 | 6 |
-| exact spelling | 33.8% | 33.3% | 1.4% | 100.0% | 1 | 0 | 0 |
-| Soundex | 33.8% | 30.6% | 9.5% | 68.4% | 13 | 6 | 0 |
-| Metaphone | 33.8% | 31.5% | 6.8% | 64.7% | 11 | 6 | 0 |
-| NYSIIS | 33.8% | 32.4% | 4.1% | 81.8% | 9 | 2 | 0 |
-| Double Metaphone | 33.8% | 31.1% | 8.1% | 66.7% | 12 | 6 | 0 |
-| Bhasha (ours) | 33.8% | 30.1% | 10.8% | 60.0% | 12 | 8 | 0 |
+| edit distance only | 33.8% | 31.1% | 8.1% | 42.0% | 34 | 41 | 6 |
+| exact spelling | 33.8% | 33.3% | 1.4% | 50.0% | 1 | 1 | 0 |
+| Soundex | 33.8% | 30.1% | 10.8% | 66.7% | 14 | 7 | 0 |
+| Metaphone | 33.8% | 31.1% | 8.1% | 63.2% | 12 | 7 | 0 |
+| NYSIIS | 33.8% | 32.0% | 5.4% | 76.9% | 10 | 3 | 0 |
+| Double Metaphone | 33.8% | 30.1% | 10.8% | 66.7% | 14 | 7 | 0 |
+| Bhasha (ours) | 33.8% | 29.2% | 13.5% | 60.9% | 14 | 9 | 0 |
 
-Two readings. On synthetic noise the Indic-aware key is clearly better than every classic key (0.80% entity error at 30% noise against 3.5–8.0%, every pairwise McNemar p < 0.001), and better than the edit-distance bound alone (1.68%; b = 32, c = 7, p < 0.001): bucketing does more than restrict the search, it finds forms that are two or three edits away but one sound away. Exact spelling repairs nothing, which is the point of a phonetic key. On the real-recogniser pilot the keys are within a point of each other (30.1% ours, 30.6% Soundex, 31.1% Double Metaphone) and Soundex's precision is higher (68% against 60%): where the recogniser's errors are translations and merged tokens rather than phonetic substitutions, the choice of key barely matters and the guards of §4.5 matter more. Both readings are reported because together they say what the key is for.
+Two readings. On synthetic noise the Indic-aware key is clearly better than every classic key (0.88% entity error at 30% noise against 3.2–8.1%, every pairwise McNemar p < 0.001), and better than the edit-distance bound alone (1.45%; b = 32, c = 13, p = 0.007): bucketing does more than restrict the search, it finds forms that are two or three edits away but one sound away. Exact spelling repairs nothing, which is the point of a phonetic key. On the real-recogniser pilot the keys are within a point of each other (29.2% ours, 30.1% Soundex and Double Metaphone, 31.1% Metaphone) and Soundex's precision is higher (67% against 61%): where the recogniser's errors are translations and merged tokens rather than phonetic substitutions, the choice of key barely matters and the guards of §4.5 matter more. Both readings are reported because together they say what the key is for.
 
 ### 4.7 Which rules matter
 
@@ -219,24 +221,24 @@ Each of the 16 normalisation rules was removed in turn and the transcript-level 
 
 | # | rule | EER on without it | Δ vs full (points) | precision | harmful |
 |---|---|---|---|---|---|
-| 8 | k/kh/q/c merge | 2.97% | +2.17 | 99.0% | 0 |
-| 4 | v/w merge | 2.52% | +1.72 | 98.5% | 0 |
-| 15 | h/y dropped | 1.19% | +0.39 | 99.0% | 0 |
-| 0 | long a shortens (aa→a) | 0.80% | +0.00 | 99.1% | 0 |
-| 1 | ee/ie/ii/iy→i | 0.80% | +0.00 | 99.1% | 0 |
-| 2 | oo/uu→u | 0.80% | +0.00 | 99.1% | 0 |
-| 3 | ph→f | 0.80% | +0.00 | 99.1% | 0 |
-| 5 | s/sh/z merge | 0.80% | +0.00 | 99.1% | 0 |
-| 7 | t/d/th/dh collapse | 0.80% | +0.00 | 99.1% | 0 |
-| 9 | surviving c→k | 0.80% | +0.00 | 99.1% | 0 |
-| 10 | g/gh/j-cluster merge | 0.80% | +0.00 | 99.1% | 0 |
-| 11 | b/bh/p merge | 0.80% | +0.00 | 99.1% | 0 |
-| 12 | j | 0.80% | +0.00 | 99.1% | 0 |
-| 13 | n/m merge | 0.80% | +0.00 | 99.1% | 0 |
-| 14 | l/r merge | 0.80% | +0.00 | 99.1% | 0 |
-| 6 | ch/chh merge | 0.52% | -0.28 | 99.1% | 0 |
+| 8 | k/kh/q/c merge | 3.51% | +2.63 | 99.0% | 0 |
+| 4 | v/w merge | 2.48% | +1.60 | 98.6% | 0 |
+| 15 | h/y dropped | 1.21% | +0.33 | 99.2% | 0 |
+| 0 | long a shortens (aa→a) | 0.88% | +0.00 | 99.2% | 0 |
+| 1 | ee/ie/ii/iy→i | 0.88% | +0.00 | 99.2% | 0 |
+| 2 | oo/uu→u | 0.88% | +0.00 | 99.2% | 0 |
+| 3 | ph→f | 0.88% | +0.00 | 99.2% | 0 |
+| 5 | s/sh/z merge | 0.88% | +0.00 | 99.2% | 0 |
+| 7 | t/d/th/dh collapse | 0.88% | +0.00 | 99.2% | 0 |
+| 9 | surviving c→k | 0.88% | +0.00 | 99.2% | 0 |
+| 10 | g/gh/j-cluster merge | 0.88% | +0.00 | 99.2% | 0 |
+| 11 | b/bh/p merge | 0.88% | +0.00 | 99.2% | 0 |
+| 12 | j | 0.88% | +0.00 | 99.2% | 0 |
+| 13 | n/m merge | 0.88% | +0.00 | 99.2% | 0 |
+| 14 | l/r merge | 0.88% | +0.00 | 99.2% | 0 |
+| 6 | ch/chh merge | 0.45% | -0.43 | 99.2% | 0 |
 
-Three rules carry the synthetic result: the k/kh/q/c merge (+2.17 points without it), the v/w merge (+1.72) and the dropped initial h (+0.39); removing the ch/chh merge slightly *helps* (-0.28), because it was merging forms the corpus kept distinct. The eleven rules with a zero delta are not thereby useless: they are not exercised by this corpus under this corruption model, which substitutes a fixed list of confusions on catalogue words. That is a statement about the harness's coverage as much as about the key, and it is one more reason the real-recording study matters: the rules a real recogniser exercises will differ, and this table will be re-run on that data.
+Three rules carry the synthetic result: the k/kh/q/c merge (+2.63 points without it), the v/w merge (+1.60) and the dropped initial h (+0.33); removing the ch/chh merge slightly *helps* (-0.43), because it was merging forms the corpus kept distinct. The twelve rules with a zero delta are not thereby useless: they are not exercised by this corpus under this corruption model, which substitutes a fixed list of confusions on catalogue words. That is a statement about the harness's coverage as much as about the key, and it is one more reason the real-recording study matters: the rules a real recogniser exercises will differ, and this table will be re-run on that data.
 
 ### 4.8 Noise learned from real recognisers, and real telephone Hindi
 
@@ -250,15 +252,64 @@ The corruption model of §3.4 was written by us. To take the author out of the n
 | noise source | rate | EER off | EER on | reduction | precision | harmful |
 |---|---|---|---|---|---|---|
 | Gram Vaani (real Hindi telephone speech, Whisper hi) | 15% | 26.1% | 18.89% | 27.7% | 99.1% | 0 |
-| Gram Vaani (real Hindi telephone speech, Whisper hi) | 30% | 49.6% | 35.30% | 28.8% | 97.2% | 0 |
+| Gram Vaani (real Hindi telephone speech, Whisper hi) | 30% | 49.6% | 35.30% | 28.8% | 97.0% | 0 |
 | Gram Vaani (real Hindi telephone speech, Whisper hi) | 44% (native) | 70.5% | 50.83% | 27.9% | 96.0% | 0 |
-| Gram Vaani (real Hindi telephone speech, Whisper hi) | 45% | 70.9% | 51.50% | 27.4% | 95.5% | 0 |
+| Gram Vaani (real Hindi telephone speech, Whisper hi) | 45% | 70.9% | 51.47% | 27.4% | 95.4% | 0 |
 | pilot (synthetic Indian-English speech, Whisper en) | 15% | 22.2% | 14.80% | 33.4% | 99.4% | 0 |
-| pilot (synthetic Indian-English speech, Whisper en) | 30% | 42.8% | 28.73% | 32.9% | 98.2% | 0 |
-| pilot (synthetic Indian-English speech, Whisper en) | 41% (native) | 58.4% | 39.69% | 32.0% | 96.6% | 0 |
-| pilot (synthetic Indian-English speech, Whisper en) | 45% | 63.0% | 43.69% | 30.7% | 94.5% | 0 |
+| pilot (synthetic Indian-English speech, Whisper en) | 30% | 42.8% | 28.73% | 32.9% | 98.1% | 0 |
+| pilot (synthetic Indian-English speech, Whisper en) | 41% (native) | 58.4% | 39.69% | 32.0% | 96.5% | 0 |
+| pilot (synthetic Indian-English speech, Whisper en) | 45% | 63.0% | 43.69% | 30.7% | 94.1% | 0 |
 
 Three things follow. First, real recognisers *drop and merge* words at rates the hand-written model never produced (26% of tokens dropped on telephone Hindi): a dropped entity cannot be repaired by any substitution-based layer, so entity error under learned noise is high before correction and stays high after it. Second, within that limit the bridge still does what it claims: a 28% relative reduction at the Gram Vaani native rate and 32% at the pilot's, with precision above 95% and zero harmful corrections, because the confusions a real recogniser makes on *recognised* tokens are the phonetic ones the key was written for. Third, the headline 97% reduction of §4.2 is a property of the hand-written model, which substitutes and never drops; the honest range for "what the bridge removes" is 28–33% of entity errors under data-shaped noise and 96–98% under the authors' model, and the report quotes both. Recognisers that keep tokens (biasing, Hinglish decoding) move a deployment towards the first figure's ceiling; the drops are the next target.
+
+### 4.9 Merged tokens: a split rule, and the cost it nearly had
+
+The first finding of §4.5 was that Whisper runs words together ("kal subah root canal" came back as "KAL SUBHAHROOT KANAL"), and that no rule over single tokens can repair a token that is two words. The repair added for it is a pre-pass with conditions stated so that each can be tested. A token is split only if it is long (eight letters or more), the recogniser was unsure of it, and the lexicon cannot explain it as a whole, that is, no catalogue form lies within the ordinary rule's reach; it is then split at the first point where both halves are known words (a grammar or frame word, or a word of a catalogue form, each within one edit of its sound key) and at least one half is a catalogue word. "subhahroot" becomes "subah root", and the n-gram pass then repairs "root kanal" as before. Two grammar words glued together are left alone, because a split that frees no catalogue word has nothing to offer.
+
+**Table 12 — The merged-token rule on the pilot (300 utterances, English decoding, no hints)**
+
+| bridge | EER off (%) | EER on (%) | reduction (%) | precision (%) | beneficial | neutral | harmful |
+|---|---|---|---|---|---|---|---|
+| guards of §4.5 | 33.8 | 30.1 | 10.8 | 60.0 | 12 | 8 | 0 |
+| guards and the merged-token rule | 33.8 | 29.2 | 13.5 | 60.9 | 14 | 9 | 0 |
+
+Two more entities are recovered in 300 utterances, through two splits ("subhahroot" → "subah root", and in the biased run of §4.11 "democlass" → "demo class" and "subavteet" → "subah teeth"), at no cost in precision and with no harmful correction. The third condition, that the whole token must be unexplained, was not found on the pilot but by the synthetic harness. The first version of the rule split before the ordinary rule ran, and at 30% synthetic noise "Koolkarni", two edits from Kulkarni, became the grammar words "ko karni" before the lexicon saw it: entity error rose from 0.80% to 1.18% with the harmful count still zero, because a neutral correction can pre-empt a beneficial one and the harmful count, defined over the heard token, cannot see that. A probe over the 30% sample (`research/harness/split_probe.py`) counted nine sentences where the split fired, all nine worse; with the ordering condition it fires on none, and Tables 1, 8 and 10 are unchanged by the rule within their intervals. Under the learned noise of §4.8 the rule changes nothing material (Table 11 was regenerated with it: every reduction is identical and precision moves by at most 0.4 points), as expected, since the learned model's merges are of corpus words and the rule touches a merge only when a catalogue word is inside it.
+
+### 4.10 Calibrating the confidence gate, and finding it is not where the safety comes from
+
+§4.5 ended by saying the confidence gate needs per-recogniser calibration before condition 1 can be trusted. `haanji/bhasha/calibration.py` does the calibration: every word of a (heard, truth) pair is labelled right or wrong by alignment, "confidence below *t*" is treated as a detector of wrong words, the ROC of that detector is drawn, and *t* is set at Youden's J (the largest TPR − FPR); the area under the curve says how much the confidences know at all. The engine loads the result (`Calibration.load`, matched to a recogniser name by longest prefix) into the bridge's `conf_high`.
+
+**Table 13 — Calibrated thresholds**
+
+| recogniser and data | words | wrong (%) | AUC | threshold | TPR | FPR |
+|---|---|---|---|---|---|---|
+| faster-whisper small, English, the pilot | 1,928 | 65.0 | 0.67 | 0.64 | 0.62 | 0.34 |
+| the same, biased with the pack vocabulary (§4.11) | 1,846 | 50.2 | 0.62 | 0.65 | 0.65 | 0.44 |
+| faster-whisper small, Hindi, Gram Vaani (§4.8) | 2,266 | 69.6 | 0.77 | 0.73 | 0.78 | 0.38 |
+
+**Table 14 — The gate against downstream entity error on the pilot (English decoding)**
+
+| gate | 0.50 | 0.60 | 0.70 | 0.80 | 0.85 (default) | 0.90 and above, or no gate |
+|---|---|---|---|---|---|---|
+| EER on (%) | 31.5 | 30.6 | 31.1 | 29.7 | 29.2 | 29.2 |
+| precision (%) | 86 | 67 | 63 | 64 | 61 | 61 |
+| beneficial | 6 | 8 | 12 | 14 | 14 | 14 |
+| harmful | 0 | 0 | 0 | 0 | 0 | 0 |
+
+Three things follow. First, the confidences are weakly informative: an AUC of 0.62–0.77 (0.5 is chance) means Whisper's word probability separates its right words from its wrong ones only a little, which is consistent with 80% of all words falling below 0.85 in §4.5. Second, the calibrated thresholds make the bridge worse, not better: at 0.64 the pilot's entity error falls to 31.1% instead of 29.2% (8.1% relative instead of 13.5%), and on the biased run the calibrated 0.65 leaves no correction at all (15.1% → 15.1%), because the calibration optimises the classification of *words* while the quantity that matters is the entity error after a correction layer that already has condition 2 and the guards. Third, the sweep in Table 14 says where the safety actually comes from on this recogniser: the harmful count is zero at every gate including none at all, so condition 1 contributes nothing to safety here, and every tightening of it only removes beneficial corrections. The default therefore stays at 0.85, and the calibration is kept as a tool rather than a setting: a deployment on a recogniser whose confidences are informative runs it on its own pairs in under a minute, and the ROC it records says whether the gate is worth having before the threshold is applied. Two caveats: the thresholds were fitted and the sweep run on the same 300 utterances; and the Gram Vaani pairs carry no catalogue entity, so the Hindi threshold has no downstream test.
+
+### 4.11 Biasing the recogniser with the pack vocabulary
+
+§4.1 describes the lexicon's surface forms being handed to the recogniser as hints, and §4.5 deliberately withheld them to measure the repair alone. `research/collect/transcribe.py --bias` passes the business's name and its services, staff, places and brands to Whisper as its initial prompt, which is the only biasing mechanism Whisper has (the keyword boosting of a hosted recogniser such as Deepgram is the equivalent on the telephony path), and the same 300 recordings were transcribed again.
+
+**Table 15 — Biasing on the pilot (300 utterances, 219 entities; bridge with every rule)**
+
+| decoding | WER (%) | EER off (%) | EER on (%) | reduction (%) | precision (%) | beneficial | neutral | harmful |
+|---|---|---|---|---|---|---|---|---|
+| English, no hints (Table 6) | 88.7 | 33.8 | 29.2 | 13.5 | 60.9 | 14 | 9 | 0 |
+| English, pack vocabulary as the prompt | 68.5 | 15.1 | 14.2 | 6.1 | 42.9 | 3 | 4 | 0 |
+
+Biasing is the largest single lever in this report. Word error falls by twenty points and the entity error rate *before any repair* halves, from 33.8% to 15.1%, because the recogniser now keeps the catalogue words it was paraphrasing or translating: per pack, Kolkata goes from 37.0% to 5.6% unrepaired entity error, the coaching institute from 31.4% to 9.8%, the salon from 45.1% to 13.7%. After it the bridge has less to do and does it: three beneficial corrections in 300 utterances (*root kanal* → root canal twice, and the split *democlass* → demo class), 6.1% relative, no harmful correction. One correction in the biased run shows a gap in the harmful count: *meen* → Meena, the laboratory's receptionist, from a mishearing of *mein*, invented an entity the caller never said. The harmful count, defined over the heard token, calls it neutral; the entity error rate, which counts spurious entities as well as missed ones, charges it, and it is why the laboratory's row and Tara's row move the wrong way by one entity each (29.4% → 31.4%, 24.7% → 26.0%). Another, *need* → NEET on translated sentences ("We need time for the campus visit"), is neutral by both measures and wrong by inspection: a general recogniser that translates produces English function words that collide with a pack's brands, and that is a guard the pilot suggests but, having been found on the test data, does not yet justify. The reading is that the recommended configuration is both mechanisms, biasing first and the bridge as the safety net behind it, which is what the second row measures; and that the next lever for a deployment is a recogniser that decodes Hinglish natively rather than translating it, which no amount of post-correction can replace.
 
 ## 5. Speculative Turn Execution
 
@@ -281,16 +332,16 @@ A budget bounds the cost of wrong guesses: at most 2 speculations in flight, 3 p
 
 | configuration | task success (%) | EER (%) | read-turn p50 (ms) | read-turn p90 (ms) | write-turn p90 (ms) | all-tool p90 (ms) | spec. hit rate (%) | wasted | unconfirmed writes |
 |---|---|---|---|---|---|---|---|---|---|
-| full | 100.0 ± 0.0 | 0.0 ± 0.0 | 161 ± 22 | 270 ± 29 | 233 ± 33 | 251 ± 31 | 46.2 ± 0.0 | 42.0 | 0 |
-| no_speculation | 100.0 ± 0.0 | 0.0 ± 0.0 | 286 ± 7 | 374 ± 13 | 228 ± 7 | 349 ± 10 | 0.0 ± 0.0 | 0.0 | 0 |
-| no_bhasha | 66.7 ± 0.0 | 69.2 ± 0.0 | 194 ± 5 | 306 ± 16 | 226 ± 5 | 278 ± 18 | 21.7 ± 0.0 | 54.0 | 0 |
-| baseline | 66.7 ± 0.0 | 69.2 ± 0.0 | 206 ± 3 | 332 ± 23 | 221 ± 18 | 306 ± 24 | 0.0 ± 0.0 | 0.0 | 0 |
+| full | 100.0 ± 0.0 | 0.0 ± 0.0 | 142 ± 15 | 238 ± 26 | 194 ± 55 | 220 ± 20 | 41.9 ± 0.0 | 54.0 | 0 |
+| no_speculation | 100.0 ± 0.0 | 0.0 ± 0.0 | 246 ± 8 | 310 ± 11 | 194 ± 22 | 297 ± 5 | 0.0 ± 0.0 | 0.0 | 0 |
+| no_bhasha | 66.7 ± 0.0 | 66.7 ± 0.0 | 167 ± 7 | 260 ± 30 | 164 ± 43 | 224 ± 26 | 19.2 ± 0.0 | 63.0 | 0 |
+| baseline | 66.7 ± 0.0 | 66.7 ± 0.0 | 180 ± 12 | 275 ± 12 | 163 ± 40 | 249 ± 22 | 0.0 ± 0.0 | 0.0 | 0 |
 
 <figure><img src="figures/fig3_latency.svg" alt="Read-turn latency with and without speculation"><figcaption>Figure 3. Engine-side latency of read-only turns (p50, p90) and of write turns (p90), with and without speculation. Nominal milliseconds.</figcaption></figure>
 
-On the authored scenarios with clean transcripts, every configuration with the bridge on reaches the expected outcome in 100.0% of calls, and the two bridge-off configurations fail 7 of the 21, every one of them a scenario whose hand-written corruption hits a catalogue entity (two more such scenarios survive because the dialogue happens to tolerate that particular mangling). Speculation changes no outcome and no transcript. It lowers the median latency of read-only turns from 286 ms to 161 ms (43.8% lower) and the p90 from 374 ms to 270 ms, at a hit rate of 46.2% over 78 speculations per run, saving 250 ms per hit. About 42 speculations per run are wasted, bounded by the budget.
+On the authored scenarios with clean transcripts, every configuration with the bridge on reaches the expected outcome in 100.0% of calls, and the two bridge-off configurations fail 8 of the 24, every one of them a scenario whose hand-written corruption hits a catalogue entity (two more such scenarios survive because the dialogue happens to tolerate that particular mangling). Speculation changes no outcome and no transcript. It lowers the median latency of read-only turns from 246 ms to 142 ms (42.3% lower) and the p90 from 310 ms to 238 ms, at a hit rate of 41.9% over 93 speculations per run, saving 218 ms per hit. About 54 speculations per run are wasted, bounded by the budget.
 
-Three things in the table are reported rather than averaged away. First, write turns are never speculated, so the booking turn itself is not faster: its p90 is 228 ms without speculation and 233 ms with it, and it still waits for the caller's confirmation and the ledger. The p90 over *all* tool turns does fall (349 → 251 ms) only because most tool turns in a booking call are reads. Second, the hit rate is well under 100%: the predictor fires on partials that turn out to want a different date or no tool at all. Third, the two runtime contributions interact: with the bridge off, the hit rate drops to 21.7%, because the predictor derives its arguments from the same mangled entities the policy does, and the real turn then asks for something else. The second and third are the expected shape of a correct speculation scheme, and the second is the quantity a learned predictor trained on real calls would improve.
+Three things in the table are reported rather than averaged away. First, write turns are never speculated, so the booking turn itself is not faster: its p90 is 194 ms with speculation and without it, and it still waits for the caller's confirmation and the ledger. The p90 over *all* tool turns does fall (297 → 220 ms) only because most tool turns in a booking call are reads. Second, the hit rate is well under 100%: the predictor fires on partials that turn out to want a different date or no tool at all. Third, the two runtime contributions interact: with the bridge off, the hit rate drops to 19.2%, because the predictor derives its arguments from the same mangled entities the policy does, and the real turn then asks for something else. The second and third are the expected shape of a correct speculation scheme, and the second is the quantity a learned predictor trained on real calls would improve.
 
 ### 5.3 Concurrency
 
@@ -310,6 +361,19 @@ Speculation and the policy are measured per call above; a receptionist also has 
 Latency is flat across the ladder and no request fails; throughput scales with concurrency because the engine's own work per turn is a few milliseconds and the rest is waiting. The expected-outcome rate falls because all callers in a level share one tenant calendar and ask for the same morning: once it is full the agent correctly offers another time or takes a callback, which the fixed script does not follow, so those calls end abandoned or as leads. That is the calendar working, not the engine failing, and it is why the column is reported next to the error count rather than folded into it. The numbers are engine-side; a speech vendor's round trip and a telephony hop will dominate a deployment, and this measurement says only that the engine will not be the bottleneck before them.
 
 **Cost.** The engine process spent 0.0085 CPU-seconds per call (3.28 CPU-ms per turn) across the ladder; on a ₹600/month single-vCPU instance that is ≈ ₹0.000000 of infrastructure per call (0.0 millionths of a rupee), against the ₹0.20 the cost model in `insights.py` assumes — the assumption is conservative by five orders of magnitude, and the per-minute speech vendors (telephony ≈ ₹0.50, recognition ≈ ₹0.90, synthesis ≈ ₹0.45 per minute) are the whole of the ≈ ₹3 per call. A receptionist at ₹12,000 a month answering 50 calls a day costs ≈ ₹9.2 per call.
+
+### 5.4 A learned predictor, and why the hand-set one stays
+
+§5.2 named the hit rate as the headroom a learned predictor would take. `research/harness/predictor_fit.py` tries it on the data the harness has. Every partial transcript of every scenario is logged (156 partials over the six packs, 44 of them followed by a read-only tool call in the real turn), each with the eight features the hand-set scorer uses (date, time and booking words, question, identity and cancel words, length, and whether a service is mentioned); a logistic predictor is fitted by gradient descent, validated leave-one-pack-out, refitted on everything, and then run through the benchmark against the hand-set weights.
+
+**Table 16 — Hand-set against fitted predictor**
+
+| | precision | recall | hit rate (%) | speculations started | wasted | read-turn p50 (ms) |
+|---|---|---|---|---|---|---|
+| hand-set weights | 0.86 | 0.82 | 41.9 | 93 | 54 | 116 |
+| fitted weights | 1.00 | 0.71 | 44.4 | 81 | 45 | 160 |
+
+Cross-validation gives precision 1.00 in every held-out pack and recall from 0.25 (coaching institute) to 1.00. The benchmark row is a single run at the harness's default settings: its hit rate agrees with Table 4's five-seed mean and its latencies are one sample of that distribution; the comparison within the row is paired. The fitted predictor is cautious: it never fires on a partial that wants no tool, misses three in ten that do, starts 13% fewer speculations, wastes fewer, and lifts the hit rate by two and a half points; and the median read turn is 44 ms *slower*, because the turns it declines are exactly the ones where a hit saves the most. For latency, recall is what matters: a wasted speculation costs an otherwise idle engine a cheap read, a missed one costs the caller the whole tool time. The hand-set weights therefore stay the default, and the fitting script is kept as the harness for the data that would change the answer, partials from real calls, which the live feed of the demo server records as they happen.
 
 ## 6. Pramaan Ledger
 
@@ -366,7 +430,7 @@ The Claude column is empty in this version of the report because the run require
 
 **Construct.** Entity error rate is defined over the catalogue entities the pack declares; a recogniser error in a date word or a phone number is invisible to it, though not to task success, which is why both are reported. "Task success" is agreement with the outcome the scenario author expected, which for handoffs and refusals is the right behaviour, not a booking.
 
-**Internal.** The corruption model is a model: it reproduces the substitutions Indian-English recognisers make, in the directions they make them, but it was written by the same team as the correction layer. We mitigated this by making it corrupt words outside every lexicon and by counting harmful corrections explicitly; the zero harmful count under it is evidence the layer is conservative on that distribution, and §4.5 shows it was not conservative on a real recogniser's distribution until two of its assumptions (calibrated confidence, no very short tokens) were made explicit. The guards were then evaluated on the data that motivated them. Scenarios are scripted, so a clarification question the caller "does not answer" counts as a failure the way a real caller would not. Speculation is measured against the mock recogniser's partials, which arrive at a realistic word rate but with no real acoustic uncertainty.
+**Internal.** The corruption model is a model: it reproduces the substitutions Indian-English recognisers make, in the directions they make them, but it was written by the same team as the correction layer. We mitigated this by making it corrupt words outside every lexicon and by counting harmful corrections explicitly; the zero harmful count under it is evidence the layer is conservative on that distribution, and §4.5 shows it was not conservative on a real recogniser's distribution until two of its assumptions (calibrated confidence, no very short tokens) were made explicit. The guards were then evaluated on the data that motivated them, and so were the merged-token rule, the calibrated thresholds and the gate sweep of §4.9–4.10 and the biasing comparison of §4.11: all on the same 300 pilot utterances, so each gain is optimistic in the same way. Scenarios are scripted, so a clarification question the caller "does not answer" counts as a failure the way a real caller would not. Speculation is measured against the mock recogniser's partials, which arrive at a realistic word rate but with no real acoustic uncertainty.
 
 **External.** All latencies are engine-side, under simulated time, on one machine: they measure what HaanJi adds and what speculation removes, not vendor round-trip time, which in a deployment will dominate. No real audio was recognised and no real caller was involved in any number above; the browser demo and the WhatsApp channel have handled real text and speech, but informally. Five packs and 21 scenarios are a small, author-written sample of Indian small businesses.
 
@@ -378,12 +442,13 @@ The Claude column is empty in this version of the report because the run require
 2. **Real users.** The study kit is in place: a protocol (`docs/study/protocol.md`), a participant page (`/study`) with consent, three timed task cards and the System Usability Scale (Brooke 1996) in Hinglish, and an analysis script that reports task success with Wilson intervals and SUS with a t-interval. The study itself (8–10 participants) has not been run.
 3. **The hosted-model ablation** (§7) with the key in place, including the speculation hit rate under model-derived arguments and a token-cost line.
 4. **Out-of-lexicon failures.** The calls that still fail under noise are ones where a date or number word was corrupted. A separate, small closed-vocabulary repair for dates, times and numbers, with the same two-condition rule, is the obvious next layer.
-5. **Telephony.** The live demo uses the browser's recogniser and a WhatsApp text channel; a PSTN trunk with streaming recognition and synthesis is the remaining integration, and vendor latency is the quantity to measure there.
-6. **A learned predictor.** The speculation hit rate (46.2%) is the headroom; a predictor trained on logged partials would raise it without touching the correctness properties.
+5. **Telephony.** A Twilio Media Streams bridge with streaming recognition (Deepgram) and synthesis (ElevenLabs) is built and tested against fakes; a real call has not been placed, and vendor latency is the quantity to measure when one is.
+6. **A learned predictor.** Tried in §5.4 on the harness's own partials: more precise, less eager, and slower at the median, so the hand-set weights stay. The version that could change that trains on partials from real calls, which the live feed records.
+7. **A Hinglish-capable decoder.** Biasing (§4.11) halves entity error before any repair; a recogniser that decodes code-mixed speech natively, or Whisper's Hindi mode with the transliteration of §4.8, is the next experiment on the same 300 files, and the one most likely to move the pilot's numbers.
 
 ## 10. Conclusion
 
-A voice receptionist for Indian small businesses fails for three specific reasons: it does not know the business's words, it is slow at the turn, and it cannot prove what was agreed. HaanJi addresses each with a mechanism that is small, inspectable and measured. Bhasha Bridge removes most catalogue entity errors under heavy synthetic noise without damaging a correct transcript, and the gain survives into end-to-end task success and into a second language; on a real recogniser's output it needed two more stated rules to stay safe and then helped far less, and under noise learned from real telephone Hindi it removes about a third of the entity errors rather than nearly all, because real recognisers drop words as often as they mangle them. That measurement sends the next piece of work to recogniser biasing and to volunteers' recordings rather than to more synthetic noise. Speculative Turn Execution takes a large fraction off the median read-turn latency while leaving every transcript identical. The Pramaan Ledger makes every booking carry its own evidence and makes an unconfirmed booking impossible rather than unlikely, a property that holds whether the dialogue is driven by the deterministic policy or by a hosted model. The evaluation is reproducible from a clean checkout and is honest about its synthetic origins; the next two studies replace synthetic noise with real recordings and scripted callers with real ones.
+A voice receptionist for Indian small businesses fails for three specific reasons: it does not know the business's words, it is slow at the turn, and it cannot prove what was agreed. HaanJi addresses each with a mechanism that is small, inspectable and measured. Bhasha Bridge removes most catalogue entity errors under heavy synthetic noise without damaging a correct transcript, and the gain survives into end-to-end task success and into a second language; on a real recogniser's output it needed two more stated rules to stay safe and then helped far less, and under noise learned from real telephone Hindi it removes about a third of the entity errors rather than nearly all, because real recognisers drop words as often as they mangle them. That measurement sent the next piece of work to recogniser biasing, which was then tried: with the pack vocabulary in the recogniser's prompt, entity error halves before the bridge runs, and the bridge's role becomes the safety net behind it. Calibrating the bridge's confidence gate turned out not to matter, and the report says so: on Whisper's probabilities the gate contributes nothing to safety, the stated guards and the second condition carry all of it. Speculative Turn Execution takes a large fraction off the median read-turn latency while leaving every transcript identical. The Pramaan Ledger makes every booking carry its own evidence and makes an unconfirmed booking impossible rather than unlikely, a property that holds whether the dialogue is driven by the deterministic policy or by a hosted model. The evaluation is reproducible from a clean checkout and is honest about its synthetic origins; the next two studies replace synthetic noise with real recordings and scripted callers with real ones.
 
 ## References
 
@@ -441,18 +506,26 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 223 tests, about 4 s
-python -m haanji.cli selftest               # 21 scenarios reach their expected outcome
+pytest -q                                   # 317 tests, about 6 s
+python -m haanji.cli selftest               # 24 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
                                             # report_data.json, report_tables.md, figures/
 python research/harness/llm_ablation.py     # needs ANTHROPIC_API_KEY for the claude half
 python research/collect/synth.py && python research/collect/transcribe.py --manifest research/collect/data/synthetic/manifest.jsonl --out research/collect/data/synthetic/pairs.jsonl && python research/collect/evaluate.py --pairs research/collect/data/synthetic/pairs.jsonl
                                             # the §4.5 pilot (macOS voices, faster-whisper)
-python research/harness/report_pdf.py       # this document as PDF
+python research/harness/baselines.py        # §4.6–4.7: research/baselines.json
+python research/harness/learned_noise.py    # §4.8: research/learned_noise.json (needs the Gram Vaani pairs)
+python research/harness/split_probe.py      # §4.9: where the merged-token rule fires on synthetic noise
+python research/harness/calibrate.py        # §4.10: research/calibration.json
+python research/collect/transcribe.py --bias --manifest research/collect/data/synthetic/manifest.jsonl --out research/collect/data/synthetic/pairs_biased.jsonl && python research/collect/evaluate.py --pairs research/collect/data/synthetic/pairs_biased.jsonl --out research/real_asr_biased.json
+                                            # §4.11: the biased pilot
+python research/harness/predictor_fit.py    # §5.4: research/predictor_fit.json
+python research/harness/load_test.py        # §5.3: research/load_test.json
+python research/harness/report_pdf.py       # this document as PDF; --paper for research/PAPER.pdf
 ```
 
-## Appendix B. The packaged scenarios
+## Appendix B. The packaged scenarios (24)
 
 | pack | scenario | expected outcome | caller turns | what it exercises |
 |---|---|---|---|---|
@@ -477,25 +550,46 @@ python research/harness/report_pdf.py       # this document as PDF
 | clinic_kolkata | benglish_booking_with_noise | BOOKED | 4 | Benglish; service mangled, repaired from the lexicon |
 | clinic_kolkata | benglish_price_faq | FAQ_ANSWERED | 2 | Benglish knowledge base |
 | clinic_kolkata | benglish_emergency | HANDED_OFF | 1 | Benglish guardrail |
+| clinic_pune | marathi_booking_with_noise | BOOKED | 4 | Marathinglish; service mangled, repaired from the lexicon |
+| clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
+| clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (223 tests)
+## Appendix C. Test inventory (317 tests)
 
 | file | tests | what it guards |
 |---|---|---|
-| test_pipeline.py | 31 | the turn controller, barge-in, confirmation flow, receipts per call, speculation on/off identity |
-| test_packs.py | 25 | every pack validates and every scenario reaches its outcome |
+| test_pipeline.py | 34 | the turn controller, barge-in, confirmation flow, receipts per call, speculation on/off identity, a Devanagari turn |
+| test_web.py | 30 | the demo server, design tokens, relative URLs, no emoji (every page, including the research pages) |
+| test_packs.py | 29 | every pack validates and every scenario reaches its outcome |
+| test_bhasha.py | 28 | the two-condition rule, name protection, harmful-correction detection, the pilot's guards, the merged-token rule and its ordering |
 | test_phonetics.py | 24 | each key rule, the known b/p collision |
 | test_backend_guardrails.py | 24 | availability, bookings, guardrail subject/qualifier pairs |
-| test_web.py | 26 | the demo server, design tokens, relative URLs, no emoji (every page, including the research pages) |
 | test_pramaan.py | 19 | chain, signatures, refusal of unconfirmed writes, verifier, daily anchor |
-| test_bhasha.py | 22 | the two-condition rule, name protection, harmful-correction detection, the pilot's guards |
 | test_speculation.py | 14 | purity, argument identity, freshness, invalidation, budget |
 | test_claude_adapter.py | 10 | the hosted-model adapter and its confirmation gate |
-| test_research_kit.py | 8 | the recording page, the study page, scoring of real recogniser pairs |
 | test_whatsapp_webhook.py | 9 | Meta signature, dedup, handshake |
+| test_auth.py | 9 | one-time codes over WhatsApp, signed scoped tokens, roles, per-pack scope, lockout |
+| test_research_kit.py | 8 | the recording page, the study page, scoring of real recogniser pairs |
+| test_trust.py | 6 | receipt links in replies, daily anchors and their signatures, the owner's digest |
 | test_text_channels.py | 6 | the WhatsApp simulator and text turns |
+| test_pramaan_properties.py | 6 | property-based: random receipts and mutations; truncation is caught by the anchor, not the chain |
+| test_onboard.py | 5 | the onboarding wizard's draft is a valid pack whose generated scenarios pass |
+| test_devanagari.py | 5 | transliteration both ways, the toggle endpoint, a Hindi-script turn |
+| test_calendar.py | 5 | iCalendar feed, per-booking .ics, Google Calendar through a fake |
+| test_telephony.py | 4 | the Twilio media-stream bridge with fake recogniser and synthesiser |
+| test_reschedule.py | 4 | a booking moved through the ordinary confirmation flow and sealed with its previous receipt |
+| test_privacy.py | 4 | the per-customer vault, access and erasure, crypto-shredding |
+| test_live.py | 4 | the event bus and the server-sent feed |
+| test_hardening.py | 4 | security headers, per-client rate limiting of writes, the signed webhook exempt |
+| test_calibration.py | 4 | ROC, Youden's J, loading thresholds per recogniser |
+| test_takeover.py | 3 | human takeover and hand-back; WhatsApp waits for the person |
+| test_stats.py | 3 | McNemar and the paired t-interval |
+| test_ops.py | 3 | Prometheus text, spans and the ops view, the refused-write counter |
+| test_marathi.py | 3 | the third language end to end |
+| test_corrupt_learned.py | 3 | the learned corruption model fits and replays |
 | test_benglish.py | 3 | the second language end to end |
 | test_study_analysis.py | 2 | the study summary arithmetic |
+| test_push.py | 2 | VAPID keys, subscriptions, dropping dead endpoints |
 
 ## Appendix D. Diagrams
 

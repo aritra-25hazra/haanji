@@ -106,7 +106,7 @@ export function Chip({ kind, mono = false, children }:
 }
 
 const OUTCOME_KIND: Record<string, "ok" | "warn" | "bad" | "muted" | undefined> = {
-  BOOKED: "ok", FAQ_ANSWERED: undefined, LEAD_CAPTURED: "warn", HANDED_OFF: "bad", ABANDONED: "muted", IN_PROGRESS: "muted",
+  BOOKED: "ok", RESCHEDULED: "ok", FAQ_ANSWERED: undefined, LEAD_CAPTURED: "warn", HANDED_OFF: "bad", ABANDONED: "muted", IN_PROGRESS: "muted",
 };
 export function OutcomeChip({ outcome }: { outcome: string | null }) {
   const o = outcome || "IN_PROGRESS";

@@ -13,6 +13,7 @@ import type {
   User,
   Ops,
   CustomerRecord,
+  LiveSession,
 } from "./types";
 
 export const ENGINE_BASE = "/engine";
@@ -80,6 +81,13 @@ export const engine = {
   addUser: (u: { phone: string; role: string; packs: string[]; name: string }) => request<{ user: User }>("api/auth/users", { method: "POST", body: JSON.stringify(u) }),
   removeUser: (phone: string) => request<{ removed: boolean }>(`api/auth/users/${encodeURIComponent(phone)}`, { method: "DELETE" }),
   ops: (pack: string) => request<Ops>(`api/ops?${q(pack)}`),
+  liveSessions: (pack: string) => request<{ sessions: LiveSession[] }>(`api/sessions/live?${q(pack)}`),
+  takeover: (sid: string) => request<{ ok: boolean; human: boolean }>(`api/sessions/${encodeURIComponent(sid)}/takeover`, { method: "POST" }),
+  handback: (sid: string) => request<{ ok: boolean; human: boolean }>(`api/sessions/${encodeURIComponent(sid)}/handback`, { method: "POST" }),
+  humanReply: (sid: string, text: string) => request<{ ok: boolean; reply: string }>(`api/sessions/${encodeURIComponent(sid)}/human-reply`, { method: "POST", body: JSON.stringify({ text }) }),
+  pushKey: () => request<{ public_key: string }>("api/push/vapid-public-key"),
+  pushSubscribe: (pack: string, subscription: unknown, label: string) => request<{ ok: boolean; subscribers: number }>("api/push/subscribe", { method: "POST", body: JSON.stringify({ pack, subscription, label }) }),
+  pushTest: (pack: string) => request<{ sent: number; dropped: number; failed: number }>(`api/push/test?${q(pack)}`, { method: "POST" }),
   customerRecord: (pack: string, phone: string) => request<CustomerRecord>(`api/privacy/customer/${encodeURIComponent(phone)}?${q(pack)}`),
   eraseCustomer: (pack: string, phone: string) => request<Record<string, number | boolean>>(`api/privacy/customer/${encodeURIComponent(phone)}?${q(pack)}`, { method: "DELETE" }),
   privacyPolicy: () => request<{ retention_days: number; consent_line: string | null; vault: { keys: number; shredded: number } }>("api/privacy/policy"),
@@ -218,7 +226,7 @@ export function subscribeLive(pack: string, onEvent: (e: LiveEvent) => void): ()
     const handle = (ev: MessageEvent) => {
       try { const e = JSON.parse(ev.data as string) as LiveEvent; since = Math.max(since, e.seq); onEvent(e); } catch { /* ignore */ }
     };
-    for (const kind of ["session.started", "partial", "turn", "session.ended"]) es.addEventListener(kind, handle as EventListener);
+    for (const kind of ["session.started", "partial", "turn", "session.ended", "session.takeover", "session.handback", "privacy.erased"]) es.addEventListener(kind, handle as EventListener);
     es.onerror = () => { es?.close(); es = null; startPolling(); };
   } else {
     startPolling();
@@ -230,3 +238,18 @@ export function subscribeLive(pack: string, onEvent: (e: LiveEvent) => void): ()
 const DEV_KEY = "haanji.devanagari";
 export function devanagariWanted(): boolean { try { return localStorage.getItem(DEV_KEY) === "1"; } catch { return false; } }
 export function setDevanagariWanted(v: boolean): void { try { localStorage.setItem(DEV_KEY, v ? "1" : "0"); } catch { /* private mode */ } }
+
+
+/** Ask the browser for push permission, subscribe through the service worker,
+ *  and register the subscription with the engine. Returns a human-readable note. */
+export async function enablePush(pack: string): Promise<string> {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return "Is browser mein push notifications nahi hain.";
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") return "Permission nahi mili.";
+  const reg = await navigator.serviceWorker.register("/sw.js");
+  const { public_key } = await engine.pushKey();
+  const key = Uint8Array.from(atob(public_key.replace(/-/g, "+").replace(/_/g, "/").padEnd(public_key.length + ((4 - (public_key.length % 4)) % 4), "=")), (c) => c.charCodeAt(0));
+  const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+  const r = await engine.pushSubscribe(pack, sub.toJSON(), navigator.userAgent.slice(0, 40));
+  return `Notifications on — ${r.subscribers} device(s) is pack ke liye.`;
+}

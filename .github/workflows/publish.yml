@@ -1,0 +1,37 @@
+name: publish
+
+# Builds the engine wheel and publishes it to PyPI through trusted publishing
+# (no token in the repository). Two things the repository owner does once:
+#   1. on PyPI, add this repository, this workflow file and the `pypi`
+#      environment as a trusted publisher of the `haanji-engine` project;
+#   2. on GitHub, set the repository variable PYPI_PUBLISH to `true`.
+# Until both are done a release only builds and checks the wheel.
+on:
+  release: { types: [published] }
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: build the sdist and the wheel, with the packs inside
+        run: make dist
+      - name: check the metadata PyPI will show
+        run: pip install twine && twine check engine/dist/*
+      - uses: actions/upload-artifact@v4
+        with: { name: dist, path: engine/dist/ }
+
+  publish:
+    needs: build
+    if: github.event_name == 'release' && vars.PYPI_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions: { id-token: write }
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: dist, path: dist/ }
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with: { packages-dir: dist/ }

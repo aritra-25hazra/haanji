@@ -27,8 +27,8 @@ implemented, measured and testable rather than described:
 
 | | What it is | What it is worth |
 |---|---|---|
-| **Bhasha Bridge** | A per-tenant phonetic index built from the business's own catalogue, used both to bias the recogniser and to repair its output — but only when the recogniser was unsure *and* the sound key matches exactly. | Entity error rate **31.1% → 0.9%** at 30% recognition noise, with **zero** harmful corrections over 3,495 sentences. |
-| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **255 ms → 145 ms**, a 43.2% reduction, with a 46.2% prediction hit rate. |
+| **Bhasha Bridge** | A per-tenant phonetic index built from the business's own catalogue, used both to bias the recogniser and to repair its output — but only when the recogniser was unsure *and* the sound key matches exactly. | Entity error rate **30.9% → 0.9%** at 30% recognition noise, with **zero** harmful corrections over 4,050 sentences. |
+| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **235 ms → 124 ms**, a 47.2% reduction, with a 41.9% prediction hit rate. |
 | **Pramaan Ledger** | Every write is sealed into an Ed25519-signed, hash-chained receipt that binds the action to the caller's recorded confirmation. Daily Merkle anchors; an independent verifier. | **80/80** single-field tampering attempts detected; deletion and forgery detected; **0** unconfirmed writes accepted. |
 
 Every number above was produced by `python -m haanji.bench` on this repository and
@@ -87,8 +87,8 @@ cd engine
 pip install -e ".[dev]"
 
 python -m haanji.cli demo          # one narrated call, at real speaking speed
-python -m haanji.cli selftest      # all 21 packaged scenarios, all five verticals
-pytest -q                          # 223 tests
+python -m haanji.cli selftest      # all 24 packaged scenarios, all six packs
+pytest -q                          # 317 tests
 python -m haanji.bench             # regenerates research/results.json
 ```
 
@@ -184,7 +184,7 @@ PRAMAAN LEDGER
 │   │   ├── insights.py      outcome/revenue/cost analytics behind /api/insights
 │   │   ├── bench.py         the evaluation harness that produces every number
 │   │   └── cli.py           demo · selftest · bench · verify · serve · packs
-│   └── tests/               223 tests, including the safety properties and the demo pages
+│   └── tests/               317 tests, including the safety properties and the demo pages
 ├── core-api/        Java 21 / Spring Boot 3 control plane
 │   ├── domain repo service web security config pramaan packs
 │   ├── db/migration/        Flyway: schema, ledger, knowledge + lexicon
@@ -223,15 +223,15 @@ good transcript is worse than no layer at all. Personal names the caller has jus
 introduced are never touched — "mera naam Wijay hai" stays *Wijay*, even though
 *Vijay Nagar* is in the lexicon.
 
-Measured over 3,495 independently corrupted sentences at three noise levels:
+Measured over 4,050 independently corrupted sentences at three noise levels:
 
 | noise | entity error, off | entity error, on | reduction | precision | harmful |
 |---|---|---|---|---|---|
-| 15% | 17.9% | 0.31% | 98.2% | 99.1% | 0 |
-| 30% | 31.1% | 0.86% | 97.2% | 99.2% | 0 |
-| 45% | 48.5% | 1.53% | 96.8% | 99.1% | 0 |
+| 15% | 17.8% | 0.38% | 97.9% | 99.2% | 0 |
+| 30% | 30.9% | 0.91% | 97.1% | 99.3% | 0 |
+| 45% | 48.6% | 1.62% | 96.7% | 99.2% | 0 |
 
-Median cost: **0.07 ms** per utterance.
+Median cost: **0.08 ms** per utterance.
 
 Against the classic keys, with the lexicon, the two-condition rule and the
 edit-distance bound held fixed (entity error *after* correction; synthetic at
@@ -239,15 +239,15 @@ edit-distance bound held fixed (entity error *after* correction; synthetic at
 
 | keyer | synthetic @30% | real pilot | harmful (real) |
 |---|---|---|---|
-| edit distance only | 1.68% | 32.4% | 6 |
-| exact spelling | 32.01% | 33.3% | 0 |
-| Soundex | 3.98% | 30.6% | 0 |
-| Metaphone | 8.04% | 31.5% | 0 |
-| NYSIIS | 3.46% | 32.4% | 0 |
-| Double Metaphone | 6.99% | 31.1% | 0 |
-| Bhasha (ours) | 0.80% | 30.1% | 0 |
+| edit distance only | 1.45% | 31.1% | 6 |
+| exact spelling | 32.18% | 33.3% | 0 |
+| Soundex | 4.15% | 30.1% | 0 |
+| Metaphone | 8.08% | 31.1% | 0 |
+| NYSIIS | 3.24% | 32.0% | 0 |
+| Double Metaphone | 6.78% | 30.1% | 0 |
+| Bhasha (ours) | 0.88% | 29.2% | 0 |
 
-Every pairwise McNemar test against ours on the synthetic data has p < 0.001;
+Every pairwise McNemar test against ours on the synthetic data has p < 0.001 (p = 0.007 against the edit-distance bound alone);
 on real recogniser output the keys are within a point of each other and the
 safety rule matters more than the key. The per-rule ablation and the tests
 are in the report (§4.6–4.7, `research/baselines.json`).
@@ -282,10 +282,10 @@ with_speculation_on_and_off` asserts the strong form of this — the transcript 
 the call must be identical whether speculation is on or off, because it is a
 latency optimisation and nothing else.
 
-Measured: **255 ms → 145 ms** median on read turns (43.2% lower), 46.2% hit rate
-over 130 speculations, 247 ms saved per hit. Write turns are never speculated, so
-the booking turn itself is not faster: its p90 is 229 ms without
-speculation and 232 ms with it — reported rather than averaged away.
+Measured: **235 ms → 124 ms** median on read turns (47.2% lower), 41.9% hit rate
+over 155 speculations, 219 ms saved per hit. Write turns are never speculated, so
+the booking turn itself is not faster: its p90 is 197 ms without
+speculation and 200 ms with it — reported rather than averaged away.
 
 ### Pramaan Ledger — proof, not logs
 
@@ -403,6 +403,22 @@ switch in `render.yaml`.
   across the ladder because sixty scripted callers book the same morning in
   one shared calendar and the script does not take the alternative the agent
   offers — the calendar filling is correct behaviour, not an error.
+* **Rescheduling.** "Meri booking parso shaam ko shift kar do": the booking
+  is found by number, re-slotted through the ordinary flow, and sealed as one
+  receipt that names the previous booking and its receipt — outcome
+  `RESCHEDULED`, on every channel.
+* **Human takeover.** From the dashboard's live panel, *Mujhe do* takes a
+  running call — web, WhatsApp or phone — away from the agent; the person's
+  typed replies are spoken on the line, sent on WhatsApp or shown in the
+  browser, and recorded as human turns; *Wapas agent ko* hands it back.
+* **Notifications and an installable console.** *Notifications on* subscribes
+  the owner's phone to web push (VAPID keys generated beside the data); a
+  booking, a reschedule, a callback or a handoff buzzes it with a link to the
+  call. The console has a web-app manifest and a service worker, so it
+  installs to the home screen.
+* **Hindi-script input.** A recogniser running in Hindi mode may send
+  Devanagari; the engine transliterates it before the pipeline, so the same
+  lexicon, extractor and policy answer.
 * **Devanagari.** A हिंदी toggle on `/talk` and in the console's call view
   shows the transcript in Devanagari (an approximate, dictionary-plus-rules
   transliteration; the engine labels it so).
@@ -518,8 +534,8 @@ to stop it.
 
 A project report should say what was verified and what was not.
 
-* **The Python engine is fully executed here.** 223 tests, 21 scenarios across
-  five verticals and two languages, and the entire benchmark run on this
+* **The Python engine is fully executed here.** 317 tests, 24 scenarios across
+  six packs and three languages, and the entire benchmark run on this
   machine. Every number in this README comes from that run.
 * **The React console builds here.** `npm run build` type-checks the whole
   TypeScript source under `strict` and emits a production bundle.
@@ -556,11 +572,37 @@ A project report should say what was verified and what was not.
   found the bridge's confidence gate wide open on a real recogniser's
   probabilities and the layer making harmful corrections; two stated guards
   fixed that, and on that data the bridge reduces entity errors by about a
-  tenth, not by 97%. The report's §4.5 says why. Volunteer recordings go through
+  tenth, not by 97%. The report's §4.5 says why. Three follow-ups on the same
+  300 recordings ([§4.9–4.11](research/REPORT.md)): a merged-token rule adds
+  two repairs; calibrating the confidence gate per recogniser does *not* help
+  (Whisper's word probabilities are weakly informative, and a sweep shows the
+  gate contributes nothing to safety on that data — the guards and the second
+  condition do); and handing the pack vocabulary to the recogniser as its
+  prompt halves entity error before any repair, which makes biasing the lever
+  and the bridge the safety net behind it. Volunteer recordings go through
   the same pipeline (`/record`), and a small user study has its kit at `/study`
   ([protocol](docs/study/protocol.md)); neither has been run yet.
+* **A learned speculation predictor was tried and not adopted.** Fitted on the
+  harness's own partials it is more precise, less eager and slower at the
+  median ([§5.4](research/REPORT.md)); the hand-set weights stay until partials
+  from real calls exist.
 
 ---
+
+## Install, cite, read
+
+* **Install the engine alone:** `pip install "haanji-engine[web]"` — the six
+  packs are bundled; `HAANJI_PACKS_DIR` points it at your own. A GitHub
+  release builds and checks the wheel (`publish` workflow) and uploads it to
+  PyPI through trusted publishing once the repository variable `PYPI_PUBLISH`
+  is `true`. ([CHANGELOG](CHANGELOG.md))
+* **Cite:** [`CITATION.cff`](CITATION.cff) (GitHub's *Cite this repository*
+  button reads it); a release on GitHub is archived on Zenodo with a DOI once
+  the repository is linked there.
+* **Read:** the documentation site is built from [`docs/`](docs/) by MkDocs
+  (`make docs`) and published by the `docs` workflow; the report and the
+  paper are in it. The paper is also in LaTeX, ready for a venue template:
+  [`research/paper-latex/`](research/paper-latex/).
 
 ## Team
 

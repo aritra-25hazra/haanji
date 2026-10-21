@@ -14,5 +14,5 @@ Three engineered contributions live here:
 Everything runs offline with the mock adapters, which is what the demo and the
 whole test suite use.
 """
-__version__ = "0.3.0"
+__version__ = "1.0.0"
 __all__ = ["__version__"]

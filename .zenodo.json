@@ -1,0 +1,22 @@
+{
+  "title": "HaanJi: a voice receptionist for Indian small businesses that hears the business's own words, answers before the caller finishes, and can prove what was agreed",
+  "upload_type": "software",
+  "license": "Apache-2.0",
+  "version": "1.0.0",
+  "language": "eng",
+  "access_right": "open",
+  "description": "<p>An open-source voice-agent engine for Hinglish, Benglish and Marathinglish callers with three measured mechanisms: <b>Bhasha Bridge</b> (a per-tenant phonetic index that biases the recogniser and repairs its output under a two-condition rule that cannot damage a correct transcript), <b>Speculative Turn Execution</b> (read-only tools predicted and run from partial transcripts, claimed only on byte-identical arguments) and the <b>Pramaan Ledger</b> (Ed25519-signed, hash-chained consent receipts with daily Merkle anchors that refuse unconfirmed writes). The archive holds the engine, the owner console, the Java core API, the vertical packs, the evaluation harness, the real-recogniser pipeline, the classic-key baselines, the learned-noise model, the evaluation report and the paper draft. Every number in the report is reproducible from the archive.</p>",
+  "creators": [
+    { "name": "Hazra, Aritra", "affiliation": "Medi-Caps University" },
+    { "name": "Upadhayay, Prabhav", "affiliation": "Medi-Caps University" },
+    { "name": "Uniyal, Anuj", "affiliation": "Medi-Caps University" }
+  ],
+  "keywords": [
+    "voice agent", "speech recognition", "Hinglish", "code-mixed speech",
+    "phonetic matching", "contextual biasing", "speculative execution",
+    "verifiable receipts", "small business", "India"
+  ],
+  "related_identifiers": [
+    { "identifier": "https://github.com/aritra-25hazra/haanji", "relation": "isSupplementTo", "resource_type": "software" }
+  ]
+}

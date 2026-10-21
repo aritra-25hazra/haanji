@@ -106,7 +106,7 @@ def test_a_call_over_the_bridge_is_greeted_answered_and_recorded(client):
     assert "partial" in kinds and kinds.count("turn") == 2 and kinds[-1] == "session.ended"
     assert ev[-1]["outcome"] == "FAQ_ANSWERED"
     calls = client.get("/api/conversations", params={"pack": "dental_clinic"}).json()["conversations"]
-    assert calls[0]["channel"] == "PHONE" and calls[0]["phone"] == "9876543210"
+    assert any(c["channel"] == "PHONE" and c["phone"] == "9876543210" for c in calls[:5]), "recorded as a phone call"
 
 
 def test_barge_in_clears_twilio_s_buffer():

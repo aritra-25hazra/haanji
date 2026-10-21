@@ -69,7 +69,8 @@ class BhashaBridge:
 
         words = [t.text for t in transcript.tokens]
         confs = [t.confidence for t in transcript.tokens]
-        corrections: list[Correction] = []
+        words, confs, splits = self._split_merged(words, confs)
+        corrections: list[Correction] = list(splits)
         used = [False] * len(words)
         out = list(words)
 
@@ -102,6 +103,84 @@ class BhashaBridge:
 
         text = " ".join(w for w in out if w)
         return CorrectedTranscript(text, corrections, (time.perf_counter() - t0) * 1000)
+
+    # ------------------------------------------------------------ merged tokens
+    MIN_MERGED_LEN = 8
+
+    def _known_word(self, token: str) -> tuple[str, bool] | None:
+        """A single word the engine would recognise on its own: a grammar or
+        frame word (within one edit), or a one-word lexicon form (exact key
+        and within one edit). Returns (canonical spelling, from the lexicon),
+        or None."""
+        low = token.lower()
+        if low in STOPWORDS:
+            return low, False
+        if len(low) >= 3:
+            for w in STOPWORDS:
+                if abs(len(w) - len(low)) <= 1 and edit_distance(low, w, cap=1) <= 1:
+                    return w, False
+        key = phonetic_key(low)
+        if key:
+            for entry in self.lexicon.candidates(key):
+                for form in entry.forms_matching(key, 1):
+                    if edit_distance(low, form, cap=1) <= 1:
+                        return form, True
+            # a word of a longer form ("root" of "root canal"): the n-gram
+            # pass will repair the phrase once the halves are apart
+            for w in self._component_words().get(key, ()):
+                if edit_distance(low, w, cap=1) <= 1:
+                    return w, True
+        return None
+
+    def _component_words(self) -> dict[str, set[str]]:
+        cache = getattr(self, "_components", None)
+        if cache is None or cache[0] is not len(self.lexicon):
+            table: dict[str, set[str]] = {}
+            for entry in self.lexicon.entries:
+                for form in entry.forms():
+                    for w in form.lower().split():
+                        if len(w) >= 3:
+                            table.setdefault(phonetic_key(w), set()).add(w)
+            self._components = (len(self.lexicon), table)
+            cache = self._components
+        return cache[1]
+
+    def _split_merged(self, words: list[str], confs: list[float]):
+        """Real recognisers run words together ("subhahroot"). A long,
+        low-confidence token that is not itself a known word is split at the
+        point where *both* halves are known words and at least one of them
+        is a catalogue word; two grammar words glued together ("ko karni")
+        are not worth touching. The n-gram pass then repairs the halves."""
+        out_w: list[str] = []
+        out_c: list[float] = []
+        splits: list[Correction] = []
+        for word, conf in zip(words, confs):
+            low = word.lower()
+            if (len(low) < self.MIN_MERGED_LEN or conf >= self.cfg.conf_high or not low.isalpha()
+                    or self._known_word(low) is not None):
+                out_w.append(word); out_c.append(conf)
+                continue
+            # A token the lexicon can explain as a whole ("koolkarni" is two
+            # edits from Kulkarni) is the n-gram pass's job; splitting it
+            # first would hand it to the grammar words ("ko karni") instead.
+            key = phonetic_key(low)
+            if key and self._best_candidate(low, key, conf, 1) is not None:
+                out_w.append(word); out_c.append(conf)
+                continue
+            found = None
+            for cut in range(3, len(low) - 2):
+                left, right = self._known_word(low[:cut]), self._known_word(low[cut:])
+                if left and right and (left[1] or right[1]):
+                    found = (left[0], right[0])
+                    break
+            if found is None:
+                out_w.append(word); out_c.append(conf)
+                continue
+            left, right = found
+            out_w += [left, right]; out_c += [conf, conf]
+            splits.append(Correction(from_token=word, to_surface=f"{left} {right}",
+                                     asr_confidence=conf, entry_weight=0.0, ngram=1))
+        return out_w, out_c, splits
 
     # ------------------------------------------------------------------ helpers
     def _correctable(self, span: list[str], conf: float, words: list[str], i: int) -> bool:

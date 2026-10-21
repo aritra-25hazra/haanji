@@ -15,8 +15,11 @@ from typing import Any
 import yaml
 
 WEEKDAY_INDEX = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6}
-PACK_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__)))), "packs")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_REPO_PACKS = os.path.join(os.path.dirname(os.path.dirname(_HERE)), "packs")
+_BUNDLED_PACKS = os.path.join(_HERE, "packs")      # copied in at build time for the wheel
+PACK_DIR = (os.environ.get("HAANJI_PACKS_DIR")
+            or (_REPO_PACKS if os.path.isdir(_REPO_PACKS) else _BUNDLED_PACKS))
 
 
 class PackError(ValueError):

@@ -238,3 +238,11 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 
 .dev-toggle .dev { font-family: var(--font-dev); font-size: 15px; }
 .dev-toggle.on { border-color: var(--cobalt); color: var(--cobalt); }
+
+/* live sessions and takeover */
+.live-sessions { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px dashed var(--rule); border-radius: var(--r-card); margin-bottom: 8px; }
+.ls { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+.ls.mine { background: rgba(245, 185, 30, .12); padding: 6px 8px; border-radius: var(--r-ctl); }
+.live-sessions .row { display: flex; gap: 8px; }
+.live-sessions .input { min-height: 36px; padding: 0 10px; border-radius: var(--r-ctl); border: 1px solid var(--rule); font: inherit; }
+.live-sessions .grow { flex: 1; }

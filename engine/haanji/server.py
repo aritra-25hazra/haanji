@@ -34,6 +34,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
+from . import __version__
 from .adapters.mock import NullTTS
 from .backend.local import LocalBackend
 from .channels import whatsapp as wa_channel
@@ -46,11 +47,13 @@ from . import calendar as cal_mod
 from .gcal import GoogleCalendar
 from .telephony import twilio as twilio_mod
 from .pramaan.vault import Vault, normalise_phone as _norm_phone
+from .push import PushStore
 from .metrics import percentile
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
 from .insights import compute as compute_insights
-from .pipeline import CallSession
+from .pipeline import CallSession, TurnRecord
+from .models import Speaker, Turn
 from .pramaan.ledger import Ledger
 from .store import DemoStore
 from .tools.builtin import build_registry
@@ -88,7 +91,7 @@ async def _lifespan(_app: FastAPI):
             task.cancel()
 
 
-app = FastAPI(title="HaanJi demo server", version="0.4.0", lifespan=_lifespan)
+app = FastAPI(title="HaanJi demo server", version=__version__, lifespan=_lifespan)
 # Same-origin in production, because the console is served through a rewrite;
 # the regex is overridable so the engine can also be called directly.
 CORS_ORIGIN_REGEX = os.environ.get(
@@ -167,6 +170,8 @@ store = DemoStore(os.path.join(VAR_DIR, "store.sqlite"))
 gcal = GoogleCalendar(os.path.join(VAR_DIR, "gcal.sqlite"), redirect_uri=f"{PUBLIC_URL}/api/google/callback")
 # Personal data in receipts is encrypted per customer (docs/privacy-dpdp.md).
 vault = Vault(os.path.join(VAR_DIR, "vault.sqlite"))
+push = PushStore(os.path.join(VAR_DIR, "push.sqlite"), os.path.join(VAR_DIR, "vapid.json"),
+                 contact=os.environ.get("HAANJI_PUSH_CONTACT") or "mailto:owner@haanji.local")
 CONSENT_LINE = os.environ.get("HAANJI_CONSENT_LINE") or ""
 RETENTION_DAYS = int(os.environ.get("HAANJI_RETENTION_DAYS", "0"))        # 0 = keep
 
@@ -263,6 +268,8 @@ class Holder:
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     last_used: float = field(default_factory=time.monotonic)
     receipts_seen: int = 0
+    human: bool = False                       # a person at the console has taken the call
+    speak: Any = None                         # telephony: how to say something on this call
 
 
 _sessions: dict[str, Holder] = {}
@@ -464,10 +471,28 @@ def _finish(sid: str, holder: Holder) -> None:
             outcome=report.outcome.value, call_id=report.conversation_id,
             receipts=len(report.receipts), turns=len(report.turns))
     TELEMETRY.gauge("live_sessions", max(0, len(_sessions) - 1))
+    _push_outcome(holder, report)
     if holder.phone and report.receipts and store.has_open_missed(holder.rt.pack_id, holder.phone):
         store.mark_recovered(holder.rt.pack_id, holder.phone, report.receipts[-1])
     _sessions.pop(sid, None)
     _wa_sessions.pop((holder.rt.pack_id, holder.phone or ""), None)
+
+
+def _push_outcome(holder: Holder, report) -> None:
+    """The owner's phone buzzes for the outcomes that need a human eye."""
+    titles = {"BOOKED": "Nayi booking", "RESCHEDULED": "Booking badli", "LEAD_CAPTURED": "Callback chahiye",
+              "HANDED_OFF": "Call aapke liye"}
+    title = titles.get(report.outcome.value)
+    if not title or push.count(holder.rt.pack_id) == 0:
+        return
+    body = f"{holder.channel.lower()} · {_mask(holder.phone) or 'number nahi'} · {len(report.turns)} turns"
+    if report.receipts:
+        body += f" · receipt {report.receipts[-1]}"
+    url = f"{(os.environ.get('HAANJI_CONSOLE_URL') or '').rstrip('/')}/calls/{report.conversation_id}"
+    try:
+        push.send(holder.rt.pack_id, f"{title} — {holder.rt.pack.persona.business_name}", body, url)
+    except Exception as exc:                              # noqa: BLE001
+        print(f"push failed: {exc}", file=sys.stderr)
 
 
 # ──────────────────────────────────────────────────────────────── web-call api
@@ -505,6 +530,8 @@ async def session_utterance(sid: str, body: TextIn):
     if holder is None:
         raise HTTPException(404, "no such session")
     holder.last_used = time.monotonic()
+    if holder.human:
+        return _human_turn(sid, holder, body.text)
     async with holder.lock:
         record = await holder.session.handle_text_turn(body.text)
         payload = _turn_payload(record, holder)
@@ -550,6 +577,9 @@ async def _wa_turn(pack_id: str, phone: str, text: str) -> list[dict[str, Any]]:
         store.add_wa(pack_id, phone, "out", greeting)
         replies.append({"text": greeting})
     holder.last_used = time.monotonic()
+    if holder.human:
+        _human_turn(sid, holder, text)
+        return replies                                 # the person at the console answers
     async with holder.lock:
         record = await holder.session.handle_text_turn(text)
         payload = _turn_payload(record, holder)
@@ -1301,6 +1331,15 @@ async def _phone_open(pack: str, caller: str | None):
     return await _new_session(pack, "PHONE", phone)
 
 
+def _phone_human(sid: str, holder: Holder, text: str) -> bool:
+    """Telephony bridge asks: is a person holding this call? If so, log the
+    caller's words for the console and do not run the policy."""
+    if holder.human:
+        _human_turn(sid, holder, text)
+        return True
+    return False
+
+
 async def _phone_turn(record, holder: Holder) -> None:
     payload = _turn_payload(record, holder)
     if payload["receipts"]:
@@ -1316,10 +1355,138 @@ async def twilio_stream(ws: WebSocket):
     await ws.accept()
     bridge = twilio_mod.TwilioBridge(ws, open_session=_phone_open, close_session=_finish,
                                      stt_factory=PHONE_FACTORIES["stt"], tts=PHONE_FACTORIES["tts"],
-                                     on_turn=_phone_turn,
+                                     on_turn=_phone_turn, human_hook=_phone_human,
                                      on_partial=lambda text, holder: publish("partial", sid=holder_sid(holder),
                                                                              pack=holder.rt.pack_id, text=text))
     await bridge.run()
+
+
+# ───────────────────────────────────────────────────── human takeover
+PROTECTED.append(("GET|POST", re.compile(r"^/api/sessions/(live|[^/]+/(takeover|handback|human-reply))$"), "staff"))
+
+
+def _human_turn(sid: str, holder: Holder, text: str) -> dict[str, Any]:
+    """The caller spoke while a person holds the call: log it, tell the
+    console, say nothing. The policy does not run."""
+    session = holder.session
+    seq = len(session.ctx.turns) + 1
+    session.ctx.add(Turn(seq, Speaker.CALLER, text))
+    publish("turn", sid=sid, pack=holder.rt.pack_id, channel=holder.channel, heard=text, corrected=text,
+            reply="", corrections=[], tools=[], speculation_hits=[], receipts=[], guard="", latency_ms=0.0,
+            spans=[], outcome=_provisional_outcome(session), human=True, awaiting_human=True)
+    return {"reply": "", "heard": text, "corrected": text, "corrections": [], "tools": [], "speculation_hits": [],
+            "guard": "", "latency_ms": 0.0, "receipts": [], "end_call": False, "outcome": None, "spans": [],
+            "human": True}
+
+
+async def _human_reply(sid: str, holder: Holder, text: str) -> dict[str, Any]:
+    session = holder.session
+    seq = len(session.ctx.turns) + 1
+    session.ctx.add(Turn(seq, Speaker.AGENT, text))
+    session.ctx.last_agent_utterance = text
+    session.ctx.last_agent_started_ms = int(time.time() * 1000)
+    session.turns.append(TurnRecord(seq, "", "", text))          # recorded with the call, as a human turn
+    session.turns[-1].guard = "human"
+    if holder.channel == "WHATSAPP" and holder.phone:
+        store.add_wa(holder.rt.pack_id, holder.phone, "out", text, meta={"human": True})
+        if wa_channel.configured():
+            try:
+                await wa_channel.send_text(holder.phone, text)
+            except Exception as exc:                      # noqa: BLE001
+                print(f"human reply over WhatsApp failed: {exc}", file=sys.stderr)
+    if holder.speak is not None:
+        await holder.speak(text)                           # telephony: synthesise on the line
+    publish("turn", sid=sid, pack=holder.rt.pack_id, channel=holder.channel, heard="", corrected="",
+            reply=text, corrections=[], tools=[], speculation_hits=[], receipts=[], guard="human",
+            latency_ms=0.0, spans=[], outcome=_provisional_outcome(session), human=True)
+    return {"ok": True, "reply": text}
+
+
+class HumanReply(BaseModel):
+    text: str
+
+
+@app.get("/api/sessions/live")
+async def sessions_live(pack: str | None = None):
+    out = []
+    for sid, h in _sessions.items():
+        if pack and h.rt.pack_id != pack:
+            continue
+        last_caller = next((t.text for t in reversed(h.session.ctx.turns) if t.speaker is Speaker.CALLER), "")
+        out.append({"sid": sid, "pack": h.rt.pack_id, "channel": h.channel, "phone": _mask(h.phone),
+                    "human": h.human, "turns": len(h.session.ctx.turns), "last_caller": last_caller,
+                    "idle_s": round(time.monotonic() - h.last_used, 1)})
+    return {"sessions": out}
+
+
+@app.post("/api/sessions/{sid}/takeover")
+async def session_takeover(sid: str, request: Request):
+    holder = _sessions.get(sid)
+    if holder is None:
+        raise HTTPException(404, "no such session")
+    holder.human = True
+    who = getattr(request.state, "user", None)
+    publish("session.takeover", sid=sid, pack=holder.rt.pack_id, channel=holder.channel,
+            by=(who.name or who.phone) if who else "console")
+    return {"ok": True, "human": True}
+
+
+@app.post("/api/sessions/{sid}/handback")
+async def session_handback(sid: str):
+    holder = _sessions.get(sid)
+    if holder is None:
+        raise HTTPException(404, "no such session")
+    holder.human = False
+    publish("session.handback", sid=sid, pack=holder.rt.pack_id, channel=holder.channel)
+    return {"ok": True, "human": False}
+
+
+@app.post("/api/sessions/{sid}/human-reply")
+async def session_human_reply(sid: str, body: HumanReply):
+    holder = _sessions.get(sid)
+    if holder is None:
+        raise HTTPException(404, "no such session")
+    if not holder.human:
+        raise HTTPException(409, "take the call over first")
+    holder.last_used = time.monotonic()
+    return await _human_reply(sid, holder, body.text.strip())
+
+
+# ─────────────────────────────────────────────────────────── web push
+PROTECTED.append(("POST|DELETE", re.compile(r"^/api/push/(subscribe|unsubscribe|test)$"), "staff"))
+
+
+class PushSubIn(BaseModel):
+    pack: str = DEFAULT_PACK
+    subscription: dict[str, Any]
+    label: str = ""
+
+
+@app.get("/api/push/vapid-public-key")
+async def push_key():
+    return {"public_key": push.public_key}
+
+
+@app.post("/api/push/subscribe")
+async def push_subscribe(body: PushSubIn):
+    if body.pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {body.pack}")
+    try:
+        n = push.subscribe(body.pack, body.subscription, body.label)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    return {"ok": True, "subscribers": n}
+
+
+@app.delete("/api/push/unsubscribe")
+async def push_unsubscribe(endpoint: str):
+    return {"removed": push.unsubscribe(endpoint)}
+
+
+@app.post("/api/push/test")
+async def push_test(pack: str = DEFAULT_PACK):
+    return push.send(pack, f"HaanJi — {runtime(pack).pack.persona.business_name}", "Notifications chal rahi hain.",
+                     (os.environ.get("HAANJI_CONSOLE_URL") or "/"))
 
 
 # ──────────────────────────────────────────────────────────── privacy
@@ -1497,6 +1664,7 @@ async def status():
             "google": {"configured": gcal.configured, "connected": gcal.connected()},
             "phone": phone_status(),
             "privacy": {"retention_days": RETENTION_DAYS, "consent": bool(CONSENT_LINE)},
+            "push": {"public_key": push.public_key},
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
             "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),

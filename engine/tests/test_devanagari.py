@@ -37,3 +37,15 @@ def test_devanagari_to_latin_is_consistent_and_hindi_shaped():
     out = to_latin("मुझे रूट कैनल करवाना है")
     assert out.startswith("mujhe root ") and out.endswith(" hai") and out.isascii()
     assert to_latin(to_latin("डॉक्टर")) == to_latin("डॉक्टर"), "Latin text passes through unchanged"
+
+
+async def test_a_devanagari_turn_runs_the_same_pipeline(pack, backend, registry, ledger):
+    from haanji.adapters.mock import NullTTS
+    from haanji.config import EngineConfig
+    from haanji.pipeline import CallSession
+    s = CallSession(tenant_id="t_test", pack=pack, backend=backend, registry=registry, ledger=ledger,
+                    config=EngineConfig(), tts=NullTTS())
+    await s.open()
+    rec = await s.handle_text_turn("कल सुबह रूट कैनल का टाइम मिलेगा")
+    assert rec.corrected.isascii() and "root canal" in rec.corrected
+    assert s.ctx.service == "root canal" and "check_availability" in rec.tools

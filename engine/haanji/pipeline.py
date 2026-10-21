@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .adapters import LLMTurn
+from .devanagari import latinise
 from .adapters.factory import make_llm
 from .adapters.mock import MockSTT, MockTTS
 from .backend.local import LocalBackend
@@ -260,6 +261,7 @@ class CallSession:
         interim results here, so speculation gets the same early signal it has
         on the telephone path. Corrections run first for the same reason as in
         :meth:`handle_utterance`."""
+        text = latinise(text)
         if not text.strip():
             return
         corrected = self.bhasha.correct(self._text_transcript(text, final=False)).text
@@ -274,6 +276,7 @@ class CallSession:
         ``confidence`` is the browser recogniser's utterance-level figure when
         one exists; it is recorded into the confirmation proof, while the
         per-token repair decision uses the out-of-vocabulary model above."""
+        text = latinise(text)
         self.speculation.begin_turn()
         await self._finish_speaking()
         final = self._text_transcript(text, final=True)

@@ -1,0 +1,720 @@
+{
+ "generated_at": "2026-10-21T13:53:46+00:00",
+ "downstream_sweep": {
+  "faster-whisper:small:en": [
+   {
+    "threshold": 0.5,
+    "eer_on": 0.3151,
+    "precision": 0.8571,
+    "harmful": 0,
+    "beneficial": 6
+   },
+   {
+    "threshold": 0.6,
+    "eer_on": 0.3059,
+    "precision": 0.6667,
+    "harmful": 0,
+    "beneficial": 8
+   },
+   {
+    "threshold": 0.7,
+    "eer_on": 0.3105,
+    "precision": 0.6316,
+    "harmful": 0,
+    "beneficial": 12
+   },
+   {
+    "threshold": 0.8,
+    "eer_on": 0.2968,
+    "precision": 0.6364,
+    "harmful": 0,
+    "beneficial": 14
+   },
+   {
+    "threshold": 0.85,
+    "eer_on": 0.2922,
+    "precision": 0.6087,
+    "harmful": 0,
+    "beneficial": 14
+   },
+   {
+    "threshold": 0.9,
+    "eer_on": 0.2922,
+    "precision": 0.6087,
+    "harmful": 0,
+    "beneficial": 14
+   },
+   {
+    "threshold": 0.95,
+    "eer_on": 0.2922,
+    "precision": 0.6087,
+    "harmful": 0,
+    "beneficial": 14
+   },
+   {
+    "threshold": 1.01,
+    "eer_on": 0.2922,
+    "precision": 0.6087,
+    "harmful": 0,
+    "beneficial": 14
+   }
+  ],
+  "faster-whisper:small:en:biased": [
+   {
+    "threshold": 0.5,
+    "eer_on": 0.1553,
+    "precision": 0.0,
+    "harmful": 0,
+    "beneficial": 0
+   },
+   {
+    "threshold": 0.6,
+    "eer_on": 0.1553,
+    "precision": 0.0,
+    "harmful": 0,
+    "beneficial": 0
+   },
+   {
+    "threshold": 0.7,
+    "eer_on": 0.1461,
+    "precision": 0.3333,
+    "harmful": 0,
+    "beneficial": 2
+   },
+   {
+    "threshold": 0.8,
+    "eer_on": 0.1416,
+    "precision": 0.4286,
+    "harmful": 0,
+    "beneficial": 3
+   },
+   {
+    "threshold": 0.85,
+    "eer_on": 0.1416,
+    "precision": 0.4286,
+    "harmful": 0,
+    "beneficial": 3
+   },
+   {
+    "threshold": 0.9,
+    "eer_on": 0.1416,
+    "precision": 0.4286,
+    "harmful": 0,
+    "beneficial": 3
+   },
+   {
+    "threshold": 0.95,
+    "eer_on": 0.1416,
+    "precision": 0.4286,
+    "harmful": 0,
+    "beneficial": 3
+   },
+   {
+    "threshold": 1.01,
+    "eer_on": 0.1416,
+    "precision": 0.4286,
+    "harmful": 0,
+    "beneficial": 3
+   }
+  ]
+ },
+ "method": "Youden's J on the ROC of 'confidence < t' against alignment-labelled wrong words",
+ "recognisers": {
+  "faster-whisper:small:en": {
+   "threshold": 0.64,
+   "tpr": 0.623,
+   "fpr": 0.341,
+   "youden_j": 0.282,
+   "tokens": 1928,
+   "wrong_tokens": 1254,
+   "wrong_rate": 0.65,
+   "auc": 0.673,
+   "curve": [
+    {
+     "threshold": 0.0,
+     "tpr": 0.0,
+     "fpr": 0.0,
+     "j": 0.0
+    },
+    {
+     "threshold": 0.05,
+     "tpr": 0.006,
+     "fpr": 0.003,
+     "j": 0.003
+    },
+    {
+     "threshold": 0.09,
+     "tpr": 0.029,
+     "fpr": 0.007,
+     "j": 0.021
+    },
+    {
+     "threshold": 0.13,
+     "tpr": 0.05,
+     "fpr": 0.012,
+     "j": 0.038
+    },
+    {
+     "threshold": 0.17,
+     "tpr": 0.073,
+     "fpr": 0.027,
+     "j": 0.046
+    },
+    {
+     "threshold": 0.21,
+     "tpr": 0.102,
+     "fpr": 0.036,
+     "j": 0.066
+    },
+    {
+     "threshold": 0.25,
+     "tpr": 0.134,
+     "fpr": 0.049,
+     "j": 0.085
+    },
+    {
+     "threshold": 0.29,
+     "tpr": 0.171,
+     "fpr": 0.065,
+     "j": 0.105
+    },
+    {
+     "threshold": 0.33,
+     "tpr": 0.215,
+     "fpr": 0.08,
+     "j": 0.135
+    },
+    {
+     "threshold": 0.37,
+     "tpr": 0.262,
+     "fpr": 0.095,
+     "j": 0.167
+    },
+    {
+     "threshold": 0.41,
+     "tpr": 0.317,
+     "fpr": 0.11,
+     "j": 0.207
+    },
+    {
+     "threshold": 0.45,
+     "tpr": 0.363,
+     "fpr": 0.145,
+     "j": 0.217
+    },
+    {
+     "threshold": 0.49,
+     "tpr": 0.406,
+     "fpr": 0.181,
+     "j": 0.225
+    },
+    {
+     "threshold": 0.53,
+     "tpr": 0.468,
+     "fpr": 0.22,
+     "j": 0.249
+    },
+    {
+     "threshold": 0.57,
+     "tpr": 0.537,
+     "fpr": 0.263,
+     "j": 0.275
+    },
+    {
+     "threshold": 0.61,
+     "tpr": 0.583,
+     "fpr": 0.306,
+     "j": 0.277
+    },
+    {
+     "threshold": 0.65,
+     "tpr": 0.633,
+     "fpr": 0.359,
+     "j": 0.274
+    },
+    {
+     "threshold": 0.69,
+     "tpr": 0.681,
+     "fpr": 0.426,
+     "j": 0.255
+    },
+    {
+     "threshold": 0.73,
+     "tpr": 0.726,
+     "fpr": 0.509,
+     "j": 0.217
+    },
+    {
+     "threshold": 0.77,
+     "tpr": 0.764,
+     "fpr": 0.57,
+     "j": 0.194
+    },
+    {
+     "threshold": 0.81,
+     "tpr": 0.81,
+     "fpr": 0.642,
+     "j": 0.168
+    },
+    {
+     "threshold": 0.85,
+     "tpr": 0.856,
+     "fpr": 0.699,
+     "j": 0.157
+    },
+    {
+     "threshold": 0.89,
+     "tpr": 0.895,
+     "fpr": 0.769,
+     "j": 0.126
+    },
+    {
+     "threshold": 0.93,
+     "tpr": 0.941,
+     "fpr": 0.838,
+     "j": 0.103
+    },
+    {
+     "threshold": 0.97,
+     "tpr": 0.974,
+     "fpr": 0.927,
+     "j": 0.046
+    },
+    {
+     "threshold": 1.01,
+     "tpr": 1.0,
+     "fpr": 1.0,
+     "j": 0.0
+    }
+   ]
+  },
+  "faster-whisper:small:en:biased": {
+   "threshold": 0.65,
+   "tpr": 0.653,
+   "fpr": 0.439,
+   "youden_j": 0.214,
+   "tokens": 1846,
+   "wrong_tokens": 926,
+   "wrong_rate": 0.502,
+   "auc": 0.62,
+   "curve": [
+    {
+     "threshold": 0.0,
+     "tpr": 0.0,
+     "fpr": 0.0,
+     "j": 0.0
+    },
+    {
+     "threshold": 0.04,
+     "tpr": 0.031,
+     "fpr": 0.033,
+     "j": -0.001
+    },
+    {
+     "threshold": 0.08,
+     "tpr": 0.054,
+     "fpr": 0.043,
+     "j": 0.011
+    },
+    {
+     "threshold": 0.12,
+     "tpr": 0.076,
+     "fpr": 0.05,
+     "j": 0.026
+    },
+    {
+     "threshold": 0.16,
+     "tpr": 0.104,
+     "fpr": 0.07,
+     "j": 0.034
+    },
+    {
+     "threshold": 0.2,
+     "tpr": 0.122,
+     "fpr": 0.079,
+     "j": 0.043
+    },
+    {
+     "threshold": 0.24,
+     "tpr": 0.16,
+     "fpr": 0.098,
+     "j": 0.062
+    },
+    {
+     "threshold": 0.28,
+     "tpr": 0.195,
+     "fpr": 0.116,
+     "j": 0.079
+    },
+    {
+     "threshold": 0.32,
+     "tpr": 0.22,
+     "fpr": 0.139,
+     "j": 0.081
+    },
+    {
+     "threshold": 0.36,
+     "tpr": 0.267,
+     "fpr": 0.161,
+     "j": 0.106
+    },
+    {
+     "threshold": 0.4,
+     "tpr": 0.314,
+     "fpr": 0.183,
+     "j": 0.132
+    },
+    {
+     "threshold": 0.44,
+     "tpr": 0.352,
+     "fpr": 0.213,
+     "j": 0.139
+    },
+    {
+     "threshold": 0.48,
+     "tpr": 0.408,
+     "fpr": 0.245,
+     "j": 0.164
+    },
+    {
+     "threshold": 0.52,
+     "tpr": 0.471,
+     "fpr": 0.284,
+     "j": 0.187
+    },
+    {
+     "threshold": 0.56,
+     "tpr": 0.532,
+     "fpr": 0.333,
+     "j": 0.2
+    },
+    {
+     "threshold": 0.6,
+     "tpr": 0.59,
+     "fpr": 0.377,
+     "j": 0.212
+    },
+    {
+     "threshold": 0.64,
+     "tpr": 0.646,
+     "fpr": 0.433,
+     "j": 0.213
+    },
+    {
+     "threshold": 0.68,
+     "tpr": 0.683,
+     "fpr": 0.486,
+     "j": 0.197
+    },
+    {
+     "threshold": 0.72,
+     "tpr": 0.722,
+     "fpr": 0.549,
+     "j": 0.174
+    },
+    {
+     "threshold": 0.76,
+     "tpr": 0.765,
+     "fpr": 0.608,
+     "j": 0.157
+    },
+    {
+     "threshold": 0.8,
+     "tpr": 0.794,
+     "fpr": 0.678,
+     "j": 0.115
+    },
+    {
+     "threshold": 0.84,
+     "tpr": 0.835,
+     "fpr": 0.735,
+     "j": 0.1
+    },
+    {
+     "threshold": 0.88,
+     "tpr": 0.876,
+     "fpr": 0.796,
+     "j": 0.08
+    },
+    {
+     "threshold": 0.92,
+     "tpr": 0.927,
+     "fpr": 0.843,
+     "j": 0.083
+    },
+    {
+     "threshold": 0.96,
+     "tpr": 0.968,
+     "fpr": 0.916,
+     "j": 0.051
+    },
+    {
+     "threshold": 1.0,
+     "tpr": 1.0,
+     "fpr": 1.0,
+     "j": 0.0
+    }
+   ]
+  },
+  "faster-whisper:small:hi": {
+   "threshold": 0.73,
+   "tpr": 0.775,
+   "fpr": 0.379,
+   "youden_j": 0.396,
+   "tokens": 2266,
+   "wrong_tokens": 1577,
+   "wrong_rate": 0.696,
+   "auc": 0.767,
+   "curve": [
+    {
+     "threshold": 0.0,
+     "tpr": 0.0,
+     "fpr": 0.0,
+     "j": 0.0
+    },
+    {
+     "threshold": 0.03,
+     "tpr": 0.031,
+     "fpr": 0.0,
+     "j": 0.031
+    },
+    {
+     "threshold": 0.07,
+     "tpr": 0.033,
+     "fpr": 0.0,
+     "j": 0.033
+    },
+    {
+     "threshold": 0.11,
+     "tpr": 0.039,
+     "fpr": 0.0,
+     "j": 0.039
+    },
+    {
+     "threshold": 0.14,
+     "tpr": 0.042,
+     "fpr": 0.0,
+     "j": 0.042
+    },
+    {
+     "threshold": 0.18,
+     "tpr": 0.051,
+     "fpr": 0.001,
+     "j": 0.049
+    },
+    {
+     "threshold": 0.21,
+     "tpr": 0.059,
+     "fpr": 0.001,
+     "j": 0.058
+    },
+    {
+     "threshold": 0.24,
+     "tpr": 0.074,
+     "fpr": 0.003,
+     "j": 0.071
+    },
+    {
+     "threshold": 0.27,
+     "tpr": 0.084,
+     "fpr": 0.004,
+     "j": 0.079
+    },
+    {
+     "threshold": 0.3,
+     "tpr": 0.094,
+     "fpr": 0.006,
+     "j": 0.088
+    },
+    {
+     "threshold": 0.33,
+     "tpr": 0.113,
+     "fpr": 0.007,
+     "j": 0.106
+    },
+    {
+     "threshold": 0.36,
+     "tpr": 0.126,
+     "fpr": 0.007,
+     "j": 0.119
+    },
+    {
+     "threshold": 0.39,
+     "tpr": 0.149,
+     "fpr": 0.012,
+     "j": 0.137
+    },
+    {
+     "threshold": 0.42,
+     "tpr": 0.174,
+     "fpr": 0.02,
+     "j": 0.154
+    },
+    {
+     "threshold": 0.45,
+     "tpr": 0.205,
+     "fpr": 0.025,
+     "j": 0.181
+    },
+    {
+     "threshold": 0.48,
+     "tpr": 0.237,
+     "fpr": 0.038,
+     "j": 0.199
+    },
+    {
+     "threshold": 0.51,
+     "tpr": 0.282,
+     "fpr": 0.054,
+     "j": 0.228
+    },
+    {
+     "threshold": 0.54,
+     "tpr": 0.353,
+     "fpr": 0.078,
+     "j": 0.275
+    },
+    {
+     "threshold": 0.57,
+     "tpr": 0.413,
+     "fpr": 0.103,
+     "j": 0.31
+    },
+    {
+     "threshold": 0.6,
+     "tpr": 0.476,
+     "fpr": 0.134,
+     "j": 0.343
+    },
+    {
+     "threshold": 0.63,
+     "tpr": 0.536,
+     "fpr": 0.174,
+     "j": 0.362
+    },
+    {
+     "threshold": 0.66,
+     "tpr": 0.607,
+     "fpr": 0.226,
+     "j": 0.381
+    },
+    {
+     "threshold": 0.69,
+     "tpr": 0.684,
+     "fpr": 0.302,
+     "j": 0.382
+    },
+    {
+     "threshold": 0.72,
+     "tpr": 0.752,
+     "fpr": 0.364,
+     "j": 0.388
+    },
+    {
+     "threshold": 0.75,
+     "tpr": 0.814,
+     "fpr": 0.434,
+     "j": 0.38
+    },
+    {
+     "threshold": 0.78,
+     "tpr": 0.865,
+     "fpr": 0.517,
+     "j": 0.348
+    },
+    {
+     "threshold": 0.81,
+     "tpr": 0.899,
+     "fpr": 0.589,
+     "j": 0.31
+    },
+    {
+     "threshold": 0.84,
+     "tpr": 0.934,
+     "fpr": 0.673,
+     "j": 0.261
+    },
+    {
+     "threshold": 0.87,
+     "tpr": 0.956,
+     "fpr": 0.756,
+     "j": 0.199
+    },
+    {
+     "threshold": 0.9,
+     "tpr": 0.97,
+     "fpr": 0.846,
+     "j": 0.124
+    },
+    {
+     "threshold": 0.93,
+     "tpr": 0.982,
+     "fpr": 0.925,
+     "j": 0.058
+    },
+    {
+     "threshold": 0.96,
+     "tpr": 0.993,
+     "fpr": 0.981,
+     "j": 0.012
+    },
+    {
+     "threshold": 1.01,
+     "tpr": 1.0,
+     "fpr": 1.0,
+     "j": 0.0
+    }
+   ]
+  }
+ },
+ "effect_on_pilot": {
+  "faster-whisper:small:en": {
+   "0.85 (default)": {
+    "entity_error_rate_off": 0.3379,
+    "entity_error_rate_on": 0.2922,
+    "relative_reduction_pct": 13.5,
+    "precision": 0.6087,
+    "corrections": {
+     "beneficial": 14,
+     "neutral": 9,
+     "harmful": 0
+    }
+   },
+   "0.64 (learned)": {
+    "entity_error_rate_off": 0.3379,
+    "entity_error_rate_on": 0.3105,
+    "relative_reduction_pct": 8.1,
+    "precision": 0.6667,
+    "corrections": {
+     "beneficial": 10,
+     "neutral": 5,
+     "harmful": 0
+    }
+   }
+  },
+  "faster-whisper:small:en:biased": {
+   "0.85 (default)": {
+    "entity_error_rate_off": 0.1507,
+    "entity_error_rate_on": 0.1416,
+    "relative_reduction_pct": 6.1,
+    "precision": 0.4286,
+    "corrections": {
+     "beneficial": 3,
+     "neutral": 4,
+     "harmful": 0
+    }
+   },
+   "0.65 (learned)": {
+    "entity_error_rate_off": 0.1507,
+    "entity_error_rate_on": 0.1507,
+    "relative_reduction_pct": 0.0,
+    "precision": 0.2,
+    "corrections": {
+     "beneficial": 1,
+     "neutral": 4,
+     "harmful": 0
+    }
+   }
+  }
+ }
+}
