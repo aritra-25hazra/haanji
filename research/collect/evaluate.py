@@ -58,7 +58,8 @@ def main(argv=None) -> int:
     for ex in res["examples"][:8]:
         print(f"  truth   : {ex['truth']}\n  heard   : {ex['heard']}\n  bridged : {ex['corrected']}   "
               f"{ex['corrections']}\n")
-    print(f"wrote {Path(args.out).relative_to(ROOT)}")
+    out_path = Path(args.out).resolve()
+    print(f"wrote {out_path.relative_to(ROOT) if out_path.is_relative_to(ROOT) else out_path}")
     return 0
 
 

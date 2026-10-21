@@ -1,6 +1,6 @@
 [project]
 name = "haanji-engine"
-version = "0.4.0"
+version = "1.0.0"
 description = "Real-time voice-agent engine for Indian languages: Bhasha Bridge, Speculative Turn Execution and the Pramaan Ledger"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -8,7 +8,33 @@ license = { text = "Apache-2.0" }
 authors = [
   { name = "Aritra Hazra" }, { name = "Prabhav Upadhayay" }, { name = "Anuj Uniyal" },
 ]
+keywords = ["voice agent", "speech recognition", "Hinglish", "code-mixed", "phonetic matching",
+            "contextual biasing", "speculative execution", "verifiable receipts", "India"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Natural Language :: Hindi",
+  "Natural Language :: Bengali",
+  "Natural Language :: Marathi",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Communications :: Telephony",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = ["cryptography>=42.0", "PyYAML>=6.0"]
+
+[project.urls]
+Homepage = "https://github.com/aritra-25hazra/haanji"
+Documentation = "https://aritra-25hazra.github.io/haanji/"
+Repository = "https://github.com/aritra-25hazra/haanji"
+Changelog = "https://github.com/aritra-25hazra/haanji/blob/main/CHANGELOG.md"
+Report = "https://github.com/aritra-25hazra/haanji/blob/main/research/REPORT.md"
 
 [project.optional-dependencies]
 dev  = ["pytest>=8.0", "pytest-asyncio>=0.23", "httpx>=0.27", "hypothesis>=6.0"]
@@ -25,6 +51,11 @@ haanji = "haanji.cli:main"
 # ./var, and auto-discovery would otherwise refuse to build once that exists.
 [tool.setuptools.packages.find]
 include = ["haanji*"]
+
+# The vertical packs live at the repository root; `make dist` (and the publish
+# workflow) copy them into haanji/packs/ so a wheel carries them too.
+[tool.setuptools.package-data]
+haanji = ["packs/*.yaml", "web/*"]
 
 [build-system]
 requires = ["setuptools>=68"]

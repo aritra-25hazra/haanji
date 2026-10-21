@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-15T14:38:59+00:00",
+ "generated_at": "2026-10-21T13:53:48+00:00",
  "results": {
   "Gram Vaani (real Hindi telephone speech, Whisper hi)": {
    "learned": {
@@ -102,7 +102,7 @@
       "harmful": 0
      },
      "precision": 0.9909,
-     "median_correct_ms": 0.006
+     "median_correct_ms": 0.007
     },
     "0.30": {
      "sentences": 2430,
@@ -111,12 +111,12 @@
      "entity_error_rate_on": 0.353,
      "relative_reduction_pct": 28.8,
      "corrections": {
-      "beneficial": 616,
-      "neutral": 18,
+      "beneficial": 615,
+      "neutral": 19,
       "harmful": 0
      },
-     "precision": 0.9716,
-     "median_correct_ms": 0.073
+     "precision": 0.97,
+     "median_correct_ms": 0.078
     },
     "0.44": {
      "sentences": 2430,
@@ -130,21 +130,21 @@
       "harmful": 0
      },
      "precision": 0.9595,
-     "median_correct_ms": 0.089
+     "median_correct_ms": 0.103
     },
     "0.45": {
      "sentences": 2430,
      "entities": 3303,
      "entity_error_rate_off": 0.7094,
-     "entity_error_rate_on": 0.515,
+     "entity_error_rate_on": 0.5147,
      "relative_reduction_pct": 27.4,
      "corrections": {
       "beneficial": 728,
-      "neutral": 34,
+      "neutral": 35,
       "harmful": 0
      },
-     "precision": 0.9554,
-     "median_correct_ms": 0.09
+     "precision": 0.9541,
+     "median_correct_ms": 0.103
     }
    }
   },
@@ -249,7 +249,7 @@
       "harmful": 0
      },
      "precision": 0.9941,
-     "median_correct_ms": 0.006
+     "median_correct_ms": 0.007
     },
     "0.30": {
      "sentences": 2430,
@@ -258,12 +258,12 @@
      "entity_error_rate_on": 0.2873,
      "relative_reduction_pct": 32.9,
      "corrections": {
-      "beneficial": 615,
-      "neutral": 11,
+      "beneficial": 614,
+      "neutral": 12,
       "harmful": 0
      },
-     "precision": 0.9824,
-     "median_correct_ms": 0.067
+     "precision": 0.9808,
+     "median_correct_ms": 0.069
     },
     "0.41": {
      "sentences": 2430,
@@ -273,11 +273,11 @@
      "relative_reduction_pct": 32.0,
      "corrections": {
       "beneficial": 734,
-      "neutral": 26,
+      "neutral": 27,
       "harmful": 0
      },
-     "precision": 0.9658,
-     "median_correct_ms": 0.078
+     "precision": 0.9645,
+     "median_correct_ms": 0.086
     },
     "0.45": {
      "sentences": 2430,
@@ -286,12 +286,12 @@
      "entity_error_rate_on": 0.4369,
      "relative_reduction_pct": 30.7,
      "corrections": {
-      "beneficial": 750,
-      "neutral": 44,
+      "beneficial": 749,
+      "neutral": 47,
       "harmful": 0
      },
-     "precision": 0.9446,
-     "median_correct_ms": 0.082
+     "precision": 0.941,
+     "median_correct_ms": 0.092
     }
    }
   }

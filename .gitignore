@@ -23,3 +23,15 @@ research/REPORT.html
 engine/var-load/
 research/collect/data/gramvaani/GV_Dev_5h/
 research/collect/data/gramvaani/*.tar.gz
+
+# packs are copied into the package only to build a wheel
+engine/haanji/packs/
+# docs site build
+site/
+docs/research/
+
+# LaTeX build products
+research/paper-latex/*.pdf
+research/paper-latex/*.log
+research/paper-latex/*.aux
+research/paper-latex/*.xdv

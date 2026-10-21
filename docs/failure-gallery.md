@@ -25,13 +25,13 @@ Pilot: synthetic Indian-English speech (macOS say: Rishi, Aman, Tara) through fa
 | truth | heard | bridge said | why not repaired | status |
 |---|---|---|---|---|
 | Jadavpur wali branch mein tooth extraction ka slot hai kya | Is there a slot for tooth extraction in the Jadavpuvali branch? | is there a slot for tooth extraction in the jadavpuvali branch | the recogniser paraphrased or translated the sentence; the entity was dropped, not mangled | open (recogniser biasing is the lever) |
-| kal subah root canal ke liye time chahiye | KAL SUBHAHROOT KANAL KE LIYE TAIM CHAHIYE | kal subhahroot kanal ke liye taim chahiye | corrupted beyond edit distance 2, or the corrupted form collided with no lexicon key | open (recogniser biasing is the lever) |
 | Gariahat wali branch mein root canal ka slot hai kya | What is the slot of Root Canal in Giriyatwali branch? | what is the slot of root canal in giriyatwali branch | the recogniser paraphrased or translated the sentence; the entity was dropped, not mangled | open (recogniser biasing is the lever) |
 | Gariahat wali branch mein root canal ka slot hai kya | What is the slot of Garia Heart Branch Main Root Canal? | what is the slot of garia heart branch main root canal | the recogniser paraphrased or translated the sentence; the entity was dropped, not mangled | open (recogniser biasing is the lever) |
 | Dr Banerjee ke saath root canal book karna hai | We have to book a root canal along with Dr. Bainarji. | we have to book a root canal along with dr bainarji | corrupted beyond edit distance 2, or the corrupted form collided with no lexicon key | open (recogniser biasing is the lever) |
 | Gariahat mein aap log hain na | Garia heart main aap log hain na | garia heart main aap log hain na | corrupted beyond edit distance 2, or the corrupted form collided with no lexicon key | open (recogniser biasing is the lever) |
 | Dr Banerjee se milna hai parso | Dr. Bhainaji se milna hai parso. | dr bhainaji se milna hai parso | corrupted beyond edit distance 2, or the corrupted form collided with no lexicon key | open (recogniser biasing is the lever) |
 | kal subah tooth extraction ke liye time chahiye | Tomorrow morning, we need time to extract the tooth. | tomorrow morning we need time to extract the tooth | corrupted beyond edit distance 2, or the corrupted form collided with no lexicon key | open (recogniser biasing is the lever) |
+| kal subah tooth extraction ke liye time chahiye | Thank you. | thank you | the recogniser paraphrased or translated the sentence; the entity was dropped, not mangled | open (recogniser biasing is the lever) |
 
 ## 3. Absurd-but-harmless: `to do` → `thyroid profile`
 

@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use HaanJi in research, please cite it as below."
+title: "HaanJi: a voice receptionist for Indian small businesses that hears the business's own words, answers before the caller finishes, and can prove what was agreed"
+type: software
+version: 1.0.0
+date-released: "2026-10-21"
+license: Apache-2.0
+repository-code: "https://github.com/aritra-25hazra/haanji"
+url: "https://github.com/aritra-25hazra/haanji"
+abstract: >-
+  An open-source voice-agent engine for Hinglish, Benglish and Marathinglish
+  callers with three measured mechanisms: Bhasha Bridge (a per-tenant phonetic
+  index that biases the recogniser and repairs its output under a two-condition
+  rule that cannot damage a correct transcript), Speculative Turn Execution
+  (read-only tools predicted and run from partial transcripts, claimed only on
+  byte-identical arguments) and the Pramaan Ledger (Ed25519-signed, hash-chained
+  consent receipts with daily Merkle anchors that refuse unconfirmed writes).
+  The evaluation harness, the real-recogniser pipeline, the baselines and the
+  report are in the repository.
+keywords:
+  - voice agent
+  - speech recognition
+  - Hinglish
+  - code-mixed speech
+  - phonetic matching
+  - contextual biasing
+  - speculative execution
+  - verifiable receipts
+  - small business
+  - India
+authors:
+  - family-names: Hazra
+    given-names: Aritra
+    affiliation: "Medi-Caps University"
+  - family-names: Upadhayay
+    given-names: Prabhav
+    affiliation: "Medi-Caps University"
+  - family-names: Uniyal
+    given-names: Anuj
+    affiliation: "Medi-Caps University"

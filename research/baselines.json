@@ -1,57 +1,57 @@
 {
- "generated_at": "2026-10-15T14:10:45+00:00",
+ "generated_at": "2026-10-21T13:54:03+00:00",
  "trials": 9,
  "synthetic": {
   "edit distance only": {
    "0.15": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.1733,
-    "entity_error_rate_on": 0.0056,
-    "relative_reduction_pct": 96.8,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.175,
+    "entity_error_rate_on": 0.0048,
+    "relative_reduction_pct": 97.2,
     "corrections": {
-     "beneficial": 660,
-     "neutral": 29,
+     "beneficial": 765,
+     "neutral": 33,
      "harmful": 0
     },
-    "precision": 0.9579,
-    "median_correct_ms": 0.007
+    "precision": 0.9586,
+    "median_correct_ms": 0.008
    },
    "0.30": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.3208,
-    "entity_error_rate_on": 0.0168,
-    "relative_reduction_pct": 94.8,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.3224,
+    "entity_error_rate_on": 0.0145,
+    "relative_reduction_pct": 95.5,
     "corrections": {
-     "beneficial": 1166,
-     "neutral": 76,
+     "beneficial": 1344,
+     "neutral": 83,
      "harmful": 0
     },
-    "precision": 0.9388,
-    "median_correct_ms": 0.293
+    "precision": 0.9418,
+    "median_correct_ms": 0.344
    },
    "0.45": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.5042,
-    "entity_error_rate_on": 0.0294,
-    "relative_reduction_pct": 94.2,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.5071,
+    "entity_error_rate_on": 0.0254,
+    "relative_reduction_pct": 95.0,
     "corrections": {
-     "beneficial": 1682,
-     "neutral": 93,
+     "beneficial": 1962,
+     "neutral": 99,
      "harmful": 0
     },
-    "precision": 0.9476,
-    "median_correct_ms": 0.484
+    "precision": 0.952,
+    "median_correct_ms": 0.549
    }
   },
   "exact spelling": {
    "0.15": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.1733,
-    "entity_error_rate_on": 0.173,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.175,
+    "entity_error_rate_on": 0.1747,
     "relative_reduction_pct": 0.2,
     "corrections": {
      "beneficial": 4,
@@ -59,28 +59,14 @@
      "harmful": 0
     },
     "precision": 1.0,
-    "median_correct_ms": 0.006
+    "median_correct_ms": 0.007
    },
    "0.30": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.3208,
-    "entity_error_rate_on": 0.3201,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.3224,
+    "entity_error_rate_on": 0.3218,
     "relative_reduction_pct": 0.2,
-    "corrections": {
-     "beneficial": 4,
-     "neutral": 0,
-     "harmful": 0
-    },
-    "precision": 1.0,
-    "median_correct_ms": 0.011
-   },
-   "0.45": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.5042,
-    "entity_error_rate_on": 0.5035,
-    "relative_reduction_pct": 0.1,
     "corrections": {
      "beneficial": 4,
      "neutral": 0,
@@ -88,226 +74,240 @@
     },
     "precision": 1.0,
     "median_correct_ms": 0.014
+   },
+   "0.45": {
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.5071,
+    "entity_error_rate_on": 0.5065,
+    "relative_reduction_pct": 0.1,
+    "corrections": {
+     "beneficial": 4,
+     "neutral": 0,
+     "harmful": 0
+    },
+    "precision": 1.0,
+    "median_correct_ms": 0.024
    }
   },
   "Soundex": {
    "0.15": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.1733,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.175,
     "entity_error_rate_on": 0.0248,
-    "relative_reduction_pct": 85.7,
+    "relative_reduction_pct": 85.8,
     "corrections": {
-     "beneficial": 578,
+     "beneficial": 672,
      "neutral": 4,
      "harmful": 0
     },
-    "precision": 0.9931,
-    "median_correct_ms": 0.006
+    "precision": 0.9941,
+    "median_correct_ms": 0.007
    },
    "0.30": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.3208,
-    "entity_error_rate_on": 0.0398,
-    "relative_reduction_pct": 87.6,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.3224,
+    "entity_error_rate_on": 0.0415,
+    "relative_reduction_pct": 87.1,
     "corrections": {
-     "beneficial": 1048,
-     "neutral": 16,
+     "beneficial": 1198,
+     "neutral": 18,
      "harmful": 0
     },
-    "precision": 0.985,
-    "median_correct_ms": 0.018
+    "precision": 0.9852,
+    "median_correct_ms": 0.024
    },
    "0.45": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.5042,
-    "entity_error_rate_on": 0.0709,
-    "relative_reduction_pct": 85.9,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.5071,
+    "entity_error_rate_on": 0.0772,
+    "relative_reduction_pct": 84.8,
     "corrections": {
-     "beneficial": 1508,
-     "neutral": 31,
+     "beneficial": 1731,
+     "neutral": 37,
      "harmful": 0
     },
-    "precision": 0.9799,
-    "median_correct_ms": 0.031
+    "precision": 0.9791,
+    "median_correct_ms": 0.047
    }
   },
   "Metaphone": {
    "0.15": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.1733,
-    "entity_error_rate_on": 0.0377,
-    "relative_reduction_pct": 78.2,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.175,
+    "entity_error_rate_on": 0.0388,
+    "relative_reduction_pct": 77.9,
     "corrections": {
-     "beneficial": 522,
+     "beneficial": 601,
      "neutral": 5,
      "harmful": 0
     },
-    "precision": 0.9905,
-    "median_correct_ms": 0.006
+    "precision": 0.9917,
+    "median_correct_ms": 0.007
    },
    "0.30": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.3208,
-    "entity_error_rate_on": 0.0804,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.3224,
+    "entity_error_rate_on": 0.0808,
     "relative_reduction_pct": 74.9,
     "corrections": {
-     "beneficial": 901,
-     "neutral": 14,
+     "beneficial": 1028,
+     "neutral": 15,
      "harmful": 0
     },
-    "precision": 0.9847,
-    "median_correct_ms": 0.017
+    "precision": 0.9856,
+    "median_correct_ms": 0.023
    },
    "0.45": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.5042,
-    "entity_error_rate_on": 0.1429,
-    "relative_reduction_pct": 71.7,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.5071,
+    "entity_error_rate_on": 0.1399,
+    "relative_reduction_pct": 72.4,
     "corrections": {
-     "beneficial": 1241,
-     "neutral": 29,
+     "beneficial": 1455,
+     "neutral": 31,
      "harmful": 0
     },
-    "precision": 0.9772,
-    "median_correct_ms": 0.027
+    "precision": 0.9791,
+    "median_correct_ms": 0.044
    }
   },
   "NYSIIS": {
    "0.15": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.1733,
-    "entity_error_rate_on": 0.0164,
-    "relative_reduction_pct": 90.5,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.175,
+    "entity_error_rate_on": 0.0151,
+    "relative_reduction_pct": 91.3,
     "corrections": {
-     "beneficial": 612,
+     "beneficial": 714,
      "neutral": 3,
      "harmful": 0
     },
-    "precision": 0.9951,
-    "median_correct_ms": 0.006
+    "precision": 0.9958,
+    "median_correct_ms": 0.007
    },
    "0.30": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.3208,
-    "entity_error_rate_on": 0.0346,
-    "relative_reduction_pct": 89.2,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.3224,
+    "entity_error_rate_on": 0.0324,
+    "relative_reduction_pct": 90.0,
     "corrections": {
-     "beneficial": 1075,
-     "neutral": 9,
+     "beneficial": 1245,
+     "neutral": 10,
      "harmful": 0
     },
-    "precision": 0.9917,
-    "median_correct_ms": 0.019
+    "precision": 0.992,
+    "median_correct_ms": 0.026
    },
    "0.45": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.5042,
-    "entity_error_rate_on": 0.0709,
-    "relative_reduction_pct": 85.9,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.5071,
+    "entity_error_rate_on": 0.0681,
+    "relative_reduction_pct": 86.6,
     "corrections": {
-     "beneficial": 1514,
-     "neutral": 13,
+     "beneficial": 1772,
+     "neutral": 15,
      "harmful": 0
     },
-    "precision": 0.9915,
-    "median_correct_ms": 0.032
+    "precision": 0.9916,
+    "median_correct_ms": 0.051
    }
   },
   "Double Metaphone": {
    "0.15": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.1733,
-    "entity_error_rate_on": 0.028,
-    "relative_reduction_pct": 83.9,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.175,
+    "entity_error_rate_on": 0.0291,
+    "relative_reduction_pct": 83.4,
     "corrections": {
-     "beneficial": 556,
+     "beneficial": 639,
      "neutral": 4,
      "harmful": 0
     },
-    "precision": 0.9929,
-    "median_correct_ms": 0.006
+    "precision": 0.9938,
+    "median_correct_ms": 0.008
    },
    "0.30": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.3208,
-    "entity_error_rate_on": 0.0699,
-    "relative_reduction_pct": 78.2,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.3224,
+    "entity_error_rate_on": 0.0678,
+    "relative_reduction_pct": 79.0,
     "corrections": {
-     "beneficial": 941,
-     "neutral": 14,
+     "beneficial": 1081,
+     "neutral": 15,
      "harmful": 0
     },
-    "precision": 0.9853,
-    "median_correct_ms": 0.048
+    "precision": 0.9863,
+    "median_correct_ms": 0.059
    },
    "0.45": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.5042,
-    "entity_error_rate_on": 0.1097,
-    "relative_reduction_pct": 78.2,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.5071,
+    "entity_error_rate_on": 0.1063,
+    "relative_reduction_pct": 79.0,
     "corrections": {
-     "beneficial": 1342,
-     "neutral": 27,
+     "beneficial": 1572,
+     "neutral": 29,
      "harmful": 0
     },
-    "precision": 0.9803,
-    "median_correct_ms": 0.074
+    "precision": 0.9819,
+    "median_correct_ms": 0.102
    }
   },
   "Bhasha (ours)": {
    "0.15": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.1733,
-    "entity_error_rate_on": 0.0014,
-    "relative_reduction_pct": 99.2,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.175,
+    "entity_error_rate_on": 0.0036,
+    "relative_reduction_pct": 97.9,
     "corrections": {
-     "beneficial": 659,
+     "beneficial": 756,
      "neutral": 1,
      "harmful": 0
     },
-    "precision": 0.9985,
-    "median_correct_ms": 0.006
+    "precision": 0.9987,
+    "median_correct_ms": 0.008
    },
    "0.30": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.3208,
-    "entity_error_rate_on": 0.008,
-    "relative_reduction_pct": 97.5,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.3224,
+    "entity_error_rate_on": 0.0088,
+    "relative_reduction_pct": 97.3,
     "corrections": {
-     "beneficial": 1155,
+     "beneficial": 1327,
      "neutral": 11,
      "harmful": 0
     },
-    "precision": 0.9906,
-    "median_correct_ms": 0.072
+    "precision": 0.9918,
+    "median_correct_ms": 0.082
    },
    "0.45": {
-    "sentences": 2097,
-    "entities": 2862,
-    "entity_error_rate_off": 0.5042,
-    "entity_error_rate_on": 0.021,
-    "relative_reduction_pct": 95.8,
+    "sentences": 2430,
+    "entities": 3303,
+    "entity_error_rate_off": 0.5071,
+    "entity_error_rate_on": 0.0206,
+    "relative_reduction_pct": 95.9,
     "corrections": {
-     "beneficial": 1666,
+     "beneficial": 1938,
      "neutral": 18,
      "harmful": 0
     },
-    "precision": 0.9893,
-    "median_correct_ms": 0.111
+    "precision": 0.9908,
+    "median_correct_ms": 0.14
    }
   }
  },
@@ -316,16 +316,16 @@
    "utterances": 300,
    "entities": 219,
    "entity_error_rate_off": 0.3379,
-   "entity_error_rate_on": 0.3242,
-   "relative_reduction_pct": 4.1,
+   "entity_error_rate_on": 0.3105,
+   "relative_reduction_pct": 8.1,
    "corrections": {
-    "beneficial": 32,
-    "neutral": 38,
+    "beneficial": 34,
+    "neutral": 41,
     "harmful": 6
    },
-   "precision": 0.4211,
+   "precision": 0.4198,
    "word_error_rate": 0.8869,
-   "median_correct_ms": 0.713
+   "median_correct_ms": 0.744
   },
   "exact spelling": {
    "utterances": 300,
@@ -335,59 +335,29 @@
    "relative_reduction_pct": 1.4,
    "corrections": {
     "beneficial": 1,
-    "neutral": 0,
+    "neutral": 1,
     "harmful": 0
    },
-   "precision": 1.0,
+   "precision": 0.5,
    "word_error_rate": 0.8869,
-   "median_correct_ms": 0.018
+   "median_correct_ms": 0.022
   },
   "Soundex": {
    "utterances": 300,
    "entities": 219,
    "entity_error_rate_off": 0.3379,
-   "entity_error_rate_on": 0.3059,
-   "relative_reduction_pct": 9.5,
+   "entity_error_rate_on": 0.3014,
+   "relative_reduction_pct": 10.8,
    "corrections": {
-    "beneficial": 13,
-    "neutral": 6,
+    "beneficial": 14,
+    "neutral": 7,
     "harmful": 0
    },
-   "precision": 0.6842,
+   "precision": 0.6667,
    "word_error_rate": 0.8869,
-   "median_correct_ms": 0.025
+   "median_correct_ms": 0.028
   },
   "Metaphone": {
-   "utterances": 300,
-   "entities": 219,
-   "entity_error_rate_off": 0.3379,
-   "entity_error_rate_on": 0.3151,
-   "relative_reduction_pct": 6.8,
-   "corrections": {
-    "beneficial": 11,
-    "neutral": 6,
-    "harmful": 0
-   },
-   "precision": 0.6471,
-   "word_error_rate": 0.8869,
-   "median_correct_ms": 0.023
-  },
-  "NYSIIS": {
-   "utterances": 300,
-   "entities": 219,
-   "entity_error_rate_off": 0.3379,
-   "entity_error_rate_on": 0.3242,
-   "relative_reduction_pct": 4.1,
-   "corrections": {
-    "beneficial": 9,
-    "neutral": 2,
-    "harmful": 0
-   },
-   "precision": 0.8182,
-   "word_error_rate": 0.8869,
-   "median_correct_ms": 0.025
-  },
-  "Double Metaphone": {
    "utterances": 300,
    "entities": 219,
    "entity_error_rate_off": 0.3379,
@@ -395,27 +365,57 @@
    "relative_reduction_pct": 8.1,
    "corrections": {
     "beneficial": 12,
-    "neutral": 6,
+    "neutral": 7,
     "harmful": 0
    },
-   "precision": 0.6667,
+   "precision": 0.6316,
    "word_error_rate": 0.8869,
-   "median_correct_ms": 0.081
+   "median_correct_ms": 0.03
   },
-  "Bhasha (ours)": {
+  "NYSIIS": {
+   "utterances": 300,
+   "entities": 219,
+   "entity_error_rate_off": 0.3379,
+   "entity_error_rate_on": 0.3196,
+   "relative_reduction_pct": 5.4,
+   "corrections": {
+    "beneficial": 10,
+    "neutral": 3,
+    "harmful": 0
+   },
+   "precision": 0.7692,
+   "word_error_rate": 0.8869,
+   "median_correct_ms": 0.03
+  },
+  "Double Metaphone": {
    "utterances": 300,
    "entities": 219,
    "entity_error_rate_off": 0.3379,
    "entity_error_rate_on": 0.3014,
    "relative_reduction_pct": 10.8,
    "corrections": {
-    "beneficial": 12,
-    "neutral": 8,
+    "beneficial": 14,
+    "neutral": 7,
     "harmful": 0
    },
-   "precision": 0.6,
+   "precision": 0.6667,
    "word_error_rate": 0.8869,
-   "median_correct_ms": 0.13
+   "median_correct_ms": 0.098
+  },
+  "Bhasha (ours)": {
+   "utterances": 300,
+   "entities": 219,
+   "entity_error_rate_off": 0.3379,
+   "entity_error_rate_on": 0.2922,
+   "relative_reduction_pct": 13.5,
+   "corrections": {
+    "beneficial": 14,
+    "neutral": 9,
+    "harmful": 0
+   },
+   "precision": 0.6087,
+   "word_error_rate": 0.8869,
+   "median_correct_ms": 0.154
   }
  },
  "per_rule": [
@@ -424,8 +424,8 @@
    "label": "long a shortens (aa→a)",
    "pattern": "aa+h?",
    "replacement": "a",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -434,8 +434,8 @@
    "label": "ee/ie/ii/iy→i",
    "pattern": "(ee|ie|ii|iy)",
    "replacement": "i",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -444,8 +444,8 @@
    "label": "oo/uu→u",
    "pattern": "(oo|uu)",
    "replacement": "u",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -454,8 +454,8 @@
    "label": "ph→f",
    "pattern": "ph",
    "replacement": "f",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -464,18 +464,18 @@
    "label": "v/w merge",
    "pattern": "[vw]",
    "replacement": "V",
-   "eer_on": 0.0252,
-   "precision": 0.9849,
+   "eer_on": 0.0248,
+   "precision": 0.9861,
    "harmful": 0,
-   "delta_eer_points": 1.72
+   "delta_eer_points": 1.6
   },
   {
    "rule": 5,
    "label": "s/sh/z merge",
    "pattern": "(sh|s|z)",
    "replacement": "S",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -484,18 +484,18 @@
    "label": "ch/chh merge",
    "pattern": "(chh|ch|c(?=[hiey]))",
    "replacement": "C",
-   "eer_on": 0.0052,
-   "precision": 0.9906,
+   "eer_on": 0.0045,
+   "precision": 0.9919,
    "harmful": 0,
-   "delta_eer_points": -0.28
+   "delta_eer_points": -0.43
   },
   {
    "rule": 7,
    "label": "t/d/th/dh collapse",
    "pattern": "(th|dh|[td])",
    "replacement": "T",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -504,18 +504,18 @@
    "label": "k/kh/q/c merge",
    "pattern": "(kh|[kqx]|c(?=[aou]))",
    "replacement": "K",
-   "eer_on": 0.0297,
-   "precision": 0.9899,
+   "eer_on": 0.0351,
+   "precision": 0.9902,
    "harmful": 0,
-   "delta_eer_points": 2.17
+   "delta_eer_points": 2.63
   },
   {
    "rule": 9,
    "label": "surviving c→k",
    "pattern": "c",
    "replacement": "K",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -524,8 +524,8 @@
    "label": "g/gh/j-cluster merge",
    "pattern": "(gh|g|j(?=[^aeiou]))",
    "replacement": "G",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -534,8 +534,8 @@
    "label": "b/bh/p merge",
    "pattern": "(bh|b|p)",
    "replacement": "P",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -544,8 +544,8 @@
    "label": "j",
    "pattern": "j",
    "replacement": "J",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -554,8 +554,8 @@
    "label": "n/m merge",
    "pattern": "[nm]",
    "replacement": "N",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -564,8 +564,8 @@
    "label": "l/r merge",
    "pattern": "[lr]",
    "replacement": "R",
-   "eer_on": 0.008,
-   "precision": 0.9906,
+   "eer_on": 0.0088,
+   "precision": 0.9918,
    "harmful": 0,
    "delta_eer_points": 0.0
   },
@@ -574,61 +574,61 @@
    "label": "h/y dropped",
    "pattern": "[hy]",
    "replacement": "",
-   "eer_on": 0.0119,
-   "precision": 0.9904,
+   "eer_on": 0.0121,
+   "precision": 0.9917,
    "harmful": 0,
-   "delta_eer_points": 0.39
+   "delta_eer_points": 0.33
   }
  ],
  "mcnemar_30": {
   "edit distance only": {
    "b": 32,
-   "c": 7,
-   "statistic": 14.769,
-   "p": 0.0001215019756430813,
-   "n_discordant": 39
+   "c": 13,
+   "statistic": 7.2,
+   "p": 0.007290358091535644,
+   "n_discordant": 45
   },
   "exact spelling": {
-   "b": 807,
+   "b": 936,
    "c": 0,
-   "statistic": 805.001,
-   "p": 4.412715327754896e-177,
-   "n_discordant": 807
+   "statistic": 934.001,
+   "p": 3.986094463128498e-205,
+   "n_discordant": 936
   },
   "Soundex": {
-   "b": 97,
-   "c": 7,
-   "statistic": 76.163,
-   "p": 2.6112900606557634e-18,
-   "n_discordant": 104
+   "b": 118,
+   "c": 13,
+   "statistic": 82.565,
+   "p": 1.0225763472354887e-19,
+   "n_discordant": 131
   },
   "Metaphone": {
-   "b": 203,
+   "b": 234,
    "c": 0,
-   "statistic": 201.005,
-   "p": 1.2604836256974427e-45,
-   "n_discordant": 203
+   "statistic": 232.004,
+   "p": 2.1789738549331263e-52,
+   "n_discordant": 234
   },
   "NYSIIS": {
-   "b": 82,
-   "c": 7,
-   "statistic": 61.528,
-   "p": 4.3647165609053815e-15,
-   "n_discordant": 89
+   "b": 90,
+   "c": 13,
+   "statistic": 56.078,
+   "p": 6.96638531334849e-14,
+   "n_discordant": 103
   },
   "Double Metaphone": {
-   "b": 175,
+   "b": 193,
    "c": 0,
-   "statistic": 173.006,
-   "p": 1.6320043148058357e-39,
-   "n_discordant": 175
+   "statistic": 191.005,
+   "p": 1.9183358269073504e-43,
+   "n_discordant": 193
   },
   "off vs ours": {
-   "b": 809,
+   "b": 938,
    "c": 0,
-   "statistic": 807.001,
-   "p": 1.6213418686570166e-177,
-   "n_discordant": 809
+   "statistic": 936.001,
+   "p": 1.464839702132934e-205,
+   "n_discordant": 938
   }
  }
 }

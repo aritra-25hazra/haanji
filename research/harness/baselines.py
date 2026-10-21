@@ -90,7 +90,8 @@ def mcnemar_vs_ours(syn: dict, rate: str = "0.30") -> dict:
 
 
 def tables(syn, realr, rules, mc) -> str:
-    out = ["**Table 8 — Keyers on synthetic noise (transcript level, 2,097 sentences per rate)**\n",
+    n_sentences = syn["Bhasha (ours)"]["0.30"]["sentences"]
+    out = [f"**Table 8 — Keyers on synthetic noise (transcript level, {n_sentences:,} sentences per rate)**\n",
            "| keyer | EER on @15% | EER on @30% | EER on @45% | precision @30% | harmful @30% | McNemar vs ours @30% |",
            "|---|---|---|---|---|---|---|"]
     for name, res in syn.items():

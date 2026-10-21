@@ -26,7 +26,7 @@ single-run numbers in the README agree within those intervals.
 
 **9. Why entity error rate and not word error rate?** The agent books correctly if it gets the service, the doctor and the place right; it can survive a hundred wrong function words. WER is reported alongside on the pilot for comparison (89 %). *Evidence: REPORT §3.4, §4.5.*
 
-**10. Your noise is synthetic. What about real recognisers?** We built the pipeline and ran a pilot: synthetic Indian-English speech through faster-whisper. It found a real weakness (confidence not calibrated; `slot`→`Salt`), which three stated guards fixed; on that data the bridge helps about a tenth, not 97 %. Volunteers' recordings go through the same pipeline. *Evidence: REPORT §4.5; `research/real_asr.json`, `real_asr_v0.json`; `research/collect/`.*
+**10. Your noise is synthetic. What about real recognisers?** We built the pipeline and ran a pilot: synthetic Indian-English speech through faster-whisper. It found a real weakness (confidence not calibrated; `slot`→`Salt`), which three stated guards fixed; on that data the bridge helps about a tenth, not 97 %. Then: the pack vocabulary as the recogniser's prompt halves entity error *before* any repair (33.8 → 15.1 %), a merged-token rule adds two repairs, and calibrating the gate does not help — the guards and the second condition carry the safety. Volunteers' recordings go through the same pipeline. *Evidence: REPORT §4.5, §4.9–4.11; `research/real_asr.json`, `real_asr_biased.json`, `calibration.json`; `research/collect/`.*
 
 **11. Does it generalise beyond Hindi?** The Benglish pack (Kolkata) gains as much as the Hinglish ones from the same key rules, and a Marathinglish pack (Pune) was added afterwards with one phrase-table row and one YAML file; the policy's language is a phrase table and a vocabulary list, no forked code. *Evidence: REPORT Table 3; `packs/clinic_kolkata.yaml`, `packs/clinic_pune.yaml`; `engine/haanji/speak.py`; `engine/tests/test_marathi.py`.*
 
@@ -58,13 +58,13 @@ single-run numbers in the README agree within those intervals.
 
 ## Evaluation and rigour
 
-**23. How many runs? Are the differences significant?** Five seeds × three repetitions for the ablation; 2,097 sentences per noise level for the correction layer; McNemar's test on paired per-sentence outcomes (p < 0.001 for bridge off vs on and for ours vs every baseline at 30 %). *Evidence: REPORT §3.4, Table 8; `research/harness/stats.py`.*
+**23. How many runs? Are the differences significant?** Five seeds × three repetitions for the ablation; 2,430 sentences per noise level for the correction layer; McNemar's test on paired per-sentence outcomes (p < 0.001 for bridge off vs on and for ours vs every classic key at 30 %; p = 0.007 against the edit-distance bound alone). *Evidence: REPORT §3.4, Table 8; `research/harness/stats.py`.*
 
 **24. Confidence intervals overlap in some rows. So?** Then that row is "not separated by this experiment", and the report says so rather than claiming a win. *Evidence: REPORT §8 "Statistical".*
 
 **25. Where is the real data?** Pilot on synthetic speech through a real recogniser (done); public Hindi telephone speech through Whisper with a corruption model learned from it (§4.8); volunteer recordings and the user study need people and are pending with their kits ready. *Evidence: REPORT §4.5–§4.6, §9.*
 
-**26. How reproducible is this?** One clean checkout, no network, no key: `pytest` (≈300 tests), `selftest` (21 scenarios), `bench`, and the five-seed harness regenerate every table. CI runs it on every push. *Evidence: REPORT Appendix A; `.github/workflows/ci.yml`.*
+**26. How reproducible is this?** One clean checkout, no network, no key: `pytest` (317 tests), `selftest` (24 scenarios), `bench`, and the five-seed harness regenerate every table. CI runs it on every push. *Evidence: REPORT Appendix A; `.github/workflows/ci.yml`.*
 
 **27. What are the threats to validity?** Construct (EER ignores date/number errors), internal (the corruption model was written by us), external (engine-side latency, scripted callers, five packs), statistical (few seeds). Each is listed with what was done about it. *Evidence: REPORT §8.*
 
@@ -96,7 +96,7 @@ single-run numbers in the README agree within those intervals.
 
 **39. Could this be published?** The IEEE-format paper draft condenses the report; the contributions are measured, the baselines are present, the limitations are stated. The missing piece for a strong venue is the volunteer-recording study. *Evidence: `research/PAPER.md` / `PAPER.pdf`.*
 
-**40. What would you do with six more months?** Real recordings and the user study; a learned predictor for speculation; a closed-vocabulary repair for dates and numbers; a PSTN deployment measured end to end; Marathi, Tamil and Telugu packs. *Evidence: REPORT §9.*
+**40. What would you do with six more months?** Real recordings and the user study; a recogniser that decodes Hinglish natively (biasing already halves entity error, §4.11); a predictor trained on real calls' partials (the harness one did not beat the hand-set weights, §5.4); a closed-vocabulary repair for dates and numbers; a real phone call through the Twilio bridge, measured end to end; Tamil and Telugu packs. *Evidence: REPORT §9.*
 
 ## Ethics, privacy, law
 
@@ -110,14 +110,33 @@ single-run numbers in the README agree within those intervals.
 
 **44. Who did what?** Three authors; the repository history and co-author trailers show each change. *Evidence: `git log`.*
 
-**45. How was it tested?** ≈300 unit, property and integration tests; 24 scenario tests in three languages; a visual/accessibility pass; a load test; a real-recogniser pilot. *Evidence: REPORT Appendix C.*
+**45. How was it tested?** 317 unit, property and integration tests; 24 scenario tests in three languages; a visual/accessibility pass; a load test; a real-recogniser pilot. *Evidence: REPORT Appendix C.*
 
 **46. Why Python for the engine and Java for the core API?** Python for the research iteration and the speech/ML ecosystem; Java (Spring) for the owner-facing API with ArchUnit rules; the ledger is ported to both and the property is tested end to end on the Python side. *Evidence: README "Honest notes".*
 
-**47. What is the hardest bug you found?** The bridge's confidence gate was open on a real recogniser's probabilities and it corrected `slot` to `Salt` six times; the fix was two stated rules, and the finding changed the report's headline from 97 % to "about a tenth on real recogniser output". *Evidence: REPORT §4.5.*
+**47. What is the hardest bug you found?** The bridge's confidence gate was open on a real recogniser's probabilities and it corrected `slot` to `Salt` six times; the fix was two stated rules, and the finding changed the report's headline from 97 % to "about a tenth on real recogniser output". The runner-up: the first merged-token rule split *Koolkarni* into the grammar words *ko karni* before the lexicon saw it — a neutral correction pre-empting a beneficial one, invisible to the harmful count, caught by the synthetic harness. *Evidence: REPORT §4.5, §4.9.*
 
 **48. What is the single most important number?** Zero: unconfirmed writes accepted, in every configuration, every seed, every attack, and in production. *Evidence: REPORT Table 4 (last column), Table 5; `/metrics` `haanji_ledger_unconfirmed_refused_total`.*
 
 **49. What would a competitor have to do to copy this?** Build the per-tenant phonetic index and prove it does no harm, make tool execution speculative without changing answers, and give customers a receipt they can verify without trusting the company. Each is small; together they are the product. *Evidence: this document.*
 
 **50. Demo it in two minutes.** `/talk`: say "rut kanal kal subah", watch the repair paint over, the slot arrive before you finish, the stamp drop; open the receipt link; press *tamper* on `/verify`. *Evidence: docs/demo-script.md.*
+
+## The last additions
+
+**51. Biasing helped far more than the bridge. Doesn't that undercut the bridge?** It reorders the two: biasing makes the recogniser *keep* catalogue words it was translating or paraphrasing, which no post-correction can recover; the bridge repairs what survives. With the vocabulary in the prompt, entity error halves before the bridge runs and the bridge still adds a safe 6 % on top. The recommended configuration is both. *Evidence: REPORT §4.11, Table 15; `research/real_asr_biased.json`.*
+
+**52. You calibrated the confidence gate and then did not use the result. Why?** Because the measurement said not to: Whisper's word probabilities separate right from wrong words only weakly (AUC 0.62–0.77), the calibrated threshold lowered the bridge's gain, and a sweep showed zero harmful corrections at every gate including none at all — on this recogniser the gate contributes nothing to safety; the guards and the second condition carry it. The tool stays so a deployment can test its own recogniser in a minute. *Evidence: REPORT §4.10, Tables 13–14; `haanji/bhasha/calibration.py`; `research/calibration.json`.*
+
+**53. What did the merged-token rule nearly break?** Its first version split before the ordinary rule ran, so a token the lexicon could have repaired whole became two grammar words. Synthetic entity error rose from 0.80 % to 1.18 % with the harmful count still zero, which exposed a blind spot in that count: a neutral correction that pre-empts a beneficial one. The rule now applies only to tokens the lexicon cannot explain, and only when a half is a catalogue word. *Evidence: REPORT §4.9; `research/harness/split_probe.py`; `test_a_token_the_lexicon_explains_as_a_whole_is_repaired_not_split`.*
+
+**54. Why does the learned predictor lose to the hand-set one?** It is more precise and less eager: it never fires on a partial that wants no tool, misses three in ten that do, and its median read turn is 44 ms slower because the turns it declines are the ones where a hit saves most. For latency, recall is what matters; a wasted speculation costs an idle engine a cheap read. *Evidence: REPORT §5.4, Table 16; `research/predictor_fit.json`.*
+
+**55. How does a reschedule stay provable?** The new slot is booked first through the ordinary confirmation flow, the receipt is sealed with the previous booking's id, slot and receipt code inside the signed payload, and only then is the old booking cancelled. The outcome is `RESCHEDULED`; the verifier shows the chain. *Evidence: `haanji/tools/builtin.py` `reschedule_appointment`; `tests/test_reschedule.py`.*
+
+**56. What happens when a person takes a call over?** The session is flagged human; caller turns are logged and shown to the person instead of the agent; the person's replies go out on the same channel (spoken on the phone line, sent on WhatsApp, shown in the browser) and are recorded as human turns, so the transcript says who said what. Hand-back resumes the agent. *Evidence: `POST /api/sessions/{id}/takeover`; `tests/test_takeover.py`.*
+
+**57. How does the owner learn a booking happened without opening anything?** Web push from the console (VAPID keys generated beside the data, the subscription stored per pack) on a booking, a reschedule, a callback or a handoff; the evening WhatsApp digest; and the console installs as an app. *Evidence: `haanji/push.py`; `tests/test_push.py`; console *Notifications on*.*
+
+**58. How would someone else install or cite this?** `pip install haanji-engine` gives the engine with the six packs bundled; the repository has `CITATION.cff` and `.zenodo.json`, so a GitHub release mints a DOI once Zenodo is linked; the documentation site is built from `docs/` by MkDocs; the paper is in LaTeX for a venue template. *Evidence: `CHANGELOG.md`; `.github/workflows/publish.yml`, `pages.yml`; `research/paper-latex/`.*
+

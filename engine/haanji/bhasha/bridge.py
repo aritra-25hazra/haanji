@@ -107,28 +107,29 @@ class BhashaBridge:
     # ------------------------------------------------------------ merged tokens
     MIN_MERGED_LEN = 8
 
-    def _known_word(self, token: str) -> str | None:
+    def _known_word(self, token: str) -> tuple[str, bool] | None:
         """A single word the engine would recognise on its own: a grammar or
         frame word (within one edit), or a one-word lexicon form (exact key
-        and within one edit). Returns the canonical spelling, or None."""
+        and within one edit). Returns (canonical spelling, from the lexicon),
+        or None."""
         low = token.lower()
         if low in STOPWORDS:
-            return low
+            return low, False
         if len(low) >= 3:
             for w in STOPWORDS:
                 if abs(len(w) - len(low)) <= 1 and edit_distance(low, w, cap=1) <= 1:
-                    return w
+                    return w, False
         key = phonetic_key(low)
         if key:
             for entry in self.lexicon.candidates(key):
                 for form in entry.forms_matching(key, 1):
                     if edit_distance(low, form, cap=1) <= 1:
-                        return form
+                        return form, True
             # a word of a longer form ("root" of "root canal"): the n-gram
             # pass will repair the phrase once the halves are apart
             for w in self._component_words().get(key, ()):
                 if edit_distance(low, w, cap=1) <= 1:
-                    return w
+                    return w, True
         return None
 
     def _component_words(self) -> dict[str, set[str]]:
@@ -147,8 +148,9 @@ class BhashaBridge:
     def _split_merged(self, words: list[str], confs: list[float]):
         """Real recognisers run words together ("subhahroot"). A long,
         low-confidence token that is not itself a known word is split at the
-        point where *both* halves are known words; anything less is left
-        alone. The n-gram pass then repairs the halves as usual."""
+        point where *both* halves are known words and at least one of them
+        is a catalogue word; two grammar words glued together ("ko karni")
+        are not worth touching. The n-gram pass then repairs the halves."""
         out_w: list[str] = []
         out_c: list[float] = []
         splits: list[Correction] = []
@@ -158,11 +160,18 @@ class BhashaBridge:
                     or self._known_word(low) is not None):
                 out_w.append(word); out_c.append(conf)
                 continue
+            # A token the lexicon can explain as a whole ("koolkarni" is two
+            # edits from Kulkarni) is the n-gram pass's job; splitting it
+            # first would hand it to the grammar words ("ko karni") instead.
+            key = phonetic_key(low)
+            if key and self._best_candidate(low, key, conf, 1) is not None:
+                out_w.append(word); out_c.append(conf)
+                continue
             found = None
             for cut in range(3, len(low) - 2):
                 left, right = self._known_word(low[:cut]), self._known_word(low[cut:])
-                if left and right:
-                    found = (left, right)
+                if left and right and (left[1] or right[1]):
+                    found = (left[0], right[0])
                     break
             if found is None:
                 out_w.append(word); out_c.append(conf)

@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-21T13:44:22+00:00",
- "label": "synthetic Indian-English speech through faster-whisper small, English decoding, WITH the pack vocabulary as initial prompt (biasing)",
+ "generated_at": "2026-10-21T13:53:45+00:00",
+ "label": "synthetic Indian-English speech through faster-whisper small, English decoding, WITH the pack vocabulary as initial prompt (biasing); bridge with the frame-word, short-form and merged-token rules",
  "sources": [
   "research/collect/data/synthetic/pairs_biased.jsonl"
  ],
@@ -17,12 +17,12 @@
   "relative_reduction_pct": 6.1,
   "corrections": {
    "beneficial": 3,
-   "neutral": 6,
+   "neutral": 4,
    "harmful": 0
   },
-  "precision": 0.3333,
+  "precision": 0.4286,
   "word_error_rate": 0.6852,
-  "median_correct_ms": 0.185
+  "median_correct_ms": 0.167
  },
  "per_pack": {
   "clinic_kolkata": {
@@ -33,12 +33,12 @@
    "relative_reduction_pct": 33.3,
    "corrections": {
     "beneficial": 1,
-    "neutral": 2,
+    "neutral": 1,
     "harmful": 0
    },
-   "precision": 0.3333,
+   "precision": 0.5,
    "word_error_rate": 0.6053,
-   "median_correct_ms": 0.205
+   "median_correct_ms": 0.194
   },
   "coaching_institute": {
    "utterances": 60,
@@ -53,7 +53,7 @@
    },
    "precision": 0.3333,
    "word_error_rate": 0.5879,
-   "median_correct_ms": 0.22
+   "median_correct_ms": 0.211
   },
   "dental_clinic": {
    "utterances": 60,
@@ -68,7 +68,7 @@
    },
    "precision": 1.0,
    "word_error_rate": 0.9845,
-   "median_correct_ms": 0.155
+   "median_correct_ms": 0.144
   },
   "diagnostic_lab": {
    "utterances": 60,
@@ -83,7 +83,7 @@
    },
    "precision": 0.0,
    "word_error_rate": 0.566,
-   "median_correct_ms": 0.213
+   "median_correct_ms": 0.165
   },
   "salon_spa": {
    "utterances": 60,
@@ -93,12 +93,12 @@
    "relative_reduction_pct": 0.0,
    "corrections": {
     "beneficial": 0,
-    "neutral": 1,
+    "neutral": 0,
     "harmful": 0
    },
    "precision": 0.0,
    "word_error_rate": 0.6825,
-   "median_correct_ms": 0.176
+   "median_correct_ms": 0.157
   }
  },
  "per_speaker": {
@@ -115,7 +115,7 @@
    },
    "precision": 0.0,
    "word_error_rate": 0.6894,
-   "median_correct_ms": 0.207
+   "median_correct_ms": 0.185
   },
   "say:Aman": {
    "utterances": 100,
@@ -130,7 +130,7 @@
    },
    "precision": 0.6,
    "word_error_rate": 0.6954,
-   "median_correct_ms": 0.172
+   "median_correct_ms": 0.159
   },
   "say:Tara": {
    "utterances": 100,
@@ -140,31 +140,15 @@
    "relative_reduction_pct": -5.6,
    "corrections": {
     "beneficial": 0,
-    "neutral": 4,
+    "neutral": 2,
     "harmful": 0
    },
    "precision": 0.0,
    "word_error_rate": 0.6709,
-   "median_correct_ms": 0.179
+   "median_correct_ms": 0.163
   }
  },
  "examples": [
-  {
-   "id": "clinic_kolkata-006-tara",
-   "pack": "clinic_kolkata",
-   "speaker": "say:Tara",
-   "truth": "khub rokto porche dat theke",
-   "heard": "Hubrahto parchhe daatheke.",
-   "corrected": "hubrahto parchhe saath ke",
-   "corrections": [
-    {
-     "from": "daatheke",
-     "to": "saath ke"
-    }
-   ],
-   "entity_errors_off": 0,
-   "entity_errors_on": 0
-  },
   {
    "id": "clinic_kolkata-008-aman",
    "pack": "clinic_kolkata",
@@ -525,13 +509,8 @@
    "speaker": "say:Tara",
    "truth": "Palasia mein aap log hain na",
    "heard": "Palatiaming aap log hain na.",
-   "corrected": "wala timing aap log hain na",
-   "corrections": [
-    {
-     "from": "palatiaming",
-     "to": "wala timing"
-    }
-   ],
+   "corrected": "palatiaming aap log hain na",
+   "corrections": [],
    "entity_errors_off": 1,
    "entity_errors_on": 1
   }

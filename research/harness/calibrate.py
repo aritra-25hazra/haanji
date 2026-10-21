@@ -60,7 +60,25 @@ def main() -> int:
             print(f"  {name:32s} gate {label:16s} EER {r['entity_error_rate_off']*100:.1f} -> {r['entity_error_rate_on']*100:.1f}  "
                   f"precision {r['precision']*100:.0f}%  harmful {r['corrections']['harmful']}")
         effects[name] = rows
+    # The gate that matters is the one that minimises entity error downstream
+    # with no harmful corrections — not the one that best classifies words.
+    sweeps = {}
+    # Gram Vaani speech carries no pack entity, so only the pilot sets are swept.
+    for name in ("faster-whisper:small:en", "faster-whisper:small:en:biased"):
+        path = SETS[name]
+        if not path.exists():
+            continue
+        pairs = load_pairs(path)
+        rows = []
+        for thr in (0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.01):
+            r = real_pairs_experiment(packs, pairs, BhashaConfig(enabled=True, conf_high=thr))["overall"]
+            rows.append({"threshold": thr, "eer_on": r["entity_error_rate_on"], "precision": r["precision"],
+                         "harmful": r["corrections"]["harmful"], "beneficial": r["corrections"]["beneficial"]})
+            print(f"  sweep {name:28s} gate {thr:4.2f}  EER on {r['entity_error_rate_on']*100:5.1f}  "
+                  f"precision {r['precision']*100:3.0f}%  beneficial {r['corrections']['beneficial']:2d}  harmful {r['corrections']['harmful']}")
+        sweeps[name] = rows
     OUT.write_text(json.dumps({"generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                               "downstream_sweep": sweeps,
                                "method": "Youden's J on the ROC of 'confidence < t' against alignment-labelled wrong words",
                                "recognisers": recognisers, "effect_on_pilot": effects}, indent=1) + "\n")
     print(f"wrote {OUT.relative_to(ROOT)}")

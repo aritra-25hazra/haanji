@@ -34,6 +34,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
+from . import __version__
 from .adapters.mock import NullTTS
 from .backend.local import LocalBackend
 from .channels import whatsapp as wa_channel
@@ -90,7 +91,7 @@ async def _lifespan(_app: FastAPI):
             task.cancel()
 
 
-app = FastAPI(title="HaanJi demo server", version="0.4.0", lifespan=_lifespan)
+app = FastAPI(title="HaanJi demo server", version=__version__, lifespan=_lifespan)
 # Same-origin in production, because the console is served through a rewrite;
 # the regex is overridable so the engine can also be called directly.
 CORS_ORIGIN_REGEX = os.environ.get(
