@@ -28,14 +28,16 @@ def _vapid_keys(path: str) -> tuple[str, str]:
     if os.path.exists(path):
         d = json.loads(open(path, encoding="utf-8").read())
         return d["private_pem"], d["public_key"]
-    from py_vapid import Vapid01, b64urlencode
+    # A VAPID key is a P-256 ECDSA key; `cryptography` is already a hard
+    # dependency, so the engine never needs the push library just to start.
+    import base64
     from cryptography.hazmat.primitives import serialization
-    v = Vapid01()
-    v.generate_keys()
-    private_pem = v.private_key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
-                                              serialization.NoEncryption()).decode()
-    raw = v.public_key.public_bytes(serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint)
-    public = b64urlencode(raw)
+    from cryptography.hazmat.primitives.asymmetric import ec
+    key = ec.generate_private_key(ec.SECP256R1())
+    private_pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+                                    serialization.NoEncryption()).decode()
+    raw = key.public_key().public_bytes(serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint)
+    public = base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
     with open(path, "w", encoding="utf-8") as fh:
         json.dump({"private_pem": private_pem, "public_key": public}, fh)
     try:
