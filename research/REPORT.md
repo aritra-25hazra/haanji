@@ -538,7 +538,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 581 tests, about 6 s
+pytest -q                                   # 580 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -586,12 +586,12 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (581 tests)
+## Appendix C. Test inventory (580 tests)
 
 | file | tests | what it guards |
 |---|---|---|
 | test_adversarial.py | 89 | prompt injection against the model adapter still meets the read-back gate; the guardrail corpus (research/benchmark/guardrail_corpus.yaml) in every pack; random Latin, Devanagari and digit text never crashes, books or silences the agent |
-| test_numeric_repair.py | 49 | the closed-vocabulary date/time/number pass: what it restores, what it must never turn into a different number, the benchmark's date_time score |
+| test_numeric_repair.py | 48 | the closed-vocabulary date/time/number pass: what it restores, what it must never turn into a different number, the benchmark's date_time score |
 | test_pipeline.py | 54 | the turn controller, barge-in, confirmation flow, receipts per call, speculation on/off identity, a Devanagari turn |
 | test_web.py | 30 | the demo server, design tokens, relative URLs, no emoji (every page, including the research pages) |
 | test_packs.py | 45 | every pack validates and every scenario reaches its outcome |
