@@ -426,6 +426,28 @@ The adapter is validated offline with a scripted stand-in for the API (ten tests
 
 The Claude column is empty in this version of the report because the run requires an API key and had not been executed when the report was generated; the harness skips it with a note rather than inventing a number. The column will be filled in version 1.1 with the same script. What the design already guarantees, independent of that run, is that the receipts column will be produced by the same code path and the unconfirmed-writes count will be zero.
 
+### 7.1 What real phrasings did to the policy, and what changed (1.1)
+
+The scenarios in Appendix B were written by the policy's authors, in the phrasings the policy understood; §8 says this about the corruption model and it was true of the dialogue as well. A review on 2026-10-29 probed the engine with the sentences callers actually use and found twelve ways to get a wrong booking or a dropped call from a transcript the recogniser had heard perfectly. Each is reproduced in `engine/tests/test_phase_g.py` and fixed in 1.1:
+
+| the caller said | 1.0 did | 1.1 does |
+|---|---|---|
+| "saade das baje" | booked 10:00 (the fraction word was ignored) | reads 10:30; also *paune, sava, dedh, dhai* and number words in Hindi, Bengali and Marathi |
+| "15 tarikh ko", "3 november", "do din baad" | silently booked tomorrow | resolves the date; an unresolvable day ("agle hafte") is asked about, never guessed |
+| "kal shaam ka slot" / "tomorrow afternoon" | offered 9:30 in the morning | availability takes a part of the day |
+| "nahi, shaam ko koi time hai?" | repeated the identical offer | looks again in the evening |
+| "nahi parso" | ended the call (a bare "nahi" was a goodbye) | changes the day; "nahi" is a rejection when a slot is on the table |
+| "Dr Iyer se root canal" | booked Dr Sheikh | the named staff member is booked |
+| "mujhe aur meri wife ko" | one seat | two seats, together or back to back, one receipt |
+| "98765 43210 hai aur 2 log" | phone 8765432102, customer "Aur Log" | one number read in one breath; grammar is not a name |
+| "kal 8 baje" at a salon that opens at 10 | asked for name and number, then failed at booking time | checks the exact time first and offers the nearest free ones |
+| "discount milega kya" | "Ye emergency lag rahi hai", handed off | a refusal in its own words, and the call goes on (`REFUSED`) |
+| "dawai ki dukaan paas hai kya" | refused as a prescription request | answered |
+
+The identity of the caller also changed: a number typed into the web page is not proof of anything, so cancelling or moving a booking there now needs the receipt code the customer was given; a number the channel vouched for (network caller-id, the WhatsApp sender) does not, and the receipt records which (`identity`).
+
+Two of these changes touch the measurements above. Speculation's arguments are more specific — a part of the day, an exact time, a staff member — and the predictor no longer guesses "tomorrow" when the partial has named no day, because the policy never asks for availability without one. Fewer speculations fire and a hit saves the same tool time, so the hit rate is unchanged and the read-turn median improves by less than Table 4 reports for 1.0; the 1.1 tables are regenerated with the same harness. The refusal scenarios' expected outcome is `REFUSED` where it was `HANDED_OFF`, which does not change task success.
+
 ## 8. Threats to validity
 
 **Construct.** Entity error rate is defined over the catalogue entities the pack declares; a recogniser error in a date word or a phone number is invisible to it, though not to task success, which is why both are reported. "Task success" is agreement with the outcome the scenario author expected, which for handoffs and refusals is the right behaviour, not a booking.
