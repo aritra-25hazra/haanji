@@ -24,10 +24,14 @@ TTSFactory = Callable[[str], AsyncIterator[bytes]]
 STTFactory = Callable[..., Any]        # (on_text) -> object with start/send/close
 
 
-def twiml_connect(stream_url: str, pack: str, caller: str | None = None) -> str:
+def twiml_connect(stream_url: str, pack: str, caller: str | None = None, ticket: str | None = None) -> str:
     params = [f'<Parameter name="pack" value="{escape(pack)}"/>']
     if caller:
         params.append(f'<Parameter name="caller" value="{escape(caller)}"/>')
+    if ticket:
+        # Minted by the signed /voice webhook, checked once when the stream
+        # starts: the media socket itself carries no Twilio signature.
+        params.append(f'<Parameter name="ticket" value="{escape(ticket)}"/>')
     return ('<?xml version="1.0" encoding="UTF-8"?><Response><Connect>'
             f'<Stream url="{escape(stream_url)}">{"".join(params)}</Stream></Connect></Response>')
 
@@ -168,7 +172,14 @@ class TwilioBridge:
         params = start.get("customParameters") or {}
         pack = params.get("pack") or os.environ.get("HAANJI_PHONE_PACK") or os.environ.get("HAANJI_PACK", "dental_clinic")
         caller = params.get("caller") or None
-        self.sid, self.holder = await self.open_session(pack, caller)
+        try:
+            opened = await self.open_session(pack, caller, params)
+        except TypeError:                                  # an older two-argument opener
+            opened = await self.open_session(pack, caller)
+        if opened is None:                                 # the ticket did not check out
+            await self.ws.close()
+            return
+        self.sid, self.holder = opened
         self.holder.speak = self.say                           # lets a human reply be spoken on the line
         self.stt = self.stt_factory(self.on_text)
         await self.stt.start()

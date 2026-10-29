@@ -122,7 +122,8 @@ class CallSession:
         self.ctx = ConversationContext(tenant_id=tenant_id)
         self.speculation = SpeculationEngine(
             tenant_id, self._execute_tool, registry.is_read_only, self.cfg.speculation,
-            IntentPredictor(services=pack.service_aliases()))
+            IntentPredictor(services=pack.service_aliases(), staff=list(pack.staff),
+                            today=lambda: backend.today))
         self.llm_system: str = getattr(self.llm, "system", "")
         self.llm_tools: list[dict] = getattr(self.llm, "tools", [])
         self.turns: list[TurnRecord] = []
@@ -166,13 +167,17 @@ class CallSession:
     async def hangup(self) -> None:
         await self._finish_speaking()
 
-    async def open(self, *, phone: str | None = None) -> None:
+    async def open(self, *, phone: str | None = None, verified: bool = False) -> None:
         """Answer the call. When the channel already knows the caller's number,
         a returning customer is looked up and greeted by name, and the number
-        is pre-filled so the policy never asks for it again."""
+        is pre-filled so the policy never asks for it again. ``verified`` says
+        the channel proved the number (network caller-id, the WhatsApp
+        sender); a typed number on the web is not proof of anything, and the
+        policy asks for the receipt code before touching an existing booking."""
         customer = None
         if phone:
             self.ctx.customer_phone = phone
+            self.ctx.phone_verified = bool(verified)
             found = await self.backend.lookup_customer(self.tenant_id, phone)
             if found.get("found"):
                 customer = found["customer"]
@@ -305,8 +310,11 @@ class CallSession:
             record.guard = verdict.rule
             turn = LLMTurn(tool_calls=[ToolCall("handoff", {"reason": verdict.rule})])
         elif verdict.action is Action.REFUSE:
+            # A refusal is spoken in the pack's refusal line and the call goes
+            # on; it used to be routed through the handoff tool, which told a
+            # caller asking about a discount that they had an emergency.
             record.guard = verdict.rule
-            turn = LLMTurn(tool_calls=[ToolCall("handoff", {"reason": verdict.rule})])
+            turn = LLMTurn(tool_calls=[ToolCall("refuse", {"reason": verdict.rule, "line": verdict.line})])
         else:
             t_llm = time.perf_counter()
             turn = await self.llm.respond(self.llm_system, [
@@ -408,8 +416,12 @@ class CallSession:
     def finish(self) -> CallReport:
         outcome = self.ctx.outcome
         if outcome is None:
-            outcome = (Outcome.FAQ_ANSWERED if self.ctx.answered_questions
-                       else Outcome.ABANDONED)
+            if self.ctx.answered_questions:
+                outcome = Outcome.FAQ_ANSWERED
+            elif self.ctx.flags.get("refusals"):
+                outcome = Outcome.REFUSED
+            else:
+                outcome = Outcome.ABANDONED
         self.metrics.inc(f"outcome_{outcome.value}")
         return CallReport(
             conversation_id=self.ctx.conversation_id, tenant_id=self.tenant_id,

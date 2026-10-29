@@ -20,7 +20,7 @@ TENANT = "t_move"
 
 async def session(pack, backend, registry, ledger, phone=None):
     s = CallSession(tenant_id=TENANT, pack=pack, backend=backend, registry=registry, ledger=ledger, tts=NullTTS())
-    await s.open(phone=phone)
+    await s.open(phone=phone, verified=phone is not None)   # the channel gave us the number
     return s
 
 

@@ -14,6 +14,7 @@ A hosted language model can be dropped in behind :class:`MockLLM` without the
 rest of the engine changing, because the policy already speaks in tool calls.
 """
 from __future__ import annotations
+import re
 from typing import Any
 
 from . import nlu
@@ -23,10 +24,10 @@ from .models import ConversationContext, Outcome, ToolCall, ToolResult
 from .speak import phrase, spoken_date, spoken_time
 from .vertical import Pack
 
-GOODBYE = {"bye", "byee", "dhanyavaad", "dhanyawad", "thanks", "thank", "shukriya",
-           "alvida", "bas", "itna", "yahi", "khatam", "dhonnobad", "thak", "eituku",
-           "dhanyavad", "evdhach", "evadhach", "itkach", "purey"}
+GOODBYE = nlu.FAREWELL_WORDS
 MORE_HELP = "Aur kuch puchna tha?"
+PERIOD_WORD = {"morning": "subah", "afternoon": "dopahar", "evening": "shaam"}
+_CODE = re.compile(r"\b([0-9A-Fa-f]{4})[\s-]?([0-9A-Fa-f]{4})\b")
 
 
 def _spoken_time(hhmm: str, lang: str = "hinglish") -> str:
@@ -66,30 +67,60 @@ class DialoguePolicy:
         return self.pack.persona.closing
 
     # -------------------------------------------------------------- listening
+    def _fresh_look(self, ctx: ConversationContext) -> None:
+        """Something that decides the slot changed: forget the offered slots
+        and any time we had already checked."""
+        ctx.time = None
+        ctx.last_offered_slots = []
+        ctx.flags.pop("time_checked", None)
+        ctx.flags.pop("party_plan", None)
+        ctx.flags.pop("period_relaxed", None)
+
     def absorb(self, text: str, ctx: ConversationContext) -> None:
         """Fold whatever the caller just said into the state of the call."""
         service = nlu.match_service(text, self.aliases)
         if service:
             if ctx.service and service != ctx.service:
-                ctx.time = None                # a different service needs a fresh look
-                ctx.last_offered_slots = []
+                self._fresh_look(ctx)          # a different service needs a fresh look
             ctx.service = service
         w = nlu.words(text)
         if w & nlu.DATE_WORDS:
-            new_date = nlu.normalise_date(text, ctx.date)
+            new_date = nlu.normalise_date(text, ctx.date, self.backend.today)
+            if new_date is None and nlu.date_unclear(text):
+                ctx.flags["date_unclear"] = True
             if new_date != ctx.date:
-                ctx.time = None
-                ctx.last_offered_slots = []
+                self._fresh_look(ctx)
+                ctx.flags.pop("date_unclear", None)
             ctx.date = new_date
         if w & nlu.TIME_WORDS:
             spoken = nlu.normalise_time(text)
             if spoken:
-                ctx.time = spoken
+                if spoken != ctx.time:
+                    self._fresh_look(ctx)
+                ctx.time = spoken              # the caller named a clock time: check that one
+                ctx.period = None
+            else:
+                period = nlu.time_period(text)
+                if period and period != ctx.period:
+                    self._fresh_look(ctx)      # "shaam ko" after a morning offer: look again
+                    ctx.period = period
+        person = nlu.match_staff(text, self.pack.staff)
+        if person and person != ctx.staff:
+            ctx.staff = person
+            ctx.last_offered_slots = []
+            ctx.flags.pop("time_checked", None)
+        party = nlu.party_size(text)
+        if party and party != ctx.party_size:
+            ctx.party_size = party
+            ctx.last_offered_slots = []
+            ctx.flags.pop("time_checked", None)
         name = nlu.extract_name(text)
         if name:
             ctx.customer_name = name
         phone = nlu.extract_phone(text)
         if phone:
+            if ctx.customer_phone and phone != ctx.customer_phone:
+                ctx.phone_verified = False     # a different number than the one the channel gave us
             ctx.customer_phone = phone
 
     # ------------------------------------------------------------- deciding
@@ -116,8 +147,28 @@ class DialoguePolicy:
                 return LLMTurn(say=self._p("changed", "Theek hai, badal dete hain. Kaunsa din ya time chahiye?"))
             return LLMTurn(say=self._p("yes_or_no", "Bas ek baar haan ya na keh dijiye, phir main confirm kar dunga."))
 
-        # 2. The caller is winding up.
-        if self._is_goodbye(low) and not ctx.flags.get("await_details"):
+        # 1b. We asked for the receipt code before touching an existing booking.
+        if ctx.flags.get("await_code"):
+            return self._identity_reply(text, ctx)
+
+        # 2. A slot is on the table. "nahi" here is a rejection, never a goodbye.
+        if ctx.last_offered_slots and not ctx.time:
+            chosen = self._chosen_slot(text, ctx)
+            if chosen:
+                ctx.date, ctx.time, ctx.staff = chosen["date"], chosen["time"], chosen["staff"]
+                if chosen.get("party"):
+                    ctx.flags["party_plan"] = chosen["party"]
+                ctx.flags["time_checked"] = True
+                ctx.last_offered_slots = []
+                return self._advance_booking(ctx)
+            if nlu.is_negative(text) and not (nlu.words(text) & GOODBYE):
+                ctx.last_offered_slots = []
+                if ctx.period or ctx.date:   # absorb() found nothing new: ask instead of repeating
+                    ctx.period = None
+                return LLMTurn(say=self._p("ask_period", "Theek hai. Subah, dopahar ya shaam — kaunsa time theek rahega?"))
+
+        # 2b. The caller is winding up.
+        if nlu.is_farewell(text) and not ctx.flags.get("await_details"):
             return LLMTurn(say=self.closing(), end_call=True)
 
         # 3. We asked for a name and number in order to leave a callback note.
@@ -131,9 +182,22 @@ class DialoguePolicy:
         # 4. Cancellation.
         if nlu.words(text) & nlu.CANCEL_WORDS and not ctx.flags.get("await_details"):
             if not ctx.customer_phone:
-                return LLMTurn(say="Zaroor. Jis number se booking hui thi wo bata dijiye.")
+                ctx.flags["await_cancel"] = True
+                return LLMTurn(say=self._p("ask_booking_number", "Zaroor. Jis number se booking hui thi wo bata dijiye."))
+            gate = self._identity_gate(ctx, "cancel")
+            if gate is not None:
+                return gate
+            ctx.flags.pop("await_cancel", None)
             ctx.pending_confirmation = {"action": "cancel_appointment",
-                                        "args": {"phone": ctx.customer_phone}}
+                                        "args": {"phone": ctx.customer_phone, "identity": self._identity(ctx)}}
+            return LLMTurn(say="Aapki booking cancel kar dun? Haan ya na bol dijiye.")
+        if ctx.flags.get("await_cancel") and ctx.customer_phone:
+            gate = self._identity_gate(ctx, "cancel")
+            if gate is not None:
+                return gate
+            ctx.flags.pop("await_cancel", None)
+            ctx.pending_confirmation = {"action": "cancel_appointment",
+                                        "args": {"phone": ctx.customer_phone, "identity": self._identity(ctx)}}
             return LLMTurn(say="Aapki booking cancel kar dun? Haan ya na bol dijiye.")
 
         # 4b. Rescheduling: find the booking, then run the ordinary slot flow
@@ -146,6 +210,9 @@ class DialoguePolicy:
             if not ctx.customer_phone:
                 ctx.flags["await_reschedule"] = True
                 return LLMTurn(say=self._p("ask_booking_number", "Zaroor. Jis number se booking hui thi wo bata dijiye."))
+            gate = self._identity_gate(ctx, "reschedule")
+            if gate is not None:
+                return gate
             ctx.flags.pop("await_reschedule", None)
             booking = self.backend.find_booking(self.tenant_id, ctx.customer_phone)
             if booking is None:
@@ -166,21 +233,13 @@ class DialoguePolicy:
                 ctx.flags["reschedule_lead"] = lead      # said once the slots come back
             return nxt
 
-        # 5. The caller accepted a slot we offered.
-        if ctx.last_offered_slots and not ctx.time:
-            chosen = self._chosen_slot(text, ctx)
-            if chosen:
-                ctx.date, ctx.time, ctx.staff = chosen["date"], chosen["time"], chosen["staff"]
-                ctx.last_offered_slots = []
-                return self._advance_booking(ctx)
-
         # 6. A question that is not a booking request.
         w = nlu.words(text)
         if (w & nlu.QUESTION_WORDS) and not self._wants_booking(w, ctx):
             return LLMTurn(tool_calls=[ToolCall("search_knowledge", {"query": text.strip()})])
 
         # 7. The booking path.
-        if self._wants_booking(w, ctx) or ctx.service or ctx.date:
+        if self._wants_booking(w, ctx) or ctx.service or ctx.date or ctx.flags.get("date_unclear"):
             return self._advance_booking(ctx)
 
         # 8. Nothing recognisable yet.
@@ -238,14 +297,49 @@ class DialoguePolicy:
             ctx.outcome = Outcome.HANDED_OFF
             return LLMTurn(say=by_name["handoff"].spoken or "", end_call=True)
 
+        if "refuse" in by_name:
+            ctx.flags["refusals"] = int(ctx.flags.get("refusals", 0)) + 1
+            return LLMTurn(say=by_name["refuse"].spoken or self.pack.guardrails.refusal_line)
+
         if "check_availability" in by_name:
             r = by_name["check_availability"]
-            slots = (r.data or {}).get("slots", [])
+            data = r.data or {}
+            slots = data.get("slots", [])
+            if data.get("past"):
+                ctx.date = None
+                self._fresh_look(ctx)
+                return LLMTurn(say=self._p("past_day", "Wo din to nikal gaya. Kaunsa din dekhun?"))
+            if data.get("requested"):
+                # The caller named a time; we asked about that one exactly.
+                if data.get("at_free") and slots:
+                    ctx.time, ctx.staff = slots[0]["time"], slots[0]["staff"]
+                    if slots[0].get("party"):
+                        ctx.flags["party_plan"] = slots[0]["party"]
+                    ctx.flags["time_checked"] = True
+                    return self._advance_booking(ctx)
+                alts = data.get("alternatives") or []
+                ctx.time = None
+                ctx.flags.pop("time_checked", None)
+                at = _spoken_time(data["requested"], self.lang).capitalize()
+                if not alts:
+                    ctx.flags["await_details"] = True
+                    ctx.flags["lead_intent"] = ctx.service or "appointment"
+                    return LLMTurn(say=self._p("no_slot_at_none", "{at} pe jagah nahi hai, aur us din koi aur slot bhi khaali nahi.").format(at=at)
+                                   + self._p("leave_details", " Aap apna naam aur number de dijiye, hum call karke time set kar denge."))
+                ctx.last_offered_slots = alts
+                alt = " ya ".join(_spoken_time(a["time"], self.lang) for a in alts[:2])
+                return LLMTurn(say=self._p("no_slot_at", "{at} pe jagah nahi hai. {alt} chalega?").format(at=at, alt=alt))
+            if not slots and ctx.period and not ctx.flags.get("period_relaxed"):
+                # Nothing in the asked part of the day: look at the whole day once,
+                # and say why the offer is not what they asked for.
+                ctx.flags["period_relaxed"] = self._p(f"{ctx.period}_w", PERIOD_WORD[ctx.period])
+                ctx.period = None
+                return LLMTurn(tool_calls=[ToolCall("check_availability", self._avail_args(ctx))])
             if not slots:
                 ctx.flags["await_details"] = True
                 ctx.flags["lead_intent"] = ctx.service or "appointment"
                 reason = (self._p("closed_day", "Us din hum band rehte hain.")
-                          if (r.data or {}).get("closed")
+                          if data.get("closed")
                           else self._p("no_slots", "Us din sab slot bhar gaye hain."))
                 return LLMTurn(say=reason + self._p(
                     "leave_details", " Aap apna naam aur number de dijiye, hum call "
@@ -256,9 +350,14 @@ class DialoguePolicy:
                     f"{_spoken_time(first['time'], self.lang)}")
             line = self._p("offer", "{when} khaali hai, {staff} ke saath."
                            ).format(when=when, staff=first["staff"])
+            if ctx.party_size > 1:
+                line += self._p("party_for", " {n} logon ke liye").format(n=ctx.party_size) + "."
             if len(slots) > 1:
                 line += self._p("offer_alt", " Ya phir {alt}."
                                 ).format(alt=_spoken_time(slots[1]["time"], self.lang))
+            relaxed = ctx.flags.pop("period_relaxed", None)
+            if relaxed:
+                line = self._p("period_relaxed", "{period} mein jagah nahi hai.").format(period=relaxed.capitalize()) + " " + line
             return LLMTurn(say=line + self._p("offer_ok", " Chalega?"))
 
         if "search_knowledge" in by_name:
@@ -288,6 +387,20 @@ class DialoguePolicy:
         return LLMTurn(say=MORE_HELP)
 
     # ------------------------------------------------------------- internals
+    def _avail_args(self, ctx: ConversationContext) -> dict[str, Any]:
+        """Exactly what :func:`nlu.availability_args` derives from the same
+        sentence, so a speculated availability can be claimed."""
+        args: dict[str, Any] = {"service": ctx.service or "__default__", "date": ctx.date}
+        if ctx.time:
+            args["at"] = ctx.time
+        elif ctx.period:
+            args["period"] = ctx.period
+        if ctx.staff:
+            args["staff"] = ctx.staff
+        if ctx.party_size > 1:
+            args["party"] = ctx.party_size
+        return args
+
     def _advance_booking(self, ctx: ConversationContext) -> LLMTurn:
         if not ctx.service:
             names = ", ".join(self.pack.service_names[:3])
@@ -295,10 +408,13 @@ class DialoguePolicy:
                 "Zaroor. Kaunsi service chahiye — {services}, ya kuch aur?"
                 ).format(services=names))
         if not ctx.date:
+            if ctx.flags.pop("date_unclear", None):
+                return LLMTurn(say=self._p("ask_date", "Kaunsi tarikh ya kaunsa din? Jaise 'kal', 'somvar' ya '15 tarikh'."))
             return LLMTurn(say=self._p("ask_day", "Theek hai. Kis din ka time dekhun?"))
-        if not ctx.time:
-            return LLMTurn(tool_calls=[ToolCall("check_availability",
-                                                {"service": ctx.service, "date": ctx.date})])
+        if not ctx.time or not ctx.flags.get("time_checked"):
+            # Either we need slots to offer, or the caller named a time and we
+            # check that exact time before asking for their name and number.
+            return LLMTurn(tool_calls=[ToolCall("check_availability", self._avail_args(ctx))])
         if not ctx.customer_phone:
             return LLMTurn(say=self._p("ask_name_number", "Bas aapka naam aur mobile number bata dijiye."))
         if not ctx.customer_name and not ctx.flags.get("asked_name"):
@@ -333,34 +449,95 @@ class DialoguePolicy:
         raise ValueError(f"{action} does not take a confirmation")
 
     def _ask_confirmation(self, ctx: ConversationContext) -> LLMTurn:
-        args = {"service": ctx.service, "date": ctx.date, "time": ctx.time,
-                "customer_name": ctx.customer_name, "phone": ctx.customer_phone,
-                "staff": ctx.staff}
+        args: dict[str, Any] = {"service": ctx.service, "date": ctx.date, "time": ctx.time,
+                                "customer_name": ctx.customer_name, "phone": ctx.customer_phone,
+                                "staff": ctx.staff}
         action = "book_appointment"
         if ctx.flags.get("reschedule_booking_id"):
             action = "reschedule_appointment"
             args["booking_id"] = ctx.flags["reschedule_booking_id"]
+            args["identity"] = self._identity(ctx)
+        elif ctx.party_size > 1:
+            args["party"] = ctx.party_size
+            if ctx.flags.get("party_plan"):
+                args["party_slots"] = ctx.flags["party_plan"]
         ctx.pending_confirmation = {"action": action, "args": args}
+        what = ctx.service
+        if ctx.party_size > 1:
+            what += self._p("party_for", " {n} logon ke liye").format(n=ctx.party_size)
         if self._p("confirm", ""):
             who = self._p("with", " {staff} er sathe").format(staff=ctx.staff) if ctx.staff else ""
             say = self._p("confirm", "").format(
-                what=ctx.service,
+                what=what,
                 when=f"{_spoken_date(ctx.date, self.backend, self.lang)} "
                      f"{_spoken_time(ctx.time, self.lang)}",
                 who=who, name=ctx.customer_name or "apnar")
         else:
             who = f" {ctx.staff} ke saath" if ctx.staff else ""
-            say = (f"Ek baar dohra deta hoon — {ctx.service}, "
+            say = (f"Ek baar dohra deta hoon — {what}, "
                    f"{_spoken_date(ctx.date, self.backend)} {_spoken_time(ctx.time)}{who}, "
                    f"{ctx.customer_name or 'aapke'} naam se. Confirm kar dun?")
         return LLMTurn(say=say, needs_confirmation=True)
 
+    # ------------------------------------------------- who is on the line
+    @staticmethod
+    def _identity(ctx: ConversationContext) -> str:
+        if ctx.phone_verified:
+            return "channel"                   # caller-id / WhatsApp sender
+        if ctx.flags.get("identity_code"):
+            return "receipt_code"              # they quoted the booking's receipt code
+        return "unverified"
+
+    def _identity_gate(self, ctx: ConversationContext, intent: str) -> LLMTurn | None:
+        """Before an existing booking is cancelled or moved, the caller has to
+        be its owner. A number the channel proved (phone caller-id, WhatsApp
+        sender) is enough; a number typed into a web page is not, so there we
+        ask for the receipt code the customer was given when they booked."""
+        if ctx.phone_verified or ctx.flags.get("identity_code"):
+            return None
+        if self.backend.find_booking(self.tenant_id, ctx.customer_phone) is None:
+            return None                        # nothing to protect; the ordinary "no booking" reply follows
+        ctx.flags["await_code"] = intent
+        return LLMTurn(say=self._p("ask_code", "Suraksha ke liye booking ka confirmation code bata dijiye (jaise 2504-7863)."))
+
+    def _identity_reply(self, text: str, ctx: ConversationContext) -> LLMTurn:
+        intent = ctx.flags.get("await_code")
+        m = _CODE.search(text)
+        booking = self.backend.find_booking(self.tenant_id, ctx.customer_phone) if ctx.customer_phone else None
+        code = (m.group(1) + m.group(2)).upper() if m else None
+        if code and booking and booking.receipt_code and booking.receipt_code.replace("-", "").upper() == code:
+            ctx.flags.pop("await_code", None)
+            ctx.flags["identity_code"] = code
+            if intent == "cancel":
+                ctx.pending_confirmation = {"action": "cancel_appointment",
+                                            "args": {"phone": ctx.customer_phone, "identity": "receipt_code"}}
+                return LLMTurn(say="Shukriya. Aapki booking cancel kar dun? Haan ya na bol dijiye.")
+            ctx.flags["await_reschedule"] = True
+            return self.plan(text, ctx)
+        if nlu.is_negative(text) or nlu.is_farewell(text) or (m is None and ctx.flags.get("code_asked")):
+            # No code to hand: the shop calls the number on the booking back.
+            ctx.flags.pop("await_code", None)
+            ctx.flags["await_details"] = True
+            ctx.flags["lead_intent"] = f"{intent}_request"
+            if ctx.customer_phone:
+                return self.plan(text, ctx)
+            return LLMTurn(say=self._p("code_not_found", "Is code par booking nahi mili. Naam aur number de dijiye, hum us number par call karke kar denge."))
+        ctx.flags["code_asked"] = True
+        return LLMTurn(say=self._p("code_not_found", "Is code par booking nahi mili. Naam aur number de dijiye, hum us number par call karke kar denge."))
+
     def _chosen_slot(self, text: str, ctx: ConversationContext) -> dict[str, Any] | None:
-        asked = nlu.normalise_time(text) if nlu.words(text) & nlu.TIME_WORDS else None
+        w = nlu.words(text)
+        asked = nlu.normalise_time(text) if w & nlu.TIME_WORDS else None
         if asked:
             for slot in ctx.last_offered_slots:
                 if slot["time"] == asked:
                     return slot
+            return None                        # a time we did not offer: look it up, do not guess
+        if w & {"pehla", "pehli", "first", "wahi", "prothom", "pahila", "pahili"} and not (w & nlu.NO_WORDS):
+            return ctx.last_offered_slots[0]
+        if w & {"doosra", "dusra", "dusri", "second", "baad", "ditiyo", "dusre", "wala"} and len(ctx.last_offered_slots) > 1 \
+                and not (w & nlu.NO_WORDS):
+            return ctx.last_offered_slots[1]
         if nlu.is_affirmative(text) and not nlu.is_negative(text):
             return ctx.last_offered_slots[0]
         return None
@@ -371,7 +548,4 @@ class DialoguePolicy:
 
     @staticmethod
     def _is_goodbye(low: str) -> bool:
-        w = nlu.words(low)
-        if w & GOODBYE:
-            return True
-        return bool(w & nlu.NO_WORDS) and len(w) <= 3
+        return nlu.is_farewell(low)

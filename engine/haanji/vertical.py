@@ -8,6 +8,7 @@ tenant is filling in a pack; supporting a new industry is writing one. No part
 of the engine knows what a dentist is.
 """
 from __future__ import annotations
+import re
 import os
 from dataclasses import dataclass, field
 from typing import Any
@@ -53,6 +54,13 @@ class Guardrails:
     max_discount_pct: int = 0
     refusal_line: str = "Iska sahi jawab hamari team hi de payegi, main aapko unse jodta hoon."
     escalation_line: str = "Yeh urgent lag raha hai — main abhi aapko humare staff se joddta hoon."
+    # Extra rules a pack adds to the engine's built-in set, as
+    # {id, action: refuse|escalate, match: <regex>, unless: <regex>?, line?}
+    # and built-in rule ids the pack switches off. The built-in rules are in
+    # haanji/guardrails.py; a pack can add to them and quieten them, never
+    # invent an exception to a safety rule's intent.
+    rules: list[dict] = field(default_factory=list)
+    disable: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -181,13 +189,30 @@ def from_dict(data: dict[str, Any]) -> Pack:
         style=p.get("style", Persona.style))
 
     g = data.get("guardrails") or {}
+    rules = []
+    for i, r in enumerate(g.get("rules") or []):
+        if not isinstance(r, dict) or not r.get("match"):
+            raise PackError(f"guardrails.rules[{i}] needs a 'match' regex")
+        action = str(r.get("action", "refuse")).lower()
+        if action not in ("refuse", "escalate"):
+            raise PackError(f"guardrails.rules[{i}].action must be refuse or escalate")
+        try:
+            re.compile(str(r["match"]), re.IGNORECASE)
+            if r.get("unless"):
+                re.compile(str(r["unless"]), re.IGNORECASE)
+        except re.error as exc:
+            raise PackError(f"guardrails.rules[{i}]: bad regex: {exc}") from exc
+        rules.append({"id": str(r.get("id") or f"pack.rule{i + 1}"), "action": action,
+                      "match": str(r["match"]), "unless": str(r["unless"]) if r.get("unless") else None,
+                      "line": str(r["line"]) if r.get("line") else None})
     pack.guardrails = Guardrails(
         refuse_topics=list(g.get("refuse", [])),
         escalate_on=list(g.get("escalate_on", [])),
         never_quote_outside_catalogue=bool(g.get("never_quote_outside_catalogue", True)),
         max_discount_pct=int(g.get("max_discount_pct", 0)),
         refusal_line=g.get("refusal_line", Guardrails.refusal_line),
-        escalation_line=g.get("escalation_line", Guardrails.escalation_line))
+        escalation_line=g.get("escalation_line", Guardrails.escalation_line),
+        rules=rules, disable=[str(x) for x in (g.get("disable") or [])])
 
     pack.staff = list(data.get("staff", []))
     pack.staff_role = data.get("staff_role", "staff")

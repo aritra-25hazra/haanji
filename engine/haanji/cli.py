@@ -97,8 +97,14 @@ def cmd_serve(args) -> int:
     import os
     os.environ.setdefault("HAANJI_PACK", args.pack)
     os.environ.setdefault("HAANJI_VAR_DIR", args.var_dir)
+    # Behind a managed host's proxy (Render sets RENDER; any proxy can set
+    # HAANJI_BEHIND_PROXY=1) the request scheme and client address come from
+    # X-Forwarded-*; Twilio's signature is over the https URL, and the rate
+    # limiter must see the caller, not the proxy.
+    behind_proxy = os.environ.get("HAANJI_BEHIND_PROXY", "1" if os.environ.get("RENDER") else "0") in ("1", "true", "on")
     uvicorn.run("haanji.server:app", host=args.host, port=args.port,
-                reload=args.reload, log_level="info")
+                reload=args.reload, log_level="info",
+                proxy_headers=True, forwarded_allow_ips="*" if behind_proxy else "127.0.0.1")
     return 0
 
 

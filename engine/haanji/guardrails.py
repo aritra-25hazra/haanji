@@ -55,8 +55,12 @@ RULES: list[tuple[str, Action, re.Pattern, re.Pattern | None]] = [
     ("handoff.request", Action.ESCALATE,
      _rx(r"\b(manager|owner|senior|insaan|human|aadmi|kisi se)\b"),
      _rx(r"(baat|transfer|connect|jod|bulao|bula)")),
+    # "dawai ki dukaan paas hai?" is a directions question; "kaunsi dawai lun"
+    # is a request for a prescription. The qualifier tells them apart.
     ("advice.medicine", Action.REFUSE,
-     _rx(r"\b(dawai|dawa|medicine|tablet|goli|dose|antibiotic|prescri\w*)\b"), None),
+     _rx(r"\b(dawai|dawa|medicine|tablet|goli|dose|antibiotic|painkiller|prescri\w*|oshudh|aushadh)\b"),
+     _rx(r"(lun|loon|le lu|le sakt|le lena|khaun|kha sakt|khana|batao|bataiye|bata do|suggest|recommend|"
+         r"kaunsi|konsi|kaun si|kitni|likh|prescri|chahiye|de do|dijiye|kon|kokhon|kitna|kaise)")),
     ("advice.diagnosis", Action.REFUSE,
      _rx(r"\b(bimari|disease|infection|problem kya|kya hua hai|diagnos\w*)\b"),
      _rx(r"(batao|bataiye|kya|kaun|hai)")),
@@ -75,14 +79,41 @@ RULES: list[tuple[str, Action, re.Pattern, re.Pattern | None]] = [
 PHONE = re.compile(r"\b(\d{2})\d{4,6}(\d{2})\b")
 
 
+# Refusals that are not about the business's expertise get their own line:
+# a discount question at a dental clinic should not be answered with "only
+# the doctor can tell you that".
+RULE_LINES = {
+    "promise.discount": ("no_discount", "Discount ka faisla main nahi le sakta, par rate zaroor bata sakta hoon. "
+                                        "Kaunsi service ke liye?"),
+}
+
+
 class Guard:
-    """Pack-aware. A pack can switch a category off, but not invent an exception."""
+    """Pack-aware. A pack can switch a built-in rule off and add rules of its
+    own (``guardrails.rules`` in the YAML); it cannot invent an exception to
+    a built-in rule's intent."""
 
     def __init__(self, pack: Pack):
         self.pack = pack
         self.enabled = {rid for rid, *_ in RULES}
         if pack.guardrails.max_discount_pct > 0:
             self.enabled.discard("promise.discount")
+        for rid in getattr(pack.guardrails, "disable", []) or []:
+            self.enabled.discard(rid)
+        self.extra: list[tuple[str, Action, re.Pattern, re.Pattern | None, str | None]] = []
+        for r in getattr(pack.guardrails, "rules", []) or []:
+            action = Action.ESCALATE if r.get("action") == "escalate" else Action.REFUSE
+            self.extra.append((r["id"], action, _rx(r["match"]),
+                               _rx(r["unless"]) if r.get("unless") else None, r.get("line")))
+
+    def _line(self, rid: str, action: Action) -> str:
+        from .speak import phrase
+        if action is Action.ESCALATE:
+            return self.pack.guardrails.escalation_line
+        if rid in RULE_LINES:
+            key, default = RULE_LINES[rid]
+            return phrase(self.pack.language, key, default)
+        return self.pack.guardrails.refusal_line
 
     def check(self, text: str) -> Verdict:
         for rid, action, subject, qualifier in RULES:
@@ -92,9 +123,13 @@ class Guard:
                 continue
             if qualifier is not None and not qualifier.search(text):
                 continue
-            line = (self.pack.guardrails.escalation_line if action is Action.ESCALATE
-                    else self.pack.guardrails.refusal_line)
-            return Verdict(action, rid, line)
+            return Verdict(action, rid, self._line(rid, action))
+        for rid, action, subject, unless, line in self.extra:
+            if not subject.search(text):
+                continue
+            if unless is not None and unless.search(text):
+                continue
+            return Verdict(action, rid, line or self._line(rid, action))
         return Verdict(Action.ALLOW)
 
     def price_allowed(self, service: str | None) -> bool:

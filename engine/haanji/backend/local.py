@@ -71,10 +71,17 @@ class Slot:
     date: str
     time: str
     staff: str
+    party: list[dict[str, str]] | None = None     # where a group is seen, when asked for one
 
     def spoken(self) -> str:
         from ..speak import spoken_time
         return spoken_time(self.time)
+
+    def as_dict(self) -> dict[str, Any]:
+        d: dict[str, Any] = {"date": self.date, "time": self.time, "staff": self.staff, "spoken": self.spoken()}
+        if self.party:
+            d["party"] = self.party
+        return d
 
 
 @dataclass
@@ -106,16 +113,48 @@ def _mins(hhmm: str) -> int:
     return int(h) * 60 + int(m)
 
 
+IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
+PERIODS = {"morning": (0, 12 * 60), "afternoon": (12 * 60, 16 * 60), "evening": (16 * 60, 24 * 60)}
+
+
 class LocalBackend:
     """Business data plus the rules that protect it."""
 
-    def __init__(self, conn: sqlite3.Connection, *, today: dt.date | None = None):
+    def __init__(self, conn: sqlite3.Connection, *, today: dt.date | None = None,
+                 now: dt.datetime | None = None):
         self.conn = conn
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
         self.conn.commit()
-        self.today = today or dt.date.today()
+        # ``today`` used to be read once at construction, so a server that ran
+        # past midnight resolved "kal" to the wrong day. It is a property now;
+        # tests pin it (and optionally the clock) for reproducibility.
+        self._today: dt.date | None = today
+        self._now: dt.datetime | None = now
         self.calls: dict[str, int] = {}
+
+    @property
+    def today(self) -> dt.date:
+        if self._now is not None:
+            return self._now.date()
+        return self._today or dt.datetime.now(IST).date()
+
+    @today.setter
+    def today(self, value: dt.date | None) -> None:
+        self._today = value
+
+    def now_minutes(self, day: dt.date) -> int:
+        """Minutes past midnight if ``day`` is today, else -1. With a pinned
+        ``today`` but no pinned clock there is no "now" to compare against,
+        so nothing is treated as past (keeps the tests deterministic)."""
+        if day != self.today:
+            return -1
+        if self._now is not None:
+            return self._now.hour * 60 + self._now.minute
+        if self._today is not None:
+            return -1
+        now = dt.datetime.now(IST)
+        return now.hour * 60 + now.minute
 
     # ------------------------------------------------------------------ setup
     def load_pack(self, tenant_id: str, pack) -> None:
@@ -192,7 +231,16 @@ class LocalBackend:
 
     # ---------------------------------------------------------- availability
     async def availability(self, tenant_id: str, service: str | None, date_token: str,
-                           *, limit: int = 3, staff: str | None = None) -> dict[str, Any]:
+                           *, limit: int = 3, staff: str | None = None,
+                           period: str | None = None, at: str | None = None,
+                           party: int = 1) -> dict[str, Any]:
+        """Free slots for a service on a day.
+
+        ``period`` keeps only morning / afternoon / evening starts (the caller
+        said "shaam ko"); ``at`` asks about one exact time and, when it is
+        taken, returns the nearest free alternatives; ``party`` asks for
+        room for several people at once: a different staff member each at the
+        same time, or back-to-back slots with one staff member."""
         await CLOCK.sleep_ms(NOMINAL_MS["availability"])
         self.calls["availability"] = self.calls.get("availability", 0) + 1
         iso = self.resolve_date(date_token)
@@ -202,36 +250,91 @@ class LocalBackend:
         wanted_staff = [staff] if staff else (
             [s for s in (svc["staff"] or "").split(",") if s] if svc else self.staff_names(tenant_id))
         wanted_staff = wanted_staff or self.staff_names(tenant_id)
+        party = max(1, int(party or 1))
 
         hrow = self.conn.execute("SELECT * FROM hours WHERE tenant_id=? AND weekday=?",
                                  (tenant_id, day.weekday())).fetchone()
+        base = {"date": iso, "service": svc["name"] if svc else service, "duration_min": duration,
+                "period": period, "requested": at, "party": party}
         if hrow is None:
-            return {"date": iso, "closed": True, "slots": [],
-                    "service": svc["name"] if svc else service}
+            return {**base, "closed": True, "slots": []}
+        if day < self.today:
+            return {**base, "closed": False, "past": True, "slots": []}
 
         taken = {(r["staff"], r["time"]) for r in self.conn.execute(
             "SELECT staff, time FROM bookings WHERE tenant_id=? AND date=? AND status='CONFIRMED'",
             (tenant_id, iso))}
-        now_min = (dt.datetime.now().hour * 60 + dt.datetime.now().minute) if day == self.today else -1
-
-        slots: list[Slot] = []
+        now_min = self.now_minutes(day)
+        lo, hi = PERIODS.get(period or "", (0, 24 * 60))
         step = max(15, duration)
-        for start in range(hrow["open_min"], hrow["close_min"] - duration + 1, step):
+
+        def free_at(start: int) -> list[str]:
             if hrow["break_start"] is not None and hrow["break_start"] <= start < hrow["break_end"]:
-                continue
+                return []
+            if start < hrow["open_min"] or start > hrow["close_min"] - duration:
+                return []
+            return [p for p in wanted_staff if (p, _hhmm(start)) not in taken]
+
+        def party_plan(start: int) -> list[dict[str, str]] | None:
+            """Where ``party`` people can be seen: together, or in a row."""
+            if party == 1:
+                return None
+            people = free_at(start)
+            if len(people) >= party:
+                return [{"time": _hhmm(start), "staff": p} for p in people[:party]]
+            for person in people:
+                run = [{"time": _hhmm(start), "staff": person}]
+                nxt = start + step
+                while len(run) < party and person in free_at(nxt):
+                    run.append({"time": _hhmm(nxt), "staff": person})
+                    nxt += step
+                if len(run) == party:
+                    return run
+            return None
+
+        def slot_for(start: int) -> Slot | None:
             if start <= now_min + 30:
-                continue                       # never offer a slot in the past
-            for person in wanted_staff:
-                if (person, _hhmm(start)) in taken:
-                    continue
-                slots.append(Slot(iso, _hhmm(start), person))
-                break
+                return None                    # never offer a slot in the past
+            people = free_at(start)
+            if not people:
+                return None
+            plan = party_plan(start)
+            if party > 1 and plan is None:
+                return None
+            s = Slot(iso, _hhmm(start), people[0])
+            s.party = plan
+            return s
+
+        starts = list(range(hrow["open_min"], hrow["close_min"] - duration + 1, step))
+        slots: list[Slot] = []
+        if at:
+            want = _mins(at)
+            exact = slot_for(want) if want in starts or free_at(want) else None
+            if exact is not None:
+                slots = [exact]
+            else:
+                # nearest alternatives either side, within the day
+                cands = sorted((abs(st - want), st) for st in starts)
+                for _, st in cands:
+                    s = slot_for(st)
+                    if s is not None:
+                        slots.append(s)
+                    if len(slots) >= 2:
+                        break
+                return {**base, "closed": False, "slots": [], "at_free": False,
+                        "alternatives": [s.as_dict() for s in slots]}
+            return {**base, "closed": False, "slots": [s.as_dict() for s in slots], "at_free": True}
+
+        for start in starts:
+            if not (lo <= start < hi):
+                continue
+            s = slot_for(start)
+            if s is None:
+                continue
+            slots.append(s)
             if len(slots) >= limit:
                 break
-        return {"date": iso, "closed": False, "service": svc["name"] if svc else service,
-                "duration_min": duration,
-                "slots": [{"date": s.date, "time": s.time, "staff": s.staff,
-                           "spoken": s.spoken()} for s in slots]}
+        return {**base, "closed": False, "slots": [s.as_dict() for s in slots]}
 
     # ------------------------------------------------------------- knowledge
     async def search_knowledge(self, tenant_id: str, query: str, *, limit: int = 2) -> dict[str, Any]:
@@ -275,6 +378,8 @@ class LocalBackend:
             raise BackendError("business is closed on that day")
         if not (hrow["open_min"] <= _mins(time) <= hrow["close_min"] - duration):
             raise BackendError("that time is outside working hours")
+        if day < self.today or _mins(time) <= self.now_minutes(day):
+            raise BackendError("that time has already passed")
         booking = Booking(str(uuid.uuid4()), tenant_id, svc["name"] if svc else service,
                           staff, iso, time, duration, customer_name, phone,
                           "CONFIRMED", receipt_code)

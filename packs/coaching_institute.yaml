@@ -97,7 +97,7 @@ scenarios:
       - heard: "nahi thank you"
         truth: "nahi thank you"
   - name: rank_promise_refusal
-    expect: HANDED_OFF
+    expect: REFUSED
     turns:
       - heard: "guarantee do ki selection ho jayega"
         truth: "guarantee do ki selection ho jayega"

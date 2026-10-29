@@ -92,7 +92,7 @@ class PushStore:
                 else:
                     from pywebpush import webpush
                     webpush(subscription_info=sub, data=payload, vapid_private_key=self.private_pem,
-                            vapid_claims={"sub": self.contact}, ttl=3600)
+                            vapid_claims={"sub": self.contact}, ttl=3600, timeout=5)
                 sent += 1
             except Exception as exc:                      # noqa: BLE001 - one bad phone must not stop the rest
                 status = getattr(getattr(exc, "response", None), "status_code", None)
