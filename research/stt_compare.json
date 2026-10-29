@@ -1,0 +1,562 @@
+{
+ "generated_at": "2026-10-29T08:48:09+00:00",
+ "data": "research/collect/data/synthetic",
+ "measurement": "haanji.collect.real_pairs_experiment: WER, entity error rate with the bridge off and on, correction precision and harmful corrections, over the same (heard, truth) pairs",
+ "engines": {
+  "whisper": {
+   "label": "faster-whisper small, English decoding, no hints",
+   "source": "research/collect/data/synthetic/pairs.jsonl",
+   "status": "scored",
+   "pairs": 300,
+   "recognisers": [
+    "faster-whisper:small:en"
+   ],
+   "confidence_source": [
+    "vendor"
+   ],
+   "overall": {
+    "utterances": 300,
+    "entities": 219,
+    "entity_error_rate_off": 0.3379,
+    "entity_error_rate_on": 0.2922,
+    "relative_reduction_pct": 13.5,
+    "corrections": {
+     "beneficial": 14,
+     "neutral": 9,
+     "harmful": 0
+    },
+    "precision": 0.6087,
+    "word_error_rate": 0.8869,
+    "median_correct_ms": 0.146
+   },
+   "per_pack": {
+    "clinic_kolkata": {
+     "utterances": 60,
+     "entities": 54,
+     "entity_error_rate_off": 0.3704,
+     "entity_error_rate_on": 0.3148,
+     "relative_reduction_pct": 15.0,
+     "corrections": {
+      "beneficial": 3,
+      "neutral": 1,
+      "harmful": 0
+     },
+     "precision": 0.75,
+     "word_error_rate": 0.8334,
+     "median_correct_ms": 0.154
+    },
+    "coaching_institute": {
+     "utterances": 60,
+     "entities": 51,
+     "entity_error_rate_off": 0.3137,
+     "entity_error_rate_on": 0.2549,
+     "relative_reduction_pct": 18.8,
+     "corrections": {
+      "beneficial": 7,
+      "neutral": 8,
+      "harmful": 0
+     },
+     "precision": 0.4667,
+     "word_error_rate": 0.7746,
+     "median_correct_ms": 0.161
+    },
+    "dental_clinic": {
+     "utterances": 60,
+     "entities": 12,
+     "entity_error_rate_off": 0.25,
+     "entity_error_rate_on": 0.25,
+     "relative_reduction_pct": 0.0,
+     "corrections": {
+      "beneficial": 0,
+      "neutral": 0,
+      "harmful": 0
+     },
+     "precision": 0.0,
+     "word_error_rate": 1.1373,
+     "median_correct_ms": 0.135
+    },
+    "diagnostic_lab": {
+     "utterances": 60,
+     "entities": 51,
+     "entity_error_rate_off": 0.2353,
+     "entity_error_rate_on": 0.2157,
+     "relative_reduction_pct": 8.3,
+     "corrections": {
+      "beneficial": 1,
+      "neutral": 0,
+      "harmful": 0
+     },
+     "precision": 1.0,
+     "word_error_rate": 0.7317,
+     "median_correct_ms": 0.129
+    },
+    "salon_spa": {
+     "utterances": 60,
+     "entities": 51,
+     "entity_error_rate_off": 0.451,
+     "entity_error_rate_on": 0.3922,
+     "relative_reduction_pct": 13.0,
+     "corrections": {
+      "beneficial": 3,
+      "neutral": 0,
+      "harmful": 0
+     },
+     "precision": 1.0,
+     "word_error_rate": 0.9576,
+     "median_correct_ms": 0.149
+    }
+   },
+   "examples": [
+    {
+     "id": "clinic_kolkata-007-rishi",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Rishi",
+     "truth": "Jadavpur wali branch mein tooth extraction ka slot hai kya",
+     "heard": "Is there a slot for tooth extraction in the Jadavpuvali branch?",
+     "corrected": "is there a slot for tooth extraction in the jadavpuvali branch",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-008-rishi",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Rishi",
+     "truth": "kal subah root canal ke liye time chahiye",
+     "heard": "KAL SUBHAHROOT KANAL KE LIYE TAIM CHAHIYE",
+     "corrected": "kal subah root canal ke liye taim chahiye",
+     "corrections": [
+      {
+       "from": "subhahroot",
+       "to": "subah root"
+      },
+      {
+       "from": "root kanal",
+       "to": "root canal"
+      }
+     ],
+     "entity_errors_off": 1,
+     "entity_errors_on": 0
+    },
+    {
+     "id": "clinic_kolkata-009-rishi",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Rishi",
+     "truth": "Gariahat wali branch mein root canal ka slot hai kya",
+     "heard": "What is the slot of Root Canal in Giriyatwali branch?",
+     "corrected": "what is the slot of root canal in giriyatwali branch",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-009-tara",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Tara",
+     "truth": "Gariahat wali branch mein root canal ka slot hai kya",
+     "heard": "What is the slot of Garia Heart Branch Main Root Canal?",
+     "corrected": "what is the slot of garia heart branch main root canal",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-010-rishi",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Rishi",
+     "truth": "Dr Banerjee ke saath root canal book karna hai",
+     "heard": "Dr. Banerjee ke saath Root Kanal Book Kanhai.",
+     "corrected": "dr banerjee ke saath root canal book kanhai",
+     "corrections": [
+      {
+       "from": "root kanal",
+       "to": "root canal"
+      }
+     ],
+     "entity_errors_off": 1,
+     "entity_errors_on": 0
+    },
+    {
+     "id": "clinic_kolkata-010-aman",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Aman",
+     "truth": "Dr Banerjee ke saath root canal book karna hai",
+     "heard": "We have to book a root canal along with Dr. Bainarji.",
+     "corrected": "we have to book a root canal along with dr bainarji",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-011-rishi",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Rishi",
+     "truth": "Gariahat mein aap log hain na",
+     "heard": "Giriahat me aplog Hannah",
+     "corrected": "Gariahat me aplog hannah",
+     "corrections": [
+      {
+       "from": "giriahat",
+       "to": "Gariahat"
+      }
+     ],
+     "entity_errors_off": 1,
+     "entity_errors_on": 0
+    },
+    {
+     "id": "clinic_kolkata-011-tara",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Tara",
+     "truth": "Gariahat mein aap log hain na",
+     "heard": "Garia heart main aap log hain na",
+     "corrected": "garia heart main aap log hain na",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-012-aman",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Aman",
+     "truth": "Dr Banerjee se milna hai parso",
+     "heard": "Dr. Bhainaji se milna hai parso.",
+     "corrected": "dr bhainaji se milna hai parso",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-014-aman",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Aman",
+     "truth": "kal subah tooth extraction ke liye time chahiye",
+     "heard": "Tomorrow morning, we need time to extract the tooth.",
+     "corrected": "tomorrow morning we need time to extract the tooth",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-014-tara",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Tara",
+     "truth": "kal subah tooth extraction ke liye time chahiye",
+     "heard": "Thank you.",
+     "corrected": "thank you",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-015-rishi",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Rishi",
+     "truth": "Dumdum mein aap log hain na",
+     "heard": "dum dum may aplog henna",
+     "corrected": "dum dum may aplog henna",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    }
+   ]
+  },
+  "whisper_biased": {
+   "label": "faster-whisper small, pack vocabulary as the prompt",
+   "source": "research/collect/data/synthetic/pairs_biased.jsonl",
+   "status": "scored",
+   "pairs": 300,
+   "recognisers": [
+    "faster-whisper:small:en:biased"
+   ],
+   "confidence_source": [
+    "vendor"
+   ],
+   "overall": {
+    "utterances": 300,
+    "entities": 219,
+    "entity_error_rate_off": 0.1507,
+    "entity_error_rate_on": 0.1416,
+    "relative_reduction_pct": 6.1,
+    "corrections": {
+     "beneficial": 3,
+     "neutral": 4,
+     "harmful": 0
+    },
+    "precision": 0.4286,
+    "word_error_rate": 0.6852,
+    "median_correct_ms": 0.149
+   },
+   "per_pack": {
+    "clinic_kolkata": {
+     "utterances": 60,
+     "entities": 54,
+     "entity_error_rate_off": 0.0556,
+     "entity_error_rate_on": 0.037,
+     "relative_reduction_pct": 33.3,
+     "corrections": {
+      "beneficial": 1,
+      "neutral": 1,
+      "harmful": 0
+     },
+     "precision": 0.5,
+     "word_error_rate": 0.6053,
+     "median_correct_ms": 0.166
+    },
+    "coaching_institute": {
+     "utterances": 60,
+     "entities": 51,
+     "entity_error_rate_off": 0.098,
+     "entity_error_rate_on": 0.0784,
+     "relative_reduction_pct": 20.0,
+     "corrections": {
+      "beneficial": 1,
+      "neutral": 2,
+      "harmful": 0
+     },
+     "precision": 0.3333,
+     "word_error_rate": 0.5879,
+     "median_correct_ms": 0.18
+    },
+    "dental_clinic": {
+     "utterances": 60,
+     "entities": 12,
+     "entity_error_rate_off": 0.25,
+     "entity_error_rate_on": 0.1667,
+     "relative_reduction_pct": 33.3,
+     "corrections": {
+      "beneficial": 1,
+      "neutral": 0,
+      "harmful": 0
+     },
+     "precision": 1.0,
+     "word_error_rate": 0.9845,
+     "median_correct_ms": 0.131
+    },
+    "diagnostic_lab": {
+     "utterances": 60,
+     "entities": 51,
+     "entity_error_rate_off": 0.2941,
+     "entity_error_rate_on": 0.3137,
+     "relative_reduction_pct": -6.7,
+     "corrections": {
+      "beneficial": 0,
+      "neutral": 1,
+      "harmful": 0
+     },
+     "precision": 0.0,
+     "word_error_rate": 0.566,
+     "median_correct_ms": 0.152
+    },
+    "salon_spa": {
+     "utterances": 60,
+     "entities": 51,
+     "entity_error_rate_off": 0.1373,
+     "entity_error_rate_on": 0.1373,
+     "relative_reduction_pct": 0.0,
+     "corrections": {
+      "beneficial": 0,
+      "neutral": 0,
+      "harmful": 0
+     },
+     "precision": 0.0,
+     "word_error_rate": 0.6825,
+     "median_correct_ms": 0.145
+    }
+   },
+   "examples": [
+    {
+     "id": "clinic_kolkata-008-aman",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Aman",
+     "truth": "kal subah root canal ke liye time chahiye",
+     "heard": "KAL SUBH ROOT KANAL KE LAY TIME CHAHE.",
+     "corrected": "kal subh root canal ke lay time chahe",
+     "corrections": [
+      {
+       "from": "root kanal",
+       "to": "root canal"
+      }
+     ],
+     "entity_errors_off": 1,
+     "entity_errors_on": 0
+    },
+    {
+     "id": "clinic_kolkata-014-aman",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Aman",
+     "truth": "kal subah tooth extraction ke liye time chahiye",
+     "heard": "KAL SUBAR TOoth EXTRACKSH ke liye time chahe.",
+     "corrected": "kal subar tooth extracksh ke liye time chahe",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-019-rishi",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Rishi",
+     "truth": "kal subah teeth cleaning ke liye time chahiye",
+     "heard": "Kaal Subah Teeth Clean -In ke liye time chahiye.",
+     "corrected": "kaal subah teeth clean in ke liye time chahiye",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "clinic_kolkata-019-tara",
+     "pack": "clinic_kolkata",
+     "speaker": "say:Tara",
+     "truth": "kal subah teeth cleaning ke liye time chahiye",
+     "heard": "Call Subavteet Cleaning ke liye time chahiye.",
+     "corrected": "call subah teeth cleaning ke liye time chahiye",
+     "corrections": [
+      {
+       "from": "subavteet",
+       "to": "subah teeth"
+      }
+     ],
+     "entity_errors_off": 0,
+     "entity_errors_on": 0
+    },
+    {
+     "id": "coaching_institute-000-aman",
+     "pack": "coaching_institute",
+     "speaker": "say:Aman",
+     "truth": "demo class ka slot chahiye kal",
+     "heard": "Democlass Kasla Chahee Kul",
+     "corrected": "demo class kasla chahee kul",
+     "corrections": [
+      {
+       "from": "democlass",
+       "to": "demo class"
+      }
+     ],
+     "entity_errors_off": 1,
+     "entity_errors_on": 0
+    },
+    {
+     "id": "coaching_institute-000-tara",
+     "pack": "coaching_institute",
+     "speaker": "say:Tara",
+     "truth": "demo class ka slot chahiye kal",
+     "heard": "Demo class kaslaa chahe kulkarni.",
+     "corrected": "demo class kaslaa chahe kulkarni",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "coaching_institute-008-aman",
+     "pack": "coaching_institute",
+     "speaker": "say:Aman",
+     "truth": "kal subah counselling session ke liye time chahiye",
+     "heard": "We need time for the counselling session tomorrow.",
+     "corrected": "we NEET time for the counselling session tomorrow",
+     "corrections": [
+      {
+       "from": "need",
+       "to": "NEET"
+      }
+     ],
+     "entity_errors_off": 0,
+     "entity_errors_on": 0
+    },
+    {
+     "id": "coaching_institute-009-tara",
+     "pack": "coaching_institute",
+     "speaker": "say:Tara",
+     "truth": "Bhawarkuan wali branch mein counselling session ka slot hai kya",
+     "heard": "Is Bhawarkuan's branch the slot for the main counselling session?",
+     "corrected": "is bhawarkuan's branch the slot for the main counselling session",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "coaching_institute-011-rishi",
+     "pack": "coaching_institute",
+     "speaker": "say:Rishi",
+     "truth": "Bhawarkuan mein aap log hain na",
+     "heard": "Bhawakuan may upload Hannah.",
+     "corrected": "bhawakuan may upload hannah",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "coaching_institute-014-aman",
+     "pack": "coaching_institute",
+     "speaker": "say:Aman",
+     "truth": "kal subah campus visit ke liye time chahiye",
+     "heard": "We need time for the campus visit tomorrow morning.",
+     "corrected": "we NEET time for the campus visit tomorrow morning",
+     "corrections": [
+      {
+       "from": "need",
+       "to": "NEET"
+      }
+     ],
+     "entity_errors_off": 0,
+     "entity_errors_on": 0
+    },
+    {
+     "id": "coaching_institute-019-aman",
+     "pack": "coaching_institute",
+     "speaker": "say:Aman",
+     "truth": "kal subah demo class ke liye time chahiye",
+     "heard": "Kulkarni wants time for the demo class tomorrow morning.",
+     "corrected": "kulkarni wants time for the demo class tomorrow morning",
+     "corrections": [],
+     "entity_errors_off": 1,
+     "entity_errors_on": 1
+    },
+    {
+     "id": "dental_clinic-000-aman",
+     "pack": "dental_clinic",
+     "speaker": "say:Aman",
+     "truth": "haan ji mujhe root canal karwana tha",
+     "heard": "Han Ji Mujhe Root Kanal Karwana Tha.",
+     "corrected": "han ji mujhe root canal karwana tha",
+     "corrections": [
+      {
+       "from": "root kanal",
+       "to": "root canal"
+      }
+     ],
+     "entity_errors_off": 1,
+     "entity_errors_on": 0
+    }
+   ]
+  },
+  "sarvam": {
+   "label": "Sarvam Saarika, hi-IN (Devanagari, romanised)",
+   "status": "not run: key needed (SARVAM_API_KEY)",
+   "source": "/Users/aritrahazra/Desktop/Antigravity/1/Major Project-1/haanji/.claude/worktrees/agent-ac571128ec8989810/research/collect/data/synthetic/pairs_sarvam.jsonl"
+  },
+  "bhashini": {
+   "label": "Bhashini / ULCA ASR, hi (Devanagari, romanised)",
+   "status": "not run: key needed (BHASHINI_USER_ID, BHASHINI_API_KEY)",
+   "source": "/Users/aritrahazra/Desktop/Antigravity/1/Major Project-1/haanji/.claude/worktrees/agent-ac571128ec8989810/research/collect/data/synthetic/pairs_bhashini.jsonl"
+  },
+  "deepgram": {
+   "label": "Deepgram nova-2, hi-Latn",
+   "status": "not run: key needed (HAANJI_DEEPGRAM_KEY)",
+   "source": "/Users/aritrahazra/Desktop/Antigravity/1/Major Project-1/haanji/.claude/worktrees/agent-ac571128ec8989810/research/collect/data/synthetic/pairs_deepgram.jsonl"
+  },
+  "google": {
+   "label": "Google Speech-to-Text v1, hi-IN (Devanagari, romanised)",
+   "status": "not run: key needed (GOOGLE_APPLICATION_CREDENTIALS)",
+   "source": "/Users/aritrahazra/Desktop/Antigravity/1/Major Project-1/haanji/.claude/worktrees/agent-ac571128ec8989810/research/collect/data/synthetic/pairs_google.jsonl"
+  }
+ },
+ "scored": [
+  "whisper",
+  "whisper_biased"
+ ],
+ "skipped": {
+  "sarvam": "not run: key needed (SARVAM_API_KEY)",
+  "bhashini": "not run: key needed (BHASHINI_USER_ID, BHASHINI_API_KEY)",
+  "deepgram": "not run: key needed (HAANJI_DEEPGRAM_KEY)",
+  "google": "not run: key needed (GOOGLE_APPLICATION_CREDENTIALS)"
+ }
+}
