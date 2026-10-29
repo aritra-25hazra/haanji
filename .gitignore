@@ -38,3 +38,6 @@ research/paper-latex/*.xdv
 
 # TypeScript incremental build state
 *.tsbuildinfo
+
+# agent worktrees
+.claude/worktrees/
