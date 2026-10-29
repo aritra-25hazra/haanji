@@ -7,7 +7,6 @@ here is sealed in the Pramaan ledger like the agent's own writes — a staff
 cancellation is as much a fact about the booking as the caller's was."""
 from __future__ import annotations
 import datetime as dt
-import io
 import json
 import logging
 import os
@@ -20,7 +19,8 @@ from pydantic import BaseModel, Field
 
 from . import backup as backup_mod
 from .backend.local import BOOKING_STATUSES, BackendError
-from .payments import PaymentStore, configured as payments_configured, verify_razorpay_signature
+from .payments import PaymentStore, verify_razorpay_signature
+from .payments import configured as payments_configured
 from .settings import SettingsError, SettingsStore
 
 log = logging.getLogger("haanji.admin")
@@ -84,7 +84,7 @@ def build_router(deps: Deps) -> APIRouter:
             end = to or (dt.date.fromisoformat(start) + dt.timedelta(days=6)).isoformat()
             dt.date.fromisoformat(start), dt.date.fromisoformat(end)
         except ValueError:
-            raise HTTPException(422, "from/to must be YYYY-MM-DD")
+            raise HTTPException(422, "from/to must be YYYY-MM-DD") from None
         if status not in BOOKING_STATUSES and status != "ALL":
             raise HTTPException(422, f"status must be one of {', '.join(BOOKING_STATUSES)} or ALL")
         owner = _is_owner(request, deps)
@@ -132,7 +132,7 @@ def build_router(deps: Deps) -> APIRouter:
         try:
             changed = rt.backend.set_status(pack, b.booking_id, status)
         except BackendError as exc:
-            raise HTTPException(422, str(exc))
+            raise HTTPException(422, str(exc)) from exc
         if not changed:
             raise HTTPException(409, "a cancelled booking cannot change status")
         who = _who(request, deps)
@@ -165,13 +165,13 @@ def build_router(deps: Deps) -> APIRouter:
         try:
             changes = await request.json()
         except ValueError:
-            raise HTTPException(400, "not json")
+            raise HTTPException(400, "not json") from None
         if not isinstance(changes, dict):
             raise HTTPException(422, "a JSON object of settings")
         try:
             current = deps.settings.update(pack, changes)
         except SettingsError as exc:
-            raise HTTPException(422, str(exc))
+            raise HTTPException(422, str(exc)) from exc
         deps.publish("settings.changed", pack=pack, keys=sorted(changes), by=_who(request, deps))
         return {"pack": pack, "settings": current}
 
@@ -221,7 +221,7 @@ def build_router(deps: Deps) -> APIRouter:
         try:
             payload = json.loads(raw or b"{}")
         except ValueError:
-            raise HTTPException(400, "not json")
+            raise HTTPException(400, "not json") from None
         payment_id, provider_id, status = PaymentStore.from_webhook(payload)
         if not payment_id or not status:
             return {"ok": True, "ignored": True}

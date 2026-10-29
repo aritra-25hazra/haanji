@@ -12,7 +12,7 @@ from __future__ import annotations
 import datetime as dt
 import sqlite3
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from ..clock import CLOCK

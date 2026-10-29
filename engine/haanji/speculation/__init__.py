@@ -6,8 +6,8 @@ Correctness never depends on the guess: only read-only tools may be speculated,
 a cached result is used only on an exact argument match, entries expire and can
 be claimed once, and any write clears the cache.
 """
-from .predictor import IntentPredictor, ToolGuess
-from .cache import SpeculationCache, SpecStats
+from .cache import SpecStats, SpeculationCache
 from .engine import SpeculationEngine
+from .predictor import IntentPredictor, ToolGuess
 
 __all__ = ["IntentPredictor", "ToolGuess", "SpeculationCache", "SpecStats", "SpeculationEngine"]

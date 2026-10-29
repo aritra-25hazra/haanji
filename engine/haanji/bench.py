@@ -45,9 +45,9 @@ from typing import Any
 
 from . import nlu
 from .bhasha.numeric import temporal_lexicon, temporal_tokens
-from .corrupt import corrupt
 from .clock import CLOCK, set_speed
-from .config import (BhashaConfig, EngineConfig, LedgerConfig, SpeculationConfig)
+from .config import BhashaConfig, EngineConfig, LedgerConfig, SpeculationConfig
+from .corrupt import corrupt
 from .metrics import Metrics, percentile
 from .pipeline import CallReport, run_scenario
 from .pramaan.ledger import Ledger, LedgerError

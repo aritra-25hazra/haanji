@@ -8,7 +8,6 @@ client so tests can swap the transport.
 """
 from __future__ import annotations
 import datetime as dt
-import json
 import os
 import secrets
 import sqlite3

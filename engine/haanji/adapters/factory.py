@@ -11,6 +11,6 @@ def make_llm(name: str, policy, pack, registry, **kw):
     if key == "mock":
         return MockLLM(policy)
     if key == "claude":
-        from .claude import ClaudeLLM          # lazy: the SDK is an optional extra
+        from .claude import ClaudeLLM  # lazy: the SDK is an optional extra
         return ClaudeLLM(policy, pack, registry, **kw)
     raise ValueError(f"unknown LLM provider {name!r}; expected 'mock' or 'claude'")

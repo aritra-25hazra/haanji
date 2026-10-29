@@ -15,7 +15,7 @@ import time
 
 from .. import nlu
 from ..config import BhashaConfig
-from ..models import Correction, CorrectedTranscript, Transcript
+from ..models import CorrectedTranscript, Correction, Transcript
 from .lexicon import TYPE_PRIOR, LexEntry, TenantLexicon
 from .numeric import NUMERIC_WEIGHT, number_runs, temporal_lexicon
 from .phonetics import edit_distance, phonetic_key, phrase_key
