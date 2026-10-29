@@ -25,6 +25,8 @@ interface AppState {
   user: User | null;
   /** Owner-only controls show for the owner, and for everyone when the engine runs with auth off. The server enforces; this is UX. */
   isOwner: boolean;
+  /** The public demo (sign-in off on a public server), or no engine at all: nothing can be changed from here. */
+  readOnly: boolean;
   signIn: (token: string, user: User) => void;
   signOut: () => void;
   /** POST /api/auth/logout (every device), then forget the token here. */
@@ -90,11 +92,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const authOn = !!status?.auth?.enabled;
     const mode: Mode = !checked || (authOn && !authChecked) ? "checking" : status ? "live" : hasToken ? "offline" : "demo";
     const isOwner = status ? (!authOn || user?.role === "owner") : mode === "demo";
+    const readOnly = status ? !!status.demo_readonly : mode !== "live";
     return {
       status, online: !!status, checked, mode, pack,
       packs: allowed(status ? status.packs : SAMPLE_STATUS.packs), setPack, refresh,
       authRequired: authOn && authChecked && !user,
-      user, isOwner, signIn, signOut, signOutEverywhere,
+      user, isOwner, readOnly, signIn, signOut, signOutEverywhere,
     };
   }, [status, checked, pack, setPack, refresh, allowed, authChecked, hasToken, user, signIn, signOut, signOutEverywhere]);
 

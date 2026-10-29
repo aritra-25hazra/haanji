@@ -55,6 +55,13 @@ class Facts:
 
 def count_tests() -> tuple[int, dict[str, int]]:
     """What ``pytest --collect-only -q`` reports from engine/, per file and in total."""
+    try:
+        import hypothesis  # noqa: F401  - the dev extra: without it two test modules skip and the count is short
+    except ImportError:
+        raise SystemExit("readme_sync: the test count needs the dev extras (hypothesis is missing): "
+                         "pip install -e '.[dev]' and re-run")
+    if sys.version_info < (3, 11):
+        raise SystemExit(f"readme_sync: the engine needs Python 3.11+, this is {sys.version.split()[0]}")
     proc = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
                           cwd=ROOT / "engine", capture_output=True, text=True)
     per_file: Counter[str] = Counter()

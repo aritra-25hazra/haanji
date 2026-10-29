@@ -10,8 +10,12 @@ export interface Status {
   whatsapp?: { configured: boolean; number: string | null };
   digest?: { owner_configured: boolean; hour_ist: number };
   auth?: { enabled: boolean };
+  /** A public server with sign-in off: the console's destructive operations are refused (403). */
+  demo_readonly?: boolean;
   google?: { configured: boolean; connected: string[] };
   phone?: { configured: boolean; number: string | null };
+  privacy?: { retention_days: number; consent: boolean };
+  backup?: { s3: boolean; restore_from: boolean };
 }
 
 export type Role = "owner" | "staff";

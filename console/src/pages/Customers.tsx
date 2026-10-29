@@ -9,7 +9,7 @@ const BK_KIND: Record<string, ChipKind | undefined> = { CONFIRMED: undefined, CO
 
 /** One row per number: who comes, how often, and who does not turn up. */
 export default function Customers() {
-  const { pack, mode, isOwner } = useApp();
+  const { pack, mode, isOwner, readOnly } = useApp();
   const [q, setQ] = useState("");
   const [debounced, setDebounced] = useState("");
   useEffect(() => { const t = setTimeout(() => setDebounced(q.trim()), 300); return () => clearTimeout(t); }, [q]);
@@ -47,7 +47,7 @@ export default function Customers() {
           )}
       </Panel>
       {open && (
-        <CustomerDrawer customer={open} pack={pack} live={live} isOwner={isOwner}
+        <CustomerDrawer customer={open} pack={pack} live={live} isOwner={isOwner && !readOnly}
                         onClose={() => setOpen(null)} onErased={() => { setOpen(null); reload(); }} />
       )}
     </Page>

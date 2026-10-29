@@ -41,6 +41,9 @@ class Deps:
     offer_waitlist: Callable[[Any, str, str | None], Awaitable[Any]]
     var_dir: str
     public_url: str
+    notify: Callable[..., Awaitable[Any]] | None = None       # (pack, phone, text, meta=…) -> delivered
+    auth_enabled: Callable[[], bool] = lambda: False
+    is_public: Callable[[], bool] = lambda: False
 
 
 class StatusIn(BaseModel):
@@ -114,11 +117,26 @@ def build_router(deps: Deps) -> APIRouter:
              "customer_name": b.customer_name, "phone": b.phone, "previous_receipt": b.receipt_code}, pack), who)
         rt.backend.cancel(pack, b.booking_id)
         deps.publish("booking.cancelled", pack=pack, booking_id=b.booking_id, by=who, receipt=code)
+        # The customer hears about it: the console's prompt promises a WhatsApp,
+        # so one is recorded in their thread and sent when a number is connected.
+        notified = None
+        if b.phone and deps.notify is not None:
+            from .speak import spoken_date, spoken_time
+            when = f"{spoken_date(b.date, rt.backend.today, rt.backend.resolve_date, rt.pack.language)} {spoken_time(b.time, rt.pack.language)}"
+            first = (b.customer_name or "").split()[0] if b.customer_name else ""
+            text = (f"Namaste{(' ' + first + ' ji') if first else ''}! {rt.pack.persona.business_name}: aapki {when} ki "
+                    f"{b.service} booking cancel kar di gayi hai. Dobara booking ke liye yahin likh dijiye ya call kijiye.")
+            try:
+                notified = await deps.notify(pack, b.phone, text, meta={"staff_cancel": b.booking_id, "receipt": code},
+                                             template="receipt", params=[code or ""])
+            except Exception as exc:                          # noqa: BLE001
+                log.warning("cancel notice failed: %s", exc)
+                notified = False
         try:
             await deps.offer_waitlist(rt, b.date, b.service)
         except Exception as exc:                              # noqa: BLE001 - a courtesy
             log.warning("waitlist offer failed: %s", exc)
-        return {"ok": True, "booking_id": b.booking_id, "receipt_code": code}
+        return {"ok": True, "booking_id": b.booking_id, "receipt_code": code, "customer_notified": notified}
 
     @r.post("/api/bookings/{booking_id}/status")
     async def booking_status(booking_id: str, body: StatusIn, request: Request, pack: str = deps.default_pack):
@@ -269,6 +287,10 @@ button{{font:inherit;padding:.8rem 1.4rem;border:0;border-radius:.6rem;backgroun
     # ------------------------------------------------------------- backup
     @r.get("/api/admin/backup")
     async def admin_backup(request: Request):
+        # The archive holds signing keys and the vault secret: on a public
+        # server it is handed only to a signed-in owner, never to "whoever asks".
+        if deps.is_public() and not deps.auth_enabled():
+            raise HTTPException(409, "backups are downloadable only with HAANJI_AUTH=on; use `haanji backup` on the host")
         if not _is_owner(request, deps):
             raise HTTPException(403, "owner role needed")
         data = backup_mod.make_backup(deps.var_dir)

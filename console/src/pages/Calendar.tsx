@@ -21,7 +21,7 @@ const byTime = (a: Booking, b: Booking) => a.time.localeCompare(b.time);
 
 /** The receptionist's book: a day by staff, or a week by day. */
 export default function Calendar() {
-  const { pack, mode } = useApp();
+  const { pack, mode, readOnly } = useApp();
   const [view, setView] = useState<View>("day");
   const [anchor, setAnchor] = useState<string>(today);
   const [now] = useState<string>(today);
@@ -83,8 +83,8 @@ export default function Calendar() {
         {loading && !data ? <Loading />
           : !data ? <Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></Empty>
           : view === "day"
-            ? <DayGrid bookings={data} busy={busy} onAct={act} />
-            : <WeekGrid days={days} today={now} bookings={data} busy={busy} onAct={act} />}
+            ? <DayGrid bookings={data} busy={busy} onAct={act} readOnly={readOnly} />
+            : <WeekGrid days={days} today={now} bookings={data} busy={busy} onAct={act} readOnly={readOnly} />}
       </Panel>
       <WaitlistPanel pack={pack} live={live} />
       <PaymentsPanel pack={pack} live={live} />
@@ -92,7 +92,7 @@ export default function Calendar() {
   );
 }
 
-function DayGrid({ bookings, busy, onAct }: { bookings: Booking[]; busy: string | null; onAct: (b: Booking, a: Action) => void }) {
+function DayGrid({ bookings, busy, onAct, readOnly = false }: { bookings: Booking[]; busy: string | null; onAct: (b: Booking, a: Action) => void; readOnly?: boolean }) {
   const byStaff = new Map<string, Booking[]>();
   for (const b of bookings) byStaff.set(b.staff, [...(byStaff.get(b.staff) ?? []), b]);
   const staffs = [...byStaff.keys()].sort();
@@ -104,7 +104,7 @@ function DayGrid({ bookings, busy, onAct }: { bookings: Booking[]; busy: string 
         return (
           <section key={s} className="cal-col" aria-label={s}>
             <h3><span>{s}</span><span className="count">{list.length}</span></h3>
-            {list.map((b) => <BookingCard key={b.booking_id} b={b} busy={busy === b.booking_id} onAct={(a) => onAct(b, a)} />)}
+            {list.map((b) => <BookingCard key={b.booking_id} b={b} busy={busy === b.booking_id} onAct={(a) => onAct(b, a)} readOnly={readOnly} />)}
           </section>
         );
       })}
@@ -112,8 +112,8 @@ function DayGrid({ bookings, busy, onAct }: { bookings: Booking[]; busy: string 
   );
 }
 
-function WeekGrid({ days, today: now, bookings, busy, onAct }:
-  { days: string[]; today: string; bookings: Booking[]; busy: string | null; onAct: (b: Booking, a: Action) => void }) {
+function WeekGrid({ days, today: now, bookings, busy, onAct, readOnly = false }:
+  { days: string[]; today: string; bookings: Booking[]; busy: string | null; onAct: (b: Booking, a: Action) => void; readOnly?: boolean }) {
   return (
     <div className="cal-grid" style={{ "--cols": 7 } as CSSProperties}>
       {days.map((d) => {
@@ -123,7 +123,7 @@ function WeekGrid({ days, today: now, bookings, busy, onAct }:
             <h3><span>{DAY_NAMES[dayOfWeek(d)]} {d.slice(8)}</span><span className="count">{list.length || ""}</span></h3>
             {list.length === 0
               ? <p className="none">—</p>
-              : list.map((b) => <BookingCard key={b.booking_id} b={b} showStaff busy={busy === b.booking_id} onAct={(a) => onAct(b, a)} />)}
+              : list.map((b) => <BookingCard key={b.booking_id} b={b} showStaff busy={busy === b.booking_id} onAct={(a) => onAct(b, a)} readOnly={readOnly} />)}
           </section>
         );
       })}
@@ -133,7 +133,7 @@ function WeekGrid({ days, today: now, bookings, busy, onAct }:
 
 /** One booking: service, time, customer, receipt, money, reminder — and what
  *  the desk can do about it. Cancel asks once, inline. */
-function BookingCard({ b, showStaff = false, busy, onAct }: { b: Booking; showStaff?: boolean; busy: boolean; onAct: (a: Action) => void }) {
+function BookingCard({ b, showStaff = false, busy, onAct, readOnly = false }: { b: Booking; showStaff?: boolean; busy: boolean; onAct: (a: Action) => void; readOnly?: boolean }) {
   const [confirm, setConfirm] = useState(false);
   return (
     <article className={"bk " + b.status} aria-label={`${b.time} ${b.service} — ${b.customer_name}`} data-testid={`booking-${b.booking_id}`}>
@@ -155,8 +155,10 @@ function BookingCard({ b, showStaff = false, busy, onAct }: { b: Booking; showSt
           ? <Chip kind="ok" title={b.reminder_sent_at}><Icon name="bell" small />reminder {fmtTime(b.reminder_sent_at)}</Chip>
           : b.status === "CONFIRMED" ? <Chip kind="muted"><Icon name="bell" small />reminder pending</Chip> : null}
       </div>
-      {confirm ? (
-        <Confirm text="Pakka cancel karein? Caller ko WhatsApp jayega." yes="Haan, cancel karo" no="Nahi" busy={busy}
+      {readOnly ? (
+        <div className="acts"><Chip kind="muted" title="Public demo: badlav band hain. Asli dukaan ke liye HAANJI_AUTH=on.">demo · read-only</Chip></div>
+      ) : confirm ? (
+        <Confirm text="Pakka cancel karein? Caller ko WhatsApp par suchna jayegi (agar number juda hai) aur khaali slot waitlist wale ko offer hoga." yes="Haan, cancel karo" no="Nahi" busy={busy}
                  onYes={() => { setConfirm(false); onAct("cancel"); }} onNo={() => setConfirm(false)} />
       ) : (
         <div className="acts">

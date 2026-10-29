@@ -7,7 +7,8 @@ import type { PackSummary } from "../types";
 const SUB = "Edit karo, validate karo, uske apne scenarios chalao — phir ship karo.";
 
 export default function PackStudio() {
-  const { mode, isOwner } = useApp();
+  const { mode, isOwner: owner, readOnly } = useApp();
+  const isOwner = owner && !readOnly;
   const live = mode === "live";
   const [packs, setPacks] = useState<PackSummary[] | null>(null);
   const [packsError, setPacksError] = useState<string | null>(null);

@@ -60,6 +60,31 @@ services:
       # can be shown; a real shop (HAANJI_AUTH=on) starts with an empty table.
       - key: HAANJI_DEMO
         value: "1"
+      # Privacy defaults the public demo also keeps: a spoken notice at the
+      # start of every call, and call records purged after 180 days (bookings
+      # and receipts stay; docs/privacy-dpdp.md).
+      - key: HAANJI_CONSENT_LINE
+        value: "Ye call quality aur record ke liye save hoti hai."
+      - key: HAANJI_RETENTION_DAYS
+        value: "180"
+      # With sign-in off, a public server is a read-only demo for strangers:
+      # settings, cancellations, users, pack saves, erasure and backups are
+      # refused (HAANJI_DEMO_WRITES=1 re-opens them for a private demo).
+      - key: HAANJI_DEMO_WRITES
+        value: "0"
+      # Durable records on an ephemeral disk: nightly backups to S3-compatible
+      # storage and a restore on boot. Set these before trusting the service
+      # with a real shop's bookings (docs/operations.md).
+      - key: HAANJI_BACKUP_S3_BUCKET
+        sync: false
+      - key: HAANJI_BACKUP_S3_ENDPOINT
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: HAANJI_RESTORE_FROM
+        sync: false
       # Where the owner console is hosted, so the landing page can link to it.
       - key: HAANJI_CONSOLE_URL
         value: https://haanji-kappa.vercel.app

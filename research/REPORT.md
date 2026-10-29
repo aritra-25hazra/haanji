@@ -540,7 +540,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 580 tests, about 6 s
+pytest -q                                   # 585 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -588,7 +588,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (580 tests)
+## Appendix C. Test inventory (585 tests)
 
 | file | tests | what it guards |
 |---|---|---|
@@ -605,6 +605,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_stt_engines.py | 18 | the five recogniser adapters against the vendors' documented response shapes; a missing key is named; stt_compare.json never carries a number for an engine that did not run |
 | test_speculation.py | 14 | purity, argument identity, freshness, invalidation, budget |
 | test_phase_g2.py | 12 | reminders, deposits, the waitlist, the console's calendar and settings, backups, the audio hash in a receipt |
+| test_phase_g3.py | 5 | the second review: a read-only public demo, a body cap that counts bytes, a cancellation the customer hears about, privacy defaults |
 | test_claude_adapter.py | 10 | the hosted-model adapter and its confirmation gate |
 | test_whatsapp_webhook.py | 9 | Meta signature, dedup, handshake |
 | test_auth.py | 9 | one-time codes over WhatsApp, signed scoped tokens, roles, per-pack scope, lockout |

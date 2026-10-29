@@ -54,3 +54,8 @@ purpose; the person is no longer identifiable from it.
   shredded key is overwritten in the file, not merely unlinked.
 * **Consent audio.** A phone confirmation's audio clip is kept only when
   `HAANJI_CONFIRMATION_AUDIO_DIR` is set; by default only its hash exists.
+* **Defaults that protect by default (1.1.1).** Call records and WhatsApp
+  messages are purged after 180 days unless `HAANJI_RETENTION_DAYS` says
+  otherwise (0 keeps everything; bookings and receipts always stay), and the
+  public deployment speaks a consent line at the start of every call. The 1.0
+  defaults were "keep forever" and "say nothing" unless configured.

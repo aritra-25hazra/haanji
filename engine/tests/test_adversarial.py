@@ -19,6 +19,11 @@ from pathlib import Path
 
 import pytest
 import yaml
+
+import pytest
+
+pytest.importorskip("hypothesis")   # the dev extra; a minimal install skips these, it does not fail
+
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 

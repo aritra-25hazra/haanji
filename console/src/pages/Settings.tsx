@@ -45,6 +45,9 @@ function Connections({ pack }: { pack: string }) {
       <div className="status-row">
         <Chip kind={wa?.configured ? "ok" : "muted"}><Icon name="phone" small />WhatsApp · {wa?.configured ? `juda${wa.number ? ` · ${wa.number}` : ""}` : "set nahi"}</Chip>
         <Chip kind={ph?.configured ? "ok" : "muted"}><Icon name="mic" small />Phone line · {ph?.configured ? `judi${ph.number ? ` · ${ph.number}` : ""}` : "set nahi"}</Chip>
+        <Chip kind={status?.backup?.s3 ? "ok" : "warn"} title={status?.backup?.s3 ? "Roz raat S3 par backup" : "HAANJI_BACKUP_S3_BUCKET set nahi: redeploy par bookings aur ledger chale jaate hain (docs/operations.md)"}>
+          <Icon name="lock" small />Backup · {status?.backup?.s3 ? "S3 nightly" : "set nahi — redeploy par data jaata hai"}
+        </Chip>
         <Chip kind={g.data?.connected ? "ok" : g.data?.configured ? "warn" : "muted"}>
           <Icon name="calendar" small />Google Calendar · {g.data ? (g.data.connected ? "juda" : g.data.configured ? "keys hain, connect nahi" : "keys set nahi") : g.error ? "pata nahi" : "…"}
         </Chip>
@@ -55,6 +58,7 @@ function Connections({ pack }: { pack: string }) {
 
 /** GET /api/settings → form → PUT only the keys that changed. */
 function SettingsForm({ pack }: { pack: string }) {
+  const { readOnly } = useApp();
   const { data, error, reload } = useData(() => engine.settings(pack), [pack]);
   const [draft, setDraft] = useState<Partial<SettingsShape>>({});
   const [busy, setBusy] = useState(false);
@@ -101,7 +105,7 @@ function SettingsForm({ pack }: { pack: string }) {
         </div>
         <p className="muted small">Deposit 0 se zyada ho to har nayi booking pe payment link jaata hai — Razorpay, ya keys na hon to is server ka mock link.</p>
         <div className="row">
-          <button className="btn btn-primary" type="submit" disabled={!dirty || busy}>{busy ? "Save…" : "Save karo"}</button>
+          <button className="btn btn-primary" type="submit" disabled={!dirty || busy || readOnly} title={readOnly ? "Public demo: settings read-only hain" : undefined}>{busy ? "Save…" : readOnly ? "Read-only (demo)" : "Save karo"}</button>
           {dirty && <button className="btn btn-ghost" type="button" onClick={() => setDraft({})} disabled={busy}>Wapas</button>}
           {note && <span className="muted" role="status">{note}</span>}
         </div>
@@ -180,6 +184,7 @@ function DigestPanel({ pack }: { pack: string }) {
 
 /** Who may sign in: list, add, remove (never yourself). */
 function UsersPanel() {
+  const { readOnly } = useApp();
   const { packs, user: me } = useApp();
   const { data, error, reload } = useData(() => engine.users().then((r) => r.users), []);
   const [phone, setPhone] = useState("");
@@ -245,7 +250,7 @@ function UsersPanel() {
           </div>
         </div>
         <div className="row">
-          <button className="btn btn-primary" type="submit" disabled={busy || digits.length < 10}><Icon name="user" small />User jodo</button>
+          <button className="btn btn-primary" type="submit" disabled={busy || digits.length < 10 || readOnly}><Icon name="user" small />User jodo</button>
           {note && <span className="muted" role="status">{note}</span>}
         </div>
       </form>

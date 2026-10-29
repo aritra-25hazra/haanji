@@ -66,6 +66,17 @@ WhatsApp / payment lagana ho.
 * CLI: `haanji backup --out file.tar.gz [--s3]`, `haanji restore file.tar.gz
   [--force]`.
 
+## Public demo = read-only console
+
+`HAANJI_AUTH=off` wale **public** server (Render) par console ki destructive
+cheezein band rehti hain: settings save, booking cancel / no-show, users,
+pack save, customer erase, backup download, digest/push test. API `403` deta
+hai aur console buttons ko "demo: read-only" dikhata hai. Asli dukaan ke liye
+`HAANJI_AUTH=on`; apne laptop ya private network pe demo ke liye
+`HAANJI_DEMO_WRITES=1`. Backup download sirf login ke saath hota hai (archive
+mein signing keys aur vault secret hote hain); host pe `haanji backup` hamesha
+chalta hai.
+
 ## Security knobs (asli dukaan ke liye)
 
 | key | kya |

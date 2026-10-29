@@ -2,6 +2,10 @@
 import copy
 import sqlite3
 
+import pytest
+
+pytest.importorskip("hypothesis")   # the dev extra; a minimal install skips these, it does not fail
+
 from hypothesis import given, settings, strategies as st
 
 from haanji.pramaan.ledger import Ledger

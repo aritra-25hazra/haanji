@@ -160,6 +160,42 @@ def rate_limited(client: str, now: float | None = None, limit: int | None = None
     return False
 
 
+def body_limit_for(path: str) -> int:
+    # Nothing on this server needs a large body except a volunteer's recording.
+    return MAX_RECORD_BYTES if path == "/api/record" else MAX_BODY_BYTES
+
+
+class BodyLimitMiddleware:
+    """Caps a request body by the bytes actually received. The Content-Length
+    check below is a cheap early refusal, but a chunked request carries no
+    length header, so the count has to happen on the way in."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        limit = body_limit_for(scope.get("path", ""))
+        seen = 0
+
+        async def limited_receive():
+            nonlocal seen
+            message = await receive()
+            if message["type"] == "http.request":
+                seen += len(message.get("body", b""))
+                if seen > limit:
+                    # An HTTPException, not a custom one: FastAPI turns any other
+                    # error raised while it parses a body into a generic 400.
+                    raise HTTPException(413, "request body too large")
+            return message
+
+        await self.app(scope, limited_receive, send)
+
+
+app.add_middleware(BodyLimitMiddleware)
+
+
 @app.middleware("http")
 async def hardening(request: Request, call_next):
     path = request.url.path
@@ -168,13 +204,16 @@ async def hardening(request: Request, call_next):
             TELEMETRY.inc("http_rate_limited_total")
             return JSONResponse({"detail": "too many requests; try again in a minute"}, status_code=429,
                                 headers={"Retry-After": "60"})
-        # Nothing on this server needs a large body except a volunteer's recording.
         try:
             length = int(request.headers.get("content-length") or 0)
         except ValueError:
             length = 0
-        if length > (MAX_RECORD_BYTES if path == "/api/record" else MAX_BODY_BYTES):
+        if length > body_limit_for(path):
             return JSONResponse({"detail": "request body too large"}, status_code=413)
+    if demo_locked(request.method, path):
+        TELEMETRY.inc("demo_readonly_refused_total")
+        return JSONResponse({"detail": "the public demo is read-only: set HAANJI_AUTH=on for a real shop "
+                                       "(or HAANJI_DEMO_WRITES=1 for a private demo)"}, status_code=403)
     elif request.method == "GET" and not path.startswith(RATE_LIMIT_EXEMPT) and \
             rate_limited("GET " + _client_of(request), limit=RATE_LIMIT_GET_PER_MIN):
         TELEMETRY.inc("http_rate_limited_total")
@@ -217,11 +256,36 @@ payments = PaymentStore(os.path.join(VAR_DIR, "payments.sqlite"), PUBLIC_URL)
 push = PushStore(os.path.join(VAR_DIR, "push.sqlite"), os.path.join(VAR_DIR, "vapid.json"),
                  contact=os.environ.get("HAANJI_PUSH_CONTACT") or "mailto:owner@haanji.local")
 CONSENT_LINE = os.environ.get("HAANJI_CONSENT_LINE") or ""
-RETENTION_DAYS = int(os.environ.get("HAANJI_RETENTION_DAYS", "0"))        # 0 = keep
+# Storage limitation (DPDP): call records and messages older than this are
+# purged every evening; bookings and receipts (the business's records) stay.
+# 0 keeps everything. The 1.0 default was 0, which meant nothing was ever
+# purged unless the owner knew to configure it.
+RETENTION_DAYS = int(os.environ.get("HAANJI_RETENTION_DAYS", "180"))
 
 # ─────────────────────────────────────────────────────────────── auth
 AUTH_ENABLED = os.environ.get("HAANJI_AUTH", "off").lower() in ("on", "1", "true", "yes")
 AUTH_DEV = os.environ.get("HAANJI_AUTH_DEV", "0").lower() in ("1", "true", "yes", "on")
+# A public server with sign-in off is a demo for strangers: the console's
+# destructive operations (settings, cancelling bookings, users, pack saves,
+# erasure, backups) are refused there. HAANJI_DEMO_WRITES=1 re-opens them for
+# a private demo behind someone's own firewall.
+DEMO_WRITES = os.environ.get("HAANJI_DEMO_WRITES", "").lower() in ("1", "true", "yes", "on")
+DEMO_READONLY = IS_PUBLIC and not AUTH_ENABLED and not DEMO_WRITES
+DEMO_LOCKED: list[tuple[str, re.Pattern]] = [
+    ("PUT", re.compile(r"^/api/settings$")),
+    ("POST", re.compile(r"^/api/bookings/[^/]+/(cancel|status)$")),
+    ("DELETE", re.compile(r"^/api/waitlist/[^/]+$")),
+    ("GET|POST|DELETE", re.compile(r"^/api/auth/users(/.*)?$")),
+    ("GET", re.compile(r"^/api/admin/backup$")),
+    ("POST", re.compile(r"^/api/(digest/send|push/test|anchors/seal)$")),
+    ("DELETE", re.compile(r"^/api/privacy/customer/.*$")),
+    ("PUT", re.compile(r"^/api/packs/[^/]+$")),
+    ("DELETE", re.compile(r"^/api/google/disconnect$")),
+]
+
+
+def demo_locked(method: str, path: str) -> bool:
+    return DEMO_READONLY and any(method in m.split("|") and rx.match(path) for m, rx in DEMO_LOCKED)
 auth = AuthStore(os.path.join(VAR_DIR, "auth.sqlite"), os.environ.get("HAANJI_AUTH_SECRET") or None)
 # (method regex, path regex, minimum role). Everything else is public: the
 # demo pages, callers' sessions, the verifier's export, the webhooks.
@@ -2074,6 +2138,7 @@ async def status():
             "public_url": PUBLIC_URL,
             "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
             "auth": {"enabled": AUTH_ENABLED},
+            "demo_readonly": DEMO_READONLY,
             "google": {"configured": gcal.configured, "connected": gcal.connected()},
             "phone": phone_status(),
             "privacy": {"retention_days": RETENTION_DAYS, "consent": bool(CONSENT_LINE)},
@@ -2145,8 +2210,23 @@ async def static_file(name: str):
 # ───────────────────────────────────────────────── the operator console's routes
 from .payments import configured as payments_configured_fn    # noqa: E402
 
+async def notify_customer(pack_id: str, phone: str, text: str, *, meta: dict[str, Any] | None = None,
+                          template: str = "receipt", params: list[str] | None = None) -> bool | None:
+    """A message from the shop to a customer, recorded in their WhatsApp thread
+    and sent when a real number is connected (None = nothing to send with)."""
+    store.add_wa(pack_id, phone, "out", text, meta=meta or {})
+    if not wa_channel.configured():
+        return None
+    try:
+        return await wa_channel.send_template(phone, template, params or [], fallback_text=text)
+    except Exception as exc:                          # noqa: BLE001 - a courtesy, not the record
+        log.warning("customer notice to …%s failed: %s", phone[-4:], exc)
+        return False
+
+
 app.include_router(admin_mod.build_router(admin_mod.Deps(
     runtime=runtime, list_packs=list_packs, default_pack=DEFAULT_PACK, store=store, settings=settings,
     payments=payments, vault=vault, publish=publish, mask=_mask,
     user_of=lambda request: getattr(request.state, "user", None),
-    offer_waitlist=offer_waitlist, var_dir=VAR_DIR, public_url=PUBLIC_URL)))
+    offer_waitlist=offer_waitlist, var_dir=VAR_DIR, public_url=PUBLIC_URL,
+    notify=notify_customer, auth_enabled=lambda: AUTH_ENABLED, is_public=lambda: IS_PUBLIC)))
