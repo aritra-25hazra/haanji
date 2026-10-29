@@ -43,7 +43,8 @@ STOPWORDS = FRAME_WORDS | {
     "ekta", "er", "ta", "tay", "shokale", "bikele", "khub",
 }
 NAME_INTRO = re.compile(
-    r"(mera naam|naam hai|naam se|my name is|name is|ke naam)\s*$", re.IGNORECASE
+    r"(mera naam|naam hai|naam se|my name is|name is|ke naam|maru naam|mara naam|"
+    r"en peru|naa peru|na peru|peru)\s*$", re.IGNORECASE
 )
 
 

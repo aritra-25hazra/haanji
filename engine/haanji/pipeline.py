@@ -253,7 +253,7 @@ class CallSession:
         # A reply to a question that asked for the caller's name IS a name:
         # nothing in it may be "repaired", however unusual it looks. This is
         # the text-channel form of the phone path's name guard.
-        asked_name = bool(re.search(r"\b(naam|name)\b", self.ctx.last_agent_utterance,
+        asked_name = bool(re.search(r"\b(naam|name|naav|peru)\b", self.ctx.last_agent_utterance,
                                     re.IGNORECASE))
         tokens = [Token(w, 0.95 if asked_name or w.lower().strip('.,!?') in known
                         or w.isdigit() else 0.62)

@@ -17,6 +17,20 @@ LANGUAGE_NOTES = {
                 "the way a receptionist in an Indian city speaks on the phone.",
     "benglish": "Reply in Benglish (Bengali written in Latin script, mixed with English), "
                 "the way a receptionist in Kolkata speaks on the phone.",
+    "marathinglish": "Reply in Marathinglish (Marathi written in Latin script, mixed with English), "
+                     "the way a receptionist in Pune speaks on the phone.",
+    "tanglish": "Reply in Tanglish (Tamil written in Latin script, mixed with English), "
+                "the way a receptionist in Chennai speaks on the phone. Say times as "
+                "'kaalai 10 mani', 'pathu arai' for half past.",
+    "tenglish": "Reply in Tenglish (Telugu written in Latin script, mixed with English), "
+                "the way a receptionist in Hyderabad speaks on the phone. Say times as "
+                "'udayam 10 gantalaku', 'padinnara' for half past ten.",
+    "gujlish": "Reply in Gujlish (Gujarati written in Latin script, mixed with English), "
+               "the way a receptionist in Ahmedabad speaks on the phone. Say times as "
+               "'savare 10 vage', 'sada das' for half past ten.",
+    "punglish": "Reply in Punglish (Punjabi written in Latin script, mixed with English), "
+                "the way a receptionist in Ludhiana speaks on the phone. Say times as "
+                "'savere 10 vaje', 'saadhe das' for half past ten.",
 }
 
 

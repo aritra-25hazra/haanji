@@ -1,0 +1,143 @@
+# Vertical Pack — a diagnostic lab in Hyderabad, speaking Tenglish (Telugu in
+# Latin script mixed with English). Home sample collection and fasting tests
+# are the two things a lab caller asks about most.
+pack: lab_hyderabad
+display_name: Diagnostic lab (Hyderabad, Tenglish)
+version: 1
+language: tenglish
+
+persona:
+  agent_name: Haanji
+  business_name: Nirmal Diagnostics
+  greeting: "Namaskaram, Nirmal Diagnostics. Ye test cheyinchukovali?"
+  closing: "Ayipoyindi. Report time ki vastundi. Dhanyavadalu."
+  style: >
+    Calm, precise, short Tenglish. Always says the fasting requirement when
+    one applies. Uses "meeru", never "nuvvu".
+
+guardrails:
+  never_quote_outside_catalogue: true
+  max_discount_pct: 0
+  refuse:
+    - interpreting a test result
+    - saying whether a value is dangerous
+    - suggesting a diagnosis or a medicine
+  escalate_on:
+    - patient says they feel faint or unwell
+    - asking about a critical value in a report
+    - insurance or TPA dispute
+  refusal_line: "Report meaning doctor cheptaru — nenu report time ki pampistanu."
+  escalation_line: "Nenu ippude mimmalni maa lab in-charge ki connect chestunna."
+
+staff_role: phlebotomist
+staff: [Lakshmi, Srinivas, Fathima]
+
+hours:
+  mon-sat: ["07:00", "19:00", "13:00", "14:00"]
+  sun: null
+
+services:
+  - name: complete blood count
+    duration_min: 15
+    price_inr: 350
+    staff: [Lakshmi, Srinivas, Fathima]
+    aliases: [cbc, blood count, blood test, raktha pariksha]
+  - name: lipid profile
+    duration_min: 15
+    price_inr: 700
+    staff: [Lakshmi, Srinivas]
+    prep_note: "12 gantalu fasting undali."
+    aliases: [lipid, cholesterol test]
+  - name: thyroid profile
+    duration_min: 15
+    price_inr: 550
+    staff: [Lakshmi, Fathima]
+    aliases: [thyroid, tsh, thyroid test, t3 t4]
+  - name: vitamin d test
+    duration_min: 15
+    price_inr: 1200
+    staff: [Srinivas, Fathima]
+    aliases: [vitamin d, vit d]
+  - name: full body checkup
+    duration_min: 45
+    price_inr: 2400
+    staff: [Lakshmi, Srinivas]
+    prep_note: "Udayam khali kadupu tho raavali."
+    aliases: [full body, health package, master checkup]
+  - name: home sample collection
+    duration_min: 30
+    price_inr: 200
+    staff: [Srinivas, Fathima]
+    aliases: [home collection, intiki vachi sample, home visit]
+
+lexicon:
+  places: [Kukatpally, Banjara Hills, KPHB, Madhapur, Ameerpet]
+  brands: [Nirmal Diagnostics, NABL, Aarogyasri]
+  phrases: [fasting, khali kadupu, report eppudu, home collection, hard copy]
+  variants:
+    Kukatpally: [Kukatpalli, Kukkatpally]
+    Banjara Hills: [Banjara Hils]
+    Srinivas: [Sreenivas, Srinivaas]
+
+knowledge:
+  - q: "Report eppudu vastundi?"
+    a: "Chaala reports aa roju sayantram 6 gantalaku WhatsApp lo vastayi. Vitamin D marusati roju."
+    tags: [report, eppudu, vastundi, time, whatsapp, kab, kokhon]
+  - q: "Fasting kavala?"
+    a: "Lipid profile, full body checkup ki 12 gantalu fasting kavali. Migatha tests ki avasaram ledu."
+    tags: [fasting, kavala, avasarama, avasaram, khali, kadupu, tinakunda, empty, stomach]
+  - q: "Home collection unda?"
+    a: "Avunu, intiki vachi sample teesukuntamu, 200 rupayalu charge, udayam 7 nunchi 11 varaku."
+    tags: [home, inti, intiki, collection, sample, vastara, visit]
+  - q: "Lab eppudu open untundi?"
+    a: "Monday nunchi Saturday udayam 7 nunchi sayantram 7 varaku. Madhyahnam 1 nunchi 2 lunch break. Sunday closed."
+    tags: [timing, timings, eppudu, open, closed, hours, sunday, kab]
+  - q: "CBC ki entha?"
+    a: "Complete blood count 350 rupayalu."
+    tags: [cbc, blood, count, entha, enta, rate, price, charge, charges, cost, kitna]
+  - q: "Lab ekkada undi?"
+    a: "Memu Kukatpally lo, KPHB Road number 1, Metro station pakkana, ground floor."
+    tags: [ekkada, address, location, reach, kahan, kothay]
+
+scenarios:
+  - name: tenglish_booking_with_noise
+    expect: BOOKED
+    note: "A Tenglish caller; the recogniser mangles the test name, the pack repairs it."
+    turns:
+      - heard: "repu udayam lipid profail test cheyali"
+        truth: "repu udayam lipid profile test cheyali"
+        low_conf: [profail]
+      - heard: "avunu alage"
+        truth: "avunu alage"
+      - heard: "Ravi Kumar 9848012345"
+        truth: "Ravi Kumar 9848012345"
+      - heard: "avunu confirm cheyandi"
+        truth: "avunu confirm cheyandi"
+  - name: tenglish_price_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "cbc ki entha avthundi?"
+        truth: "cbc ki entha avthundi?"
+      - heard: "ledu inthe, dhanyavadalu"
+        truth: "ledu inthe, dhanyavadalu"
+  - name: tenglish_fasting_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "fasting kavala?"
+        truth: "fasting kavala?"
+      - heard: "ledu anthe"
+        truth: "ledu anthe"
+  - name: tenglish_report_refusal
+    expect: REFUSED
+    note: "Guardrail: the agent never says whether a value is dangerous."
+    turns:
+      - heard: "naa report lo sugar ekkuva undi, danger aa?"
+        truth: "naa report lo sugar ekkuva undi, danger aa?"
+  - name: tenglish_closed_day_lead
+    expect: LEAD_CAPTURED
+    note: "Sunday is closed; a missed booking must still become a lead."
+    turns:
+      - heard: "aadivaram udayam thyroid test unda?"
+        truth: "aadivaram udayam thyroid test unda?"
+      - heard: "Sudha Reddy 9949012345"
+        truth: "Sudha Reddy 9949012345"

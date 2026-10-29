@@ -39,14 +39,19 @@ def _rx(pattern: str) -> re.Pattern:
 # (rule id, action, subject pattern, qualifier pattern or None)
 RULES: list[tuple[str, Action, re.Pattern, re.Pattern | None]] = [
     ("emergency.bleeding", Action.ESCALATE,
-     _rx(r"\b(khoon|blood|bleeding|rakt\w*|rokto)\b"),
+     _rx(r"\b(khoon|blood|bleeding|rakt\w*|rokto|ratham|raththam|rattam|lohi|lahu)\b"),
      _rx(r"(aa rah|nahi ruk|ruk nahi|band nahi|bahut|zyada|non ?stop|porche|"
-         r"bondho hochhe na|khub|besh|khup|yet aahe|thambat nahi)")),
+         r"bondho hochhe na|khub|besh|khup|yet aahe|thambat nahi|"
+         r"romba|nikkave|nikkala|niruthala|varudhu|"            # Tamil
+         r"chaala|aagatledu|aagaledu|vastundi|"                 # Telugu
+         r"bahu|band nathi|atakto nathi|nikle che|"             # Gujarati
+         r"bahut|rukda nahi|ruk nai|hatda nahi|bandh nahi)")),  # Punjabi
     ("emergency.acute", Action.ESCALATE,
      _rx(r"\b(accident|fracture|behosh|faint|chakkar|saans nahi|emergency|"
          r"unbearable|bardasht nahi|asahniya|asahya|shwas yet nahi)\b"), None),
     ("emergency.swelling", Action.ESCALATE,
-     _rx(r"\b(sujan|swelling|sooj)\w*\b"), _rx(r"(bukhar|fever|dard|pain)")),
+     _rx(r"\b(sujan|swelling|sooj|veekkam|veekam|vaapu|sojo)\w*\b"),
+     _rx(r"(bukhar|fever|dard|pain|vali|noppi|jvaram|jwaram|taav|dukhe|dukhda)")),
     ("commercial.refund", Action.ESCALATE,
      _rx(r"\b(refund|paisa wapas|paise wapas|money back)\b"), None),
     ("commercial.complaint", Action.ESCALATE,
@@ -60,18 +65,23 @@ RULES: list[tuple[str, Action, re.Pattern, re.Pattern | None]] = [
     ("advice.medicine", Action.REFUSE,
      _rx(r"\b(dawai|dawa|medicine|tablet|goli|dose|antibiotic|painkiller|prescri\w*|oshudh|aushadh)\b"),
      _rx(r"(lun|loon|le lu|le sakt|le lena|khaun|kha sakt|khana|batao|bataiye|bata do|suggest|recommend|"
-         r"kaunsi|konsi|kaun si|kitni|likh|prescri|chahiye|de do|dijiye|kon|kokhon|kitna|kaise)")),
+         r"kaunsi|konsi|kaun si|kitni|likh|prescri|chahiye|de do|dijiye|kon|kokhon|kitna|kaise|"
+         r"sapdalam|sapda|sollunga|edukkalam|edukka|enna|"      # Tamil
+         r"veskovala|veskovali|teesukovala|cheppandi|emi|"      # Telugu
+         r"aapo|kaho|levi|lau|kai|kayi|"                        # Gujarati
+         r"dasso|khaa|lawan|kehdi|kedi|kinni)")),               # Punjabi
     ("advice.diagnosis", Action.REFUSE,
      _rx(r"\b(bimari|disease|infection|problem kya|kya hua hai|diagnos\w*)\b"),
      _rx(r"(batao|bataiye|kya|kaun|hai)")),
     ("advice.report", Action.REFUSE,
      _rx(r"\b(report|result|value|level|hemoglobin|sugar|tsh|cholesterol|x ?ray)\b"),
      _rx(r"(matlab|khatra|danger|serious|normal|kam hai|zyada hai|theek hai|"
-         r"chinta|worry|kya hai ye)")),
+         r"chinta|worry|kya hai ye|"
+         r"pramadam|ekkuva|thakkuva|adhigam|kammi|vadhare|ochhu|khatarnak|arth)")),
     ("promise.outcome", Action.REFUSE,
      _rx(r"\b(guarantee|guranty|garanti|pakka|zaroor|surely)\b"),
      _rx(r"(selection|rank|result|ho jayega|mil jayega|thik ho jay|theek ho jay|"
-         r"ho jayegi|score)")),
+         r"ho jayegi|score|thashe|avutundi|avthundi|aagum|hovega|ho jave)")),
     ("promise.discount", Action.REFUSE,
      _rx(r"\b(discount|chhoot|chhut|kam kar|sasta|kam karo|bargain)\b"), None),
 ]
