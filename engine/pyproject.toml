@@ -1,6 +1,6 @@
 [project]
 name = "haanji-engine"
-version = "1.0.0"
+version = "1.1.0"
 description = "Real-time voice-agent engine for Indian languages: Bhasha Bridge, Speculative Turn Execution and the Pramaan Ledger"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -41,6 +41,7 @@ dev  = ["pytest>=8.0", "pytest-asyncio>=0.23", "httpx>=0.27", "hypothesis>=6.0"]
 web  = ["fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27", "pywebpush>=2.0"]
 live = ["websockets>=12.0", "httpx>=0.27"]
 llm  = ["anthropic>=0.50"]
+backup = ["boto3>=1.34"]
 # The research harness: classic phonetic keys for the baselines, Markdown for the PDF report.
 research = ["jellyfish>=1.0", "metaphone>=0.6", "markdown>=3.5", "faster-whisper>=1.0"]
 
@@ -64,3 +65,26 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+exclude = ["tests/visual_check.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I"]
+# E501: long lines are a later pass. B905: zip(strict=) adds nothing here, every zip is over
+# lists built together to the same length.
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.isort]
+# The repository's import style: `from __future__ import annotations`, then the
+# standard library with no blank line, then a gap before third-party and local imports.
+no-lines-before = ["standard-library"]
+
+[tool.ruff.lint.per-file-ignores]
+# server.py, policy.py and nlu.py are being edited on another branch; their lint pass follows that merge.
+"haanji/server.py" = ["B904", "E402", "E741", "I001"]
+"haanji/policy.py" = ["F841"]
+"haanji/nlu.py" = ["B033", "B007"]
+# Dense transliteration tables, deliberately one rule per line.
+"haanji/devanagari.py" = ["E702"]

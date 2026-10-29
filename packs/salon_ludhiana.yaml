@@ -1,0 +1,149 @@
+# Vertical Pack — a salon in Ludhiana, speaking Punglish (Punjabi in Latin
+# script mixed with English). Haircut, colour and bridal; Monday is the
+# weekly off, so a Monday request becomes a lead.
+pack: salon_ludhiana
+display_name: Salon (Ludhiana, Punglish)
+version: 1
+language: punglish
+
+persona:
+  agent_name: Haanji
+  business_name: Rang Salon
+  greeting: "Sat Sri Akal ji, Rang Salon. Kehdi service chahidi?"
+  closing: "Perfect ji, tuhada slot lag gaya. Milde haan!"
+  style: >
+    Friendly, upbeat, short Punglish sentences. Says "ji" often, uses
+    "tusi", never "tu". Always confirms the stylist by name.
+
+guardrails:
+  never_quote_outside_catalogue: true
+  max_discount_pct: 0
+  refuse:
+    - promising a hair or skin result
+    - advice on a scalp or skin condition
+    - matching a competitor's price
+  escalate_on:
+    - allergic reaction after a service
+    - complaint about a previous service
+    - refund request
+  refusal_line: "Eh stylist tuhanu vekh ke hi dass sakde ji, main tuhada slot laga dinda."
+  escalation_line: "Eh main manager ji nu de raha, oh hune tuhade naal gall karnge."
+
+staff_role: stylist
+staff: [Simran, Harpreet, Jas, Deepak]
+
+hours:
+  tue-sun: ["10:00", "21:00"]
+  mon: null
+
+services:
+  - name: haircut
+    duration_min: 30
+    price_inr: 400
+    staff: [Simran, Harpreet, Jas, Deepak]
+    aliases: [hair cut, trim, cutting, vaal katwaune]
+  - name: global colour
+    duration_min: 120
+    price_inr: 4500
+    staff: [Harpreet, Simran]
+    aliases: [colour, color, hair colour, global color, colouring, rang]
+  - name: hair spa
+    duration_min: 60
+    price_inr: 1500
+    staff: [Simran, Jas]
+    aliases: [spa, hair treatment]
+  - name: bridal makeup
+    duration_min: 180
+    price_inr: 15000
+    staff: [Simran]
+    prep_note: "Trial session pehla karni pendi hai."
+    aliases: [bridal, dulhan makeup, wedding makeup, viah makeup]
+  - name: beard trim
+    duration_min: 20
+    price_inr: 250
+    staff: [Harpreet, Deepak]
+    aliases: [beard, dadhi, daadhi]
+  - name: keratin treatment
+    duration_min: 150
+    price_inr: 6000
+    staff: [Harpreet]
+    aliases: [keratin, smoothening]
+
+lexicon:
+  places: [Model Town, Sarabha Nagar, Dugri, BRS Nagar, Pakhowal Road]
+  brands: [Rang Salon, Loreal, Schwarzkopf, Olaplex]
+  phrases: [walk in, advance booking, membership card, viah da season]
+  variants:
+    Sarabha Nagar: [Sarabha Nagr, Sarabha]
+    Harpreet: [Harpreet kaur, Harprit]
+    Schwarzkopf: [Shwarzkof]
+
+knowledge:
+  - q: "Salon kadon khulda?"
+    a: "Tuesday ton Sunday, savere 10 vaje ton raat 9 vaje tak. Monday weekly off hunda ji."
+    tags: [timing, timings, kadon, kado, khulda, band, open, hours, monday, kab]
+  - q: "Haircut da kinna lagda?"
+    a: "Haircut 400 rupaye ton shuru, stylist de hisaab naal badal sakda."
+    tags: [haircut, cut, kinna, kinne, kinni, charge, charges, price, rate, lagda, kitna]
+  - q: "Bridal package hai?"
+    a: "Bridal makeup 15,000 rupaye ton shuru, te usde vich ik trial session shaamil hai."
+    tags: [bridal, dulhan, package, viah, shaadi, wedding, makeup]
+  - q: "Membership hai?"
+    a: "Haan ji, 5,000 rupaye di membership te saal bhar 20 percent chhoot."
+    tags: [membership, card, offer, saal]
+  - q: "Salon kithe hai?"
+    a: "Assi Sarabha Nagar market vich, main gate de saamne, first floor te."
+    tags: [kithe, address, location, kahan, reach]
+  - q: "Parking hai?"
+    a: "Market di parking saamne hi hai, car te scooter dona layi."
+    tags: [parking, gaddi, car, scooter, park]
+
+scenarios:
+  - name: punglish_booking_with_noise
+    expect: BOOKED
+    note: "A Punglish caller; the recogniser mangles the service, the pack repairs it."
+    turns:
+      - heard: "kal shaam global kalar karwauna hai"
+        truth: "kal shaam global colour karwauna hai"
+        low_conf: [kalar]
+      - heard: "haan ji theek hai"
+        truth: "haan ji theek hai"
+      - heard: "Navjot Gill 9815012345"
+        truth: "Navjot Gill 9815012345"
+      - heard: "haan ji confirm kar deo"
+        truth: "haan ji confirm kar deo"
+  - name: punglish_monday_closed_lead
+    expect: LEAD_CAPTURED
+    note: "Monday is the weekly off; a missed booking must still become a lead."
+    turns:
+      - heard: "somvar nu hercut da slot hai?"
+        truth: "somvar nu haircut da slot hai?"
+        low_conf: [hercut]
+      - heard: "Gurpreet 9872012345"
+        truth: "Gurpreet 9872012345"
+  - name: punglish_price_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "hercut da kinna lagda?"
+        truth: "haircut da kinna lagda?"
+        low_conf: [hercut]
+      - heard: "nahi bas, dhanvaad"
+        truth: "nahi bas, dhanvaad"
+  - name: punglish_complaint_handoff
+    expect: HANDED_OFF
+    note: "Guardrail: a refund request goes to the manager."
+    turns:
+      - heard: "pichhli vaari service kharab si, refund chahida"
+        truth: "pichhli vaari service kharab si, refund chahida"
+  - name: punglish_bridal_booking
+    expect: BOOKED
+    note: "A Punjabi day word and the first-offered slot taken by name."
+    turns:
+      - heard: "parso savere bridal makeup chahida"
+        truth: "parso savere bridal makeup chahida"
+      - heard: "haan pehla wala theek hai"
+        truth: "haan pehla wala theek hai"
+      - heard: "Manpreet Kaur 9876012345"
+        truth: "Manpreet Kaur 9876012345"
+      - heard: "hanji pakka"
+        truth: "hanji pakka"

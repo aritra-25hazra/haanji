@@ -42,6 +42,10 @@ class Vault:
     def __init__(self, path: str, secret: bytes | None = None):
         self.conn = sqlite3.connect(path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
+        # Crypto-shredding deletes a key row; secure_delete makes SQLite
+        # overwrite the freed page instead of leaving the key readable in
+        # the file until it is reused.
+        self.conn.execute("PRAGMA secure_delete=ON")
         self.conn.executescript(SCHEMA)
         self.conn.commit()
         self.secret = secret or self._secret(path)
@@ -61,11 +65,15 @@ class Vault:
         return value
 
     # ------------------------------------------------------------ subjects
-    def subject(self, phone: str | None) -> str | None:
+    def subject(self, phone: str | None, tenant_id: str | None = None) -> str | None:
+        """A keyed hash of the number, per tenant when one is given: the same
+        customer at two shops has two keys, so forgetting them at one shop
+        does not blind the other shop's receipts."""
         p = normalise_phone(phone)
         if not p:
             return None
-        return hmac.new(self.secret, p.encode(), hashlib.sha256).hexdigest()[:32]
+        material = f"{tenant_id}|{p}" if tenant_id else p
+        return hmac.new(self.secret, material.encode(), hashlib.sha256).hexdigest()[:32]
 
     def _key(self, subject: str, create: bool) -> bytes | None:
         r = self.conn.execute("SELECT key FROM customer_keys WHERE subject=?", (subject,)).fetchone()
@@ -80,12 +88,12 @@ class Vault:
         return key
 
     # ------------------------------------------------------------- sealing
-    def seal_args(self, args: dict[str, Any]) -> dict[str, Any]:
+    def seal_args(self, args: dict[str, Any], tenant_id: str | None = None) -> dict[str, Any]:
         """Replace personal fields with ciphertext under the customer's key.
         A customer who asked to be forgotten gets no new key: their fields
         are stored as 'erased'. Arguments without a phone are left alone."""
         phone = args.get("phone")
-        subject = self.subject(phone)
+        subject = self.subject(phone, tenant_id)
         if subject is None:
             return dict(args)
         key = self._key(subject, create=True)
@@ -119,10 +127,10 @@ class Vault:
         return out
 
     # ------------------------------------------------------------- erasure
-    def forget(self, phone: str) -> bool:
+    def forget(self, phone: str, tenant_id: str | None = None) -> bool:
         """Crypto-shred: delete the customer's key. The receipts stay valid;
         their personal fields become unreadable."""
-        subject = self.subject(phone)
+        subject = self.subject(phone, tenant_id)
         if subject is None:
             return False
         with self.conn:
@@ -131,8 +139,8 @@ class Vault:
                               (subject, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")))
         return cur.rowcount > 0
 
-    def is_shredded(self, phone: str) -> bool:
-        subject = self.subject(phone)
+    def is_shredded(self, phone: str, tenant_id: str | None = None) -> bool:
+        subject = self.subject(phone, tenant_id)
         return bool(subject and self.conn.execute("SELECT 1 FROM shredded WHERE subject=?", (subject,)).fetchone())
 
     def count(self) -> dict[str, int]:

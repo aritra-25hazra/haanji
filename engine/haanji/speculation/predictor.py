@@ -41,8 +41,15 @@ class IntentPredictor:
     }
     BIAS = -2.4
 
-    def __init__(self, services: list[str] | None = None):
+    def __init__(self, services: list[str] | None = None, staff: list[str] | None = None,
+                 today=None):
         self.services = services or []
+        self.staff = staff or []
+        self.today = today            # a callable returning today's date, or None
+
+    def _avail(self, partial: str, ctx: ConversationContext) -> dict[str, Any] | None:
+        today = self.today() if callable(self.today) else self.today
+        return nlu.availability_args(partial, ctx, self.services, self.staff, today)
 
     def predict(self, partial: str, ctx: ConversationContext) -> list[ToolGuess]:
         w = nlu.words(partial)
@@ -57,11 +64,9 @@ class IntentPredictor:
         service = nlu.match_service(partial, self.services) or ctx.service
 
         # --- rule 1: the caller is heading for a slot question
-        if (has_date or has_time) and has_book and not has_cancel:
-            guesses.append(ToolGuess("check_availability", 0.82, {
-                "service": service or "__default__",
-                "date": nlu.normalise_date(partial, ctx.date),
-            }))
+        avail = self._avail(partial, ctx)
+        if (has_date or has_time) and has_book and not has_cancel and avail is not None:
+            guesses.append(ToolGuess("check_availability", 0.82, avail))
         # --- rule 2: a price / timing / policy question
         if has_q and not has_book:
             guesses.append(ToolGuess("search_knowledge", 0.70, {"query": partial.strip()}))
@@ -70,7 +75,7 @@ class IntentPredictor:
             guesses.append(ToolGuess("lookup_customer", 0.65, {"phone": ctx.customer_phone}))
 
         # --- scorer, for availability turns the rules did not catch
-        if not any(g.tool == "check_availability" for g in guesses):
+        if avail is not None and not any(g.tool == "check_availability" for g in guesses):
             z = (self.BIAS
                  + self.WEIGHTS["date"] * has_date
                  + self.WEIGHTS["time"] * has_time
@@ -82,10 +87,7 @@ class IntentPredictor:
                  + self.WEIGHTS["has_service"] * bool(service))
             p = 1 / (1 + math.exp(-z))
             if p >= 0.60:
-                guesses.append(ToolGuess("check_availability", round(p, 3), {
-                    "service": service or "__default__",
-                    "date": nlu.normalise_date(partial, ctx.date),
-                }))
+                guesses.append(ToolGuess("check_availability", round(p, 3), avail))
 
         best: dict[str, ToolGuess] = {}
         for g in guesses:

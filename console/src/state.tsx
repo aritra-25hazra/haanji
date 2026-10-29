@@ -3,18 +3,32 @@ import { engine, getToken, setToken } from "./engine";
 import { SAMPLE_STATUS } from "./sample";
 import type { Status, User } from "./types";
 
+/**
+ * What the console is looking at.
+ *  - checking: the status call (and, with auth on, the "who am I" call) has not answered yet.
+ *  - live:     the engine answered; every page reads from it.
+ *  - demo:     the engine is unreachable and nobody is signed in — the public demo; pages show sample data, labelled.
+ *  - offline:  the engine is unreachable but a token exists (a signed-in owner): never show sample numbers as if they were theirs.
+ */
+export type Mode = "checking" | "live" | "demo" | "offline";
+
 interface AppState {
   status: Status | null;
   online: boolean;
   checked: boolean;
+  mode: Mode;
   pack: string;
   packs: string[];
   setPack: (pack: string) => void;
   refresh: () => Promise<void>;
   authRequired: boolean;          // engine wants a sign-in and we have none
   user: User | null;
+  /** Owner-only controls show for the owner, and for everyone when the engine runs with auth off. The server enforces; this is UX. */
+  isOwner: boolean;
   signIn: (token: string, user: User) => void;
   signOut: () => void;
+  /** POST /api/auth/logout (every device), then forget the token here. */
+  signOutEverywhere: () => Promise<void>;
 }
 
 const KEY = "haanji.pack";
@@ -30,27 +44,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pack, setPackState] = useState<string>(stored);
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [hasToken, setHasToken] = useState<boolean>(() => !!getToken());
 
-  const refresh = useCallback(async () => {
-    const s = await engine.status();
-    setStatus(s);
-    setChecked(true);
-    if (s?.auth?.enabled) {
-      if (getToken()) {
+  // One status round-trip, then (with auth on and a token) "who am I". All
+  // state lands in the continuation, never synchronously in an effect.
+  const refresh = useCallback((): Promise<void> =>
+    engine.status().then(async (s) => {
+      setStatus(s);
+      setChecked(true);
+      if (s?.auth?.enabled && getToken()) {
         try { const me = await engine.me(); setUser(me.user); } catch { setUser(null); }
-      } else { setUser(null); }
-    } else { setUser(null); }
-    setAuthChecked(true);
-    if (s && !s.packs.includes(pack)) setPackState(s.default_pack);
-  }, [pack]);
+      } else {
+        setUser(null);
+      }
+      setHasToken(!!getToken());
+      setAuthChecked(true);
+      if (s && !s.packs.includes(pack)) setPackState(s.default_pack);
+    }), [pack]);
 
   useEffect(() => {
-    const out = () => setUser(null);
+    const out = () => { setUser(null); setHasToken(false); };
     window.addEventListener("haanji:signed-out", out);
     return () => window.removeEventListener("haanji:signed-out", out);
   }, []);
-  const signIn = useCallback((token: string, u: User) => { setToken(token); setUser(u); }, []);
-  const signOut = useCallback(() => { setToken(null); setUser(null); }, []);
+  const signIn = useCallback((token: string, u: User) => { setToken(token); setHasToken(true); setUser(u); }, []);
+  const signOut = useCallback(() => { setToken(null); setHasToken(false); setUser(null); }, []);
+  const signOutEverywhere = useCallback(async () => {
+    try { await engine.logout(); } finally { setToken(null); setHasToken(false); setUser(null); }
+  }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
   useEffect(() => {
@@ -65,12 +86,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const allowed = useCallback((all: string[]) => (user && !user.packs.includes("*") ? all.filter((p) => user.packs.includes(p)) : all), [user]);
-  const value = useMemo<AppState>(() => ({
-    status, online: !!status, checked, pack,
-    packs: allowed(status ? status.packs : SAMPLE_STATUS.packs), setPack, refresh,
-    authRequired: !!status?.auth?.enabled && authChecked && !user,
-    user, signIn, signOut,
-  }), [status, checked, pack, setPack, refresh, allowed, authChecked, user, signIn, signOut]);
+  const value = useMemo<AppState>(() => {
+    const authOn = !!status?.auth?.enabled;
+    const mode: Mode = !checked || (authOn && !authChecked) ? "checking" : status ? "live" : hasToken ? "offline" : "demo";
+    const isOwner = status ? (!authOn || user?.role === "owner") : mode === "demo";
+    return {
+      status, online: !!status, checked, mode, pack,
+      packs: allowed(status ? status.packs : SAMPLE_STATUS.packs), setPack, refresh,
+      authRequired: authOn && authChecked && !user,
+      user, isOwner, signIn, signOut, signOutEverywhere,
+    };
+  }, [status, checked, pack, setPack, refresh, allowed, authChecked, hasToken, user, signIn, signOut, signOutEverywhere]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

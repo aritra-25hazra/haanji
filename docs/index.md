@@ -3,8 +3,11 @@
 *Haan ji* is how a receptionist in India picks up the phone. HaanJi is an
 open-source voice receptionist for the clinics, salons, laboratories and
 coaching institutes that lose bookings because nobody answers: it hears the
-business's own words in Hinglish, Benglish or Marathinglish, answers before
-the caller finishes, and can prove what was agreed.
+business's own words in Hinglish, Benglish, Marathinglish and (since 1.1)
+Tanglish, Tenglish, Gujlish and Punglish, answers before the caller finishes,
+and can prove what was agreed. Since 1.1 it also does what the receptionist
+does between calls: the day-before reminder, the deposit link, the waitlist,
+and a calendar the staff run — see [Running it](operations.md).
 
 <div class="grid cards" markdown>
 

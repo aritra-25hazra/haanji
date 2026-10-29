@@ -24,10 +24,14 @@ TTSFactory = Callable[[str], AsyncIterator[bytes]]
 STTFactory = Callable[..., Any]        # (on_text) -> object with start/send/close
 
 
-def twiml_connect(stream_url: str, pack: str, caller: str | None = None) -> str:
+def twiml_connect(stream_url: str, pack: str, caller: str | None = None, ticket: str | None = None) -> str:
     params = [f'<Parameter name="pack" value="{escape(pack)}"/>']
     if caller:
         params.append(f'<Parameter name="caller" value="{escape(caller)}"/>')
+    if ticket:
+        # Minted by the signed /voice webhook, checked once when the stream
+        # starts: the media socket itself carries no Twilio signature.
+        params.append(f'<Parameter name="ticket" value="{escape(ticket)}"/>')
     return ('<?xml version="1.0" encoding="UTF-8"?><Response><Connect>'
             f'<Stream url="{escape(stream_url)}">{"".join(params)}</Stream></Connect></Response>')
 
@@ -74,6 +78,8 @@ class TwilioBridge:
         self.frames_in = 0
         self.frames_out = 0
         self.started = time.monotonic()
+        self._reply_audio = bytearray()           # the caller's μ-law since the agent's last line
+        self.keep_audio_dir = os.environ.get("HAANJI_CONFIRMATION_AUDIO_DIR") or None
 
     # ---------------------------------------------------------------- audio
     async def _send_media(self, mulaw: bytes) -> None:
@@ -127,12 +133,28 @@ class TwilioBridge:
             if self.human_hook and self.human_hook(self.sid, self.holder, text):
                 return                                     # a person answers from the console
             confidence = min(confs) if confs else None
-            record = await session.handle_text_turn(text, confidence=confidence)
+            audio = bytes(self._reply_audio) or None
+            self._reply_audio = bytearray()
+            record = await session.handle_text_turn(text, confidence=confidence, audio=audio)
+            if audio and self.keep_audio_dir and any(not getattr(record, "all_read_only", True) for _ in [0]) \
+                    and session.receipts:
+                self._keep_clip(session.receipts[-1], audio)
             if self.on_turn:
                 await self.on_turn(record, self.holder)
             await self.say(record.said)
             if session.ctx.flags.get("ended"):
                 await self._finish_speaking_then_hangup()
+
+    def _keep_clip(self, code: str, audio: bytes) -> None:
+        """HAANJI_CONFIRMATION_AUDIO_DIR: keep the reply that sealed a receipt,
+        named by the receipt code, so the hash in the receipt can be checked
+        against a file the shop holds."""
+        try:
+            os.makedirs(self.keep_audio_dir, exist_ok=True)
+            with open(os.path.join(self.keep_audio_dir, f"{code.replace('-', '')}.ulaw"), "wb") as fh:
+                fh.write(audio)
+        except OSError:
+            pass
 
     async def _finish_speaking_then_hangup(self) -> None:
         if self._speaking:
@@ -155,7 +177,10 @@ class TwilioBridge:
                 elif ev == "media":
                     self.frames_in += 1
                     if self.stt is not None and msg["media"].get("track", "inbound") == "inbound":
-                        await self.stt.send(base64.b64decode(msg["media"]["payload"]))
+                        chunk = base64.b64decode(msg["media"]["payload"])
+                        if len(self._reply_audio) < 8000 * 60:          # at most a minute of a reply
+                            self._reply_audio.extend(chunk)
+                        await self.stt.send(chunk)
                 elif ev == "stop":
                     break
         except Exception:                                  # noqa: BLE001 - the socket closed
@@ -168,7 +193,14 @@ class TwilioBridge:
         params = start.get("customParameters") or {}
         pack = params.get("pack") or os.environ.get("HAANJI_PHONE_PACK") or os.environ.get("HAANJI_PACK", "dental_clinic")
         caller = params.get("caller") or None
-        self.sid, self.holder = await self.open_session(pack, caller)
+        try:
+            opened = await self.open_session(pack, caller, params)
+        except TypeError:                                  # an older two-argument opener
+            opened = await self.open_session(pack, caller)
+        if opened is None:                                 # the ticket did not check out
+            await self.ws.close()
+            return
+        self.sid, self.holder = opened
         self.holder.speak = self.say                           # lets a human reply be spoken on the line
         self.stt = self.stt_factory(self.on_text)
         await self.stt.start()

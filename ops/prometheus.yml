@@ -3,13 +3,11 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: core-api
-    metrics_path: /actuator/prometheus
-    static_configs: [{ targets: ["core-api:8080"] }]
-
   - job_name: engine
     metrics_path: /metrics
     static_configs: [{ targets: ["engine:8090"] }]
+    # With HAANJI_METRICS_TOKEN set on the engine, scrape with it:
+    # authorization: { type: Bearer, credentials: "<the token>" }
 
 rule_files: ["alerts.yml"]
 

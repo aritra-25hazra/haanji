@@ -31,6 +31,7 @@ def _vapid_keys(path: str) -> tuple[str, str]:
     # A VAPID key is a P-256 ECDSA key; `cryptography` is already a hard
     # dependency, so the engine never needs the push library just to start.
     import base64
+
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric import ec
     key = ec.generate_private_key(ec.SECP256R1())
@@ -92,7 +93,7 @@ class PushStore:
                 else:
                     from pywebpush import webpush
                     webpush(subscription_info=sub, data=payload, vapid_private_key=self.private_pem,
-                            vapid_claims={"sub": self.contact}, ttl=3600)
+                            vapid_claims={"sub": self.contact}, ttl=3600, timeout=5)
                 sent += 1
             except Exception as exc:                      # noqa: BLE001 - one bad phone must not stop the rest
                 status = getattr(getattr(exc, "response", None), "status_code", None)

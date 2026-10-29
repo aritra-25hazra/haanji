@@ -1,7 +1,7 @@
 /**
  * The only way the console talks to the engine. Every path goes through
  * /engine/, which Vite proxies in development, Vercel rewrites in production
- * and nginx proxies in the compose stack.
+ * and nginx proxies in the compose stack. The contract is docs/console-api.md.
  */
 import type {
   CallRow, Export, Insights, Lexicon, PackSummary, Status, Turn, Verdict,
@@ -14,6 +14,13 @@ import type {
   Ops,
   CustomerRecord,
   LiveSession,
+  Booking,
+  BookingFilter,
+  BookingStatus,
+  Customer,
+  Settings,
+  WaitlistEntry,
+  Payment,
 } from "./types";
 
 export const ENGINE_BASE = "/engine";
@@ -37,6 +44,24 @@ export function setToken(token: string | null): void {
   try { if (token) localStorage.setItem(TOKEN_KEY, token); else localStorage.removeItem(TOKEN_KEY); } catch { /* private mode */ }
 }
 
+const HTML_BODY = /^\s*<(!doctype|html|head|body)\b/i;
+
+/** The message a failed response deserves: the engine's own `detail` when it
+ *  sent JSON, a plain sentence when a proxy answered with an HTML error page
+ *  (a 502 from nginx is not something to paint on screen), else the body. */
+export function errorMessage(status: number, contentType: string | null, body: string): string {
+  const text = body.trim();
+  if ((contentType ?? "").includes("text/html") || HTML_BODY.test(text)) return `Engine jawab nahi de raha (${status})`;
+  if (text.startsWith("{")) {
+    try {
+      const j = JSON.parse(text) as { detail?: unknown };
+      if (typeof j.detail === "string") return j.detail;
+      if (Array.isArray(j.detail)) return j.detail.map((d) => (typeof d === "object" && d && "msg" in d ? String((d as { msg: unknown }).msg) : String(d))).join("; ");
+    } catch { /* not JSON after all */ }
+  }
+  return text || `Engine error ${status}`;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const r = await fetch(enginePath(path), {
@@ -47,17 +72,32 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     setToken(null);
     window.dispatchEvent(new Event("haanji:signed-out"));
   }
-  if (!r.ok) throw new EngineError(r.status, (await r.text()) || r.statusText);
+  if (!r.ok) throw new EngineError(r.status, errorMessage(r.status, r.headers.get("content-type"), (await r.text()) || r.statusText));
   return (await r.json()) as T;
 }
 
 const q = (pack: string) => `pack=${encodeURIComponent(pack)}`;
 
+/** The engine wraps lists (`{"bookings": [...]}`); accept a bare array too so
+ *  a contract drift in either direction cannot blank a page. */
+function list<T>(r: unknown, ...keys: string[]): T[] {
+  if (Array.isArray(r)) return r as T[];
+  if (r && typeof r === "object") {
+    for (const k of keys) {
+      const v = (r as Record<string, unknown>)[k];
+      if (Array.isArray(v)) return v as T[];
+    }
+  }
+  return [];
+}
+
+const statusTimeout = () => (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(4000) : undefined);
+
 export const engine = {
-  /** null means the engine could not be reached; every page then falls back. */
+  /** null means the engine could not be reached; the pages decide what that means. */
   status: async (): Promise<Status | null> => {
     try {
-      return await request<Status>("api/status", { signal: AbortSignal.timeout(4000) });
+      return await request<Status>("api/status", { signal: statusTimeout() });
     } catch {
       return null;
     }
@@ -77,6 +117,8 @@ export const engine = {
   requestOtp: (phone: string) => request<{ sent: boolean; channel: string; dev_code?: string }>("api/auth/otp", { method: "POST", body: JSON.stringify({ phone }) }),
   verifyOtp: (phone: string, code: string) => request<{ token: string; user: User }>("api/auth/verify", { method: "POST", body: JSON.stringify({ phone, code }) }),
   me: () => request<{ enabled: boolean; user: User | null }>("api/auth/me"),
+  /** Sign out everywhere: the engine revokes every token this number holds. */
+  logout: () => request<{ ok: boolean }>("api/auth/logout", { method: "POST" }),
   users: () => request<{ users: User[] }>("api/auth/users"),
   addUser: (u: { phone: string; role: string; packs: string[]; name: string }) => request<{ user: User }>("api/auth/users", { method: "POST", body: JSON.stringify(u) }),
   removeUser: (phone: string) => request<{ removed: boolean }>(`api/auth/users/${encodeURIComponent(phone)}`, { method: "DELETE" }),
@@ -108,6 +150,30 @@ export const engine = {
   selftest: (id: string) =>
     request<{ ok: boolean; results: { passed: boolean; line: string }[]; summary: string }>(
       `api/packs/${encodeURIComponent(id)}/selftest`, { method: "POST" }),
+
+  // ── the receptionist's desk (docs/console-api.md) ────────────────────────
+  /** Bookings in [from, to] inclusive, oldest first. `status` defaults to CONFIRMED on the engine. */
+  bookings: (pack: string, from: string, to: string, status: BookingFilter = "ALL") =>
+    request<unknown>(`api/bookings?${q(pack)}&from=${from}&to=${to}&status=${status}`)
+      .then((r) => list<Booking>(r, "bookings", "items")),
+  cancelBooking: (pack: string, id: string) =>
+    request<{ ok?: boolean; booking?: Booking }>(`api/bookings/${encodeURIComponent(id)}/cancel?${q(pack)}`, { method: "POST" }),
+  setBookingStatus: (pack: string, id: string, status: Exclude<BookingStatus, "CANCELLED">) =>
+    request<{ ok?: boolean; booking?: Booking }>(`api/bookings/${encodeURIComponent(id)}/status?${q(pack)}`,
+      { method: "POST", body: JSON.stringify({ status }) }),
+  customers: (pack: string, query = "") =>
+    request<unknown>(`api/customers?${q(pack)}${query ? `&q=${encodeURIComponent(query)}` : ""}`)
+      .then((r) => list<Customer>(r, "customers", "items")),
+  settings: (pack: string) => request<Settings>(`api/settings?${q(pack)}`),
+  /** Partial update; the engine rejects unknown keys with 422. */
+  saveSettings: (pack: string, patch: Partial<Settings>) =>
+    request<Settings>(`api/settings?${q(pack)}`, { method: "PUT", body: JSON.stringify(patch) }),
+  waitlist: (pack: string) =>
+    request<unknown>(`api/waitlist?${q(pack)}`).then((r) => list<WaitlistEntry>(r, "waitlist", "entries", "items")),
+  removeWaitlist: (pack: string, entryId: string) =>
+    request<{ removed: boolean }>(`api/waitlist/${encodeURIComponent(entryId)}?${q(pack)}`, { method: "DELETE" }),
+  payments: (pack: string) =>
+    request<unknown>(`api/payments?${q(pack)}`).then((r) => list<Payment>(r, "payments", "items")),
 };
 
 // ── pure helpers (unit-tested) ──────────────────────────────────────────────

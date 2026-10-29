@@ -2,7 +2,7 @@
 from __future__ import annotations
 import hashlib
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass
 from typing import Any
 
 GENESIS = b"\x00" * 32
@@ -25,9 +25,16 @@ class ConfirmationProof:
     reply_start_ms: int
     asr_confidence: float
     audio_offset_ms: int = 0
+    # SHA-256 of the caller's reply audio (8 kHz μ-law on the phone channel),
+    # when the channel had audio. A transcript alone is weak evidence in a
+    # dispute; the hash binds the receipt to the recording the shop may keep.
+    audio_sha256: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        d = asdict(self)
+        if d.get("audio_sha256") is None:
+            d.pop("audio_sha256", None)          # receipts sealed before 1.1 hash the same
+        return d
 
 
 @dataclass

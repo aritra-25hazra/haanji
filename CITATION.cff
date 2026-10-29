@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use HaanJi in research, please cite it as below."
 title: "HaanJi: a voice receptionist for Indian small businesses that hears the business's own words, answers before the caller finishes, and can prove what was agreed"
 type: software
-version: 1.0.0
-date-released: "2026-10-21"
+version: 1.1.0
+date-released: "2026-10-29"
 license: Apache-2.0
 repository-code: "https://github.com/aritra-25hazra/haanji"
 url: "https://github.com/aritra-25hazra/haanji"

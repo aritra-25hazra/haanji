@@ -350,6 +350,14 @@
     meta.querySelectorAll(".stamp").forEach(function (st) { S.stamp(st); });
     updatePanel(t);
     speak(t.reply);
+    if (t.payment_links && t.payment_links.length) {
+      // A deposit was configured: the link the caller would get on WhatsApp.
+      t.payment_links.forEach(function (pl) {
+        const pay = document.createElement("a"); pay.className = "stamp pay"; pay.href = pl.link; pay.target = "_blank"; pay.rel = "noopener";
+        pay.innerHTML = S.icon("lock") + "DEPOSIT ₹" + S.esc(String(pl.amount_inr));
+        $("transcript").appendChild(pay);
+      });
+    }
     if (t.end_call) {
       sid = null; $("start").hidden = false; $("end").hidden = true; tm.stop(); stopMic();
       sys("Call khatam — outcome " + (t.outcome || "").replace(/_/g, " ").toLowerCase());

@@ -5,9 +5,9 @@ caller's spoken confirmation, hashes it into a per-tenant chain and signs the
 chain head with Ed25519. Editing or deleting any past receipt breaks every
 later one, and anyone holding the public key can detect it.
 """
-from .receipt import ConfirmationProof, Receipt, canonical_json, GENESIS
 from .ledger import Ledger, LedgerError
-from .verifier import ChainReport, verify_receipt, verify_chain
+from .receipt import GENESIS, ConfirmationProof, Receipt, canonical_json
+from .verifier import ChainReport, verify_chain, verify_receipt
 
 __all__ = ["ConfirmationProof", "Receipt", "canonical_json", "GENESIS",
            "Ledger", "LedgerError", "ChainReport", "verify_receipt", "verify_chain"]

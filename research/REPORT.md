@@ -70,16 +70,20 @@ One pass through `CallSession.handle_utterance` is the whole hot path. The engin
 
 ### 3.2 Vertical packs
 
-A pack is one YAML file describing a kind of business: catalogue with durations and prices, staff, hours, persona, refusals and escalations, seed vocabulary (places, brands, phrases), a small knowledge base, and the scenarios the pack must pass before it ships. Five packs are included:
+A pack is one YAML file describing a kind of business: catalogue with durations and prices, staff, hours, persona, refusals and escalations, seed vocabulary (places, brands, phrases), a small knowledge base, and the scenarios the pack must pass before it ships. Ten packs are included:
 
 | pack | language | services | staff | scenarios |
 |---|---|---|---|---|
-| dental_clinic | Hinglish | 6 | 3 | 8 |
-| salon_spa | Hinglish | 6 | 4 | 4 |
-| diagnostic_lab | Hinglish | 6 | 3 | 3 |
-| coaching_institute | Hinglish | 4 | 3 | 3 |
+| clinic_chennai | Tanglish | 5 | 2 | 5 |
 | clinic_kolkata | Benglish | 4 | 2 | 3 |
 | clinic_pune | Marathinglish | 4 | 2 | 3 |
+| coaching_ahmedabad | Gujlish | 5 | 3 | 5 |
+| coaching_institute | Hinglish | 4 | 3 | 3 |
+| dental_clinic | Hinglish | 6 | 3 | 8 |
+| diagnostic_lab | Hinglish | 6 | 3 | 3 |
+| lab_hyderabad | Tenglish | 6 | 3 | 5 |
+| salon_ludhiana | Punglish | 6 | 4 | 5 |
+| salon_spa | Hinglish | 6 | 4 | 4 |
 
 The Kolkata and Pune packs are the test of the claim that the engine knows nothing about any particular language: supporting Benglish, and then Marathinglish, took a phrase-table row and one YAML file each, with no engine code forked. (The Pune pack was added after the evaluation runs below, which cover the first five packs and 21 scenarios; the selftest covers all 24.)
 
@@ -311,6 +315,12 @@ Three things follow. First, the confidences are weakly informative: an AUC of 0.
 
 Biasing is the largest single lever in this report. Word error falls by twenty points and the entity error rate *before any repair* halves, from 33.8% to 15.1%, because the recogniser now keeps the catalogue words it was paraphrasing or translating: per pack, Kolkata goes from 37.0% to 5.6% unrepaired entity error, the coaching institute from 31.4% to 9.8%, the salon from 45.1% to 13.7%. After it the bridge has less to do and does it: three beneficial corrections in 300 utterances (*root kanal* → root canal twice, and the split *democlass* → demo class), 6.1% relative, no harmful correction. One correction in the biased run shows a gap in the harmful count: *meen* → Meena, the laboratory's receptionist, from a mishearing of *mein*, invented an entity the caller never said. The harmful count, defined over the heard token, calls it neutral; the entity error rate, which counts spurious entities as well as missed ones, charges it, and it is why the laboratory's row and Tara's row move the wrong way by one entity each (29.4% → 31.4%, 24.7% → 26.0%). Another, *need* → NEET on translated sentences ("We need time for the campus visit"), is neutral by both measures and wrong by inspection: a general recogniser that translates produces English function words that collide with a pack's brands, and that is a guard the pilot suggests but, having been found on the test data, does not yet justify. The reading is that the recommended configuration is both mechanisms, biasing first and the bridge as the safety net behind it, which is what the second row measures; and that the next lever for a deployment is a recogniser that decodes Hinglish natively rather than translating it, which no amount of post-correction can replace.
 
+### 4.12 Indic recognisers on the same recordings: design, awaiting keys
+
+§4.11 ends with the observation that the next lever is a recogniser that decodes Hinglish natively rather than translating it. The comparison is built and waits only for vendor keys. `research/collect/engines.py` puts five recognisers behind one interface, `transcribe(path) -> [(word, confidence)]`: the pilot's faster-whisper; Sarvam AI's Saarika (`SARVAM_API_KEY`); the Bhashini/ULCA ASR pipeline (`BHASHINI_USER_ID`, `BHASHINI_API_KEY`); Deepgram's prerecorded API in its romanised-Hindi mode `hi-Latn` (`HAANJI_DEEPGRAM_KEY`, the key the telephony bridge already uses); and Google Cloud Speech-to-Text v1 in `hi-IN` (`GOOGLE_APPLICATION_CREDENTIALS`). `transcribe.py --engine <name>` runs one of them over the same manifest the pilot used (the 300 synthetic clips of §4.5, or the volunteer recordings of §9) and writes a pairs file named for the engine; `harness/stt_compare.py` scores every pairs file present with the measurement of §4.5 (word error, entity error with the bridge off and on, correction precision, harmful corrections) and writes `research/stt_compare.json` and `research/stt_compare_tables.md`. Each adapter is unit-tested against the vendor's documented response shape with the HTTP layer replaced, so a key is the only thing between the table and its numbers.
+
+Three design decisions are stated because they shape what the table will mean. First, the comparison is on the recogniser's own output with no post-editing beyond one transliteration: Saarika, Bhashini and Google answer Hindi in Devanagari, and the adapter romanises it with the engine's own approximate table (`devanagari.py`, the one the Hindi-script input path uses) so the pairs can be scored against the Latin truth; an entity the recogniser heard but that comes out in a Devanagari-derived spelling is charged against it unless the bridge repairs the spelling, which is part of what the experiment measures. Second, only Whisper, Deepgram and Google score words. For Saarika and Bhashini the pairs carry the text channel's out-of-vocabulary confidence model (`CallSession._text_transcript`: a word the pack or the shared vocabulary knows is confident, any other word is doubtful) and the row says so (`confidence_source: oov-model`), because without some confidence the bridge's first condition never holds and the "on" column would equal the "off" column by construction. Third, nothing is fabricated: an engine whose key is absent is written into the JSON as `"status": "not run: key needed"` with the names of the missing variables, and a test keeps the committed file that way. At the time of writing the two Whisper rows are the pilot's own numbers (Tables 6 and 15) and the four hosted rows are not run; the harness, not this paragraph, will carry the numbers when the keys exist.
+
 ## 5. Speculative Turn Execution
 
 ### 5.1 Method
@@ -426,6 +436,30 @@ The adapter is validated offline with a scripted stand-in for the API (ten tests
 
 The Claude column is empty in this version of the report because the run requires an API key and had not been executed when the report was generated; the harness skips it with a note rather than inventing a number. The column will be filled in version 1.1 with the same script. What the design already guarantees, independent of that run, is that the receipts column will be produced by the same code path and the unconfirmed-writes count will be zero.
 
+### 7.1 What real phrasings did to the policy, and what changed (1.1)
+
+The scenarios in Appendix B were written by the policy's authors, in the phrasings the policy understood; §8 says this about the corruption model and it was true of the dialogue as well. A review on 2026-10-29 probed the engine with the sentences callers actually use and found twelve ways to get a wrong booking or a dropped call from a transcript the recogniser had heard perfectly. Each is reproduced in `engine/tests/test_phase_g.py` and fixed in 1.1:
+
+| the caller said | 1.0 did | 1.1 does |
+|---|---|---|
+| "saade das baje" | booked 10:00 (the fraction word was ignored) | reads 10:30; also *paune, sava, dedh, dhai* and number words in Hindi, Bengali and Marathi |
+| "15 tarikh ko", "3 november", "do din baad" | silently booked tomorrow | resolves the date; an unresolvable day ("agle hafte") is asked about, never guessed |
+| "kal shaam ka slot" / "tomorrow afternoon" | offered 9:30 in the morning | availability takes a part of the day |
+| "nahi, shaam ko koi time hai?" | repeated the identical offer | looks again in the evening |
+| "nahi parso" | ended the call (a bare "nahi" was a goodbye) | changes the day; "nahi" is a rejection when a slot is on the table |
+| "Dr Iyer se root canal" | booked Dr Sheikh | the named staff member is booked |
+| "mujhe aur meri wife ko" | one seat | two seats, together or back to back, one receipt |
+| "98765 43210 hai aur 2 log" | phone 8765432102, customer "Aur Log" | one number read in one breath; grammar is not a name |
+| "kal 8 baje" at a salon that opens at 10 | asked for name and number, then failed at booking time | checks the exact time first and offers the nearest free ones |
+| "discount milega kya" | "Ye emergency lag rahi hai", handed off | a refusal in its own words, and the call goes on (`REFUSED`) |
+| "dawai ki dukaan paas hai kya" | refused as a prescription request | answered |
+
+The identity of the caller also changed: a number typed into the web page is not proof of anything, so cancelling or moving a booking there now needs the receipt code the customer was given; a number the channel vouched for (network caller-id, the WhatsApp sender) does not, and the receipt records which (`identity`).
+
+Two of these changes touch the measurements above. Speculation's arguments are more specific — a part of the day, an exact time, a staff member — and the predictor no longer guesses "tomorrow" when the partial has named no day, because the policy never asks for availability without one. Fewer speculations fire per call and a hit saves the same tool time. The refusal scenarios' expected outcome is `REFUSED` where it was `HANDED_OFF`, which does not change task success. Under noise, a corrupted day word that 1.0 silently read as "tomorrow" is now a question the scripted caller never answers; the closed-vocabulary date/time repair (§4.12's neighbour, `haanji/bhasha/numeric.py`) restores most of them.
+
+**The 1.1 run.** `python -m haanji.bench --reps 5 --speed 60` on 1.1 — ten packs, 44 scenarios, seven languages, 6,990 corrupted sentences per noise level — gives: entity error at 30% noise 30.8% → 0.96% (96.9% relative), precision 99.0%, 0 harmful, 0.10 ms median; end-to-end task success at 30% noise 70.9% → 87.7%; date/time words corrupted and not restored 20.8% → 9.6%; read-turn median 270 → 172 ms (36.3% lower), p90 363 → 289 ms, hit rate 46.3% over 270 speculations, 226 ms saved per hit, write-turn p90 157 → 163 ms; ledger 100% of tampering detected, 0 unconfirmed writes; clean scenarios 100%. Tables 1–5 above are the 1.0 evaluation over five seeds and are left as the record of that version; `research/results.json` carries the 1.1 run, and the README quotes it.
+
 ## 8. Threats to validity
 
 **Construct.** Entity error rate is defined over the catalogue entities the pack declares; a recogniser error in a date word or a phone number is invisible to it, though not to task success, which is why both are reported. "Task success" is agreement with the outcome the scenario author expected, which for handoffs and refusals is the right behaviour, not a booking.
@@ -444,7 +478,7 @@ The Claude column is empty in this version of the report because the run require
 4. **Out-of-lexicon failures.** The calls that still fail under noise are ones where a date or number word was corrupted. A separate, small closed-vocabulary repair for dates, times and numbers, with the same two-condition rule, is the obvious next layer.
 5. **Telephony.** A Twilio Media Streams bridge with streaming recognition (Deepgram) and synthesis (ElevenLabs) is built and tested against fakes; a real call has not been placed, and vendor latency is the quantity to measure when one is.
 6. **A learned predictor.** Tried in §5.4 on the harness's own partials: more precise, less eager, and slower at the median, so the hand-set weights stay. The version that could change that trains on partials from real calls, which the live feed records.
-7. **A Hinglish-capable decoder.** Biasing (§4.11) halves entity error before any repair; a recogniser that decodes code-mixed speech natively, or Whisper's Hindi mode with the transliteration of §4.8, is the next experiment on the same 300 files, and the one most likely to move the pilot's numbers.
+7. **A Hinglish-capable decoder.** Biasing (§4.11) halves entity error before any repair; a recogniser that decodes code-mixed speech natively, or Whisper's Hindi mode with the transliteration of §4.8, is the next experiment on the same 300 files, and the one most likely to move the pilot's numbers. The harness for that comparison, over five recognisers, is in place and awaits keys (§4.12).
 
 ## 10. Conclusion
 
@@ -506,8 +540,8 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 317 tests, about 6 s
-python -m haanji.cli selftest               # 24 scenarios reach their expected outcome
+pytest -q                                   # 580 tests, about 6 s
+python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
                                             # report_data.json, report_tables.md, figures/
@@ -525,7 +559,7 @@ python research/harness/load_test.py        # §5.3: research/load_test.json
 python research/harness/report_pdf.py       # this document as PDF; --paper for research/PAPER.pdf
 ```
 
-## Appendix B. The packaged scenarios (24)
+## Appendix B. The packaged scenarios (44)
 
 | pack | scenario | expected outcome | caller turns | what it exercises |
 |---|---|---|---|---|
@@ -554,18 +588,23 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (317 tests)
+## Appendix C. Test inventory (580 tests)
 
 | file | tests | what it guards |
 |---|---|---|
-| test_pipeline.py | 34 | the turn controller, barge-in, confirmation flow, receipts per call, speculation on/off identity, a Devanagari turn |
+| test_adversarial.py | 89 | prompt injection against the model adapter still meets the read-back gate; the guardrail corpus (research/benchmark/guardrail_corpus.yaml) in every pack; random Latin, Devanagari and digit text never crashes, books or silences the agent |
+| test_numeric_repair.py | 48 | the closed-vocabulary date/time/number pass: what it restores, what it must never turn into a different number, the benchmark's date_time score |
+| test_pipeline.py | 54 | the turn controller, barge-in, confirmation flow, receipts per call, speculation on/off identity, a Devanagari turn |
 | test_web.py | 30 | the demo server, design tokens, relative URLs, no emoji (every page, including the research pages) |
-| test_packs.py | 29 | every pack validates and every scenario reaches its outcome |
-| test_bhasha.py | 28 | the two-condition rule, name protection, harmful-correction detection, the pilot's guards, the merged-token rule and its ordering |
+| test_packs.py | 45 | every pack validates and every scenario reaches its outcome |
+| test_bhasha.py | 36 | the two-condition rule, name protection, harmful-correction detection, the pilot's guards, the merged-token rule and its ordering |
+| test_phase_g.py | 28 | the real-phrasing failures of §7.1 and the identity gate on cancelling or moving a booking |
 | test_phonetics.py | 24 | each key rule, the known b/p collision |
 | test_backend_guardrails.py | 24 | availability, bookings, guardrail subject/qualifier pairs |
 | test_pramaan.py | 19 | chain, signatures, refusal of unconfirmed writes, verifier, daily anchor |
+| test_stt_engines.py | 18 | the five recogniser adapters against the vendors' documented response shapes; a missing key is named; stt_compare.json never carries a number for an engine that did not run |
 | test_speculation.py | 14 | purity, argument identity, freshness, invalidation, budget |
+| test_phase_g2.py | 12 | reminders, deposits, the waitlist, the console's calendar and settings, backups, the audio hash in a receipt |
 | test_claude_adapter.py | 10 | the hosted-model adapter and its confirmation gate |
 | test_whatsapp_webhook.py | 9 | Meta signature, dedup, handshake |
 | test_auth.py | 9 | one-time codes over WhatsApp, signed scoped tokens, roles, per-pack scope, lockout |
@@ -582,12 +621,17 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_live.py | 4 | the event bus and the server-sent feed |
 | test_hardening.py | 4 | security headers, per-client rate limiting of writes, the signed webhook exempt |
 | test_calibration.py | 4 | ROC, Youden's J, loading thresholds per recogniser |
+| test_readme_sync.py | 4 | the counts in this report and the README match the repository |
 | test_takeover.py | 3 | human takeover and hand-back; WhatsApp waits for the person |
 | test_stats.py | 3 | McNemar and the paired t-interval |
 | test_ops.py | 3 | Prometheus text, spans and the ops view, the refused-write counter |
 | test_marathi.py | 3 | the third language end to end |
 | test_corrupt_learned.py | 3 | the learned corruption model fits and replays |
 | test_benglish.py | 3 | the second language end to end |
+| test_tanglish.py | 5 | Tamil-English (Chennai): dates, times, names, a scripted booking, the pack's scenarios |
+| test_tenglish.py | 5 | Telugu-English (Hyderabad): the same probes for the fifth language |
+| test_gujlish.py | 5 | Gujarati-English (Ahmedabad): the same probes for the sixth language |
+| test_punglish.py | 5 | Punjabi-English (Ludhiana): the same probes for the seventh language |
 | test_study_analysis.py | 2 | the study summary arithmetic |
 | test_push.py | 2 | VAPID keys, subscriptions, dropping dead endpoints |
 

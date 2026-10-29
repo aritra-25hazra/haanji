@@ -46,6 +46,28 @@ The `confirmation` object sealed in `P(r)` contains the agent's question text, t
 
 Availability (a deleted database loses receipts; anchors prove loss, not content), confidentiality of receipt contents at rest (see docs/privacy-dpdp.md for the PII vault), and correctness of the dialogue itself.
 
+## What 1.1 added to the chain
+
+* **Who acted.** Console actions are sealed too: `staff_cancel` and
+  `staff_update` carry the signed-in user; `payment_received` carries the
+  provider's ids; a reminder reply that cancels is a `cancel_appointment`
+  whose confirmation prompt is the reminder text and whose reply is the
+  customer's "2". `refuse` records a declined question without ending the call.
+* **How the caller was identified.** Cancel / reschedule / booking receipts
+  carry `identity`: `channel` (caller-id or the WhatsApp sender), `receipt_code`
+  (the caller quoted the code of the booking being changed) or `unverified`.
+  A number typed into the web page cannot change an existing booking without
+  the code.
+* **Audio.** On the phone channel the confirmation proof carries
+  `audio_sha256`, the hash of the caller's reply audio since the agent last
+  spoke; `HAANJI_CONFIRMATION_AUDIO_DIR` keeps the clip under the receipt code
+  so the hash can be checked against a file. Receipts without audio hash
+  exactly as before (the field is absent, not null).
+* **Keys at rest.** `HAANJI_LEDGER_KEY_SECRET` encrypts the tenants' private
+  signing keys in the database (Fernet, key derived by SHA-256); a copy of
+  the file alone can no longer re-sign the chain. Receipt short codes are an
+  indexed column; the public verifier's lookups no longer scan the chain.
+
 ## Key management in production
 
 Per-tenant Ed25519 keys; the demo stores the private key in SQLite (the schema says so), production stores it in a KMS and the ledger calls out to sign. Rotation: a new `key_id` per period; receipts record the `key_id` that signed them; the export carries every public key ever used. Revocation: a compromised key's later receipts are distrusted from the first anchor that disagrees with the transparency branch.

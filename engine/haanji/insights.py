@@ -6,7 +6,6 @@ business owner cannot interrogate is a dashboard they will not trust.
 """
 from __future__ import annotations
 import datetime as dt
-import json
 from typing import Any
 
 from .backend.local import LocalBackend

@@ -1,7 +1,7 @@
 """The speculation engine: predict, budget, execute, claim."""
 from __future__ import annotations
 import time
-from typing import Any, Callable, Awaitable
+from typing import Any, Awaitable, Callable
 
 from ..config import SpeculationConfig
 from ..models import ConversationContext

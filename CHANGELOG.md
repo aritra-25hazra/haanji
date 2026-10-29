@@ -2,6 +2,86 @@
 
 All notable changes to HaanJi. Dates are when the work reached `main`.
 
+## 1.1.0 — 2026-10-29 (phase G, from the review of the same day)
+
+A whole-project review found the engine understanding scripted callers and
+mishearing real ones, and a set of security holes in front of a real shop.
+This release fixes what it found, each with a test that reproduces the old
+behaviour, and adds the operations a shop pays a receptionist for.
+
+### Dialogue
+* Hindi/Bengali/Marathi fractions and number words ("saade das" → 10:30,
+  "paune gyarah" → 10:45, "dhai" → 14:30); numeric dates ("15 tarikh",
+  "3 november", "do din baad"); an unclear day is asked about, never
+  silently "tomorrow".
+* A part-of-day request ("kal shaam ko", "tomorrow afternoon") gets slots in
+  that part of the day; "nahi, shaam ko" looks again instead of repeating the
+  offer; "nahi parso" changes the day instead of ending the call.
+* A time the caller names is checked exactly before any details are asked,
+  with alternatives when it is taken or out of hours.
+* The named doctor is the one booked; a group ("mujhe aur meri wife ko") is
+  booked together under one receipt; "pehla / doosra" pick an offered slot.
+* Phone numbers are read in one breath, never glued across words; names are
+  not grammar.
+* A refusal (advice, promise, discount) is spoken in the pack's refusal line
+  and the call goes on (`REFUSED` outcome, ledgered `refuse`); it no longer
+  tells a discount question it has an emergency. "Dawai ki dukaan" is not a
+  prescription request. Packs may add `guardrails.rules` and `disable`
+  built-ins.
+* Cancelling or moving a booking from the web page needs the booking's
+  receipt code; a channel-vouched number (caller-id, WhatsApp sender) does
+  not. Receipts record `identity`.
+
+### Operations
+* **Reminders** the evening before (per-pack hour, template or text); "1"
+  confirms, "2" cancels through the ledger with the reminder as the question.
+* **Deposits**: `deposit_inr` puts a payment link in every confirmation
+  (Razorpay Payment Links, or a one-click mock page); paid deposits are sealed
+  as `payment_received`.
+* **Waitlist**: a full day's caller joins the waitlist; a cancellation offers
+  the freed slot to the first waiting person on WhatsApp; "haan" books it.
+* **Console API** (`docs/console-api.md`): bookings by range with cancel /
+  no-show / completed sealed as staff actions, customers, per-pack settings,
+  waitlist, payments, backup download, `POST /api/auth/logout`.
+* **Backups**: consistent SQLite backups as one tar.gz, nightly to
+  S3-compatible storage, restore on boot into an empty data directory,
+  `haanji backup` / `restore`.
+* **Audio in receipts**: the phone channel's confirmation proof carries the
+  SHA-256 of the caller's reply audio; `HAANJI_CONFIRMATION_AUDIO_DIR` keeps
+  the clip.
+* Missed-call outreach is actually sent when a WhatsApp number is connected;
+  WhatsApp sends report delivery and use approved templates when configured;
+  an undelivered login code is a 503.
+
+### Security
+* Privacy erasure requires a whole ten-digit number and matches exactly (the
+  1.0 endpoint could wipe a tenant); vault subjects are per tenant;
+  `secure_delete` on the vault.
+* "No `?pack=`" no longer means "any pack"; live sessions and events filter
+  by the user's packs; takeover routes resolve the session's pack.
+* `/api/ops`, the WhatsApp simulator, `/api/record`, `/api/study` are behind
+  sign-in when it is on; `/metrics` takes `HAANJI_METRICS_TOKEN` or a staff
+  token; `/api/status` no longer discloses the data directory.
+* OTP: 3 codes per 15 minutes per number, a 15-minute lock after 10 wrong
+  guesses across codes; tokens are revocable (logout, removal) and carry the
+  user's current role; `?token=` is accepted only by the SSE route.
+* Request bodies are capped (1 MB; 26 MB for recordings); the channel is an
+  enum; `max_concurrent_calls` is enforced; idle sessions are collected.
+* Twilio: the signed URL is rebuilt from the public URL behind the proxy,
+  uvicorn trusts forwarded headers on Render, a one-time ticket authenticates
+  the media socket; a public server refuses unsigned vendor webhooks.
+* `LocalBackend.today` is live (IST), the past cannot be booked; demo
+  customers are seeded only in demo mode; signing keys can be encrypted at
+  rest (`HAANJI_LEDGER_KEY_SECRET`); receipt codes are indexed; web push runs
+  off the event loop with a timeout; `print` became logging.
+
+### Repository
+* The Java control plane moved to `experimental/`; the compose stack is the
+  engine, the console, Prometheus and Grafana, with the engine's data on a
+  volume.
+* `docs/operations.md`, `docs/console-api.md`; the WhatsApp, phone, auth,
+  privacy and Pramaan docs describe the new knobs.
+
 ## 1.0.0 — 2026-10-21
 
 The release that goes with the project report and the paper draft. Every

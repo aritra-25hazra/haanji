@@ -24,6 +24,8 @@ import sys
 import time
 import uuid
 import zipfile
+import logging
+import secrets
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
@@ -32,7 +34,8 @@ import yaml
 from fastapi import FastAPI, HTTPException, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Literal
 
 from . import __version__
 from .adapters.mock import NullTTS
@@ -40,7 +43,8 @@ from .backend.local import LocalBackend
 from .channels import whatsapp as wa_channel
 from . import collect as collect_mod
 from . import onboard as onboard_mod
-from .auth import AuthStore, Principal, normalise_phone
+from .auth import AuthStore, OtpThrottled, Principal, normalise_phone
+from .config import EngineConfig
 from .telemetry import TELEMETRY, TOOL_BUCKETS_MS
 from .devanagari import transliterate
 from . import calendar as cal_mod
@@ -48,6 +52,11 @@ from .gcal import GoogleCalendar
 from .telephony import twilio as twilio_mod
 from .pramaan.vault import Vault, normalise_phone as _norm_phone
 from .push import PushStore
+from . import admin as admin_mod
+from . import backup as backup_mod
+from . import reminders as rem_mod
+from .payments import PaymentStore
+from .settings import SettingsStore
 from .metrics import percentile
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
@@ -67,11 +76,20 @@ DEFAULT_PACK = os.environ.get("HAANJI_PACK", "dental_clinic")
 PUBLIC_URL = (os.environ.get("HAANJI_PUBLIC_URL") or os.environ.get("RENDER_EXTERNAL_URL")
               or "http://localhost:8090").rstrip("/")
 OWNER_PHONE = os.environ.get("HAANJI_OWNER_PHONE") or None
+log = logging.getLogger("haanji.server")
+ENGINE_CFG = EngineConfig()
+# A server with a public address is a deployment: vendor webhooks must be
+# signed there, and a missing secret is a misconfiguration, not a dev shortcut.
+IS_PUBLIC = bool(os.environ.get("HAANJI_PUBLIC_URL") or os.environ.get("RENDER_EXTERNAL_URL"))
+DEMO_DATA = os.environ.get("HAANJI_DEMO", "").lower() in ("1", "true", "on", "yes")
+MAX_BODY_BYTES = int(os.environ.get("HAANJI_MAX_BODY_BYTES", str(1024 * 1024)))
+MAX_RECORD_BYTES = 26 * 1024 * 1024
 DIGEST_HOUR = int(os.environ.get("HAANJI_DIGEST_HOUR", "20"))          # IST
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
 SESSION_IDLE_S = 1800
 
 os.makedirs(VAR_DIR, exist_ok=True)
+backup_mod.restore_on_boot(VAR_DIR)                # HAANJI_RESTORE_FROM, only into an empty data dir
 
 from contextlib import asynccontextmanager
 
@@ -81,13 +99,15 @@ async def _lifespan(_app: FastAPI):
     """The evening scheduler (daily anchors, the owner's digest) runs for the
     life of the process; HAANJI_SCHEDULER=0 keeps it off, e.g. in tests."""
     seed_owner()
-    task = None
+    tasks: list[asyncio.Task] = []
     if os.environ.get("HAANJI_SCHEDULER", "1") != "0":
-        task = asyncio.ensure_future(_evening_loop())
+        tasks.append(asyncio.ensure_future(_evening_loop()))
+        tasks.append(asyncio.ensure_future(_gc_loop()))
+        tasks.append(asyncio.ensure_future(_reminder_loop()))
     try:
         yield
     finally:
-        if task:
+        for task in tasks:
             task.cancel()
 
 
@@ -106,24 +126,30 @@ app.add_middleware(CORSMiddleware, allow_origin_regex=CORS_ORIGIN_REGEX,
 # scanner expects. The WhatsApp webhook is exempt: it is signed, and Meta
 # retries in bursts.
 RATE_LIMIT_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_PER_MIN", "120"))
-RATE_LIMIT_EXEMPT = ("/wa/webhook", "/api/status", "/telephony/")
+RATE_LIMIT_GET_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_GET_PER_MIN", "600"))
+RATE_LIMIT_EXEMPT = ("/wa/webhook", "/api/status", "/telephony/", "/payments/")
+# X-Forwarded-For is only meaningful behind a proxy we trust; it is then the
+# *last* hop that the proxy appended, never the first value a client can set.
+TRUST_PROXY = os.environ.get("HAANJI_TRUST_PROXY", "1").lower() in ("1", "true", "on", "yes")
 _buckets: dict[str, tuple[float, float]] = {}      # client -> (tokens, last refill)
 
 
 def _client_of(request: Request) -> str:
-    fwd = request.headers.get("x-forwarded-for")
+    fwd = request.headers.get("x-forwarded-for") if TRUST_PROXY else None
     if fwd:
-        return fwd.split(",")[0].strip()
+        return fwd.split(",")[-1].strip()
     return request.client.host if request.client else "?"
 
 
-def rate_limited(client: str, now: float | None = None) -> bool:
-    """One bucket per client: RATE_LIMIT_PER_MIN tokens, refilled continuously."""
-    if RATE_LIMIT_PER_MIN <= 0:
+def rate_limited(client: str, now: float | None = None, limit: int | None = None) -> bool:
+    """One bucket per client: ``limit`` tokens (RATE_LIMIT_PER_MIN by default),
+    refilled continuously."""
+    limit = RATE_LIMIT_PER_MIN if limit is None else limit
+    if limit <= 0:
         return False
     now = time.monotonic() if now is None else now
-    tokens, last = _buckets.get(client, (float(RATE_LIMIT_PER_MIN), now))
-    tokens = min(float(RATE_LIMIT_PER_MIN), tokens + (now - last) * RATE_LIMIT_PER_MIN / 60.0)
+    tokens, last = _buckets.get(client, (float(limit), now))
+    tokens = min(float(limit), tokens + (now - last) * limit / 60.0)
     if tokens < 1.0:
         _buckets[client] = (tokens, now)
         return True
@@ -136,8 +162,21 @@ def rate_limited(client: str, now: float | None = None) -> bool:
 
 @app.middleware("http")
 async def hardening(request: Request, call_next):
-    if request.method in ("POST", "PUT", "DELETE", "PATCH") and \
-            not request.url.path.startswith(RATE_LIMIT_EXEMPT) and rate_limited(_client_of(request)):
+    path = request.url.path
+    if request.method in ("POST", "PUT", "DELETE", "PATCH"):
+        if not path.startswith(RATE_LIMIT_EXEMPT) and rate_limited(_client_of(request)):
+            TELEMETRY.inc("http_rate_limited_total")
+            return JSONResponse({"detail": "too many requests; try again in a minute"}, status_code=429,
+                                headers={"Retry-After": "60"})
+        # Nothing on this server needs a large body except a volunteer's recording.
+        try:
+            length = int(request.headers.get("content-length") or 0)
+        except ValueError:
+            length = 0
+        if length > (MAX_RECORD_BYTES if path == "/api/record" else MAX_BODY_BYTES):
+            return JSONResponse({"detail": "request body too large"}, status_code=413)
+    elif request.method == "GET" and not path.startswith(RATE_LIMIT_EXEMPT) and \
+            rate_limited("GET " + _client_of(request), limit=RATE_LIMIT_GET_PER_MIN):
         TELEMETRY.inc("http_rate_limited_total")
         return JSONResponse({"detail": "too many requests; try again in a minute"}, status_code=429,
                             headers={"Retry-After": "60"})
@@ -152,7 +191,8 @@ async def hardening(request: Request, call_next):
             if ROLE_RANK.get(who.role, 0) < ROLE_RANK[need]:
                 TELEMETRY.inc("auth_denied_total", status="403")
                 return JSONResponse({"detail": f"{need} role needed"}, status_code=403)
-            if not who.allows(_pack_in(request)):
+            pack = _pack_in(request)
+            if pack is not SCOPED and not who.allows(pack):
                 TELEMETRY.inc("auth_denied_total", status="403")
                 return JSONResponse({"detail": "not your pack"}, status_code=403)
             request.state.user = who
@@ -170,6 +210,10 @@ store = DemoStore(os.path.join(VAR_DIR, "store.sqlite"))
 gcal = GoogleCalendar(os.path.join(VAR_DIR, "gcal.sqlite"), redirect_uri=f"{PUBLIC_URL}/api/google/callback")
 # Personal data in receipts is encrypted per customer (docs/privacy-dpdp.md).
 vault = Vault(os.path.join(VAR_DIR, "vault.sqlite"))
+# With HAANJI_LEDGER_KEY_SECRET set, tenants' signing keys are encrypted at rest.
+LEDGER_KEY_SECRET = os.environ.get("HAANJI_LEDGER_KEY_SECRET") or None
+settings = SettingsStore(os.path.join(VAR_DIR, "settings.sqlite"))
+payments = PaymentStore(os.path.join(VAR_DIR, "payments.sqlite"), PUBLIC_URL)
 push = PushStore(os.path.join(VAR_DIR, "push.sqlite"), os.path.join(VAR_DIR, "vapid.json"),
                  contact=os.environ.get("HAANJI_PUSH_CONTACT") or "mailto:owner@haanji.local")
 CONSENT_LINE = os.environ.get("HAANJI_CONSENT_LINE") or ""
@@ -182,14 +226,26 @@ auth = AuthStore(os.path.join(VAR_DIR, "auth.sqlite"), os.environ.get("HAANJI_AU
 # (method regex, path regex, minimum role). Everything else is public: the
 # demo pages, callers' sessions, the verifier's export, the webhooks.
 PROTECTED: list[tuple[str, re.Pattern, str]] = [
-    ("GET", re.compile(r"^/api/(insights|conversations(/.*)?|lexicon|wa/threads(/.*)?|events(/recent)?|digest)$"), "staff"),
+    ("GET", re.compile(r"^/api/(insights|conversations(/.*)?|lexicon|wa/threads(/.*)?|events(/recent)?|digest|ops)$"), "staff"),
     ("GET", re.compile(r"^/api/packs/[^/]+$"), "staff"),
     ("GET", re.compile(r"^/api/(record/(manifest|export)|study/(responses|export))$"), "owner"),
+    ("GET", re.compile(r"^/api/record/prompts$"), "staff"),
+    # The WhatsApp *simulator* drives the real tenant's thread store; the
+    # research pages write to disk. Both are demo/research surfaces that a
+    # real shop keeps behind sign-in.
+    ("POST", re.compile(r"^/api/(wa/incoming|record|study)$"), "staff"),
     ("POST", re.compile(r"^/api/(packs/(draft|validate|[^/]+/selftest)|anchors/seal|digest/send)$"), "owner"),
     ("PUT", re.compile(r"^/api/packs/[^/]+$"), "owner"),
     ("GET|POST|DELETE", re.compile(r"^/api/auth/users(/.*)?$"), "owner"),
+    # the operator console (docs/console-api.md)
+    ("GET", re.compile(r"^/api/(bookings|customers|settings|waitlist|payments)$"), "staff"),
+    ("POST", re.compile(r"^/api/bookings/[^/]+/(cancel|status)$"), "staff"),
+    ("DELETE", re.compile(r"^/api/waitlist/[^/]+$"), "staff"),
+    ("PUT", re.compile(r"^/api/settings$"), "owner"),
+    ("GET", re.compile(r"^/api/admin/backup$"), "owner"),
 ]
 ROLE_RANK = {"staff": 1, "owner": 2}
+SCOPED = object()        # "the handler filters by the user's own packs"
 
 
 def seed_owner() -> None:
@@ -199,12 +255,33 @@ def seed_owner() -> None:
         auth.upsert_user(OWNER_PHONE, "owner", ["*"], name="Owner")
 
 
-def _pack_in(request: Request) -> str | None:
+def _pack_in(request: Request):
+    """Which pack a request is about, for the scope check. Routes that list
+    across packs return SCOPED and filter in the handler; everything else
+    defaults to DEFAULT_PACK, exactly as the handlers do — "no pack" is never
+    "any pack"."""
+    path = request.url.path
     q = request.query_params.get("pack")
     if q:
         return q
-    m = re.match(r"^/api/packs/([^/]+)", request.url.path)
-    return m.group(1) if m and m.group(1) not in ("draft", "validate") else None
+    m = re.match(r"^/api/packs/([^/]+)", path)
+    if m and m.group(1) not in ("draft", "validate"):
+        return m.group(1)
+    m = re.match(r"^/api/sessions/([^/]+)/(takeover|handback|human-reply)$", path)
+    if m:
+        holder = _sessions.get(m.group(1))
+        return holder.rt.pack_id if holder else DEFAULT_PACK
+    if path in ("/api/sessions/live", "/api/events", "/api/events/recent") or path.startswith("/api/auth/"):
+        return SCOPED
+    return DEFAULT_PACK
+
+
+def _allowed_packs(request: Request) -> set[str] | None:
+    """None = every pack; otherwise the signed-in user's own packs."""
+    who: Principal | None = getattr(request.state, "user", None)
+    if who is None or "*" in who.packs:
+        return None
+    return set(who.packs)
 
 
 def required_role(request: Request) -> str | None:
@@ -216,7 +293,9 @@ def required_role(request: Request) -> str | None:
 
 def principal_of(request: Request) -> Principal | None:
     header = request.headers.get("authorization", "")
-    token = header[7:] if header.lower().startswith("bearer ") else request.query_params.get("token")
+    token = header[7:] if header.lower().startswith("bearer ") else None
+    if token is None and request.url.path == "/api/events":
+        token = request.query_params.get("token")       # EventSource cannot send headers
     return auth.verify_token(token)
 
 
@@ -249,10 +328,12 @@ def runtime(pack_id: str) -> TenantRuntime:
     backend = LocalBackend(conn)
     backend.load_pack(pack_id, pack)
     demo = DEMO_CUSTOMERS.get(pack_id)
-    if demo:
+    if demo and (DEMO_DATA or not AUTH_ENABLED):
+        # "Vijay ji, wapas swagat hai" is for the public demo; a real shop's
+        # customer table starts empty.
         backend.seed_customer(pack_id, *demo[:2], last_service=demo[2])
     ledger = Ledger(sqlite3.connect(os.path.join(VAR_DIR, f"ledger-{pack_id}.sqlite"),
-                                    check_same_thread=False))
+                                    check_same_thread=False), key_secret=LEDGER_KEY_SECRET)
     registry = build_registry(pack_id, backend, pack, ledger, vault=vault)
     _runtimes[pack_id] = TenantRuntime(pack_id, pack, backend, ledger, registry)
     return _runtimes[pack_id]
@@ -270,6 +351,7 @@ class Holder:
     receipts_seen: int = 0
     human: bool = False                       # a person at the console has taken the call
     speak: Any = None                         # telephony: how to say something on this call
+    finished: bool = False                    # _finish ran (a DELETE after end_call must not run it twice)
 
 
 _sessions: dict[str, Holder] = {}
@@ -321,15 +403,40 @@ async def _event_stream(pack: str | None, queue: asyncio.Queue):
         _subscribers.discard(queue)
 
 
+def _visible(event: dict[str, Any], pack: str | None, allowed: set[str] | None) -> bool:
+    if pack and event.get("pack") not in (None, pack):
+        return False
+    return allowed is None or event.get("pack") is None or event.get("pack") in allowed
+
+
+async def _scoped_stream(pack: str | None, allowed: set[str] | None, queue: asyncio.Queue):
+    async for chunk in _event_stream(None, queue):
+        if chunk.startswith(":"):
+            yield chunk
+            continue
+        try:
+            event = json.loads(chunk.split("\ndata: ", 1)[1].rstrip("\n"))
+        except (IndexError, ValueError):
+            continue
+        if _visible(event, pack, allowed):
+            yield chunk
+
+
 @app.get("/api/events")
-async def events(pack: str | None = None):
-    return StreamingResponse(_event_stream(pack, asyncio.Queue(maxsize=256)), media_type="text/event-stream",
+async def events(request: Request, pack: str | None = None):
+    allowed = _allowed_packs(request)
+    if pack and allowed is not None and pack not in allowed:
+        raise HTTPException(403, "not your pack")
+    return StreamingResponse(_scoped_stream(pack, allowed, asyncio.Queue(maxsize=256)), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.get("/api/events/recent")
-async def events_recent(pack: str | None = None, since: int = 0, limit: int = 50):
-    rows = [e for e in _recent if e["seq"] > since and (not pack or e.get("pack") in (None, pack))]
+async def events_recent(request: Request, pack: str | None = None, since: int = 0, limit: int = 50):
+    allowed = _allowed_packs(request)
+    if pack and allowed is not None and pack not in allowed:
+        raise HTTPException(403, "not your pack")
+    rows = [e for e in _recent if e["seq"] > since and _visible(e, pack, allowed)]
     return {"events": rows[-limit:], "latest": _event_seq, "live_sessions": len(_sessions)}
 
 
@@ -352,12 +459,25 @@ def _gc() -> None:
         _wa_sessions.pop((holder.rt.pack_id, holder.phone or ""), None)
 
 
-async def _new_session(pack_id: str, channel: str, phone: str | None) -> tuple[str, Holder]:
+async def _gc_loop() -> None:
+    while True:
+        await asyncio.sleep(60)
+        _gc()
+
+
+async def _new_session(pack_id: str, channel: str, phone: str | None, *, verified: bool = False) -> tuple[str, Holder]:
+    """Open a call. ``verified`` is whether the channel proved the caller's
+    number (PSTN caller-id, the WhatsApp sender). A number typed into the
+    web page is not verified, and the policy asks for the receipt code
+    before it cancels or moves a booking for that number."""
     _gc()
+    if ENGINE_CFG.max_concurrent_calls > 0 and len(_sessions) >= ENGINE_CFG.max_concurrent_calls:
+        TELEMETRY.inc("sessions_refused_total")
+        raise HTTPException(429, "the desk is busy; please try again in a minute")
     rt = runtime(pack_id)
     session = CallSession(tenant_id=pack_id, pack=rt.pack, backend=rt.backend,
                           registry=rt.registry, ledger=rt.ledger, tts=NullTTS())
-    await session.open(phone=phone)
+    await session.open(phone=phone, verified=verified)
     if CONSENT_LINE:                                   # notice at the start of every call
         session.ctx.last_agent_utterance = f"{session.ctx.last_agent_utterance} {CONSENT_LINE}".strip()
         if session.ctx.turns:
@@ -444,20 +564,117 @@ async def _push_calendar(holder: Holder, codes: list[str]) -> None:
             if b.receipt_code in codes and b.status == "CONFIRMED":
                 await gcal.push(pack_id, b.booking_id, cal_mod.google_event(b, holder.rt.pack.persona.business_name, PUBLIC_URL))
     except Exception as exc:                          # noqa: BLE001 - a mirror, not the booking
-        print(f"google calendar push failed: {exc}", file=sys.stderr)
+        log.warning(f"google calendar push failed: {exc}")
 
 
-async def _notify_customer(holder: Holder, codes: list[str]) -> None:
-    """A web or phone caller who gave a number gets the receipt link on
-    WhatsApp, if a real number is connected. Never blocks the call."""
+async def _payment_links(holder: Holder, codes: list[str]) -> list[dict[str, Any]]:
+    """With a deposit configured, every booking just sealed gets a payment
+    link (Razorpay, or this server's mock). Returns the links made."""
+    rt = holder.rt
+    deposit = int(settings.get(rt.pack_id).get("deposit_inr") or 0)
+    if deposit <= 0 or not codes:
+        return []
+    made = []
+    for b in rt.backend.bookings(rt.pack_id):
+        if b.receipt_code in codes and b.status == "CONFIRMED" and not b.payment_id:
+            link = await payments.create_link(rt.pack_id, b, deposit, business=rt.pack.persona.business_name)
+            if link:
+                rt.backend.mark_paid(rt.pack_id, b.booking_id, link["payment_id"], False)
+                made.append(link)
+    return made
+
+
+def payment_note(links: list[dict[str, Any]]) -> str:
+    if not links:
+        return ""
+    amount = links[0]["amount_inr"]
+    return f"Slot pakka rakhne ke liye ₹{amount:,} ka deposit yahan de dijiye:\n" + "\n".join(l["link"] for l in links)
+
+
+async def _notify_customer(holder: Holder, codes: list[str], links: list[dict[str, Any]] | None = None) -> None:
+    """A web or phone caller who gave a number gets the receipt link (and the
+    deposit link) on WhatsApp, if a real number is connected. Never blocks."""
     if codes and holder.phone and holder.channel != "WHATSAPP" and wa_channel.configured():
         try:
-            await wa_channel.send_text(holder.phone, receipt_note(holder.rt.pack_id, codes))
+            text = receipt_note(holder.rt.pack_id, codes)
+            if links:
+                text += "\n\n" + payment_note(links)
+            await wa_channel.send_template(holder.phone, "receipt", [codes[-1]], fallback_text=text)
         except Exception as exc:                      # noqa: BLE001 - a courtesy, not the call
-            print(f"receipt notification failed: {exc}", file=sys.stderr)
+            log.warning(f"receipt notification failed: {exc}")
+
+
+async def offer_waitlist(rt: TenantRuntime, date: str, service: str | None) -> dict[str, Any] | None:
+    """A slot on ``date`` just freed up: the first person waiting for that day
+    hears about it on WhatsApp, and their thread is primed so that "haan"
+    books it through the ordinary read-back and receipt."""
+    if not settings.get(rt.pack_id).get("waitlist_on", True):
+        return None
+    entry = rt.backend.next_waiting(rt.pack_id, date, service)
+    if entry is None:
+        return None
+    avail = await rt.backend.availability(rt.pack_id, entry.get("service") or service, date,
+                                          period=entry.get("period") or None, limit=1)
+    slot = (avail.get("slots") or [None])[0]
+    if slot is None:
+        return None
+    business = rt.pack.persona.business_name
+    from .speak import spoken_date, spoken_time
+    when = f"{spoken_date(slot['date'], rt.backend.today, rt.backend.resolve_date, rt.pack.language)} {spoken_time(slot['time'], rt.pack.language)}"
+    svc = entry.get("service") or service or "appointment"
+    text = (f"Namaste{(' ' + entry['name'].split()[0] + ' ji') if entry.get('name') else ''}! {business} se: "
+            f"{svc} ka ek slot khaali hua hai — {when}, {slot['staff']} ke saath. "
+            f"Chahiye to 'haan' likh dijiye, main book kar dunga.")
+    phone = entry["phone"]
+    key = (rt.pack_id, phone)
+    if key in _wa_sessions:
+        _sessions.pop(_wa_sessions.pop(key), None)
+    sid, holder = await _new_session(rt.pack_id, "WHATSAPP", phone, verified=True)
+    _wa_sessions[key] = sid
+    ctx = holder.session.ctx
+    ctx.service, ctx.date, ctx.time, ctx.staff = svc, slot["date"], slot["time"], slot["staff"]
+    ctx.customer_name = ctx.customer_name or entry.get("name")
+    ctx.flags["time_checked"] = True
+    ctx.last_agent_utterance = text
+    if ctx.turns:
+        ctx.turns[-1].text = text
+    rt.backend.waitlist_mark(rt.pack_id, entry["entry_id"], "OFFERED", f"{slot['date']} {slot['time']}")
+    store.add_wa(rt.pack_id, phone, "out", text, meta={"waitlist_offer": entry["entry_id"]})
+    delivered = None
+    if wa_channel.configured():
+        delivered = await wa_channel.send_template(phone, "outreach", [business], fallback_text=text)
+    publish("waitlist.offered", pack=rt.pack_id, phone=_mask(phone), slot=f"{slot['date']} {slot['time']}")
+    TELEMETRY.inc("waitlist_offers_total", pack=rt.pack_id)
+    return {"entry_id": entry["entry_id"], "phone": phone, "slot": slot, "delivered": delivered, "text": text}
+
+
+async def _after_turn(holder: Holder, record, payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """What a booking or a cancellation sets in motion beyond the reply:
+    deposit links, the owner's calendar, the customer's WhatsApp, the next
+    person on the waitlist. Returns the payment links, for the channel to
+    show. Never raises into the call."""
+    links: list[dict[str, Any]] = []
+    try:
+        if payload["receipts"]:
+            links = await _payment_links(holder, payload["receipts"])
+            asyncio.ensure_future(_notify_customer(holder, payload["receipts"], links))
+            asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
+        if any(t in ("cancel_appointment", "reschedule_appointment") for t in record.tools):
+            phone = holder.session.ctx.customer_phone or holder.phone
+            freed = [b for b in holder.rt.backend.bookings(holder.rt.pack_id)
+                     if b.status == "CANCELLED" and (not phone or b.phone == phone)]
+            if freed:
+                last = freed[-1]
+                asyncio.ensure_future(offer_waitlist(holder.rt, last.date, last.service))
+    except Exception as exc:                          # noqa: BLE001
+        log.warning("after-turn work failed: %s", exc)
+    return links
 
 
 def _finish(sid: str, holder: Holder) -> None:
+    if holder.finished:
+        return
+    holder.finished = True
     report = holder.session.finish()
     store.record_call(report, channel=holder.channel, phone=holder.phone)
     TELEMETRY.inc("calls_total", pack=holder.rt.pack_id, channel=holder.channel.lower(), outcome=report.outcome.value)
@@ -474,6 +691,10 @@ def _finish(sid: str, holder: Holder) -> None:
     _push_outcome(holder, report)
     if holder.phone and report.receipts and store.has_open_missed(holder.rt.pack_id, holder.phone):
         store.mark_recovered(holder.rt.pack_id, holder.phone, report.receipts[-1])
+    if holder.phone and report.outcome.value in ("BOOKED", "RESCHEDULED"):
+        for entry in holder.rt.backend.waitlist(holder.rt.pack_id):
+            if entry["phone"] == holder.phone and entry["status"] in ("WAITING", "OFFERED"):
+                holder.rt.backend.waitlist_mark(holder.rt.pack_id, entry["entry_id"], "BOOKED")
     _sessions.pop(sid, None)
     _wa_sessions.pop((holder.rt.pack_id, holder.phone or ""), None)
 
@@ -489,26 +710,37 @@ def _push_outcome(holder: Holder, report) -> None:
     if report.receipts:
         body += f" · receipt {report.receipts[-1]}"
     url = f"{(os.environ.get('HAANJI_CONSOLE_URL') or '').rstrip('/')}/calls/{report.conversation_id}"
+    def _go() -> None:
+        try:
+            push.send(holder.rt.pack_id, f"{title} — {holder.rt.pack.persona.business_name}", body, url)
+        except Exception as exc:                          # noqa: BLE001
+            log.warning("push failed: %s", exc)
     try:
-        push.send(holder.rt.pack_id, f"{title} — {holder.rt.pack.persona.business_name}", body, url)
-    except Exception as exc:                              # noqa: BLE001
-        print(f"push failed: {exc}", file=sys.stderr)
+        # pywebpush is synchronous HTTP; keep it off the event loop so one
+        # slow push service cannot stall every live call.
+        asyncio.get_running_loop().run_in_executor(None, _go)
+    except RuntimeError:
+        _go()
 
 
 # ──────────────────────────────────────────────────────────────── web-call api
 class NewSession(BaseModel):
-    pack: str = DEFAULT_PACK
-    phone: str | None = None
-    channel: str = "WEB"
+    pack: str = Field(default=DEFAULT_PACK, max_length=64)
+    phone: str | None = Field(default=None, max_length=20)
+    channel: Literal["WEB", "WHATSAPP", "PHONE"] = "WEB"
 
 
 class TextIn(BaseModel):
-    text: str
+    text: str = Field(max_length=2000)
 
 
 @app.post("/api/sessions")
 async def create_session(body: NewSession):
-    sid, holder = await _new_session(body.pack, body.channel, body.phone)
+    phone = _norm_phone(body.phone) if body.phone else None
+    if body.phone and len(phone or "") != 10:
+        raise HTTPException(422, "phone must be ten digits")
+    # The browser says who is calling; nothing proved it.
+    sid, holder = await _new_session(body.pack, body.channel, phone, verified=False)
     return {"session_id": sid, "greeting": holder.session.ctx.last_agent_utterance,
             "pack": body.pack, "business": holder.rt.pack.persona.business_name}
 
@@ -535,9 +767,9 @@ async def session_utterance(sid: str, body: TextIn):
     async with holder.lock:
         record = await holder.session.handle_text_turn(body.text)
         payload = _turn_payload(record, holder)
-        if payload["receipts"]:
-            asyncio.ensure_future(_notify_customer(holder, payload["receipts"]))
-            asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
+        links = await _after_turn(holder, record, payload)
+        if links:
+            payload["payment_links"] = [{"amount_inr": l["amount_inr"], "link": l["link"]} for l in links]
         if payload["end_call"]:
             _finish(sid, holder)
     return payload
@@ -556,12 +788,12 @@ async def close_session(sid: str):
 
 # ─────────────────────────────────────────────────────────── whatsapp channel
 class WaIn(BaseModel):
-    pack: str = DEFAULT_PACK
-    phone: str
-    text: str
+    pack: str = Field(default=DEFAULT_PACK, max_length=64)
+    phone: str = Field(max_length=20)
+    text: str = Field(max_length=4096)
 
 
-async def _wa_turn(pack_id: str, phone: str, text: str) -> list[dict[str, Any]]:
+async def _wa_turn(pack_id: str, phone: str, text: str, *, verified: bool = True) -> list[dict[str, Any]]:
     """One inbound WhatsApp message -> the agent's replies. Shared by the
     simulator and the real Meta webhook, so the demo and production run the
     same path."""
@@ -571,7 +803,7 @@ async def _wa_turn(pack_id: str, phone: str, text: str) -> list[dict[str, Any]]:
     sid = _wa_sessions.get(key)
     holder = _sessions.get(sid) if sid else None
     if holder is None:
-        sid, holder = await _new_session(pack_id, "WHATSAPP", phone)
+        sid, holder = await _new_session(pack_id, "WHATSAPP", phone, verified=verified)
         _wa_sessions[key] = sid
         greeting = holder.session.ctx.last_agent_utterance
         store.add_wa(pack_id, phone, "out", greeting)
@@ -580,13 +812,20 @@ async def _wa_turn(pack_id: str, phone: str, text: str) -> list[dict[str, Any]]:
     if holder.human:
         _human_turn(sid, holder, text)
         return replies                                 # the person at the console answers
+    answered = await _reminder_reply(pack_id, phone, text, holder)
+    if answered is not None:
+        store.add_wa(pack_id, phone, "out", answered["text"], meta={"reminder_reply": True})
+        replies.append(answered)
+        return replies
     async with holder.lock:
         record = await holder.session.handle_text_turn(text)
         payload = _turn_payload(record, holder)
         text_out = record.said
+        links = await _after_turn(holder, record, payload)
         if payload["receipts"]:
             text_out = f"{record.said}\n\n{receipt_note(pack_id, payload['receipts'])}"
-            asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
+            if links:
+                text_out += "\n\n" + payment_note(links)
         store.add_wa(pack_id, phone, "out", text_out,
                      meta={"tools": record.tools, "receipts": payload["receipts"],
                            "corrections": payload["corrections"]})
@@ -599,9 +838,14 @@ async def _wa_turn(pack_id: str, phone: str, text: str) -> list[dict[str, Any]]:
 
 @app.post("/api/wa/incoming")
 async def wa_incoming(body: WaIn):
+    """The simulator. It stands in for the real channel while no WhatsApp
+    number is connected (so a typed number counts as the sender's); once a
+    real number is connected, anyone could type anyone's number here, so
+    the simulator's callers are treated as unverified."""
     if not re.fullmatch(r"\d{10}", body.phone):
         raise HTTPException(400, "phone must be ten digits")
-    return {"replies": await _wa_turn(body.pack, body.phone, body.text.strip())}
+    return {"replies": await _wa_turn(body.pack, body.phone, body.text.strip(),
+                                      verified=not wa_channel.configured())}
 
 
 @app.get("/api/wa/threads")
@@ -620,8 +864,8 @@ async def wa_thread(phone: str, pack: str = DEFAULT_PACK):
 async def wa_verify(request: Request):
     """Meta's one-time handshake when the webhook is registered."""
     q = request.query_params
-    expected = os.environ.get("HAANJI_WA_VERIFY_TOKEN") or "haanji"
-    if q.get("hub.mode") == "subscribe" and q.get("hub.verify_token") == expected:
+    expected = os.environ.get("HAANJI_WA_VERIFY_TOKEN") or ("haanji" if not IS_PUBLIC else None)
+    if expected and q.get("hub.mode") == "subscribe" and hmac.compare_digest(q.get("hub.verify_token", ""), expected):
         return PlainTextResponse(q.get("hub.challenge", ""))
     raise HTTPException(403, "bad verify token")
 
@@ -634,7 +878,11 @@ _wa_seen: deque[str] = deque(maxlen=500)
 @app.post("/wa/webhook")
 async def wa_webhook(request: Request):
     raw = await request.body()
+    if len(raw) > MAX_BODY_BYTES:
+        raise HTTPException(413, "request body too large")
     secret = os.environ.get("HAANJI_WA_APP_SECRET") or None
+    if secret is None and IS_PUBLIC and wa_channel.configured():
+        raise HTTPException(403, "HAANJI_WA_APP_SECRET is not set; refusing unsigned deliveries")
     if secret and not wa_channel.verify_signature(secret, raw, request.headers.get("X-Hub-Signature-256")):
         raise HTTPException(403, "bad signature")
     try:
@@ -648,7 +896,7 @@ async def wa_webhook(request: Request):
             continue
         if msg_id:
             _wa_seen.append(msg_id)
-        replies = await _wa_turn(pack, phone[-10:], text)
+        replies = await _wa_turn(pack, phone[-10:], text, verified=True)   # Meta vouches for the sender
         for r in replies:
             await wa_channel.send_text(phone, r["text"])
         handled += 1
@@ -657,16 +905,28 @@ async def wa_webhook(request: Request):
 
 # ───────────────────────────────────────────────────── missed-call recovery
 class MissedIn(BaseModel):
-    pack: str = DEFAULT_PACK
-    phone: str
+    pack: str = Field(default=DEFAULT_PACK, max_length=64)
+    phone: str = Field(max_length=20)
 
 
 @app.post("/api/telephony/missed-call")
-async def missed_call(body: MissedIn):
+async def missed_call(body: MissedIn, request: Request):
     """The telephony provider tells us a call rang out (Exotel/Plivo webhook
     shape documented in channels/telephony.py). We open the WhatsApp thread
-    with an outreach message; when the caller's reply ends in a booking, the
-    missed call is counted as recovered."""
+    with an outreach message — and, with a real number connected, actually
+    send it; when the caller's reply ends in a booking, the missed call is
+    counted as recovered. HAANJI_MISSED_CALL_SECRET, when set, must arrive
+    in X-HaanJi-Secret; a public server refuses the call without it."""
+    secret = os.environ.get("HAANJI_MISSED_CALL_SECRET")
+    if secret:
+        if not hmac.compare_digest(request.headers.get("X-HaanJi-Secret", ""), secret):
+            raise HTTPException(403, "bad secret")
+    elif IS_PUBLIC:
+        raise HTTPException(403, "set HAANJI_MISSED_CALL_SECRET to accept missed-call webhooks")
+    phone = _norm_phone(body.phone)
+    if len(phone) != 10:
+        raise HTTPException(422, "phone must be ten digits")
+    body.phone = phone
     rt = runtime(body.pack)
     store.record_missed(body.pack, body.phone)
     outreach = (f"Namaste! Aapne abhi {rt.pack.persona.business_name} ko call kiya tha — "
@@ -675,11 +935,15 @@ async def missed_call(body: MissedIn):
     key = (body.pack, body.phone)
     if key in _wa_sessions:                       # a fresh thread for the recovery
         _sessions.pop(_wa_sessions.pop(key), None)
-    sid, holder = await _new_session(body.pack, "WHATSAPP", body.phone)
+    sid, holder = await _new_session(body.pack, "WHATSAPP", body.phone, verified=True)
     _wa_sessions[key] = sid
     holder.session.ctx.last_agent_utterance = outreach
     store.add_wa(body.pack, body.phone, "out", outreach, meta={"missed_call_recovery": True})
-    return {"ok": True, "outreach": outreach}
+    delivered = None
+    if wa_channel.configured():
+        delivered = await wa_channel.send_template(body.phone, "outreach", [rt.pack.persona.business_name],
+                                                  fallback_text=outreach)
+    return {"ok": True, "outreach": outreach, "delivered": delivered}
 
 
 # ─────────────────────────────────────────────────────── insights + history
@@ -761,7 +1025,7 @@ async def pack_get(pack_id: str):
 
 
 class PackBody(BaseModel):
-    yaml: str
+    yaml: str = Field(max_length=400_000)
 
 
 def _validate_yaml(text: str) -> tuple[dict, list[str]]:
@@ -832,7 +1096,11 @@ async def pack_selftest(pack_id: str):
         sys.executable, "-m", "haanji.cli", "selftest", "--pack", pack_id, "--speed", "150",
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    out, _ = await asyncio.wait_for(proc.communicate(), timeout=120)
+    try:
+        out, _ = await asyncio.wait_for(proc.communicate(), timeout=120)
+    except asyncio.TimeoutError:
+        proc.kill()
+        raise HTTPException(504, "the pack's scenarios did not finish in two minutes")
     lines = out.decode().splitlines()
     results = [{"passed": l.startswith("PASS"), "line": l.split(None, 1)[1].strip()}
                for l in lines if l.startswith(("PASS", "FAIL"))]
@@ -1100,6 +1368,69 @@ async def digest_send(pack: str = DEFAULT_PACK, to: str | None = None):
     return {"sent": True, "to": number, "text": text}
 
 
+async def send_due_reminders(now: dt.datetime | None = None) -> int:
+    """Every pack's day-before (or same-day) reminders that are due now."""
+    sent = 0
+    for pid in list_packs():
+        rt = runtime(pid)
+        cfg = settings.get(pid)
+        for b in rem_mod.due_today(rt.backend, pid, cfg, now):
+            text = rem_mod.reminder_text(b, rt.pack.persona.business_name, rt.backend.today,
+                                         rt.backend.resolve_date, rt.pack.language, PUBLIC_URL)
+            delivered = None
+            if wa_channel.configured():
+                delivered = await wa_channel.send_template(b.phone, "reminder", [b.service, f"{b.date} {b.time}"],
+                                                          fallback_text=text)
+            rt.backend.mark_reminded(pid, b.booking_id)
+            store.add_wa(pid, b.phone, "out", text, meta={"reminder": b.booking_id, "delivered": delivered})
+            publish("reminder.sent", pack=pid, booking_id=b.booking_id, phone=_mask(b.phone), delivered=delivered)
+            TELEMETRY.inc("reminders_sent_total", pack=pid)
+            sent += 1
+    return sent
+
+
+async def _reminder_loop() -> None:
+    while True:
+        try:
+            await send_due_reminders()
+        except Exception as exc:                      # noqa: BLE001 - keep the loop alive
+            log.warning("reminders: %s", exc)
+        await asyncio.sleep(15 * 60)
+
+
+async def _reminder_reply(pack_id: str, phone: str, text: str, holder: Holder) -> dict[str, Any] | None:
+    """A WhatsApp message that answers a reminder (or a waitlist offer is
+    handled by the primed session, not here). '1'/'haan' confirms; '2'/
+    'cancel' cancels through the ledger with the reminder as the question
+    and this message as the proof. None when the message is not a reply."""
+    pending = store.last_outbound_with(pack_id, phone, "reminder")
+    if pending is None or pending["meta"].get("answered"):
+        return None
+    verdict = rem_mod.interpret_reply(text)
+    if verdict is None:
+        return None
+    rt = holder.rt
+    booking = rt.backend.booking(pack_id, pending["meta"]["reminder"])
+    store.set_meta(pending["msg_id"], answered=verdict)
+    if booking is None or booking.status != "CONFIRMED":
+        return {"text": "Ye booking ab calendar par nahi hai. Nayi booking chahiye to likh dijiye."}
+    if verdict == "confirm":
+        publish("reminder.confirmed", pack=pack_id, booking_id=booking.booking_id, phone=_mask(phone))
+        return {"text": f"Shukriya! {rt.pack.persona.business_name} aapka intezaar karega. Milte hain."}
+    asked_ms = int(dt.datetime.fromisoformat(pending["at"]).timestamp() * 1000)
+    proof = rem_mod.proof_for(pending["text"], text, asked_ms, int(time.time() * 1000))
+    result = await rt.registry.execute("cancel_appointment", {
+        "phone": phone, "identity": "channel", "proof": proof,
+        "excerpt": f"reminder reply: {text}", "conversation_id": f"reminder:{booking.booking_id}"})
+    if not result.ok:
+        return {"text": result.spoken or "Cancel nahi ho paya, team aapko call karegi."}
+    publish("reminder.cancelled", pack=pack_id, booking_id=booking.booking_id, phone=_mask(phone),
+            receipt=(result.data or {}).get("receipt_code"))
+    asyncio.ensure_future(offer_waitlist(rt, booking.date, booking.service))
+    return {"text": f"{result.spoken} Dobara booking chahiye to kabhi bhi likh dijiye.",
+            "receipts": [c for c in [(result.data or {}).get("receipt_code")] if c]}
+
+
 def seconds_until(hour: int, minute: int = 0, now: dt.datetime | None = None) -> float:
     """Seconds from ``now`` (IST) to the next occurrence of hour:minute IST."""
     now = now or dt.datetime.now(IST)
@@ -1118,17 +1449,23 @@ async def _evening_loop() -> None:
             try:
                 seal_pending_days(runtime(pid))
             except Exception as exc:                  # noqa: BLE001 - keep the loop alive
-                print(f"anchor {pid}: {exc}", file=sys.stderr)
+                log.warning(f"anchor {pid}: {exc}")
         try:
             purge_old_records(RETENTION_DAYS)
         except Exception as exc:                      # noqa: BLE001
-            print(f"retention: {exc}", file=sys.stderr)
+            log.warning(f"retention: {exc}")
+        if backup_mod.s3_configured():
+            try:
+                where = backup_mod.upload_s3(backup_mod.make_backup(VAR_DIR), backup_mod.backup_name())
+                log.warning("nightly backup written to %s", where)
+            except Exception as exc:                  # noqa: BLE001
+                log.warning(f"backup: {exc}")
         digest_pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
         if OWNER_PHONE and wa_channel.configured():
             try:
                 await wa_channel.send_text(OWNER_PHONE, digest_text(digest_pack))
             except Exception as exc:                  # noqa: BLE001
-                print(f"digest: {exc}", file=sys.stderr)
+                log.warning(f"digest: {exc}")
 
 
 # ─────────────────────────────────────────────────────── auth endpoints
@@ -1156,9 +1493,16 @@ async def auth_otp(body: OtpIn):
     if len(phone) < 10 or auth.user(phone) is None:
         # Same answer for unknown numbers: no account enumeration.
         return {"sent": True, "channel": "whatsapp" if wa_channel.configured() else "dev"}
-    code = auth.issue_otp(phone)
+    try:
+        code = auth.issue_otp(phone)
+    except OtpThrottled as exc:
+        raise HTTPException(429, str(exc), headers={"Retry-After": "900"})
     if wa_channel.configured():
-        await wa_channel.send_text(phone, f"HaanJi console login code: {code}\nYeh code 5 minute tak chalega. Kisi ko mat batayein.")
+        ok = await wa_channel.send_template(
+            phone, "otp", [code],
+            fallback_text=f"HaanJi console login code: {code}\nYeh code 5 minute tak chalega. Kisi ko mat batayein.")
+        if ok is False:                       # None = an adapter that does not report delivery
+            raise HTTPException(503, "could not deliver the code on WhatsApp; try again in a minute")
         return {"sent": True, "channel": "whatsapp"}
     if AUTH_DEV:
         return {"sent": True, "channel": "dev", "dev_code": code}
@@ -1174,6 +1518,17 @@ async def auth_verify(body: VerifyIn):
     if user is None or not auth.check_otp(phone, body.code):
         raise HTTPException(401, "wrong or expired code")
     return {"token": auth.token_for(user), "user": user.as_dict()}
+
+
+@app.post("/api/auth/logout")
+async def auth_logout(request: Request):
+    """Sign out everywhere: every token this number holds stops working."""
+    if not AUTH_ENABLED:
+        return {"ok": True}
+    who = principal_of(request)
+    if who is not None:
+        auth.revoke(who.phone)
+    return {"ok": True}
 
 
 @app.get("/api/auth/me")
@@ -1303,7 +1658,13 @@ async def twilio_voice(request: Request, pack: str = DEFAULT_PACK):
     raw = (await request.body()).decode("utf-8", "replace")
     form = {k: v[0] for k, v in urllib.parse.parse_qs(raw, keep_blank_values=True).items()}
     token = os.environ.get("HAANJI_TWILIO_AUTH_TOKEN")
-    if token and not twilio_mod.verify_signature(token, str(request.url), {k: str(v) for k, v in form.items()},
+    if not token and IS_PUBLIC and phone_configured():
+        raise HTTPException(403, "HAANJI_TWILIO_AUTH_TOKEN is not set; refusing unsigned calls")
+    # Twilio signed the public https URL; behind the platform's proxy the
+    # request we see may say http://, so rebuild the URL from PUBLIC_URL.
+    signed_url = (f"{PUBLIC_URL}{request.url.path}" + (f"?{request.url.query}" if request.url.query else "")
+                  if IS_PUBLIC else str(request.url))
+    if token and not twilio_mod.verify_signature(token, signed_url, {k: str(v) for k, v in form.items()},
                                                  request.headers.get("X-Twilio-Signature")):
         raise HTTPException(403, "bad Twilio signature")
     if pack not in list_packs():
@@ -1313,7 +1674,20 @@ async def twilio_voice(request: Request, pack: str = DEFAULT_PACK):
         return Response(twilio_mod.twiml_say(f"{rt.pack.persona.business_name}. The voice bridge is not configured yet."),
                         media_type="application/xml")
     caller = str(form.get("From", "")) or None
-    return Response(twilio_mod.twiml_connect(twilio_mod.stream_url(PUBLIC_URL), pack, caller), media_type="application/xml")
+    ticket = None
+    if token:
+        # The media WebSocket carries no signature of its own: this ticket,
+        # minted here and checked once when the stream starts, is what ties
+        # the socket to a call Twilio really placed.
+        now = time.monotonic()
+        for t in [t for t, (_p, _c, exp) in _phone_tickets.items() if exp < now]:
+            _phone_tickets.pop(t, None)
+        ticket = secrets.token_urlsafe(18)
+        _phone_tickets[ticket] = (pack, caller, now + 120)
+    return Response(twilio_mod.twiml_connect(twilio_mod.stream_url(PUBLIC_URL), pack, caller, ticket), media_type="application/xml")
+
+
+_phone_tickets: dict[str, tuple[str, str | None, float]] = {}
 
 
 def _phone_stt_factory(on_text):
@@ -1326,9 +1700,15 @@ def _phone_tts(text: str):
     return synth_ulaw(text)
 
 
-async def _phone_open(pack: str, caller: str | None):
+async def _phone_open(pack: str, caller: str | None, params: dict[str, Any] | None = None):
+    if os.environ.get("HAANJI_TWILIO_AUTH_TOKEN"):
+        entry = _phone_tickets.pop(str((params or {}).get("ticket") or ""), None)
+        if entry is None or entry[2] < time.monotonic() or entry[0] != pack:
+            TELEMETRY.inc("telephony_rejected_total")
+            log.warning("telephony stream without a valid ticket was refused")
+            return None
     phone = "".join(ch for ch in (caller or "") if ch.isdigit())[-10:] or None
-    return await _new_session(pack, "PHONE", phone)
+    return await _new_session(pack, "PHONE", phone, verified=phone is not None)   # network caller-id
 
 
 def _phone_human(sid: str, holder: Holder, text: str) -> bool:
@@ -1342,9 +1722,7 @@ def _phone_human(sid: str, holder: Holder, text: str) -> bool:
 
 async def _phone_turn(record, holder: Holder) -> None:
     payload = _turn_payload(record, holder)
-    if payload["receipts"]:
-        asyncio.ensure_future(_notify_customer(holder, payload["receipts"]))
-        asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
+    await _after_turn(holder, record, payload)
 
 
 PHONE_FACTORIES: dict[str, Any] = {"stt": _phone_stt_factory, "tts": _phone_tts}   # tests swap these
@@ -1393,7 +1771,7 @@ async def _human_reply(sid: str, holder: Holder, text: str) -> dict[str, Any]:
             try:
                 await wa_channel.send_text(holder.phone, text)
             except Exception as exc:                      # noqa: BLE001
-                print(f"human reply over WhatsApp failed: {exc}", file=sys.stderr)
+                log.warning(f"human reply over WhatsApp failed: {exc}")
     if holder.speak is not None:
         await holder.speak(text)                           # telephony: synthesise on the line
     publish("turn", sid=sid, pack=holder.rt.pack_id, channel=holder.channel, heard="", corrected="",
@@ -1403,14 +1781,19 @@ async def _human_reply(sid: str, holder: Holder, text: str) -> dict[str, Any]:
 
 
 class HumanReply(BaseModel):
-    text: str
+    text: str = Field(max_length=2000)
 
 
 @app.get("/api/sessions/live")
-async def sessions_live(pack: str | None = None):
+async def sessions_live(request: Request, pack: str | None = None):
+    allowed = _allowed_packs(request)
+    if pack and allowed is not None and pack not in allowed:
+        raise HTTPException(403, "not your pack")
     out = []
     for sid, h in _sessions.items():
         if pack and h.rt.pack_id != pack:
+            continue
+        if allowed is not None and h.rt.pack_id not in allowed:
             continue
         last_caller = next((t.text for t in reversed(h.session.ctx.turns) if t.speaker is Speaker.CALLER), "")
         out.append({"sid": sid, "pack": h.rt.pack_id, "channel": h.channel, "phone": _mask(h.phone),
@@ -1493,39 +1876,60 @@ async def push_test(pack: str = DEFAULT_PACK):
 PROTECTED.append(("GET|DELETE", re.compile(r"^/api/privacy/customer/.*$"), "owner"))
 
 
+def _customer_phone(phone: str) -> str:
+    """The ten digits of a customer's number, or a 400. An empty or partial
+    number used to reach a LIKE '%...' and match everyone in the tenant."""
+    p = _norm_phone(phone)
+    if len(p) != 10:
+        raise HTTPException(400, "phone must be a ten-digit number")
+    return p
+
+
+def _phone_forms(p: str) -> tuple[str, ...]:
+    """How the same number may have been stored: bare, 0-prefixed, +91/91-prefixed."""
+    return (p, "0" + p, "91" + p, "+91" + p)
+
+
 def customer_record(pack: str, phone: str) -> dict[str, Any]:
     """Everything the platform holds about one number (right of access)."""
     rt = runtime(pack)
-    p = _norm_phone(phone)
+    p = _customer_phone(phone)
+    forms = _phone_forms(p)
+    marks = ",".join("?" * len(forms))
     bookings = [b.as_dict() for b in rt.backend.bookings(pack) if _norm_phone(b.phone) == p]
-    leads = [dict(r) for r in rt.backend.conn.execute("SELECT * FROM leads WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}"))]
+    leads = [dict(r) for r in rt.backend.conn.execute(f"SELECT * FROM leads WHERE tenant_id=? AND phone IN ({marks})", (pack, *forms))]
     calls = [{"call_id": c["call_id"], "started_at": c["started_at"], "outcome": c["outcome"]}
              for c in store.calls(pack, limit=1000) if _norm_phone(c.get("phone")) == p]
-    wa = store.conn.execute("SELECT COUNT(*) c FROM wa_messages WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).fetchone()["c"]
+    wa = store.conn.execute(f"SELECT COUNT(*) c FROM wa_messages WHERE tenant_id=? AND phone IN ({marks})", (pack, *forms)).fetchone()["c"]
+    subjects = {vault.subject(p, pack), vault.subject(p)}        # per-tenant, and the older unscoped form
+    shredded = vault.is_shredded(p, pack) or vault.is_shredded(p)
     receipts = []
     for r in rt.ledger.receipts(pack):
-        if r.action_args.get("subject") == vault.subject(p):
+        if r.action_args.get("subject") in subjects:
             receipts.append({"code": r.short_code(), "action": r.action, "occurred_at": r.occurred_at,
-                             "pii_readable": not vault.is_shredded(p)})
+                             "pii_readable": not shredded})
     return {"pack": pack, "phone": p, "bookings": bookings, "leads": leads, "calls": calls, "whatsapp_messages": wa,
-            "receipts": receipts, "erased": vault.is_shredded(p)}
+            "receipts": receipts, "erased": shredded}
 
 
 def erase_customer(pack: str, phone: str) -> dict[str, int | bool]:
     """Right to erasure: shred the receipt key, anonymise bookings, delete the
     rest. Receipts stay sealed and verifiable; their personal fields become
-    unreadable."""
+    unreadable. Scoped to this tenant: the same person at another shop keeps
+    their records there."""
     rt = runtime(pack)
-    p = _norm_phone(phone)
-    shredded = vault.forget(p)
+    p = _customer_phone(phone)
+    forms = _phone_forms(p)
+    marks = ",".join("?" * len(forms))
+    shredded = vault.forget(p, pack)
     with rt.backend.conn:
-        b = rt.backend.conn.execute("UPDATE bookings SET customer_name='erased', phone=NULL WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
-        l = rt.backend.conn.execute("DELETE FROM leads WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
-        rt.backend.conn.execute("DELETE FROM customers WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}"))
+        b = rt.backend.conn.execute(f"UPDATE bookings SET customer_name='erased', phone=NULL WHERE tenant_id=? AND phone IN ({marks})", (pack, *forms)).rowcount
+        l = rt.backend.conn.execute(f"DELETE FROM leads WHERE tenant_id=? AND phone IN ({marks})", (pack, *forms)).rowcount
+        rt.backend.conn.execute(f"DELETE FROM customers WHERE tenant_id=? AND phone IN ({marks})", (pack, *forms))
     with store.conn:
-        c = store.conn.execute("DELETE FROM calls WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
-        w = store.conn.execute("DELETE FROM wa_messages WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
-        m = store.conn.execute("DELETE FROM missed_calls WHERE tenant_id=? AND phone LIKE ?", (pack, f"%{p}")).rowcount
+        c = store.conn.execute(f"DELETE FROM calls WHERE tenant_id=? AND phone IN ({marks})", (pack, *forms)).rowcount
+        w = store.conn.execute(f"DELETE FROM wa_messages WHERE tenant_id=? AND phone IN ({marks})", (pack, *forms)).rowcount
+        m = store.conn.execute(f"DELETE FROM missed_calls WHERE tenant_id=? AND phone IN ({marks})", (pack, *forms)).rowcount
     _wa_sessions.pop((pack, p), None)
     publish("privacy.erased", pack=pack, phone=_mask(p))
     return {"key_shredded": shredded, "bookings_anonymised": b, "leads_deleted": l, "calls_deleted": c,
@@ -1586,8 +1990,18 @@ SLO_TURN_MS = int(os.environ.get("HAANJI_MAX_TURN_LATENCY_MS", "1500"))
 
 
 @app.get("/metrics")
-async def metrics():
-    """Prometheus scrape target; ops/prometheus.yml points here."""
+async def metrics(request: Request):
+    """Prometheus scrape target; ops/prometheus.yml points here. With
+    HAANJI_METRICS_TOKEN set the scraper sends it as a bearer token; with
+    sign-in on and no token, a staff token is needed."""
+    want = os.environ.get("HAANJI_METRICS_TOKEN")
+    header = request.headers.get("authorization", "")
+    bearer = header[7:] if header.lower().startswith("bearer ") else ""
+    if want:
+        if not hmac.compare_digest(bearer, want):
+            raise HTTPException(401, "metrics token needed")
+    elif AUTH_ENABLED and principal_of(request) is None:
+        raise HTTPException(401, "sign in first")
     TELEMETRY.gauge("live_sessions", len(_sessions))
     return PlainTextResponse(TELEMETRY.render(), media_type="text/plain; version=0.0.4; charset=utf-8")
 
@@ -1657,14 +2071,15 @@ async def devanagari(body: TextsIn):
 async def status():
     return {"name": "HaanJi demo server", "version": app.version,
             "default_pack": DEFAULT_PACK, "packs": list_packs(),
-            "var_dir": VAR_DIR,
             "public_url": PUBLIC_URL,
             "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
-            "auth": {"enabled": AUTH_ENABLED, "dev": AUTH_DEV},
+            "auth": {"enabled": AUTH_ENABLED},
             "google": {"configured": gcal.configured, "connected": gcal.connected()},
             "phone": phone_status(),
             "privacy": {"retention_days": RETENTION_DAYS, "consent": bool(CONSENT_LINE)},
             "push": {"public_key": push.public_key},
+            "payments": {"provider": "razorpay" if payments_configured_fn() else "mock"},
+            "backup": {"s3": backup_mod.s3_configured(), "restore_from": bool(os.environ.get("HAANJI_RESTORE_FROM"))},
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
             "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),
@@ -1725,3 +2140,13 @@ async def static_file(name: str):
     media = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml",
              ".html": "text/html"}.get(os.path.splitext(name)[1], "text/plain")
     return FileResponse(path, media_type=media)
+
+
+# ───────────────────────────────────────────────── the operator console's routes
+from .payments import configured as payments_configured_fn    # noqa: E402
+
+app.include_router(admin_mod.build_router(admin_mod.Deps(
+    runtime=runtime, list_packs=list_packs, default_pack=DEFAULT_PACK, store=store, settings=settings,
+    payments=payments, vault=vault, publish=publish, mask=_mask,
+    user_of=lambda request: getattr(request.state, "user", None),
+    offer_waitlist=offer_waitlist, var_dir=VAR_DIR, public_url=PUBLIC_URL)))

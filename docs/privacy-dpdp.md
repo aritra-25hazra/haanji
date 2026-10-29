@@ -39,3 +39,18 @@ purpose; the person is no longer identifiable from it.
 - Console → Dashboard → **Privacy**: customer ka number daalo → "Kya rakha hai" se list, "Mita do" se sab hata do (receipt rahegi, par naam-number nahi khulega).
 - Render → Environment: `HAANJI_RETENTION_DAYS=180` (kitne din call records rakhne hain), `HAANJI_CONSENT_LINE="Yeh call HaanJi AI receptionist utha raha hai aur record ho rahi hai."`
 - Kisi vendor (Claude, Deepgram, ElevenLabs) ko data tabhi jaata hai jab aap uski key daalte ho.
+
+## What 1.1 fixed
+
+* **Erasure is exact.** `DELETE /api/privacy/customer/{phone}` requires a whole
+  ten-digit number (else `400`) and matches the stored number exactly, in the
+  forms it may have been stored (`98…`, `098…`, `9198…`). The 1.0 endpoint
+  matched with `LIKE '%…'`, so a request with no digits erased every customer
+  of the tenant.
+* **Per tenant.** The vault's subject is a keyed hash of *tenant and number*;
+  forgetting a customer at one shop leaves their receipts at another shop
+  readable. Older receipts (unscoped subject) are still found and shredded.
+* **Secure delete.** The vault's SQLite file runs with `secure_delete=ON`, so a
+  shredded key is overwritten in the file, not merely unlinked.
+* **Consent audio.** A phone confirmation's audio clip is kept only when
+  `HAANJI_CONFIRMATION_AUDIO_DIR` is set; by default only its hash exists.

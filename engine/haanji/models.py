@@ -26,6 +26,7 @@ class Outcome(str, Enum):
     LEAD_CAPTURED = "LEAD_CAPTURED"
     RESCHEDULED = "RESCHEDULED"
     HANDED_OFF = "HANDED_OFF"
+    REFUSED = "REFUSED"          # the agent declined (advice, discount, promise) and the caller left
     ABANDONED = "ABANDONED"
 
 
@@ -109,6 +110,9 @@ class ConversationContext:
     date: str | None = None
     time: str | None = None
     staff: str | None = None
+    period: str | None = None             # morning / afternoon / evening, when no clock time was given
+    party_size: int = 1                   # how many people the booking is for
+    phone_verified: bool = False          # the channel proved the number (PSTN caller-id, WhatsApp sender)
     customer_name: str | None = None
     customer_phone: str | None = None
     pending_confirmation: dict[str, Any] | None = None

@@ -58,6 +58,9 @@ class BhashaConfig:
     max_edit: int = field(default_factory=lambda: _i("HAANJI_BHASHA_MAX_EDIT", 2))
     max_hints: int = field(default_factory=lambda: _i("HAANJI_BHASHA_MAX_HINTS", 60))
     max_ngram: int = field(default_factory=lambda: _i("HAANJI_BHASHA_MAX_NGRAM", 3))
+    # The closed-vocabulary pass over date, time and number words
+    # (haanji/bhasha/numeric.py), after the tenant's own lexicon.
+    numeric_repair: bool = field(default_factory=lambda: _b("HAANJI_BHASHA_NUMERIC", True))
 
 
 @dataclass(frozen=True)

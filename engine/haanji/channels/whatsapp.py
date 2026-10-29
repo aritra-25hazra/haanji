@@ -56,20 +56,56 @@ def verify_signature(secret: str, raw: bytes, header: str | None) -> bool:
     return hmac.compare_digest(expected, header[len("sha256="):])
 
 
-async def send_text(to: str, text: str) -> None:
-    """Send one text message. Failures are logged, never raised: the webhook
-    must still answer Meta with a 200 or the delivery is retried."""
-    if not configured():
-        return
+async def _post(body: dict) -> bool:
     import httpx
+    to = str(body.get("to", ""))
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             r = await client.post(
                 f"{GRAPH}/{os.environ['HAANJI_WA_PHONE_ID']}/messages",
                 headers={"Authorization": f"Bearer {os.environ['HAANJI_WA_TOKEN']}"},
-                json={"messaging_product": "whatsapp", "to": to,
-                      "type": "text", "text": {"body": text}})
+                json={"messaging_product": "whatsapp", **body})
             if r.status_code >= 400:
                 log.warning("whatsapp send to …%s failed: %s %s", to[-4:], r.status_code, r.text[:200])
-    except Exception as e:                       # noqa: BLE001 — see docstring
+                return False
+            return True
+    except Exception as e:                       # noqa: BLE001 — see send_text
         log.warning("whatsapp send to …%s failed: %s", to[-4:], e)
+        return False
+
+
+async def send_text(to: str, text: str) -> bool:
+    """Send one free-form text message. Failures are logged and reported as
+    False, never raised: the webhook must still answer Meta with a 200 or
+    the delivery is retried.
+
+    Meta accepts free text only inside the 24-hour window after the
+    customer's last message. Outside it (a login code, a reminder, the
+    evening digest) use :func:`send_template`."""
+    if not configured():
+        return False
+    return await _post({"to": to, "type": "text", "text": {"body": text}})
+
+
+def template_name(kind: str) -> str | None:
+    """The approved template for a kind of message, from the environment:
+    HAANJI_WA_TEMPLATE_OTP, _REMINDER, _RECEIPT, _DIGEST, _OUTREACH."""
+    return os.environ.get(f"HAANJI_WA_TEMPLATE_{kind.upper()}") or None
+
+
+async def send_template(to: str, kind: str, params: list[str], *, fallback_text: str | None = None,
+                        language: str | None = None) -> bool:
+    """Send an approved template message (works outside the 24-hour window).
+    Without a template configured for ``kind``, falls back to free text,
+    which Meta will accept only if the customer wrote recently."""
+    if not configured():
+        return False
+    name = template_name(kind)
+    if not name:
+        return await send_text(to, fallback_text) if fallback_text else False
+    components = []
+    if params:
+        components.append({"type": "body", "parameters": [{"type": "text", "text": str(p)} for p in params]})
+    return await _post({"to": to, "type": "template",
+                        "template": {"name": name, "language": {"code": language or os.environ.get("HAANJI_WA_TEMPLATE_LANG", "en")},
+                                     "components": components}})

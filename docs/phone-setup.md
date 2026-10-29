@@ -45,3 +45,20 @@ Bridge Twilio Media Streams ke protocol pe likha hai. Exotel ka "Voicebot
 applet" aur Plivo ka "Audio Streams" bhi WebSocket pe μ-law bhejte hain; sirf
 event ke naam alag hain. `haanji/telephony/twilio.py` ka `run()` wahi jagah hai
 jahan unka adapter aayega — call ka baaki sab same rehta hai.
+
+## 1.1: proxy, signature, ticket, audio
+
+* Render ke peeche engine `X-Forwarded-*` headers trust karta hai (`RENDER`
+  env se apne aap; kisi aur proxy pe `HAANJI_BEHIND_PROXY=1`), isliye Twilio
+  ki `https://` signature sahi URL par check hoti hai.
+* Public server pe `HAANJI_TWILIO_AUTH_TOKEN` zaroori hai; bina iske voice
+  webhook `403` deta hai.
+* Media WebSocket pe koi Twilio signature nahi hoti, isliye `/voice` ek
+  one-time **ticket** TwiML `<Parameter>` mein deta hai jo stream shuru hote
+  hi ek baar check hota hai (2 minute valid). Bina ticket ka stream band.
+* Caller ka "haan" wala audio (agent ke aakhri line ke baad se) receipt mein
+  SHA-256 ke roop mein jaata hai; `HAANJI_CONFIRMATION_AUDIO_DIR` set ho to
+  clip bhi `<code>.ulaw` naam se rakhi jaati hai.
+* Missed-call webhook (`/api/telephony/missed-call`) `HAANJI_MISSED_CALL_SECRET`
+  ko `X-HaanJi-Secret` header mein maangta hai, aur asli WhatsApp number
+  connected ho to outreach sach mein bhejta hai (pehle sirf store mein likhta tha).

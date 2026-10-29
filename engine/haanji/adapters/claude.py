@@ -75,7 +75,7 @@ class ClaudeLLM:
     @property
     def client(self):
         if self._client is None:
-            import anthropic                      # the optional extra, imported late
+            import anthropic  # the optional extra, imported late
             self._client = anthropic.AsyncAnthropic(timeout=self.timeout, max_retries=1)
         return self._client
 

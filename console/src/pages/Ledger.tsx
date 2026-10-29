@@ -2,11 +2,13 @@ import { useCallback, useState, type CSSProperties } from "react";
 import { engine, tamper, verifyExport } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Chip, Empty, Icon, Loading, Page, Panel, Register, Stamp, Tile, useData } from "../components/Common";
+import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register, Stamp, Tile, useData } from "../components/Common";
 import type { Export, Verdict } from "../types";
 
+const SUB = "Har booking ek signed, chained receipt — aur ye page usse aapke browser mein dobara jaanchta hai, server pe bharosa kiye bina.";
+
 export default function Ledger() {
-  const { pack, online } = useApp();
+  const { pack, mode } = useApp();
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
@@ -19,13 +21,15 @@ export default function Ledger() {
     finally { setBusy(false); }
   }, []);
 
-  const { data, loading, error, reload } = useData<Export>(async () => {
-    if (!online) { setVerdict(null); return sample.export(); }
-    const exp = await engine.export(pack);
-    await run(exp, "engine ke export pe, abhi");
-    return exp;
-  }, [pack, online]);
+  const live = mode === "live";
+  const loader = live
+    ? async () => { const exp = await engine.export(pack); await run(exp, "engine ke export pe, abhi"); return exp; }
+    : mode === "demo" ? () => Promise.resolve(sample.export()) : null;
+  const { data, loading, error, reload } = useData<Export>(loader, [pack, mode]);
+  // The real counter: writes the ledger refused for lacking a confirmation proof.
+  const ops = useData(live ? () => engine.ops(pack) : null, [pack, mode]);
 
+  if (!live && mode !== "demo") return <NotLive title="Pramaan ledger" sub={SUB} />;
   if (loading && !data) return <Loading />;
   if (!data) {
     return (
@@ -35,15 +39,16 @@ export default function Ledger() {
     );
   }
 
-  const firstBroken = verdict && !verdict.ok ? verdict.firstBrokenSeq : null;
-  const rows = verdict
-    ? verdict.rows
+  const shown = live ? verdict : null;         // a sample export is never "verified"
+  const firstBroken = shown && !shown.ok ? shown.firstBrokenSeq : null;
+  const rows = shown
+    ? shown.rows
     : data.receipts.map((r) => ({ seq: r.seq, action: r.action, code: String(r.short_code ?? ""), ok: null as boolean | null, reason: null as string | null }));
+  const refused = ops.data?.counters.unconfirmed_refused;
 
   return (
-    <Page title="Pramaan ledger"
-          sub="Har booking ek signed, chained receipt — aur ye page usse aapke browser mein dobara jaanchta hai, server pe bharosa kiye bina."
-          actions={online ? (
+    <Page title="Pramaan ledger" sub={SUB}
+          actions={live ? (
             <>
               <button className="btn btn-ghost btn-sm" disabled={busy} onClick={reload}><Icon name="refresh" small />Dobara verify karo</button>
               <button className="btn btn-danger btn-sm" disabled={busy || !data.receipts.length}
@@ -55,24 +60,28 @@ export default function Ledger() {
       <div className="tiles">
         <Tile index={0} label="Receipts" value={data.receipts.length} foot={`tenant ${data.tenant_id}`} />
         <Tile index={1} label="Chain"
-              value={verdict
-                ? (verdict.ok ? <Stamp tone="leaf"><Icon name="check" small />VALID</Stamp> : <Stamp><Icon name="x" small />BROKEN</Stamp>)
-                : <span className="muted" style={{ fontSize: 16 }}>{online ? "jaanch raha hoon…" : "live engine chahiye"}</span>}
-              foot={verdict
-                ? (verdict.ok ? `${verdict.checked} receipts, har hash aur signature dobara bana` : `seq ${verdict.firstBrokenSeq}: ${verdict.reason}`)
-                : (online ? "" : "sample receipts verify nahi ho sakte")} />
-        <Tile index={2} label="Bina confirm writes" value={0} foot="ledger inhe accept hi nahi karta" />
+              value={shown
+                ? (shown.ok ? <Stamp tone="leaf"><Icon name="check" small />VALID</Stamp> : <Stamp><Icon name="x" small />BROKEN</Stamp>)
+                : <span className="muted" style={{ fontSize: 16 }}>{live ? "jaanch raha hoon…" : "live engine chahiye"}</span>}
+              foot={shown
+                ? (shown.ok ? `${shown.checked} receipts, har hash aur signature dobara bana` : `seq ${shown.firstBrokenSeq}: ${shown.reason}`)
+                : (live ? "" : "sample receipts verify nahi ho sakte")} />
+        <Tile index={2} label="Bina confirm writes"
+              value={refused ?? "—"}
+              foot={refused == null
+                ? (live ? (ops.error ? `counter nahi mila: ${ops.error}` : "engine se aa raha hai…") : "live engine ka counter")
+                : "ledger ne bina proof ke writes mana kiye · engine counter"} />
       </div>
 
       {problem && <div className="banner" role="status"><Icon name="x" small />Verify nahi ho paya: {problem}</div>}
 
-      {verdict && (
+      {shown && (
         <Panel title="Verdict" hint={label}>
           <div className="body" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
-              {verdict.ok
-                ? <Stamp tone="leaf" big><Icon name="check" />VALID · {verdict.checked} receipts · chain intact</Stamp>
-                : <Stamp big><Icon name="x" />BROKEN at seq {verdict.firstBrokenSeq} · {verdict.reason}</Stamp>}
+              {shown.ok
+                ? <Stamp tone="leaf" big><Icon name="check" />VALID · {shown.checked} receipts · chain intact</Stamp>
+                : <Stamp big><Icon name="x" />BROKEN at seq {shown.firstBrokenSeq} · {shown.reason}</Stamp>}
             </div>
             <div className="chain" aria-hidden="true">
               {rows.map((r) => <i key={r.seq} className={firstBroken != null && r.seq >= firstBroken ? "bad" : undefined} />)}
@@ -100,7 +109,7 @@ export default function Ledger() {
                 <td>
                   {r.ok === true ? <Chip kind="ok"><Icon name="check" small />verified</Chip>
                     : r.ok === false ? <Chip kind="bad"><Icon name="x" small />BROKEN</Chip>
-                    : <Chip kind="muted">{online ? "skipped" : "sample"}</Chip>}
+                    : <Chip kind="muted">{live ? "skipped" : "sample"}</Chip>}
                 </td>
                 <td className="muted">{r.reason ?? (r.ok === true ? "hash + link + signature, teeno dobara bane" : "")}</td>
               </tr>

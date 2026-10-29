@@ -70,7 +70,7 @@ reviewer and tie-breaker*, not exclusive author — everyone works everywhere.
 |---|---|---|
 | Voice engine core — pipeline, speculation, adapters, web call | `engine/haanji/pipeline.py`, `speculation/`, `adapters/`, `web/talk.html`, `server.py` sessions | Aritra Hazra |
 | Language & channels — Bhasha Bridge, NLU, packs, WhatsApp, missed-call | `engine/haanji/bhasha/`, `nlu.py`, `speak.py`, `channels/`, `packs/` | Prabhav Upadhayay |
-| Trust & surfaces — Pramaan ledger, verifier, console, Pack Studio, Core API | `engine/haanji/pramaan/`, `web/verify.html`, `console/`, `core-api/` | Anuj Uniyal |
+| Trust & surfaces — Pramaan ledger, verifier, console, Pack Studio, Core API | `engine/haanji/pramaan/`, `web/verify.html`, `console/`, `experimental/core-api/` | Anuj Uniyal |
 
 Cross-cutting files (`models.py`, `policy.py`, `tools/`, this file) belong to
 everyone: touching one means saying so in the group chat *before* pushing, and

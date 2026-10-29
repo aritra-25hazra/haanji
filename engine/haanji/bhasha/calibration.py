@@ -32,7 +32,7 @@ def labelled_tokens(pairs: Iterable[Any]) -> list[tuple[float, bool]]:
             continue                                 # cannot align confidences to words
         sm = difflib.SequenceMatcher(a=truth, b=heard, autojunk=False)
         wrong = [True] * len(heard)
-        for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        for tag, _i1, _i2, j1, j2 in sm.get_opcodes():
             if tag == "equal":
                 for j in range(j1, j2):
                     wrong[j] = False

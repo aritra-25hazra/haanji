@@ -53,7 +53,9 @@ CREATE INDEX IF NOT EXISTS wa_thread_ix ON wa_messages (tenant_id, phone, at);
 
 
 def _now() -> str:
-    return dt.datetime.now().isoformat(timespec="seconds")
+    # Millisecond precision: two messages in the same second (a reminder and
+    # its reply, an offer right after a cancellation) must keep their order.
+    return dt.datetime.now().isoformat(timespec="milliseconds")
 
 
 class DemoStore:
@@ -123,17 +125,41 @@ class DemoStore:
 
     # -------------------------------------------------------------- whatsapp
     def add_wa(self, tenant_id: str, phone: str, direction: str, text: str,
-               meta: dict | None = None) -> None:
+               meta: dict | None = None) -> str:
+        msg_id = str(uuid.uuid4())
         self.conn.execute("INSERT INTO wa_messages VALUES (?,?,?,?,?,?,?)",
-                          (str(uuid.uuid4()), tenant_id, phone, direction, text, _now(),
+                          (msg_id, tenant_id, phone, direction, text, _now(),
                            json.dumps(meta or {}, ensure_ascii=False)))
         self.conn.commit()
+        return msg_id
 
     def wa_thread(self, tenant_id: str, phone: str, limit: int = 200) -> list[dict[str, Any]]:
         rows = self.conn.execute(
             "SELECT * FROM wa_messages WHERE tenant_id=? AND phone=? ORDER BY at, msg_id LIMIT ?",
             (tenant_id, phone, limit))
         return [dict(r) for r in rows]
+
+    def last_outbound_with(self, tenant_id: str, phone: str, meta_key: str, within_hours: int = 48) -> dict[str, Any] | None:
+        """The most recent outbound message to ``phone`` whose meta carries
+        ``meta_key`` (a reminder, a waitlist offer), if it is recent enough
+        for a reply to be about it."""
+        since = (dt.datetime.now() - dt.timedelta(hours=within_hours)).isoformat(timespec="seconds")
+        rows = self.conn.execute(
+            "SELECT * FROM wa_messages WHERE tenant_id=? AND phone=? AND direction='out' AND at >= ?"
+            " ORDER BY at DESC, msg_id LIMIT 20", (tenant_id, phone, since))
+        for r in rows:
+            meta = json.loads(r["meta_json"] or "{}")
+            if meta_key in meta:
+                return {**dict(r), "meta": meta}
+        return None
+
+    def set_meta(self, msg_id: str, **changes: Any) -> None:
+        r = self.conn.execute("SELECT meta_json FROM wa_messages WHERE msg_id=?", (msg_id,)).fetchone()
+        if r is None:
+            return
+        meta = {**json.loads(r["meta_json"] or "{}"), **changes}
+        self.conn.execute("UPDATE wa_messages SET meta_json=? WHERE msg_id=?", (json.dumps(meta, ensure_ascii=False), msg_id))
+        self.conn.commit()
 
     def wa_threads(self, tenant_id: str) -> list[dict[str, Any]]:
         rows = self.conn.execute(

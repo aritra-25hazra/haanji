@@ -20,6 +20,10 @@ custom work; "—" means not offered. Where we are unsure we say so.
 | Google Calendar / iCalendar feed of bookings | yes | via functions | via functions | via functions | via integrations | partial | partial |
 | Self-hostable, open source, runs offline with mocks | **yes** (Apache-2.0) | — | — | — | — | — | — |
 | Reproducible evaluation with baselines and CIs | **yes** | — | — | — | — | — | — |
+| Day-before reminder with reply handling (1 = confirm, 2 = cancel, through the same ledger) | **yes** (1.1) | via functions | via functions | — | partial (flows) | yes | yes |
+| Deposit link with every booking; payment sealed in the receipt chain | **yes** (1.1, Razorpay / mock) | via functions | via functions | — | via integrations | — | partial |
+| Waitlist: a cancellation offers the freed slot to the first caller waiting | **yes** (1.1) | — | — | — | partial | — | — |
+| Caller identity before changing a booking (caller-id / sender, or the receipt code on the web) | **yes** (1.1, recorded in the receipt) | partial | partial | partial | partial | partial | partial |
 | Price model | ≈ ₹3/call measured (vendor minutes + ₹0.0002 infra) | per-minute + model | per-minute | per-minute | per-request/minute | per-minute | per-conversation |
 
 What the others do better today: production telephony at scale, many

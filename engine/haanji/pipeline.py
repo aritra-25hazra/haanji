@@ -15,13 +15,13 @@ the product:
 """
 from __future__ import annotations
 import asyncio
+import hashlib
 import re
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from .adapters import LLMTurn
-from .devanagari import latinise
 from .adapters.factory import make_llm
 from .adapters.mock import MockSTT, MockTTS
 from .backend.local import LocalBackend
@@ -29,10 +29,10 @@ from .bhasha.bridge import BhashaBridge
 from .bhasha.lexicon import TenantLexicon
 from .clock import CLOCK
 from .config import EngineConfig
+from .devanagari import latinise
 from .guardrails import Action, Guard
 from .metrics import Metrics
-from .models import (ConversationContext, Correction, Outcome, Speaker, Token,
-                     ToolCall, ToolResult, Transcript, Turn)
+from .models import ConversationContext, Correction, Outcome, Speaker, Token, ToolCall, ToolResult, Transcript, Turn
 from .policy import DialoguePolicy
 from .pramaan.ledger import Ledger
 from .pramaan.receipt import ConfirmationProof
@@ -122,7 +122,8 @@ class CallSession:
         self.ctx = ConversationContext(tenant_id=tenant_id)
         self.speculation = SpeculationEngine(
             tenant_id, self._execute_tool, registry.is_read_only, self.cfg.speculation,
-            IntentPredictor(services=pack.service_aliases()))
+            IntentPredictor(services=pack.service_aliases(), staff=list(pack.staff),
+                            today=lambda: backend.today))
         self.llm_system: str = getattr(self.llm, "system", "")
         self.llm_tools: list[dict] = getattr(self.llm, "tools", [])
         self.turns: list[TurnRecord] = []
@@ -166,13 +167,17 @@ class CallSession:
     async def hangup(self) -> None:
         await self._finish_speaking()
 
-    async def open(self, *, phone: str | None = None) -> None:
+    async def open(self, *, phone: str | None = None, verified: bool = False) -> None:
         """Answer the call. When the channel already knows the caller's number,
         a returning customer is looked up and greeted by name, and the number
-        is pre-filled so the policy never asks for it again."""
+        is pre-filled so the policy never asks for it again. ``verified`` says
+        the channel proved the number (network caller-id, the WhatsApp
+        sender); a typed number on the web is not proof of anything, and the
+        policy asks for the receipt code before touching an existing booking."""
         customer = None
         if phone:
             self.ctx.customer_phone = phone
+            self.ctx.phone_verified = bool(verified)
             found = await self.backend.lookup_customer(self.tenant_id, phone)
             if found.get("found"):
                 customer = found["customer"]
@@ -247,7 +252,7 @@ class CallSession:
         # A reply to a question that asked for the caller's name IS a name:
         # nothing in it may be "repaired", however unusual it looks. This is
         # the text-channel form of the phone path's name guard.
-        asked_name = bool(re.search(r"\b(naam|name)\b", self.ctx.last_agent_utterance,
+        asked_name = bool(re.search(r"\b(naam|name|naav|peru)\b", self.ctx.last_agent_utterance,
                                     re.IGNORECASE))
         tokens = [Token(w, 0.95 if asked_name or w.lower().strip('.,!?') in known
                         or w.isdigit() else 0.62)
@@ -268,7 +273,7 @@ class CallSession:
         self.speculation.on_partial(corrected, self.ctx)
 
     async def handle_text_turn(self, text: str, *, confidence: float | None = None,
-                               interrupted: bool = False) -> TurnRecord:
+                               interrupted: bool = False, audio: bytes | None = None) -> TurnRecord:
         """One caller turn that arrived as text — WhatsApp, or a web call whose
         recogniser lives in the browser. Runs the identical hot path: correction,
         guardrails, policy, tools with speculation claims, and the ledger.
@@ -279,6 +284,7 @@ class CallSession:
         text = latinise(text)
         self.speculation.begin_turn()
         await self._finish_speaking()
+        self._reply_audio = audio                 # hashed into the proof if a write follows
         final = self._text_transcript(text, final=True)
         if confidence is not None:
             for token in final.tokens:
@@ -305,8 +311,11 @@ class CallSession:
             record.guard = verdict.rule
             turn = LLMTurn(tool_calls=[ToolCall("handoff", {"reason": verdict.rule})])
         elif verdict.action is Action.REFUSE:
+            # A refusal is spoken in the pack's refusal line and the call goes
+            # on; it used to be routed through the handoff tool, which told a
+            # caller asking about a discount that they had an emergency.
             record.guard = verdict.rule
-            turn = LLMTurn(tool_calls=[ToolCall("handoff", {"reason": verdict.rule})])
+            turn = LLMTurn(tool_calls=[ToolCall("refuse", {"reason": verdict.rule, "line": verdict.line})])
         else:
             t_llm = time.perf_counter()
             turn = await self.llm.respond(self.llm_system, [
@@ -396,20 +405,26 @@ class CallSession:
 
     def _proof(self, reply_text: str, confidence: float, reply_started_ms: int) -> ConfirmationProof:
         """Bind the write to the exact words that authorised it."""
+        audio = getattr(self, "_reply_audio", None)
         return ConfirmationProof(
             prompt_text=self.ctx.last_agent_utterance,
             prompt_start_ms=self.ctx.last_agent_started_ms,
             reply_text=reply_text,
             reply_start_ms=reply_started_ms,
             asr_confidence=round(confidence, 3),
-            audio_offset_ms=max(0, reply_started_ms - self.ctx.last_agent_started_ms))
+            audio_offset_ms=max(0, reply_started_ms - self.ctx.last_agent_started_ms),
+            audio_sha256=hashlib.sha256(audio).hexdigest() if audio else None)
 
     # ------------------------------------------------------------------ close
     def finish(self) -> CallReport:
         outcome = self.ctx.outcome
         if outcome is None:
-            outcome = (Outcome.FAQ_ANSWERED if self.ctx.answered_questions
-                       else Outcome.ABANDONED)
+            if self.ctx.answered_questions:
+                outcome = Outcome.FAQ_ANSWERED
+            elif self.ctx.flags.get("refusals"):
+                outcome = Outcome.REFUSED
+            else:
+                outcome = Outcome.ABANDONED
         self.metrics.inc(f"outcome_{outcome.value}")
         return CallReport(
             conversation_id=self.ctx.conversation_id, tenant_id=self.tenant_id,

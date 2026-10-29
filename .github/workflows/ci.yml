@@ -15,9 +15,14 @@ jobs:
       - name: install
         working-directory: engine
         run: pip install -e ".[dev,web,llm]" jellyfish metaphone
+      - name: lint
+        working-directory: engine
+        run: pip install ruff && ruff check haanji
       - name: unit and property tests
         working-directory: engine
         run: pytest -q
+      - name: the README and the report quote the repository's real counts
+        run: python research/harness/readme_sync.py --check
       - name: every packaged scenario must still reach its expected outcome
         working-directory: engine
         run: python -m haanji.cli selftest --speed 60
@@ -30,14 +35,14 @@ jobs:
           path: research/results.json
 
   core-api:
-    name: core api
+    name: core api (experimental, not deployed)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "21", cache: maven }
       - name: build, unit tests and architecture rules
-        working-directory: core-api
+        working-directory: experimental/core-api
         run: mvn -B verify
 
   console:
@@ -46,8 +51,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: npm, cache-dependency-path: console/package.json }
-      - working-directory: console
+        with: { node-version: "20", cache: npm, cache-dependency-path: console/package-lock.json }
+      - name: install
+        working-directory: console
         run: npm install
-      - working-directory: console
+      - name: lint
+        working-directory: console
+        run: npm run lint
+      - name: component and unit tests (jsdom, mocked engine)
+        working-directory: console
+        run: npm test
+      - name: typecheck and build
+        working-directory: console
         run: npm run build
