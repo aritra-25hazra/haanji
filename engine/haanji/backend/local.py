@@ -297,9 +297,15 @@ class LocalBackend:
         if day < self.today:
             return {**base, "closed": False, "past": True, "slots": []}
 
-        taken = {(r["staff"], r["time"]) for r in self.conn.execute(
-            "SELECT staff, time FROM bookings WHERE tenant_id=? AND date=? AND status='CONFIRMED'",
-            (tenant_id, iso))}
+        occupied: dict[str, list[tuple[int, int]]] = {}
+        for row in self.conn.execute(
+            "SELECT staff, time, duration_min FROM bookings"
+            " WHERE tenant_id=? AND date=? AND status='CONFIRMED'",
+            (tenant_id, iso),
+        ):
+            start = _mins(row["time"])
+            occupied.setdefault(row["staff"], []).append(
+                (start, start + int(row["duration_min"] or 30)))
         now_min = self.now_minutes(day)
         lo, hi = PERIODS.get(period or "", (0, 24 * 60))
         step = max(15, duration)
@@ -309,7 +315,10 @@ class LocalBackend:
                 return []
             if start < hrow["open_min"] or start > hrow["close_min"] - duration:
                 return []
-            return [p for p in wanted_staff if (p, _hhmm(start)) not in taken]
+            end = start + duration
+            return [p for p in wanted_staff
+                    if not any(booked_start < end and start < booked_end
+                               for booked_start, booked_end in occupied.get(p, []))]
 
         def party_plan(start: int) -> list[dict[str, str]] | None:
             """Where ``party`` people can be seen: together, or in a row."""
@@ -416,6 +425,18 @@ class LocalBackend:
             raise BackendError("that time is outside working hours")
         if day < self.today or _mins(time) <= self.now_minutes(day):
             raise BackendError("that time has already passed")
+        start, end = _mins(time), _mins(time) + duration
+        # SQLite stores clock times as text, so compare the occupied intervals
+        # as minutes in Python rather than relying on lexical time ordering.
+        for row in self.conn.execute(
+            "SELECT time, duration_min FROM bookings"
+            " WHERE tenant_id=? AND staff=? AND date=? AND status='CONFIRMED'",
+            (tenant_id, staff, iso),
+        ):
+            booked_start = _mins(row["time"])
+            booked_end = booked_start + int(row["duration_min"] or 30)
+            if booked_start < end and start < booked_end:
+                raise BackendError("that slot overlaps another booking")
         booking = Booking(str(uuid.uuid4()), tenant_id, svc["name"] if svc else service,
                           staff, iso, time, duration, customer_name, phone,
                           "CONFIRMED", receipt_code)

@@ -287,3 +287,20 @@ def test_a_phone_confirmation_binds_the_reply_audio_into_the_receipt():
     # a receipt without audio hashes exactly as before 1.1: the field is absent, not null
     from haanji.pramaan.receipt import ConfirmationProof
     assert "audio_sha256" not in ConfirmationProof("q", 0, "a", 1, 0.9).to_dict()
+
+
+# ──────────────────────────────────────────── durations block overlapping slots
+def test_a_long_booking_blocks_the_overlapping_half_hours_for_that_staff_member():
+    pack = load_pack(PACK)
+    backend, _ = open_backend(pack, "t", today=dt.date(2026, 10, 29))
+    # root canal is 60 minutes with Dr Sheikh at 09:30: 10:00 is inside it.
+    backend.book(tenant_id="t", service="root canal", date="2026-10-30", time="09:30", staff="Dr Sheikh",
+                 customer_name="A", phone="9800000001")
+    with pytest.raises(Exception, match="overlaps"):
+        backend.book(tenant_id="t", service="teeth cleaning", date="2026-10-30", time="10:00", staff="Dr Sheikh",
+                     customer_name="B", phone="9800000002")
+    free = asyncio.run(backend.availability("t", "teeth cleaning", "2026-10-30", staff="Dr Sheikh", limit=3))["slots"]
+    assert [s["time"] for s in free][:2] == ["10:30", "11:00"], free
+    # another staff member is unaffected
+    backend.book(tenant_id="t", service="teeth cleaning", date="2026-10-30", time="10:00", staff="Dr Malhotra",
+                 customer_name="C", phone="9800000003")
