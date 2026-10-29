@@ -46,19 +46,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [authChecked, setAuthChecked] = useState(false);
   const [hasToken, setHasToken] = useState<boolean>(() => !!getToken());
 
-  const refresh = useCallback(async () => {
-    const s = await engine.status();
-    setStatus(s);
-    setChecked(true);
-    if (s?.auth?.enabled) {
-      if (getToken()) {
+  // One status round-trip, then (with auth on and a token) "who am I". All
+  // state lands in the continuation, never synchronously in an effect.
+  const refresh = useCallback((): Promise<void> =>
+    engine.status().then(async (s) => {
+      setStatus(s);
+      setChecked(true);
+      if (s?.auth?.enabled && getToken()) {
         try { const me = await engine.me(); setUser(me.user); } catch { setUser(null); }
-      } else { setUser(null); }
-    } else { setUser(null); }
-    setHasToken(!!getToken());
-    setAuthChecked(true);
-    if (s && !s.packs.includes(pack)) setPackState(s.default_pack);
-  }, [pack]);
+      } else {
+        setUser(null);
+      }
+      setHasToken(!!getToken());
+      setAuthChecked(true);
+      if (s && !s.packs.includes(pack)) setPackState(s.default_pack);
+    }), [pack]);
 
   useEffect(() => {
     const out = () => { setUser(null); setHasToken(false); };

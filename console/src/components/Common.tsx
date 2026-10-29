@@ -275,12 +275,14 @@ export function fmtInr(n: number): string { return "₹" + Math.round(n).toLocal
  *  hatched because they cost the caller nothing. */
 export function Waterfall({ spans, total }: { spans: { name: string; ms: number; speculated?: boolean; ok?: boolean; detail?: string }[]; total?: number | null }) {
   const sum = Math.max(total ?? 0, spans.reduce((a, s) => a + (s.speculated ? 0 : s.ms), 0), 1);
-  let acc = 0;
+  // Each bar starts where the previous non-speculated one ended.
+  const placed = spans.reduce<{ s: (typeof spans)[number]; left: number }[]>((acc, s) => {
+    const prev = acc[acc.length - 1];
+    return [...acc, { s, left: prev ? prev.left + (prev.s.speculated ? 0 : prev.s.ms) : 0 }];
+  }, []);
   return (
     <div className="waterfall" role="img" aria-label={spans.map((s) => `${s.name} ${Math.round(s.ms)} ms`).join(", ")}>
-      {spans.map((s, i) => {
-        const left = acc;
-        if (!s.speculated) acc += s.ms;
+      {placed.map(({ s, left }, i) => {
         const w = Math.max(0.6, (s.ms / sum) * 100);
         return (
           <div key={i} className="wf-row">
@@ -300,24 +302,21 @@ export function Waterfall({ spans, total }: { spans: { name: string; ms: number;
 export function useDevanagari(lines: string[]): { on: boolean; toggle: () => void; map: (s: string) => string } {
   const [on, setOn] = useState<boolean>(devanagariWanted);
   const [table, setTable] = useState<Record<string, string>>({});
+  const pending = useRef(new Set<string>());
   const key = lines.join("\u0001");
   useEffect(() => {
     if (!on) return;
+    // Ask for the lines neither translated nor already in flight. The answer
+    // lands in the table, which re-runs this effect until nothing is missing.
     const wanted = key ? key.split("\u0001") : [];
-    let cancelled = false;
-    // Ask for the lines not translated yet; the updater sees the latest table.
-    setTable((t) => {
-      const missing = wanted.filter((l) => l && !(l in t));
-      if (missing.length) {
-        engine.devanagari(missing).then((r) => {
-          if (cancelled) return;
-          setTable((cur) => { const n = { ...cur }; missing.forEach((l, i) => { n[l] = r.texts[i] ?? l; }); return n; });
-        }).catch(() => { /* engine away: show Roman */ });
-      }
-      return t;
-    });
-    return () => { cancelled = true; };
-  }, [on, key]);
+    const missing = wanted.filter((l) => l && !(l in table) && !pending.current.has(l));
+    if (missing.length === 0) return;
+    missing.forEach((l) => pending.current.add(l));
+    engine.devanagari(missing)
+      .then((r) => setTable((cur) => { const n = { ...cur }; missing.forEach((l, i) => { n[l] = r.texts[i] ?? l; }); return n; }))
+      .catch(() => { /* engine away: show Roman */ })
+      .finally(() => missing.forEach((l) => pending.current.delete(l)));
+  }, [on, key, table]);
   const toggle = () => { setDevanagariWanted(!on); setOn(!on); };
   return { on, toggle, map: (s: string) => (on ? table[s] ?? s : s) };
 }
