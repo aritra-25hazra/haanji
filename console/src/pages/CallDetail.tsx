@@ -3,17 +3,19 @@ import { Link, useParams } from "react-router-dom";
 import { engine, fmtMs, parseReceipts, parseTurns } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Chip, DevToggle, Empty, Icon, Loading, OutcomeChip, Page, Panel, Repair, Stamp, Tile, Waterfall, fmtDate, fmtTime, useData, useDevanagari } from "../components/Common";
+import { Chip, DevToggle, Empty, Icon, Loading, NotLive, OutcomeChip, Page, Panel, Repair, Stamp, Tile, Waterfall, fmtDate, fmtTime, useData, useDevanagari } from "../components/Common";
 import type { CallRow } from "../types";
 
 export default function CallDetail() {
   const { id = "" } = useParams();
-  const { pack, online } = useApp();
-  const { data, loading, error } = useData<CallRow | null>(
-    () => (online ? engine.call(pack, id) : Promise.resolve(sample.call(id))), [pack, online, id]);
+  const { pack, mode } = useApp();
+  const live = mode === "live";
+  const loader = live ? () => engine.call(pack, id) : mode === "demo" ? () => Promise.resolve(sample.call(id)) : null;
+  const { data, loading, error } = useData<CallRow | null>(loader, [pack, mode, id]);
   // Hooks before any early return: the transliteration table follows the data.
   const dev = useDevanagari(data ? parseTurns(data.turns_json).flatMap((t) => [t.heard, t.said]) : []);
 
+  if (!live && mode !== "demo") return <NotLive title="Call" />;
   if (loading && !data) return <Loading />;
   if (!data) {
     return (

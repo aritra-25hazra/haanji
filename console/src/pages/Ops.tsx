@@ -2,18 +2,21 @@ import { useEffect } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { engine } from "../engine";
 import { useApp } from "../state";
-import { Chip, Empty, Loading, Page, Panel, Register, Tile, Waterfall, fmtTime, useData } from "../components/Common";
+import { Chip, Empty, Loading, NotLive, Page, Panel, Register, Tile, Waterfall, fmtTime, useData } from "../components/Common";
+
+const SUB = "Latency objective, traces, counters.";
 
 export default function Ops() {
-  const { pack, online } = useApp();
-  const { data, loading, error, reload } = useData(() => (online ? engine.ops(pack) : Promise.resolve(null)), [pack, online]);
+  const { pack, mode } = useApp();
+  const live = mode === "live";
+  const { data, loading, error, reload } = useData(live ? () => engine.ops(pack) : null, [pack, mode]);
   useEffect(() => {
-    if (!online) return;
+    if (!live) return;
     const t = setInterval(reload, 10000);
     return () => clearInterval(t);
-  }, [online, reload]);
+  }, [live, reload]);
 
-  if (!online) return <Page title="Ops" sub="Latency objective, traces, counters."><Empty><p>Ops view live engine se aata hai.</p></Empty></Page>;
+  if (!live) return <NotLive title="Ops" sub={SUB} demo={<p>Ops view live engine se aata hai.</p>} />;
   if (loading && !data) return <Loading />;
   if (!data) return <Page title="Ops"><Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara</button></Empty></Page>;
 

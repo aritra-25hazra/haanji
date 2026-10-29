@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { engine } from "../engine";
 import { useApp } from "../state";
-import { Chip, Empty, Icon, Page, Panel } from "../components/Common";
+import { Chip, Icon, NotLive, Page, Panel } from "../components/Common";
 import type { Draft, DraftRequest } from "../types";
 
 const TYPES: [string, string][] = [["clinic", "Clinic / doctor"], ["salon", "Salon / spa"], ["lab", "Diagnostic lab"], ["coaching", "Coaching institute"], ["other", "Kuch aur"]];
@@ -14,7 +14,7 @@ interface ServiceRow { name: string; duration: string; price: string; staff: str
 const splitList = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
 
 export default function Onboard() {
-  const { online, status, setPack, refresh } = useApp();
+  const { mode, isOwner, status, setPack, refresh } = useApp();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [type, setType] = useState("clinic");
@@ -69,8 +69,8 @@ export default function Onboard() {
   const canNext = [name.trim().length > 1, staff.length > 0, Object.values(hours).some((h) => h.open), services.some((s) => s.name.trim()), true][step];
   const talkBase = status?.public_url || "/engine";
 
-  if (!online) {
-    return <Page title="Nayi dukaan" sub="Paanch sawaal, ek pack."><Empty><p>Yeh page live engine ke bina kaam nahi karta — yeh sach mein ek pack banata hai.</p></Empty></Page>;
+  if (mode !== "live") {
+    return <NotLive title="Nayi dukaan" sub="Paanch sawaal, ek pack." demo={<p>Yeh page live engine ke bina kaam nahi karta — yeh sach mein ek pack banata hai.</p>} />;
   }
 
   return (
@@ -149,7 +149,9 @@ export default function Onboard() {
         <Panel title="5 · Taiyaar" hint={draft ? `pack ${draft.pack_id}${draft.exists ? " (pehle se hai — save karne se overwrite hoga)" : ""}` : "pehle pack banao"}
                actions={<>
                  <button className="btn btn-primary btn-sm" onClick={build} disabled={busy !== null}>{busy === "draft" ? "Bana raha…" : "Pack banao"}</button>
-                 <button className="btn btn-ghost btn-sm" onClick={save} disabled={!draft || draft.problems.length > 0 || busy !== null}>{busy === "save" ? "Save…" : "Save karo"}</button>
+                 {isOwner
+                   ? <button className="btn btn-ghost btn-sm" onClick={save} disabled={!draft || draft.problems.length > 0 || busy !== null}>{busy === "save" ? "Save…" : "Save karo"}</button>
+                   : <Chip kind="muted" title="Pack save sirf owner kar sakta hai">save sirf owner</Chip>}
                  <button className="btn btn-ghost btn-sm" onClick={selftest} disabled={!draft || !saved || busy !== null}>{busy === "test" ? "Chal raha…" : "Scenarios chalao"}</button>
                </>}>
           <div className="body form">
