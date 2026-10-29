@@ -4,6 +4,7 @@
  * engine's own shapes. Every page labels it as sample data, and the console
  * never substitutes it for a signed-in owner (see state.tsx `mode`).
  */
+import { dayOfWeek, eachDay } from "./dates";
 import type { Booking, CallRow, Customer, Export, Insights, Lexicon, PackSummary, Payment, Status, Turn, WaitlistEntry } from "./types";
 
 export const SAMPLE_STATUS: Status = {
@@ -84,17 +85,6 @@ const DAY_PLAN: Record<number, Omit<Booking, "booking_id" | "date" | "created_at
   ],
 };
 
-function eachDay(from: string, to: string): string[] {
-  const out: string[] = [];
-  const d = new Date(`${from}T00:00:00`);
-  const end = new Date(`${to}T00:00:00`);
-  for (let i = 0; d <= end && i < 62; i++) {
-    out.push(d.toISOString().slice(0, 10));
-    d.setDate(d.getDate() + 1);
-  }
-  return out;
-}
-
 export const sample = {
   status: SAMPLE_STATUS,
 
@@ -168,7 +158,7 @@ export const sample = {
   bookings(from: string, to: string): Booking[] {
     const out: Booking[] = [];
     for (const date of eachDay(from, to)) {
-      const dow = new Date(`${date}T00:00:00`).getDay();
+      const dow = dayOfWeek(date);
       (DAY_PLAN[dow] ?? []).forEach((b, i) => {
         const n = (Number(date.replace(/-/g, "")) * 7 + i * 131) % 9000 + 1000;
         out.push({ ...b, booking_id: `sample-${date}-${i}`, date, created_at: `${date}T08:00:00`, receipt_code: `${n}-${(n * 3) % 9000 + 1000}` });
