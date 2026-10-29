@@ -15,6 +15,7 @@ the product:
 """
 from __future__ import annotations
 import asyncio
+import hashlib
 import re
 import time
 from dataclasses import dataclass, field
@@ -273,7 +274,7 @@ class CallSession:
         self.speculation.on_partial(corrected, self.ctx)
 
     async def handle_text_turn(self, text: str, *, confidence: float | None = None,
-                               interrupted: bool = False) -> TurnRecord:
+                               interrupted: bool = False, audio: bytes | None = None) -> TurnRecord:
         """One caller turn that arrived as text — WhatsApp, or a web call whose
         recogniser lives in the browser. Runs the identical hot path: correction,
         guardrails, policy, tools with speculation claims, and the ledger.
@@ -284,6 +285,7 @@ class CallSession:
         text = latinise(text)
         self.speculation.begin_turn()
         await self._finish_speaking()
+        self._reply_audio = audio                 # hashed into the proof if a write follows
         final = self._text_transcript(text, final=True)
         if confidence is not None:
             for token in final.tokens:
@@ -404,13 +406,15 @@ class CallSession:
 
     def _proof(self, reply_text: str, confidence: float, reply_started_ms: int) -> ConfirmationProof:
         """Bind the write to the exact words that authorised it."""
+        audio = getattr(self, "_reply_audio", None)
         return ConfirmationProof(
             prompt_text=self.ctx.last_agent_utterance,
             prompt_start_ms=self.ctx.last_agent_started_ms,
             reply_text=reply_text,
             reply_start_ms=reply_started_ms,
             asr_confidence=round(confidence, 3),
-            audio_offset_ms=max(0, reply_started_ms - self.ctx.last_agent_started_ms))
+            audio_offset_ms=max(0, reply_started_ms - self.ctx.last_agent_started_ms),
+            audio_sha256=hashlib.sha256(audio).hexdigest() if audio else None)
 
     # ------------------------------------------------------------------ close
     def finish(self) -> CallReport:

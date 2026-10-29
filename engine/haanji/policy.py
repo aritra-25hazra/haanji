@@ -174,10 +174,15 @@ class DialoguePolicy:
         # 3. We asked for a name and number in order to leave a callback note.
         if ctx.flags.get("await_details") and ctx.customer_phone:
             ctx.flags.pop("await_details")
-            return LLMTurn(tool_calls=[ToolCall("capture_lead", {
+            args: dict[str, Any] = {
                 "intent": ctx.flags.get("lead_intent", ctx.service or "enquiry"),
                 "name": ctx.customer_name, "phone": ctx.customer_phone,
-                "note": ctx.transcript(2)})])
+                "note": ctx.transcript(2)}
+            if ctx.flags.pop("full_day", None):
+                # They wanted a day that was full: the lead is also a place
+                # on that day's waitlist, so a freed slot finds them first.
+                args.update({"date": ctx.date, "service": ctx.service, "period": ctx.period})
+            return LLMTurn(tool_calls=[ToolCall("capture_lead", args)])
 
         # 4. Cancellation.
         if nlu.words(text) & nlu.CANCEL_WORDS and not ctx.flags.get("await_details"):
@@ -324,6 +329,7 @@ class DialoguePolicy:
                 if not alts:
                     ctx.flags["await_details"] = True
                     ctx.flags["lead_intent"] = ctx.service or "appointment"
+                    ctx.flags["full_day"] = True
                     return LLMTurn(say=self._p("no_slot_at_none", "{at} pe jagah nahi hai, aur us din koi aur slot bhi khaali nahi.").format(at=at)
                                    + self._p("leave_details", " Aap apna naam aur number de dijiye, hum call karke time set kar denge."))
                 ctx.last_offered_slots = alts
@@ -338,6 +344,8 @@ class DialoguePolicy:
             if not slots:
                 ctx.flags["await_details"] = True
                 ctx.flags["lead_intent"] = ctx.service or "appointment"
+                if not data.get("closed") and ctx.date:
+                    ctx.flags["full_day"] = True
                 reason = (self._p("closed_day", "Us din hum band rehte hain.")
                           if data.get("closed")
                           else self._p("no_slots", "Us din sab slot bhar gaye hain."))

@@ -78,6 +78,8 @@ class TwilioBridge:
         self.frames_in = 0
         self.frames_out = 0
         self.started = time.monotonic()
+        self._reply_audio = bytearray()           # the caller's μ-law since the agent's last line
+        self.keep_audio_dir = os.environ.get("HAANJI_CONFIRMATION_AUDIO_DIR") or None
 
     # ---------------------------------------------------------------- audio
     async def _send_media(self, mulaw: bytes) -> None:
@@ -131,12 +133,28 @@ class TwilioBridge:
             if self.human_hook and self.human_hook(self.sid, self.holder, text):
                 return                                     # a person answers from the console
             confidence = min(confs) if confs else None
-            record = await session.handle_text_turn(text, confidence=confidence)
+            audio = bytes(self._reply_audio) or None
+            self._reply_audio = bytearray()
+            record = await session.handle_text_turn(text, confidence=confidence, audio=audio)
+            if audio and self.keep_audio_dir and any(not getattr(record, "all_read_only", True) for _ in [0]) \
+                    and session.receipts:
+                self._keep_clip(session.receipts[-1], audio)
             if self.on_turn:
                 await self.on_turn(record, self.holder)
             await self.say(record.said)
             if session.ctx.flags.get("ended"):
                 await self._finish_speaking_then_hangup()
+
+    def _keep_clip(self, code: str, audio: bytes) -> None:
+        """HAANJI_CONFIRMATION_AUDIO_DIR: keep the reply that sealed a receipt,
+        named by the receipt code, so the hash in the receipt can be checked
+        against a file the shop holds."""
+        try:
+            os.makedirs(self.keep_audio_dir, exist_ok=True)
+            with open(os.path.join(self.keep_audio_dir, f"{code.replace('-', '')}.ulaw"), "wb") as fh:
+                fh.write(audio)
+        except OSError:
+            pass
 
     async def _finish_speaking_then_hangup(self) -> None:
         if self._speaking:
@@ -159,7 +177,10 @@ class TwilioBridge:
                 elif ev == "media":
                     self.frames_in += 1
                     if self.stt is not None and msg["media"].get("track", "inbound") == "inbound":
-                        await self.stt.send(base64.b64decode(msg["media"]["payload"]))
+                        chunk = base64.b64decode(msg["media"]["payload"])
+                        if len(self._reply_audio) < 8000 * 60:          # at most a minute of a reply
+                            self._reply_audio.extend(chunk)
+                        await self.stt.send(chunk)
                 elif ev == "stop":
                     break
         except Exception:                                  # noqa: BLE001 - the socket closed

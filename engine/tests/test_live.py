@@ -58,5 +58,5 @@ def test_an_idle_stream_sends_keepalives(monkeypatch):
 
 
 def test_the_sse_route_is_registered():
-    paths = {r.path for r in server.app.routes}
+    paths = {getattr(r, "path", None) for r in server.app.routes}
     assert "/api/events" in paths and "/api/events/recent" in paths

@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import datetime as dt
 import json
+import os
 import sqlite3
 import sys
 
@@ -174,6 +175,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out", default=None)
     p.set_defaults(func=cmd_bench)
 
+    p = sub.add_parser("backup", help="write every store under the data directory to one tar.gz")
+    p.add_argument("--var-dir", default=os.environ.get("HAANJI_VAR_DIR", "var"))
+    p.add_argument("--out", default=None, help="file to write (default: haanji-<timestamp>.tar.gz)")
+    p.add_argument("--s3", action="store_true", help="also upload to HAANJI_BACKUP_S3_BUCKET")
+    p.set_defaults(func=cmd_backup)
+
+    p = sub.add_parser("restore", help="unpack a backup into an empty data directory")
+    p.add_argument("archive", help="a tar.gz from `haanji backup`, or 's3' for the newest one in the bucket")
+    p.add_argument("--var-dir", default=os.environ.get("HAANJI_VAR_DIR", "var"))
+    p.add_argument("--force", action="store_true", help="overwrite a data directory that already has databases")
+    p.set_defaults(func=cmd_restore)
+
     p = sub.add_parser("verify", help="verify a ledger database independently")
     p.add_argument("--db", required=True)
     p.add_argument("--tenant", required=True)
@@ -195,6 +208,29 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--reload", action="store_true")
     p.set_defaults(func=cmd_serve)
     return ap
+
+
+def cmd_backup(args) -> int:
+    from . import backup as backup_mod
+    data = backup_mod.make_backup(args.var_dir)
+    out = args.out or backup_mod.backup_name()
+    with open(out, "wb") as fh:
+        fh.write(data)
+    print(f"wrote {out} ({len(data):,} bytes)")
+    if args.s3:
+        print("uploaded to", backup_mod.upload_s3(data, os.path.basename(out)))
+    return 0
+
+
+def cmd_restore(args) -> int:
+    from . import backup as backup_mod
+    data = backup_mod.latest_s3() if args.archive == "s3" else open(args.archive, "rb").read()
+    if not data:
+        print("nothing to restore", file=sys.stderr)
+        return 1
+    files = backup_mod.restore(args.var_dir, data, only_if_empty=not args.force)
+    print(f"restored {len(files)} files into {args.var_dir}")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

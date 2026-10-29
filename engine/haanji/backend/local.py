@@ -47,7 +47,20 @@ CREATE TABLE IF NOT EXISTS knowledge (
 CREATE TABLE IF NOT EXISTS leads (
   lead_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, name TEXT, phone TEXT,
   intent TEXT, note TEXT, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS waitlist (
+  entry_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, phone TEXT NOT NULL, name TEXT,
+  service TEXT, date TEXT NOT NULL, period TEXT, status TEXT NOT NULL DEFAULT 'WAITING',
+  created_at TEXT NOT NULL, offered_at TEXT, offered_slot TEXT);
+CREATE INDEX IF NOT EXISTS waitlist_day_ix ON waitlist (tenant_id, date, status);
 """
+# Columns added after 1.0.0; a database made by 1.0.0 gets them on open.
+MIGRATIONS = [
+    ("bookings", "reminder_sent_at", "TEXT"),
+    ("bookings", "paid", "INTEGER NOT NULL DEFAULT 0"),
+    ("bookings", "payment_id", "TEXT"),
+    ("bookings", "notes", "TEXT"),
+]
+BOOKING_STATUSES = ("CONFIRMED", "CANCELLED", "NO_SHOW", "COMPLETED")
 
 # Nominal latencies of the systems this backend stands in for. The demo and
 # the benchmark sleep for these (divided by the time scale) so that measured
@@ -97,11 +110,30 @@ class Booking:
     phone: str | None = None
     status: str = "CONFIRMED"
     receipt_code: str | None = None
+    created_at: str | None = None
+    reminder_sent_at: str | None = None
+    paid: bool = False
+    payment_id: str | None = None
+    notes: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {"booking_id": self.booking_id, "service": self.service, "staff": self.staff,
-                "date": self.date, "time": self.time, "customer_name": self.customer_name,
-                "phone": self.phone, "status": self.status, "receipt_code": self.receipt_code}
+                "date": self.date, "time": self.time, "duration_min": self.duration_min,
+                "customer_name": self.customer_name,
+                "phone": self.phone, "status": self.status, "receipt_code": self.receipt_code,
+                "created_at": self.created_at, "reminder_sent_at": self.reminder_sent_at,
+                "paid": bool(self.paid), "payment_id": self.payment_id, "notes": self.notes}
+
+    @classmethod
+    def from_row(cls, row) -> "Booking":
+        keys = row.keys() if hasattr(row, "keys") else row
+        return cls(row["booking_id"], row["tenant_id"], row["service"], row["staff"], row["date"], row["time"],
+                   row["duration_min"], row["customer_name"], row["phone"], row["status"], row["receipt_code"],
+                   row["created_at"] if "created_at" in keys else None,
+                   row["reminder_sent_at"] if "reminder_sent_at" in keys else None,
+                   bool(row["paid"]) if "paid" in keys and row["paid"] is not None else False,
+                   row["payment_id"] if "payment_id" in keys else None,
+                   row["notes"] if "notes" in keys else None)
 
 
 def _hhmm(minutes: int) -> str:
@@ -125,6 +157,10 @@ class LocalBackend:
         self.conn = conn
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
+        for table, column, decl in MIGRATIONS:
+            cols = {r["name"] for r in self.conn.execute(f"PRAGMA table_info({table})")}
+            if column not in cols:
+                self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
         self.conn.commit()
         # ``today`` used to be read once at construction, so a server that ran
         # past midnight resolved "kal" to the wrong day. It is a property now;
@@ -384,11 +420,12 @@ class LocalBackend:
                           staff, iso, time, duration, customer_name, phone,
                           "CONFIRMED", receipt_code)
         try:
+            booking.created_at = dt.datetime.now(dt.timezone.utc).isoformat()
             self.conn.execute(
-                "INSERT INTO bookings VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO bookings (booking_id, tenant_id, service, staff, date, time, duration_min,"
+                " customer_name, phone, status, receipt_code, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (booking.booking_id, tenant_id, booking.service, staff, iso, time, duration,
-                 customer_name, phone, "CONFIRMED", receipt_code,
-                 dt.datetime.now(dt.timezone.utc).isoformat()))
+                 customer_name, phone, "CONFIRMED", receipt_code, booking.created_at))
             self.conn.commit()
         except sqlite3.IntegrityError as exc:
             raise BackendError("that slot was taken a moment ago") from exc
@@ -415,9 +452,108 @@ class LocalBackend:
             " ORDER BY date, time LIMIT 1", (tenant_id, phone)).fetchone()
         if not row:
             return None
-        return Booking(row["booking_id"], row["tenant_id"], row["service"], row["staff"],
-                       row["date"], row["time"], row["duration_min"], row["customer_name"],
-                       row["phone"], row["status"], row["receipt_code"])
+        return Booking.from_row(row)
+
+    def booking(self, tenant_id: str, booking_id: str) -> Booking | None:
+        row = self.conn.execute("SELECT * FROM bookings WHERE tenant_id=? AND booking_id=?",
+                                (tenant_id, booking_id)).fetchone()
+        return Booking.from_row(row) if row else None
+
+    def bookings_between(self, tenant_id: str, start: str, end: str, status: str | None = "CONFIRMED") -> list[Booking]:
+        """Bookings with ``start <= date <= end`` (ISO dates), oldest first.
+        ``status`` None or 'ALL' returns every status."""
+        if status in (None, "ALL"):
+            rows = self.conn.execute("SELECT * FROM bookings WHERE tenant_id=? AND date BETWEEN ? AND ?"
+                                     " ORDER BY date, time", (tenant_id, start, end))
+        else:
+            rows = self.conn.execute("SELECT * FROM bookings WHERE tenant_id=? AND date BETWEEN ? AND ? AND status=?"
+                                     " ORDER BY date, time", (tenant_id, start, end, status))
+        return [Booking.from_row(r) for r in rows]
+
+    def set_status(self, tenant_id: str, booking_id: str, status: str) -> bool:
+        """Attendance from the console: NO_SHOW / COMPLETED, or back to CONFIRMED."""
+        if status not in BOOKING_STATUSES:
+            raise BackendError(f"status must be one of {', '.join(BOOKING_STATUSES)}")
+        cur = self.conn.execute("UPDATE bookings SET status=? WHERE tenant_id=? AND booking_id=? AND status != 'CANCELLED'",
+                                (status, tenant_id, booking_id))
+        self.conn.commit()
+        return cur.rowcount > 0
+
+    def mark_reminded(self, tenant_id: str, booking_id: str, when: str | None = None) -> None:
+        self.conn.execute("UPDATE bookings SET reminder_sent_at=? WHERE tenant_id=? AND booking_id=?",
+                          (when or dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), tenant_id, booking_id))
+        self.conn.commit()
+
+    def mark_paid(self, tenant_id: str, booking_id: str, payment_id: str | None, paid: bool = True) -> None:
+        self.conn.execute("UPDATE bookings SET paid=?, payment_id=COALESCE(?, payment_id) WHERE tenant_id=? AND booking_id=?",
+                          (1 if paid else 0, payment_id, tenant_id, booking_id))
+        self.conn.commit()
+
+    def due_reminders(self, tenant_id: str, date: str) -> list[Booking]:
+        rows = self.conn.execute("SELECT * FROM bookings WHERE tenant_id=? AND date=? AND status='CONFIRMED'"
+                                 " AND reminder_sent_at IS NULL AND phone IS NOT NULL ORDER BY time", (tenant_id, date))
+        return [Booking.from_row(r) for r in rows]
+
+    # -------------------------------------------------------------- customers
+    def customers(self, tenant_id: str, q: str | None = None, limit: int = 500) -> list[dict[str, Any]]:
+        """One row per number, with what the bookings table says about them."""
+        rows = self.conn.execute(
+            "SELECT c.phone, c.name, c.last_service, c.last_visit, c.visits,"
+            " (SELECT COUNT(*) FROM bookings b WHERE b.tenant_id=c.tenant_id AND b.phone=c.phone AND b.status='CONFIRMED') AS bookings,"
+            " (SELECT COUNT(*) FROM bookings b WHERE b.tenant_id=c.tenant_id AND b.phone=c.phone AND b.status='NO_SHOW') AS no_shows"
+            " FROM customers c WHERE c.tenant_id=? ORDER BY c.last_visit DESC LIMIT ?", (tenant_id, limit)).fetchall()
+        out = [dict(r) for r in rows]
+        if q:
+            needle = q.strip().lower()
+            out = [r for r in out if needle in (r["name"] or "").lower() or needle in (r["phone"] or "")]
+        return out
+
+    # --------------------------------------------------------------- waitlist
+    def add_waitlist(self, *, tenant_id: str, phone: str, name: str | None, service: str | None,
+                     date: str, period: str | None = None) -> str:
+        """Remember that this caller wanted this day and found no slot."""
+        iso = self.resolve_date(date)
+        dup = self.conn.execute("SELECT entry_id FROM waitlist WHERE tenant_id=? AND phone=? AND date=? AND status='WAITING'",
+                                (tenant_id, phone, iso)).fetchone()
+        if dup:
+            return dup["entry_id"]
+        entry_id = str(uuid.uuid4())
+        self.conn.execute("INSERT INTO waitlist (entry_id, tenant_id, phone, name, service, date, period, status, created_at)"
+                          " VALUES (?,?,?,?,?,?,?,'WAITING',?)",
+                          (entry_id, tenant_id, phone, name, service, iso, period,
+                           dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")))
+        self.conn.commit()
+        return entry_id
+
+    def waitlist(self, tenant_id: str, status: str | None = None) -> list[dict[str, Any]]:
+        if status:
+            rows = self.conn.execute("SELECT * FROM waitlist WHERE tenant_id=? AND status=? ORDER BY date, created_at",
+                                     (tenant_id, status))
+        else:
+            rows = self.conn.execute("SELECT * FROM waitlist WHERE tenant_id=? ORDER BY date, created_at", (tenant_id,))
+        return [dict(r) for r in rows]
+
+    def next_waiting(self, tenant_id: str, date: str, service: str | None = None) -> dict[str, Any] | None:
+        """Who should hear about a slot that just freed up on ``date``."""
+        rows = self.conn.execute("SELECT * FROM waitlist WHERE tenant_id=? AND date=? AND status='WAITING'"
+                                 " ORDER BY created_at", (tenant_id, date)).fetchall()
+        for r in rows:
+            if service is None or not r["service"] or r["service"] == service:
+                return dict(r)
+        return dict(rows[0]) if rows else None
+
+    def waitlist_mark(self, tenant_id: str, entry_id: str, status: str, offered_slot: str | None = None) -> bool:
+        cur = self.conn.execute("UPDATE waitlist SET status=?, offered_at=CASE WHEN ?='OFFERED' THEN ? ELSE offered_at END,"
+                                " offered_slot=COALESCE(?, offered_slot) WHERE tenant_id=? AND entry_id=?",
+                                (status, status, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                                 offered_slot, tenant_id, entry_id))
+        self.conn.commit()
+        return cur.rowcount > 0
+
+    def waitlist_remove(self, tenant_id: str, entry_id: str) -> bool:
+        cur = self.conn.execute("DELETE FROM waitlist WHERE tenant_id=? AND entry_id=?", (tenant_id, entry_id))
+        self.conn.commit()
+        return cur.rowcount > 0
 
     def capture_lead(self, *, tenant_id: str, name: str | None, phone: str | None,
                      intent: str, note: str = "") -> str:
@@ -431,6 +567,4 @@ class LocalBackend:
     def bookings(self, tenant_id: str) -> list[Booking]:
         rows = self.conn.execute("SELECT * FROM bookings WHERE tenant_id=? ORDER BY date, time",
                                  (tenant_id,))
-        return [Booking(r["booking_id"], r["tenant_id"], r["service"], r["staff"], r["date"],
-                        r["time"], r["duration_min"], r["customer_name"], r["phone"],
-                        r["status"], r["receipt_code"]) for r in rows]
+        return [Booking.from_row(r) for r in rows]

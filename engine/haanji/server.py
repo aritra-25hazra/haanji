@@ -52,6 +52,11 @@ from .gcal import GoogleCalendar
 from .telephony import twilio as twilio_mod
 from .pramaan.vault import Vault, normalise_phone as _norm_phone
 from .push import PushStore
+from . import admin as admin_mod
+from . import backup as backup_mod
+from . import reminders as rem_mod
+from .payments import PaymentStore
+from .settings import SettingsStore
 from .metrics import percentile
 from .bhasha.phonetics import phrase_key
 from .bhasha.lexicon import LexEntry, TenantLexicon
@@ -84,6 +89,7 @@ IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
 SESSION_IDLE_S = 1800
 
 os.makedirs(VAR_DIR, exist_ok=True)
+backup_mod.restore_on_boot(VAR_DIR)                # HAANJI_RESTORE_FROM, only into an empty data dir
 
 from contextlib import asynccontextmanager
 
@@ -97,6 +103,7 @@ async def _lifespan(_app: FastAPI):
     if os.environ.get("HAANJI_SCHEDULER", "1") != "0":
         tasks.append(asyncio.ensure_future(_evening_loop()))
         tasks.append(asyncio.ensure_future(_gc_loop()))
+        tasks.append(asyncio.ensure_future(_reminder_loop()))
     try:
         yield
     finally:
@@ -120,7 +127,7 @@ app.add_middleware(CORSMiddleware, allow_origin_regex=CORS_ORIGIN_REGEX,
 # retries in bursts.
 RATE_LIMIT_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_PER_MIN", "120"))
 RATE_LIMIT_GET_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_GET_PER_MIN", "600"))
-RATE_LIMIT_EXEMPT = ("/wa/webhook", "/api/status", "/telephony/")
+RATE_LIMIT_EXEMPT = ("/wa/webhook", "/api/status", "/telephony/", "/payments/")
 # X-Forwarded-For is only meaningful behind a proxy we trust; it is then the
 # *last* hop that the proxy appended, never the first value a client can set.
 TRUST_PROXY = os.environ.get("HAANJI_TRUST_PROXY", "1").lower() in ("1", "true", "on", "yes")
@@ -205,6 +212,8 @@ gcal = GoogleCalendar(os.path.join(VAR_DIR, "gcal.sqlite"), redirect_uri=f"{PUBL
 vault = Vault(os.path.join(VAR_DIR, "vault.sqlite"))
 # With HAANJI_LEDGER_KEY_SECRET set, tenants' signing keys are encrypted at rest.
 LEDGER_KEY_SECRET = os.environ.get("HAANJI_LEDGER_KEY_SECRET") or None
+settings = SettingsStore(os.path.join(VAR_DIR, "settings.sqlite"))
+payments = PaymentStore(os.path.join(VAR_DIR, "payments.sqlite"), PUBLIC_URL)
 push = PushStore(os.path.join(VAR_DIR, "push.sqlite"), os.path.join(VAR_DIR, "vapid.json"),
                  contact=os.environ.get("HAANJI_PUSH_CONTACT") or "mailto:owner@haanji.local")
 CONSENT_LINE = os.environ.get("HAANJI_CONSENT_LINE") or ""
@@ -228,6 +237,12 @@ PROTECTED: list[tuple[str, re.Pattern, str]] = [
     ("POST", re.compile(r"^/api/(packs/(draft|validate|[^/]+/selftest)|anchors/seal|digest/send)$"), "owner"),
     ("PUT", re.compile(r"^/api/packs/[^/]+$"), "owner"),
     ("GET|POST|DELETE", re.compile(r"^/api/auth/users(/.*)?$"), "owner"),
+    # the operator console (docs/console-api.md)
+    ("GET", re.compile(r"^/api/(bookings|customers|settings|waitlist|payments)$"), "staff"),
+    ("POST", re.compile(r"^/api/bookings/[^/]+/(cancel|status)$"), "staff"),
+    ("DELETE", re.compile(r"^/api/waitlist/[^/]+$"), "staff"),
+    ("PUT", re.compile(r"^/api/settings$"), "owner"),
+    ("GET", re.compile(r"^/api/admin/backup$"), "owner"),
 ]
 ROLE_RANK = {"staff": 1, "owner": 2}
 SCOPED = object()        # "the handler filters by the user's own packs"
@@ -552,14 +567,108 @@ async def _push_calendar(holder: Holder, codes: list[str]) -> None:
         log.warning(f"google calendar push failed: {exc}")
 
 
-async def _notify_customer(holder: Holder, codes: list[str]) -> None:
-    """A web or phone caller who gave a number gets the receipt link on
-    WhatsApp, if a real number is connected. Never blocks the call."""
+async def _payment_links(holder: Holder, codes: list[str]) -> list[dict[str, Any]]:
+    """With a deposit configured, every booking just sealed gets a payment
+    link (Razorpay, or this server's mock). Returns the links made."""
+    rt = holder.rt
+    deposit = int(settings.get(rt.pack_id).get("deposit_inr") or 0)
+    if deposit <= 0 or not codes:
+        return []
+    made = []
+    for b in rt.backend.bookings(rt.pack_id):
+        if b.receipt_code in codes and b.status == "CONFIRMED" and not b.payment_id:
+            link = await payments.create_link(rt.pack_id, b, deposit, business=rt.pack.persona.business_name)
+            if link:
+                rt.backend.mark_paid(rt.pack_id, b.booking_id, link["payment_id"], False)
+                made.append(link)
+    return made
+
+
+def payment_note(links: list[dict[str, Any]]) -> str:
+    if not links:
+        return ""
+    amount = links[0]["amount_inr"]
+    return f"Slot pakka rakhne ke liye ₹{amount:,} ka deposit yahan de dijiye:\n" + "\n".join(l["link"] for l in links)
+
+
+async def _notify_customer(holder: Holder, codes: list[str], links: list[dict[str, Any]] | None = None) -> None:
+    """A web or phone caller who gave a number gets the receipt link (and the
+    deposit link) on WhatsApp, if a real number is connected. Never blocks."""
     if codes and holder.phone and holder.channel != "WHATSAPP" and wa_channel.configured():
         try:
-            await wa_channel.send_text(holder.phone, receipt_note(holder.rt.pack_id, codes))
+            text = receipt_note(holder.rt.pack_id, codes)
+            if links:
+                text += "\n\n" + payment_note(links)
+            await wa_channel.send_template(holder.phone, "receipt", [codes[-1]], fallback_text=text)
         except Exception as exc:                      # noqa: BLE001 - a courtesy, not the call
             log.warning(f"receipt notification failed: {exc}")
+
+
+async def offer_waitlist(rt: TenantRuntime, date: str, service: str | None) -> dict[str, Any] | None:
+    """A slot on ``date`` just freed up: the first person waiting for that day
+    hears about it on WhatsApp, and their thread is primed so that "haan"
+    books it through the ordinary read-back and receipt."""
+    if not settings.get(rt.pack_id).get("waitlist_on", True):
+        return None
+    entry = rt.backend.next_waiting(rt.pack_id, date, service)
+    if entry is None:
+        return None
+    avail = await rt.backend.availability(rt.pack_id, entry.get("service") or service, date,
+                                          period=entry.get("period") or None, limit=1)
+    slot = (avail.get("slots") or [None])[0]
+    if slot is None:
+        return None
+    business = rt.pack.persona.business_name
+    from .speak import spoken_date, spoken_time
+    when = f"{spoken_date(slot['date'], rt.backend.today, rt.backend.resolve_date, rt.pack.language)} {spoken_time(slot['time'], rt.pack.language)}"
+    svc = entry.get("service") or service or "appointment"
+    text = (f"Namaste{(' ' + entry['name'].split()[0] + ' ji') if entry.get('name') else ''}! {business} se: "
+            f"{svc} ka ek slot khaali hua hai — {when}, {slot['staff']} ke saath. "
+            f"Chahiye to 'haan' likh dijiye, main book kar dunga.")
+    phone = entry["phone"]
+    key = (rt.pack_id, phone)
+    if key in _wa_sessions:
+        _sessions.pop(_wa_sessions.pop(key), None)
+    sid, holder = await _new_session(rt.pack_id, "WHATSAPP", phone, verified=True)
+    _wa_sessions[key] = sid
+    ctx = holder.session.ctx
+    ctx.service, ctx.date, ctx.time, ctx.staff = svc, slot["date"], slot["time"], slot["staff"]
+    ctx.customer_name = ctx.customer_name or entry.get("name")
+    ctx.flags["time_checked"] = True
+    ctx.last_agent_utterance = text
+    if ctx.turns:
+        ctx.turns[-1].text = text
+    rt.backend.waitlist_mark(rt.pack_id, entry["entry_id"], "OFFERED", f"{slot['date']} {slot['time']}")
+    store.add_wa(rt.pack_id, phone, "out", text, meta={"waitlist_offer": entry["entry_id"]})
+    delivered = None
+    if wa_channel.configured():
+        delivered = await wa_channel.send_template(phone, "outreach", [business], fallback_text=text)
+    publish("waitlist.offered", pack=rt.pack_id, phone=_mask(phone), slot=f"{slot['date']} {slot['time']}")
+    TELEMETRY.inc("waitlist_offers_total", pack=rt.pack_id)
+    return {"entry_id": entry["entry_id"], "phone": phone, "slot": slot, "delivered": delivered, "text": text}
+
+
+async def _after_turn(holder: Holder, record, payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """What a booking or a cancellation sets in motion beyond the reply:
+    deposit links, the owner's calendar, the customer's WhatsApp, the next
+    person on the waitlist. Returns the payment links, for the channel to
+    show. Never raises into the call."""
+    links: list[dict[str, Any]] = []
+    try:
+        if payload["receipts"]:
+            links = await _payment_links(holder, payload["receipts"])
+            asyncio.ensure_future(_notify_customer(holder, payload["receipts"], links))
+            asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
+        if any(t in ("cancel_appointment", "reschedule_appointment") for t in record.tools):
+            phone = holder.session.ctx.customer_phone or holder.phone
+            freed = [b for b in holder.rt.backend.bookings(holder.rt.pack_id)
+                     if b.status == "CANCELLED" and (not phone or b.phone == phone)]
+            if freed:
+                last = freed[-1]
+                asyncio.ensure_future(offer_waitlist(holder.rt, last.date, last.service))
+    except Exception as exc:                          # noqa: BLE001
+        log.warning("after-turn work failed: %s", exc)
+    return links
 
 
 def _finish(sid: str, holder: Holder) -> None:
@@ -582,6 +691,10 @@ def _finish(sid: str, holder: Holder) -> None:
     _push_outcome(holder, report)
     if holder.phone and report.receipts and store.has_open_missed(holder.rt.pack_id, holder.phone):
         store.mark_recovered(holder.rt.pack_id, holder.phone, report.receipts[-1])
+    if holder.phone and report.outcome.value in ("BOOKED", "RESCHEDULED"):
+        for entry in holder.rt.backend.waitlist(holder.rt.pack_id):
+            if entry["phone"] == holder.phone and entry["status"] in ("WAITING", "OFFERED"):
+                holder.rt.backend.waitlist_mark(holder.rt.pack_id, entry["entry_id"], "BOOKED")
     _sessions.pop(sid, None)
     _wa_sessions.pop((holder.rt.pack_id, holder.phone or ""), None)
 
@@ -654,9 +767,9 @@ async def session_utterance(sid: str, body: TextIn):
     async with holder.lock:
         record = await holder.session.handle_text_turn(body.text)
         payload = _turn_payload(record, holder)
-        if payload["receipts"]:
-            asyncio.ensure_future(_notify_customer(holder, payload["receipts"]))
-            asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
+        links = await _after_turn(holder, record, payload)
+        if links:
+            payload["payment_links"] = [{"amount_inr": l["amount_inr"], "link": l["link"]} for l in links]
         if payload["end_call"]:
             _finish(sid, holder)
     return payload
@@ -699,13 +812,20 @@ async def _wa_turn(pack_id: str, phone: str, text: str, *, verified: bool = True
     if holder.human:
         _human_turn(sid, holder, text)
         return replies                                 # the person at the console answers
+    answered = await _reminder_reply(pack_id, phone, text, holder)
+    if answered is not None:
+        store.add_wa(pack_id, phone, "out", answered["text"], meta={"reminder_reply": True})
+        replies.append(answered)
+        return replies
     async with holder.lock:
         record = await holder.session.handle_text_turn(text)
         payload = _turn_payload(record, holder)
         text_out = record.said
+        links = await _after_turn(holder, record, payload)
         if payload["receipts"]:
             text_out = f"{record.said}\n\n{receipt_note(pack_id, payload['receipts'])}"
-            asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
+            if links:
+                text_out += "\n\n" + payment_note(links)
         store.add_wa(pack_id, phone, "out", text_out,
                      meta={"tools": record.tools, "receipts": payload["receipts"],
                            "corrections": payload["corrections"]})
@@ -1248,6 +1368,69 @@ async def digest_send(pack: str = DEFAULT_PACK, to: str | None = None):
     return {"sent": True, "to": number, "text": text}
 
 
+async def send_due_reminders(now: dt.datetime | None = None) -> int:
+    """Every pack's day-before (or same-day) reminders that are due now."""
+    sent = 0
+    for pid in list_packs():
+        rt = runtime(pid)
+        cfg = settings.get(pid)
+        for b in rem_mod.due_today(rt.backend, pid, cfg, now):
+            text = rem_mod.reminder_text(b, rt.pack.persona.business_name, rt.backend.today,
+                                         rt.backend.resolve_date, rt.pack.language, PUBLIC_URL)
+            delivered = None
+            if wa_channel.configured():
+                delivered = await wa_channel.send_template(b.phone, "reminder", [b.service, f"{b.date} {b.time}"],
+                                                          fallback_text=text)
+            rt.backend.mark_reminded(pid, b.booking_id)
+            store.add_wa(pid, b.phone, "out", text, meta={"reminder": b.booking_id, "delivered": delivered})
+            publish("reminder.sent", pack=pid, booking_id=b.booking_id, phone=_mask(b.phone), delivered=delivered)
+            TELEMETRY.inc("reminders_sent_total", pack=pid)
+            sent += 1
+    return sent
+
+
+async def _reminder_loop() -> None:
+    while True:
+        try:
+            await send_due_reminders()
+        except Exception as exc:                      # noqa: BLE001 - keep the loop alive
+            log.warning("reminders: %s", exc)
+        await asyncio.sleep(15 * 60)
+
+
+async def _reminder_reply(pack_id: str, phone: str, text: str, holder: Holder) -> dict[str, Any] | None:
+    """A WhatsApp message that answers a reminder (or a waitlist offer is
+    handled by the primed session, not here). '1'/'haan' confirms; '2'/
+    'cancel' cancels through the ledger with the reminder as the question
+    and this message as the proof. None when the message is not a reply."""
+    pending = store.last_outbound_with(pack_id, phone, "reminder")
+    if pending is None or pending["meta"].get("answered"):
+        return None
+    verdict = rem_mod.interpret_reply(text)
+    if verdict is None:
+        return None
+    rt = holder.rt
+    booking = rt.backend.booking(pack_id, pending["meta"]["reminder"])
+    store.set_meta(pending["msg_id"], answered=verdict)
+    if booking is None or booking.status != "CONFIRMED":
+        return {"text": "Ye booking ab calendar par nahi hai. Nayi booking chahiye to likh dijiye."}
+    if verdict == "confirm":
+        publish("reminder.confirmed", pack=pack_id, booking_id=booking.booking_id, phone=_mask(phone))
+        return {"text": f"Shukriya! {rt.pack.persona.business_name} aapka intezaar karega. Milte hain."}
+    asked_ms = int(dt.datetime.fromisoformat(pending["at"]).timestamp() * 1000)
+    proof = rem_mod.proof_for(pending["text"], text, asked_ms, int(time.time() * 1000))
+    result = await rt.registry.execute("cancel_appointment", {
+        "phone": phone, "identity": "channel", "proof": proof,
+        "excerpt": f"reminder reply: {text}", "conversation_id": f"reminder:{booking.booking_id}"})
+    if not result.ok:
+        return {"text": result.spoken or "Cancel nahi ho paya, team aapko call karegi."}
+    publish("reminder.cancelled", pack=pack_id, booking_id=booking.booking_id, phone=_mask(phone),
+            receipt=(result.data or {}).get("receipt_code"))
+    asyncio.ensure_future(offer_waitlist(rt, booking.date, booking.service))
+    return {"text": f"{result.spoken} Dobara booking chahiye to kabhi bhi likh dijiye.",
+            "receipts": [c for c in [(result.data or {}).get("receipt_code")] if c]}
+
+
 def seconds_until(hour: int, minute: int = 0, now: dt.datetime | None = None) -> float:
     """Seconds from ``now`` (IST) to the next occurrence of hour:minute IST."""
     now = now or dt.datetime.now(IST)
@@ -1271,6 +1454,12 @@ async def _evening_loop() -> None:
             purge_old_records(RETENTION_DAYS)
         except Exception as exc:                      # noqa: BLE001
             log.warning(f"retention: {exc}")
+        if backup_mod.s3_configured():
+            try:
+                where = backup_mod.upload_s3(backup_mod.make_backup(VAR_DIR), backup_mod.backup_name())
+                log.warning("nightly backup written to %s", where)
+            except Exception as exc:                  # noqa: BLE001
+                log.warning(f"backup: {exc}")
         digest_pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
         if OWNER_PHONE and wa_channel.configured():
             try:
@@ -1533,9 +1722,7 @@ def _phone_human(sid: str, holder: Holder, text: str) -> bool:
 
 async def _phone_turn(record, holder: Holder) -> None:
     payload = _turn_payload(record, holder)
-    if payload["receipts"]:
-        asyncio.ensure_future(_notify_customer(holder, payload["receipts"]))
-        asyncio.ensure_future(_push_calendar(holder, payload["receipts"]))
+    await _after_turn(holder, record, payload)
 
 
 PHONE_FACTORIES: dict[str, Any] = {"stt": _phone_stt_factory, "tts": _phone_tts}   # tests swap these
@@ -1891,6 +2078,8 @@ async def status():
             "phone": phone_status(),
             "privacy": {"retention_days": RETENTION_DAYS, "consent": bool(CONSENT_LINE)},
             "push": {"public_key": push.public_key},
+            "payments": {"provider": "razorpay" if payments_configured_fn() else "mock"},
+            "backup": {"s3": backup_mod.s3_configured(), "restore_from": bool(os.environ.get("HAANJI_RESTORE_FROM"))},
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
             "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),
@@ -1951,3 +2140,13 @@ async def static_file(name: str):
     media = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml",
              ".html": "text/html"}.get(os.path.splitext(name)[1], "text/plain")
     return FileResponse(path, media_type=media)
+
+
+# ───────────────────────────────────────────────── the operator console's routes
+from .payments import configured as payments_configured_fn    # noqa: E402
+
+app.include_router(admin_mod.build_router(admin_mod.Deps(
+    runtime=runtime, list_packs=list_packs, default_pack=DEFAULT_PACK, store=store, settings=settings,
+    payments=payments, vault=vault, publish=publish, mask=_mask,
+    user_of=lambda request: getattr(request.state, "user", None),
+    offer_waitlist=offer_waitlist, var_dir=VAR_DIR, public_url=PUBLIC_URL)))

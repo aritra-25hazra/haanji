@@ -238,15 +238,29 @@ def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
                           spoken=spoken)
 
     async def capture_lead(intent: str, name: str | None = None, phone: str | None = None,
-                           note: str = "", proof: ConfirmationProof | None = None,
+                           note: str = "", date: str | None = None, service: str | None = None,
+                           period: str | None = None,
+                           proof: ConfirmationProof | None = None,
                            excerpt: str = "", conversation_id: str = "") -> ToolResult:
+        """A callback note — and, when the caller wanted a day that was full,
+        a place on that day's waitlist so a freed slot finds them first."""
         lead_id = backend.capture_lead(tenant_id=tenant_id, name=name, phone=phone,
                                        intent=intent, note=note)
-        code = _seal("capture_lead", {"lead_id": lead_id, "name": name, "phone": phone,
-                                      "intent": intent}, proof, excerpt, conversation_id, False)
-        return ToolResult("capture_lead", ok=True, data={"lead_id": lead_id, "receipt_code": code},
-                          spoken=_p("lead_saved",
-                                    "Aapka number note kar liya hai, humari team call karegi."))
+        args: dict[str, Any] = {"lead_id": lead_id, "name": name, "phone": phone, "intent": intent}
+        waitlisted = None
+        if date and phone and getattr(pack, "waitlist_on", True):
+            try:
+                waitlisted = backend.add_waitlist(tenant_id=tenant_id, phone=phone, name=name,
+                                                  service=service, date=date, period=period)
+                args["waitlist"] = {"entry_id": waitlisted, "date": backend.resolve_date(date), "service": service}
+            except Exception:                                 # noqa: BLE001 - a courtesy, not the lead
+                waitlisted = None
+        code = _seal("capture_lead", args, proof, excerpt, conversation_id, False)
+        spoken = _p("lead_saved", "Aapka number note kar liya hai, humari team call karegi.")
+        if waitlisted:
+            spoken += _p("waitlisted", " Us din koi slot khaali hua to sabse pehle aapko WhatsApp karenge.")
+        return ToolResult("capture_lead", ok=True, data={"lead_id": lead_id, "receipt_code": code,
+                                                          "waitlist_entry": waitlisted}, spoken=spoken)
 
     async def handoff(reason: str, phone: str | None = None, line: str | None = None,
                       proof: ConfirmationProof | None = None,
@@ -314,7 +328,9 @@ def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
     reg.register(Tool("capture_lead",
                       "Record a caller the agent could not book, for a human to call back.",
                       {"intent": "what they wanted", "name": "caller's name",
-                       "phone": "ten digit phone number", "note": "free text"},
+                       "phone": "ten digit phone number", "note": "free text",
+                       "date": "the day they wanted and found full (joins that day's waitlist)",
+                       "service": "the service they wanted", "period": "morning | afternoon | evening"},
                       capture_lead, read_only=False, ledgered=True, nominal_ms=110,
                       required=["intent"]))
     reg.register(Tool("refuse",
