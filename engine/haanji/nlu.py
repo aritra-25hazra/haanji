@@ -21,9 +21,9 @@ from __future__ import annotations
 import datetime as dt
 import re
 
-# Hindi, English, Bengali and Marathi forms side by side: the same extractor
-# serves Hinglish, Benglish and Marathinglish callers, which is what lets one
-# engine run a Kolkata clinic without a code fork.
+# Hindi, English, Bengali, Marathi, Tamil, Telugu, Gujarati and Punjabi forms
+# side by side: the same extractor serves every pack language, which is what
+# lets one engine run a Kolkata or a Chennai clinic without a code fork.
 DATE_WORDS = {"kal", "aaj", "parso", "today", "tomorrow", "somvar", "mangalvar", "budhvar",
               "guruvar", "shukravar", "shanivar", "ravivar",
               "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
@@ -33,22 +33,83 @@ DATE_WORDS = {"kal", "aaj", "parso", "today", "tomorrow", "somvar", "mangalvar",
               "january", "february", "march", "april", "may", "june", "july", "august",
               "september", "october", "november", "december",
               "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
-              "janvari", "farvari", "agast", "sitambar", "aktubar", "navambar", "disambar"}
+              "janvari", "farvari", "agast", "sitambar", "aktubar", "navambar", "disambar",
+              # Tamil (tanglish)
+              "naalai", "nalai", "naalaikku", "naalaiku", "nalaiku", "innaiku", "innaikku", "inniki",
+              "innaikki", "inru", "marunaal", "marunal", "naal", "thedhi", "thethi", "tedhi",
+              "thingal", "sevvai", "budhan", "vyazhan", "viyazhan", "velli", "sani", "nyayiru",
+              "gnayiru", "nyayitru", "nayiru",
+              # Telugu (tenglish)
+              "repu", "reppu", "ivala", "ivaala", "eeroju", "roju", "ellundi", "yellundi", "tedi",
+              "tareekhu", "tarikhu", "somavaram", "somavaaram", "mangalavaram", "budhavaram",
+              "guruvaram", "shukravaram", "sukravaram", "shanivaram", "sanivaram", "aadivaram",
+              "adivaram", "aadhivaram",
+              # Gujarati (gujlish)
+              "kale", "aaje", "aje", "aavti", "pachhi", "pachi", "param", "paramdivase", "paramdivse",
+              "divas", "divase", "tarike", "somvaar", "mangalvaar", "budhvaar", "guruvaar",
+              "shukravaar", "shanivaar", "ravivaar",
+              # Punjabi (punglish)
+              "ajj", "aj", "parson", "veervar", "virvar", "shukarvar", "shukkarvar", "shanicharvar",
+              "shanichar", "aitvar", "etvar", "itvar"}
+# The three relative days, per language. "naalai marunaal" is the day after,
+# so the day-after set is read before the tomorrow set.
+_DAY_AFTER_WORDS = {"parso", "porshu", "parva", "parson", "marunaal", "marunal", "ellundi", "yellundi",
+                    "param", "paramdivase", "paramdivse"}
+_TOMORROW_WORDS = {"kal", "kalke", "udya", "tomorrow", "naalai", "nalai", "naalaikku", "naalaiku",
+                   "nalaiku", "repu", "reppu", "kale"}
+_TODAY_WORDS = {"aaj", "aajke", "today", "innaiku", "innaikku", "inniki", "innaikki", "inru", "ivala",
+                "ivaala", "eeroju", "aaje", "aje", "ajj", "aj"}
 TIME_WORDS = {"baje", "subah", "shaam", "dopahar", "raat", "morning", "evening",
               "afternoon", "night", "am", "pm", "bje",
               "saade", "sadhe", "sade", "paune", "poune", "sava", "sawa", "dedh", "dhai", "adhai",
               "shokale", "shokal", "bikele", "bikel", "dupure", "dupur", "shondhe", "raate", "tay", "ta", "share",
-              "sakali", "sakalchi", "dupari", "sandhyakali", "ratri", "vajta", "vaajta", "vajata"}
+              "sakali", "sakalchi", "dupari", "sandhyakali", "ratri", "vajta", "vaajta", "vajata",
+              # Tamil: kaalai / madhiyam / saayangalam, "mani" is the clock word, "arai" the half
+              "kaalai", "kaalaiyil", "kalaila", "madhiyam", "madhyanam", "mathiyam", "saayangalam",
+              "sayangalam", "saayankalam", "sayandhram", "raathiri", "rathiri", "mani", "manikku",
+              "maniku", "manikki", "arai", "arrai", "mukkaal", "mukkal",
+              # Telugu: udayam / madhyahnam / sayantram, "gantalaku", "ara" the half
+              "udayam", "udayanne", "udayaniki", "madhyahnam", "madhyanam", "madhyannam", "sayantram",
+              "saayantram", "raatri", "gantalaku", "gantalu", "ganta", "gantaku", "ara", "paavu",
+              "pavu", "muppaavu", "muppavu",
+              # Gujarati: savare / bapore / sanje, "vage", "sada" the half
+              "savare", "savaare", "sawaare", "savar", "savarma", "bapore", "bapor", "sanje", "saanje",
+              "sanj", "saanj", "raatre", "ratre", "vage", "vagya", "vagye", "sada", "pona", "dodh",
+              # Punjabi: savere / dupahir / shaam, "vaje", "saadhe" the half
+              "savere", "sawere", "dupahir", "dupehar", "dopahir", "dupahar", "vaje", "vajje", "saadhe",
+              "sadde", "pone"}
 BOOKING_VERBS = {"milega", "milegi", "chahiye", "book", "booking", "appointment",
                  "slot", "lagwana", "dikhana", "aana", "aaunga", "aungi", "aaungi", "time",
                  "khaali", "free", "karwana", "karana", "karwani", "karani",
                  "chai", "lagbe", "hobe", "korate", "korbo", "korano", "nebo",
-                 "pahije", "hava", "havi", "hvay", "milel", "kara", "karaychi", "karayche", "karaycha"}
+                 "pahije", "hava", "havi", "hvay", "milel", "kara", "karaychi", "karayche", "karaycha",
+                 # Tamil
+                 "venum", "vendum", "kidaikuma", "kidaikkuma", "kedaikuma", "pannanum", "pannunga",
+                 "pannalama", "podunga", "podalama",
+                 # Telugu
+                 "kavali", "kaavali", "kavaali", "dorukutunda", "cheyali", "cheyyali", "cheyandi",
+                 "cheyyandi", "pettandi", "ivvandi", "ippandi",
+                 # Gujarati
+                 "malse", "male", "joiye", "joie", "joye", "karavu", "karavvu", "karaavu", "karavi",
+                 "karavvi", "karvu", "karvi", "levi", "levu",
+                 # Punjabi
+                 "chahida", "chahidi", "chaida", "chaidi", "karwauna", "karauna", "karaana", "karauni",
+                 "karwauni", "lagwauna", "milda", "mildi", "aauna"}
 QUESTION_WORDS = {"kitna", "kitne", "kitni", "kya", "kaunsa", "kaun", "kab", "kaise",
                   "charge", "charges", "fees", "fee", "price", "rate", "cost", "how",
                   "what", "when", "timing", "timings", "khulta", "band",
                   "koto", "kokhon", "kothay", "khola", "daam",
-                  "kiti", "kadhi", "kuthe", "kay", "kasa", "kashi", "kevha"}
+                  "kiti", "kadhi", "kuthe", "kay", "kasa", "kashi", "kevha",
+                  # Tamil: "irukka?" (is there?) asks about parking as often as about a slot
+                  "evlo", "evvalavu", "enna", "eppo", "eppa", "enge", "engey", "epdi", "eppadi",
+                  "kattanam", "vilai", "irukka", "irukkuma", "irukuma", "iruka",
+                  # Telugu
+                  "entha", "enta", "enti", "emiti", "eppudu", "ekkada", "ela", "evaru", "unda", "undha",
+                  "untunda", "kavala",
+                  # Gujarati
+                  "ketla", "ketlu", "ketli", "ketlo", "shu", "su", "kyare", "kyaare", "kem", "kon",
+                  # Punjabi ("ki" is left out: it is Hindi grammar in every second sentence)
+                  "kinna", "kinni", "kinne", "kado", "kadon", "kithe", "kiven", "kive"}
 IDENTITY_WORDS = {"mera", "meri", "naam", "number", "purani", "pehle", "last", "previous",
                   "my", "name", "registered"}
 CANCEL_WORDS = {"cancel", "hata", "hatao", "cancle", "radd"}
@@ -60,13 +121,24 @@ HANDOFF_WORDS = {"insaan", "aadmi", "human", "manager", "owner", "sir", "madam",
 YES_WORDS = {"haan", "haanji", "ha", "ji", "yes", "yep", "yeah", "ok", "okay", "theek",
              "thik", "sahi", "bilkul", "confirm", "kardo", "kar", "do", "chalo", "pakka",
              "hyan", "ache", "achha", "hobe", "koro", "korun",
-             "ho", "hoy", "barobar", "chalel", "nakki", "kara"}
-NO_WORDS = {"nahi", "nahin", "na", "no", "nope", "mat", "ruko", "galat", "cancel", "nhi", "naahi", "nako"}
+             "ho", "hoy", "barobar", "chalel", "nakki", "kara",
+             "aama", "aamaa", "aamam", "sari", "seri", "pannunga", "pannu",          # Tamil
+             "avunu", "avnu", "alage", "alaage", "sarle", "cheyandi", "cheyyandi",   # Telugu ("sare" is Hindi "half")
+             "haa", "barabar", "chalse", "sachu",                                   # Gujarati
+             "hanji", "changa", "aho"}                                              # Punjabi
+NO_WORDS = {"nahi", "nahin", "na", "no", "nope", "mat", "ruko", "galat", "cancel", "nhi", "naahi", "nako",
+            "illa", "illai", "illae", "vendam", "venda",                 # Tamil
+            "ledu", "kaadu", "kadu", "vaddu", "akkarledu",               # Telugu
+            "nathi"}                                                     # Gujarati ("nai" is Hindi "new")
 # Words that end a call on their own. "nahi" alone is *not* here: with a slot
 # on the table it is a rejection, and with a date beside it a correction.
 FAREWELL_WORDS = {"bye", "byee", "dhanyavaad", "dhanyawad", "dhanyavad", "thanks", "thank", "shukriya",
                   "alvida", "bas", "itna", "yahi", "khatam", "dhonnobad", "thak", "eituku",
-                  "evdhach", "evadhach", "itkach", "purey"}
+                  "evdhach", "evadhach", "itkach", "purey",
+                  "nandri", "podhum", "pothum", "avlodhaan", "avlodhan", "avlo",      # Tamil
+                  "dhanyavadalu", "dhanyavaadalu", "inthe", "anthe",                 # Telugu
+                  "aabhar", "avjo", "aavjo", "etlu", "etluj",                        # Gujarati
+                  "dhanvaad", "dhanwaad"}                                            # Punjabi
 
 # Number words in the three languages the packs speak. Collisions are
 # intentional ("char" is four everywhere); ambiguities with everyday words
@@ -84,14 +156,43 @@ NUMBER_WORDS: dict[str, int] = {
     "atthais": 28, "untees": 29, "ikattis": 31, "ektis": 31,
     "dui": 2, "don": 2, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
     "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+    # Tamil
+    "onnu": 1, "ondru": 1, "rendu": 2, "moonu": 3, "mundru": 3, "naalu": 4, "nalu": 4, "anju": 5,
+    "ainthu": 5, "aaru": 6, "aru": 6, "yezhu": 7, "ezhu": 7, "yelu": 7, "ettu": 8, "onbadhu": 9,
+    "onbathu": 9, "ombadhu": 9, "pathu": 10, "paththu": 10, "pattu": 10, "padhinonnu": 11,
+    "pathinonnu": 11, "panirendu": 12, "pannirendu": 12,
+    # Telugu
+    "okati": 1, "moodu": 3, "mudu": 3, "nalugu": 4, "aidu": 5, "ayidu": 5, "edu": 7, "yedu": 7,
+    "enimidi": 8, "tommidi": 9, "padi": 10, "padakondu": 11, "pannendu": 12,
+    # Gujarati ("be" and "baar" are only ever read beside a clock or date word)
+    "be": 2, "tran": 3, "chha": 6, "nav": 9, "agiyar": 11, "baar": 12,
+    # Punjabi
+    "ikk": 1, "ik": 1, "tinn": 3, "panj": 5, "satt": 7, "atth": 8,
 }
-_HALF = {"saade", "sadhe", "sade", "sarhe", "share", "sare"}
+_HALF = {"saade", "sadhe", "sade", "sarhe", "share", "sare", "saadhe", "sadde", "sada"}
 _QUARTER_PAST = {"sava", "sawa", "shoa", "sowa", "sabba"}
-_QUARTER_TO = {"paune", "poune", "pauney"}
-MORNING_WORDS = {"subah", "morning", "am", "shokale", "shokal", "sakali", "sakalchi", "savere", "sawere"}
-AFTERNOON_WORDS = {"dopahar", "afternoon", "dupure", "dupur", "dupari", "noon", "lunch"}
+_QUARTER_TO = {"paune", "poune", "pauney", "pona", "pone"}
+# Tamil and Telugu say the fraction after the hour: "pathu arai" (10:30),
+# "padi paavu" (10:15), "pathu mukkaal" (10:45 — ten and three quarters; the
+# hour does not roll forward the way "paune gyarah" does).
+_HALF_AFTER = {"arai", "arrai", "ara"}
+_QUARTER_PAST_AFTER = {"kaal", "kaalu", "paavu", "pavu"}
+_QUARTER_TO_AFTER = {"mukkaal", "mukkal", "muppaavu", "muppavu"}
+_CLOCK_WORDS = ("baje", "bje", "vajta", "vaajta", "vajata", "tay", "ta", "o", "oclock",
+                "mani", "manikku", "maniku", "manikki",            # Tamil
+                "gantalaku", "gantalu", "ganta", "gantaku",        # Telugu
+                "vage", "vagya", "vagye",                          # Gujarati
+                "vaje", "vajje")                                   # Punjabi
+MORNING_WORDS = {"subah", "morning", "am", "shokale", "shokal", "sakali", "sakalchi", "savere", "sawere",
+                 "kaalai", "kaalaiyil", "kalaila", "udayam", "udayanne", "udayaniki",
+                 "savare", "savaare", "sawaare", "savar", "savarma"}
+AFTERNOON_WORDS = {"dopahar", "afternoon", "dupure", "dupur", "dupari", "noon", "lunch",
+                   "madhiyam", "madhyanam", "mathiyam", "madhyahnam", "madhyannam",
+                   "bapore", "bapor", "dupahir", "dupehar", "dopahir", "dupahar"}
 EVENING_WORDS = {"shaam", "raat", "evening", "night", "pm", "bikele", "bikel", "shondhe", "raate",
-                 "sandhyakali", "ratri", "sham"}
+                 "sandhyakali", "ratri", "sham",
+                 "saayangalam", "sayangalam", "saayankalam", "sayandhram", "raathiri", "rathiri",
+                 "sayantram", "saayantram", "raatri", "sanje", "saanje", "sanj", "saanj", "raatre", "ratre"}
 _WEEK_WORDS = {"hafte", "hafta", "week", "saptah", "shoptaho", "athavda"}
 _NEXT_WORDS = {"agle", "agla", "agli", "next", "porer", "pudhchya", "pudhcha"}
 
@@ -104,15 +205,33 @@ WEEKDAYS = {"somvar": "monday", "mangalvar": "tuesday", "budhvar": "wednesday",
             "saturday": "saturday", "sunday": "sunday",
             "shombar": "monday", "mongolbar": "tuesday", "budhbar": "wednesday",
             "brihoshpotibar": "thursday", "shukrobar": "friday", "shonibar": "saturday",
-            "robibar": "sunday"}
+            "robibar": "sunday",
+            # Tamil
+            "thingal": "monday", "sevvai": "tuesday", "budhan": "wednesday", "vyazhan": "thursday",
+            "viyazhan": "thursday", "velli": "friday", "sani": "saturday", "nyayiru": "sunday",
+            "gnayiru": "sunday", "nyayitru": "sunday", "nayiru": "sunday",
+            # Telugu
+            "somavaram": "monday", "somavaaram": "monday", "mangalavaram": "tuesday",
+            "budhavaram": "wednesday", "guruvaram": "thursday", "shukravaram": "friday",
+            "sukravaram": "friday", "shanivaram": "saturday", "sanivaram": "saturday",
+            "aadivaram": "sunday", "adivaram": "sunday", "aadhivaram": "sunday",
+            # Gujarati spellings (also typed by Hindi speakers)
+            "somvaar": "monday", "mangalvaar": "tuesday", "budhvaar": "wednesday", "guruvaar": "thursday",
+            "shukravaar": "friday", "shanivaar": "saturday", "ravivaar": "sunday",
+            # Punjabi
+            "veervar": "thursday", "virvar": "thursday", "shukarvar": "friday", "shukkarvar": "friday",
+            "shanicharvar": "saturday", "shanichar": "saturday", "aitvar": "sunday", "etvar": "sunday",
+            "itvar": "sunday"}
 MONTHS = {"january": 1, "jan": 1, "janvari": 1, "february": 2, "feb": 2, "farvari": 2, "march": 3, "mar": 3,
           "april": 4, "apr": 4, "may": 5, "june": 6, "jun": 6, "july": 7, "jul": 7, "august": 8, "aug": 8,
           "agast": 8, "september": 9, "sep": 9, "sept": 9, "sitambar": 9, "october": 10, "oct": 10,
           "aktubar": 10, "november": 11, "nov": 11, "navambar": 11, "december": 12, "dec": 12, "disambar": 12}
-_DAY_MARKERS = {"tarikh", "tarik", "tareekh", "tarikhe", "ko", "th", "st", "nd", "rd", "date"}
+_DAY_MARKERS = {"tarikh", "tarik", "tareekh", "tarikhe", "ko", "th", "st", "nd", "rd", "date",
+                "thedhi", "thethi", "tedhi", "tedi", "tareekhu", "tarikhu", "tarike"}
 
 NAME_PATTERNS = [
-    re.compile(r"(?:mera naam|my name is|naam hai|naam|amar naam|nam|maza naav|naav)\s+"
+    re.compile(r"(?:mera naam|my name is|naam hai|maru naam|mara naam|naam|amar naam|nam|maza naav|naav|"
+               r"en peru|naa peru|na peru|peru)\s+"
                r"([a-zA-Z]+(?:\s+[a-zA-Z]+)?)", re.I),
     re.compile(r"^([a-zA-Z]+(?:\s+[a-zA-Z]+)?)\s+(?:bol raha|bol rahi|speaking)", re.I),
 ]
@@ -126,7 +245,10 @@ _NOT_A_NAME = {"number", "mera", "meri", "mere", "amar", "maza", "naam", "nam", 
                "mother", "father", "son", "daughter", "friend", "dost", "hum", "main", "aayenge", "aaunga",
                "aaungi", "aungi", "aayega", "aayegi", "jan", "jon", "people", "persons", "members",
                "ye", "yeh", "wo", "woh", "ye", "likh", "lo", "lijiye", "note", "kar", "karo", "do", "di",
-               "ka", "ye", "ha", "haan", "ok", "okay", "theek", "sahi", "confirm"}
+               "ka", "ye", "ha", "haan", "ok", "okay", "theek", "sahi", "confirm",
+               # the same grammar in Tamil, Telugu, Gujarati and Punjabi
+               "en", "peru", "enaku", "naa", "naaku", "maru", "mara", "mainu", "nu", "da", "di",
+               "ane", "ate", "mariyu", "per", "mandi", "loko", "bande", "jane"}
 
 
 def words(text: str) -> set[str]:
@@ -153,11 +275,11 @@ def normalise_date(text: str, fallback: str | None = None, today: dt.date | None
     and the policy asks which day."""
     w = words(text)
     toks = _tokens(text)
-    if "parso" in w or "porshu" in w or "parva" in w or ("day" in w and "after" in w):
+    if w & _DAY_AFTER_WORDS or ("day" in w and "after" in w) or (w & {"pachhi", "pachi"} and "kale" in w):
         return "day_after_tomorrow"
-    if "kal" in w or "kalke" in w or "udya" in w or "tomorrow" in w:
+    if w & _TOMORROW_WORDS:
         return "tomorrow"
-    if "aaj" in w or "aajke" in w or "today" in w:
+    if w & _TODAY_WORDS or ("ee" in w and "roju" in w):
         return "today"
     for token in w:
         if token in WEEKDAYS:
@@ -165,9 +287,12 @@ def normalise_date(text: str, fallback: str | None = None, today: dt.date | None
     base = today or dt.date.today()
     # "do din baad", "3 din baad", "in 2 days"
     for i, tok in enumerate(toks):
-        if tok in ("din", "days", "day", "dino", "divas", "divsani", "diner") and i > 0:
+        if tok in ("din", "days", "day", "dino", "divas", "divsani", "diner", "naal", "naatkal",
+                   "rojulu", "roju", "divase", "dina") and i > 0:
             n = _number_at(toks[i - 1])
-            if n is not None and 1 <= n <= 60 and (i + 1 < len(toks) and toks[i + 1] in ("baad", "bad", "por", "pore", "nantar", "later") or (i > 1 and toks[i - 2] == "in")):
+            if n is not None and 1 <= n <= 60 and (i + 1 < len(toks) and toks[i + 1] in (
+                    "baad", "bad", "por", "pore", "nantar", "later", "kalichu", "kazhichu", "tarvata",
+                    "pachhi", "pachi") or (i > 1 and toks[i - 2] == "in")):
                 return (base + dt.timedelta(days=n)).isoformat()
     # "15 tarikh", "15 ko", "pandrah tarikh", "3 november", "nov 3", "15th"
     month = next((MONTHS[t] for t in toks if t in MONTHS), None)
@@ -213,13 +338,29 @@ def _hour_minute(text: str) -> tuple[int, int] | None:
     """The clock reading in a sentence, 12-hour and before any am/pm logic."""
     t = text.lower()
     toks = _tokens(t)
-    # Fixed idioms first: dedh = 1:30, dhai/adhai = 2:30.
+    # Fixed idioms first: dedh/dodh = 1:30, dhai/adhai = 2:30, and the Telugu
+    # merged half hours — padinnara = 10:30, rendunnara = 2:30.
     for i, tok in enumerate(toks):
-        if tok == "dedh":
+        if tok in ("dedh", "dodh"):
             return 1, 30
         if tok in ("dhai", "adhai"):
             return 2, 30
-    # Fraction word + number: saade das / paune 11 / sava 9.
+        if tok.endswith("nnara") and NUMBER_WORDS.get(tok[:-5], 0) in range(1, 13):
+            return NUMBER_WORDS[tok[:-5]], 30
+    # Number + fraction word, the Tamil and Telugu order: pathu arai / padi paavu / 10 mukkaal.
+    for i in range(1, len(toks)):
+        tok = toks[i]
+        if tok not in _HALF_AFTER and tok not in _QUARTER_PAST_AFTER and tok not in _QUARTER_TO_AFTER:
+            continue
+        n = _number_at(toks[i - 1])
+        if n is None or not (1 <= n <= 12):
+            continue
+        if tok in _HALF_AFTER:
+            return n, 30
+        if tok in _QUARTER_PAST_AFTER:
+            return n, 15
+        return n, 45                      # "pathu mukkaal": ten and three quarters
+    # Fraction word + number: saade das / paune 11 / sava 9 / sada das / saadhe das.
     for i, tok in enumerate(toks[:-1]):
         n = _number_at(toks[i + 1])
         if n is None or not (1 <= n <= 12):
@@ -231,14 +372,16 @@ def _hour_minute(text: str) -> tuple[int, int] | None:
         if tok in _QUARTER_TO:
             return (n - 1) or 12, 45
     # Digits: "11", "11:30", "11.30", "1130" is not accepted (phone numbers).
-    m = re.search(r"(?<!\d)(\d{1,2})(?:[:.](\d{2}))?(?!\d)\s*(am|pm|baje|bje|vajta|vaajta|vajata|tay|ta|o'?clock)?", t)
+    m = re.search(r"(?<!\d)(\d{1,2})(?:[:.](\d{2}))?(?!\d)\s*(am|pm|baje|bje|vajta|vaajta|vajata|tay|ta|"
+                  r"mani|manikku|maniku|gantalaku|gantalu|ganta|vage|vagya|vagye|vaje|vajje|o'?clock)?", t)
     if m:
         hour, minute = int(m.group(1)), int(m.group(2) or 0)
         if 0 <= hour <= 23 and minute <= 59:
             return hour, minute
-    # Number word + clock word: "das baje", "egaro tay", "paanch vajta".
+    # Number word + clock word: "das baje", "egaro tay", "paanch vajta", "pathu mani",
+    # "padi gantalaku", "das vage", "panj vaje".
     for i, tok in enumerate(toks[:-1]):
-        if toks[i + 1] in ("baje", "bje", "vajta", "vaajta", "vajata", "tay", "ta", "o", "oclock"):
+        if toks[i + 1] in _CLOCK_WORDS:
             n = NUMBER_WORDS.get(tok)
             if n is not None and 1 <= n <= 12:
                 return n, 0
@@ -386,8 +529,15 @@ def extract_phone(text: str) -> str | None:
 _RELATIONS = {"wife", "husband", "patni", "pati", "biwi", "beta", "beti", "bachcha", "bachche", "bachcho",
               "mummy", "papa", "maa", "amma", "bhai", "behen", "mother", "father", "son", "daughter",
               "friend", "dost", "parents", "bhabhi", "didi", "dada", "dadi", "nana", "nani", "saheli",
-              "bou", "bor", "chhele", "meye", "bayko", "navra", "mulga", "mulgi"}
-_PEOPLE_WORDS = {"log", "logon", "logo", "jan", "jon", "people", "persons", "person", "members", "mansa", "lok"}
+              "bou", "bor", "chhele", "meye", "bayko", "navra", "mulga", "mulgi",
+              "manaivi", "kanavar", "purushan", "appa", "paiyan", "ponnu", "thambi", "akka",   # Tamil
+              "bharya", "bhartha", "nanna", "koduku", "koothuru", "kuthuru", "chelli", "thammudu",  # Telugu
+              "dikro", "dikri", "pappa",                                                       # Gujarati
+              "munda", "kudi", "bhabi"}                                                        # Punjabi
+_PEOPLE_WORDS = {"log", "logon", "logo", "jan", "jon", "people", "persons", "person", "members", "mansa", "lok",
+                 "per", "paer", "mandi", "loko", "vyakti", "bande", "jane"}
+_BOTH_WORDS = {"dono", "dujon", "doghe", "both", "iddaru", "iddaram", "rendum", "banne", "dove", "dovein"}
+_AND_WORDS = {"aur", "ar", "ani", "and", "ane", "ate", "te", "mariyu"}
 
 
 def party_size(text: str) -> int | None:
@@ -400,9 +550,9 @@ def party_size(text: str) -> int | None:
             n = _number_at(tok)
             if n is not None and 2 <= n <= 10:
                 return n
-    if "dono" in w or "dujon" in w or "doghe" in w or "both" in w:
+    if w & _BOTH_WORDS:
         return 2
-    if w & _RELATIONS and (("aur" in w or "ar" in w or "ani" in w or "and" in w) or "bhi" in w or "shudhdha" in w):
+    if w & _RELATIONS and (w & _AND_WORDS or "bhi" in w or "shudhdha" in w):
         return 2
     return None
 

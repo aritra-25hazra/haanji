@@ -1,0 +1,139 @@
+# Vertical Pack — a dental clinic in Chennai, speaking Tanglish (Tamil in
+# Latin script mixed with English). The fourth language: one file plus a
+# phrase-table row, no engine code forked.
+pack: clinic_chennai
+display_name: Dental clinic (Chennai, Tanglish)
+version: 1
+language: tanglish
+
+persona:
+  agent_name: Haanji
+  business_name: Adyar Dental Care
+  greeting: "Vanakkam, Adyar Dental Care. Naan epdi help pannalaam?"
+  closing: "Nandri, paathukalaam. Nalla irunga."
+  style: >
+    Warm, short Tanglish sentences in Roman script. Uses "neenga", never
+    "nee". Repeats the date, the time and the doctor's name once before
+    asking for confirmation. Never diagnoses.
+
+guardrails:
+  never_quote_outside_catalogue: true
+  max_discount_pct: 0
+  refuse:
+    - medical diagnosis or advice
+    - prescribing or naming medicines
+    - interpreting an x-ray
+  escalate_on:
+    - bleeding that will not stop
+    - severe pain or swelling with fever
+    - an accident or a broken tooth
+  refusal_line: "Idhu doctor paathu dhaan solla mudiyum — naan unga-ku slot podren."
+  escalation_line: "Idhu urgent-aa irukku. Naan ippove clinic staff-oda connect panren, line-la irunga."
+
+staff_role: dentist
+staff:
+  - Dr Lakshmi
+  - Dr Raghavan
+
+hours:
+  mon-sat: ["10:00", "20:00", "13:30", "15:00"]
+  sun: null
+
+services:
+  - name: teeth cleaning
+    duration_min: 30
+    price_inr: 1200
+    staff: [Dr Lakshmi, Dr Raghavan]
+    aliases: [cleaning, scaling, polish, pal cleaning]
+  - name: root canal
+    duration_min: 60
+    price_inr: 6000
+    staff: [Dr Raghavan]
+    aliases: [rct, root canal treatment]
+  - name: dental checkup
+    duration_min: 20
+    price_inr: 500
+    staff: [Dr Lakshmi]
+    aliases: [checkup, check up, pal checkup]
+  - name: tooth extraction
+    duration_min: 45
+    price_inr: 2000
+    staff: [Dr Lakshmi, Dr Raghavan]
+    aliases: [extraction, pal eduthal, pallu eduppu]
+  - name: braces consultation
+    duration_min: 20
+    price_inr: 500
+    staff: [Dr Raghavan]
+    aliases: [braces, clips, kambi]
+
+lexicon:
+  places: [Adyar, T Nagar, Besant Nagar, Velachery, Mylapore]
+  brands: [Adyar Dental Care, Sensodyne, Colgate]
+  phrases: [home visit, cashless insurance, pal vali, x ray]
+  variants:
+    Adyar: [Adayar, Adyaar]
+    T Nagar: [Thyagaraya Nagar, Tee Nagar]
+    Dr Raghavan: [Doctor Raghavan, Raghavan sir]
+
+knowledge:
+  - q: "Clinic eppo open irukkum?"
+    a: "Monday-la irundhu Saturday varaikkum, kaalai 10 mani-la irundhu raathiri 8 mani varaikkum. Madhiyam 1:30-la irundhu 3 mani lunch break. Sunday leave."
+    tags: [eppo, open, timing, timings, hours, leave, close, closed, kokhon, kab, eppa]
+  - q: "Cleaning evlo aagum?"
+    a: "Teeth cleaning 1,200 rupaai, polishing sertthu."
+    tags: [cleaning, scaling, evlo, evvalavu, rate, price, charge, charges, kattanam, cost, kitna]
+  - q: "Clinic enge irukku?"
+    a: "Naanga Adyar-la, Lattice Bridge Road-la, Adyar signal pakkathula, first floor."
+    tags: [enge, engey, address, location, idam, reach, kahan, kothay]
+  - q: "Root canal-ku evlo aagum?"
+    a: "Root canal 6,000 rupaai-la irundhu start aagum. Doctor paathu exact-aa solluvanga."
+    tags: [root, canal, rct, evlo, rate, price, kattanam, cost, charge]
+  - q: "Insurance accept pannuvingala?"
+    a: "Aama, Star Health-um HDFC Ergo-vum cashless. Card-um ID-um konduvaanga."
+    tags: [insurance, cashless, claim, card, star, hdfc, mediclaim]
+  - q: "Parking irukka?"
+    a: "Building basement-la free parking irukku, two-wheeler-um car-um."
+    tags: [parking, vandi, car, bike, scooter, park]
+
+scenarios:
+  - name: tanglish_booking_with_noise
+    expect: BOOKED
+    note: "A Tanglish caller; the recogniser mangles the service, the pack repairs it."
+    turns:
+      - heard: "naalai kaalai teeth clining slot irukka?"
+        truth: "naalai kaalai teeth cleaning slot irukka?"
+        low_conf: [clining]
+      - heard: "aama sari"
+        truth: "aama sari"
+      - heard: "Karthik Raman 9840012345"
+        truth: "Karthik Raman 9840012345"
+      - heard: "aama confirm pannunga"
+        truth: "aama confirm pannunga"
+  - name: tanglish_price_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "cleaning evlo aagum?"
+        truth: "cleaning evlo aagum?"
+      - heard: "illa adhu dhaan, nandri"
+        truth: "illa adhu dhaan, nandri"
+  - name: tanglish_emergency
+    expect: HANDED_OFF
+    note: "Guardrail: bleeding that will not stop leaves the automation at once."
+    turns:
+      - heard: "pallula romba blood varudhu, nikkave illa"
+        truth: "pallula romba blood varudhu, nikkave illa"
+  - name: tanglish_medicine_refusal
+    expect: REFUSED
+    note: "Guardrail: the agent never names a medicine."
+    turns:
+      - heard: "pal vali-ku enna tablet sapdalam?"
+        truth: "pal vali-ku enna tablet sapdalam?"
+  - name: tanglish_closed_day_lead
+    expect: LEAD_CAPTURED
+    note: "Sunday is closed; a missed booking must still become a lead."
+    turns:
+      - heard: "gnayiru kaalai chekup slot kidaikuma?"
+        truth: "gnayiru kaalai checkup slot kidaikuma?"
+        low_conf: [chekup]
+      - heard: "Priya Sundar 9884012345"
+        truth: "Priya Sundar 9884012345"
