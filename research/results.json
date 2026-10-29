@@ -1,69 +1,88 @@
 {
-  "generated_at": "2026-10-21T14:08:32+00:00",
+  "generated_at": "2026-10-29T16:13:28+00:00",
   "reps": 5,
-  "time_scale": 90.0,
+  "time_scale": 60.0,
   "packs": [
+    "clinic_chennai",
     "clinic_kolkata",
     "clinic_pune",
+    "coaching_ahmedabad",
     "coaching_institute",
     "dental_clinic",
     "diagnostic_lab",
+    "lab_hyderabad",
+    "salon_ludhiana",
     "salon_spa"
   ],
-  "scenarios": 24,
+  "scenarios": 44,
   "authored": {
     "full": {
       "config": "full",
       "noise": null,
       "bhasha": true,
-      "speculation": {
-        "started": 155,
-        "hits": 65,
-        "wasted": 90,
-        "hit_rate": 0.419,
-        "saved_ms_total": 14220.0,
-        "saved_ms_per_hit": 218.8
-      },
-      "calls": 120,
-      "turns": 310,
+      "speculation_enabled": true,
+      "calls": 220,
+      "turns": 530,
       "outcome_accuracy": 1.0,
       "entity_error_rate": 0.0,
-      "entities_evaluated": 75,
+      "entities_evaluated": 135,
+      "date_time": {
+        "turns": 125,
+        "corrupted": 0,
+        "unrestored": 0,
+        "error_rate": 0.0
+      },
+      "date_time_error_rate": 0.0,
       "latency_ms": {
-        "mean": 72.0,
-        "p50": 36.3,
-        "p90": 188.3,
-        "p95": 226.4,
-        "max": 359.4
+        "mean": 86.7,
+        "p50": 48.6,
+        "p90": 197.6,
+        "p95": 268.2,
+        "max": 524.1
       },
       "tool_turn_latency_ms": {
-        "n": 180,
-        "mean": 113.4,
-        "p50": 95.6,
-        "p90": 215.5,
-        "p95": 236.0
+        "n": 325,
+        "mean": 126.7,
+        "p50": 112.2,
+        "p90": 248.4,
+        "p95": 292.0
       },
       "read_turn_latency_ms": {
-        "n": 90,
-        "mean": 116.8,
-        "p50": 123.9,
-        "p90": 234.7,
-        "p95": 246.2
+        "n": 160,
+        "mean": 153.1,
+        "p50": 172.2,
+        "p90": 289.2,
+        "p95": 307.2
       },
       "write_turn_latency_ms": {
-        "n": 90,
-        "mean": 110.1,
-        "p50": 94.5,
-        "p90": 200.2,
-        "p95": 216.2
+        "n": 165,
+        "mean": 101.0,
+        "p50": 101.4,
+        "p90": 163.4,
+        "p95": 174.6
       },
       "correction_quality": {
-        "beneficial": 55,
+        "beneficial": 95,
         "neutral": 0,
-        "harmful": 0
+        "harmful": 0,
+        "temporal_restored": 0,
+        "temporal_neutral": 0
+      },
+      "speculation": {
+        "started": 270,
+        "hits": 125,
+        "wasted": 145,
+        "hit_rate": 0.463,
+        "saved_ms_total": 28188.0,
+        "saved_ms_per_hit": 225.5
       },
       "unconfirmed_writes": 0,
       "per_pack": {
+        "clinic_chennai": {
+          "calls": 25,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
         "clinic_kolkata": {
           "calls": 15,
           "outcome_accuracy": 1.0,
@@ -71,6 +90,11 @@
         },
         "clinic_pune": {
           "calls": 15,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "coaching_ahmedabad": {
+          "calls": 25,
           "outcome_accuracy": 1.0,
           "entity_error_rate": 0.0
         },
@@ -89,6 +113,16 @@
           "outcome_accuracy": 1.0,
           "entity_error_rate": 0.0
         },
+        "lab_hyderabad": {
+          "calls": 25,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "salon_ludhiana": {
+          "calls": 25,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
         "salon_spa": {
           "calls": 20,
           "outcome_accuracy": 1.0,
@@ -97,99 +131,157 @@
       },
       "metrics": {
         "counters": {
-          "tool_check_availability": 74,
-          "corrections": 55,
-          "speculation_hits": 65,
-          "tool_book_appointment": 45,
-          "outcome_BOOKED": 45,
-          "tool_search_knowledge": 100,
-          "outcome_FAQ_ANSWERED": 30,
+          "tool_check_availability": 140,
+          "corrections": 95,
+          "speculation_hits": 125,
+          "tool_book_appointment": 70,
+          "outcome_BOOKED": 70,
+          "tool_search_knowledge": 160,
+          "outcome_FAQ_ANSWERED": 55,
           "tool_handoff": 35,
           "outcome_HANDED_OFF": 35,
-          "tool_capture_lead": 10,
-          "outcome_LEAD_CAPTURED": 10
+          "tool_refuse": 30,
+          "outcome_REFUSED": 30,
+          "tool_capture_lead": 30,
+          "outcome_LEAD_CAPTURED": 30
         },
         "latency": {
           "bhasha_ms": {
-            "n": 310,
-            "mean": 6.1,
-            "p50": 1.1,
-            "p90": 21.7,
-            "p95": 28.9,
-            "max": 173.9
+            "n": 530,
+            "mean": 7.5,
+            "p50": 2.8,
+            "p90": 20.5,
+            "p95": 34.5,
+            "max": 102.0
           },
           "read_turn_latency_ms": {
-            "n": 90,
-            "mean": 116.8,
-            "p50": 123.9,
-            "p90": 234.7,
-            "p95": 246.2,
-            "max": 359.4
+            "n": 160,
+            "mean": 153.1,
+            "p50": 172.2,
+            "p90": 289.2,
+            "p95": 307.2,
+            "max": 363.3
           },
           "tool_book_appointment_ms": {
-            "n": 45,
-            "mean": 95.1,
-            "p50": 79.0,
-            "p90": 176.2,
-            "p95": 179.0,
-            "max": 209
+            "n": 70,
+            "mean": 93.8,
+            "p50": 95.5,
+            "p90": 131.4,
+            "p95": 143.1,
+            "max": 347
           },
           "tool_capture_lead_ms": {
-            "n": 10,
-            "mean": 100.7,
-            "p50": 107.5,
-            "p90": 138.2,
-            "p95": 143.6,
-            "max": 149
+            "n": 30,
+            "mean": 58.6,
+            "p50": 61.0,
+            "p90": 102.1,
+            "p95": 105.2,
+            "max": 118
           },
           "tool_check_availability_ms": {
-            "n": 74,
-            "mean": 227.7,
-            "p50": 225.0,
-            "p90": 247.0,
-            "p95": 251.3,
-            "max": 287
+            "n": 140,
+            "mean": 239.4,
+            "p50": 241.0,
+            "p90": 258.0,
+            "p95": 263.0,
+            "max": 288
           },
           "tool_handoff_ms": {
             "n": 35,
-            "mean": 59.8,
-            "p50": 48.0,
-            "p90": 98.8,
-            "p95": 118.4,
-            "max": 218
+            "mean": 50.4,
+            "p50": 52.0,
+            "p90": 80.0,
+            "p95": 89.1,
+            "max": 98
+          },
+          "tool_refuse_ms": {
+            "n": 30,
+            "mean": 63.8,
+            "p50": 62.0,
+            "p90": 91.0,
+            "p95": 93.7,
+            "max": 118
           },
           "tool_search_knowledge_ms": {
-            "n": 100,
-            "mean": 148.9,
-            "p50": 146.0,
-            "p90": 161.1,
-            "p95": 167.1,
-            "max": 236
+            "n": 160,
+            "mean": 160.5,
+            "p50": 158.0,
+            "p90": 169.0,
+            "p95": 173.0,
+            "max": 228
           },
           "tool_turn_latency_ms": {
-            "n": 180,
-            "mean": 113.4,
-            "p50": 95.6,
-            "p90": 215.5,
-            "p95": 236.0,
-            "max": 359.4
+            "n": 325,
+            "mean": 126.7,
+            "p50": 112.2,
+            "p90": 248.4,
+            "p95": 292.0,
+            "max": 524.1
           },
           "turn_latency_ms": {
-            "n": 310,
-            "mean": 72.0,
-            "p50": 36.3,
-            "p90": 188.3,
-            "p95": 226.4,
-            "max": 359.4
+            "n": 530,
+            "mean": 86.7,
+            "p50": 48.6,
+            "p90": 197.6,
+            "p95": 268.2,
+            "max": 524.1
           }
         }
       },
-      "wall_seconds": 16.9
+      "wall_seconds": 45.8
     },
     "no_speculation": {
       "config": "no_speculation",
       "noise": null,
       "bhasha": true,
+      "speculation_enabled": false,
+      "calls": 220,
+      "turns": 530,
+      "outcome_accuracy": 1.0,
+      "entity_error_rate": 0.0,
+      "entities_evaluated": 135,
+      "date_time": {
+        "turns": 125,
+        "corrupted": 0,
+        "unrestored": 0,
+        "error_rate": 0.0
+      },
+      "date_time_error_rate": 0.0,
+      "latency_ms": {
+        "mean": 128.9,
+        "p50": 99.7,
+        "p90": 314.8,
+        "p95": 344.3,
+        "max": 575.7
+      },
+      "tool_turn_latency_ms": {
+        "n": 325,
+        "mean": 193.4,
+        "p50": 166.9,
+        "p90": 336.1,
+        "p95": 362.7
+      },
+      "read_turn_latency_ms": {
+        "n": 160,
+        "mean": 282.4,
+        "p50": 270.5,
+        "p90": 363.0,
+        "p95": 520.4
+      },
+      "write_turn_latency_ms": {
+        "n": 165,
+        "mean": 107.2,
+        "p50": 110.8,
+        "p90": 157.4,
+        "p95": 163.1
+      },
+      "correction_quality": {
+        "beneficial": 95,
+        "neutral": 0,
+        "harmful": 0,
+        "temporal_restored": 0,
+        "temporal_neutral": 0
+      },
       "speculation": {
         "started": 0,
         "hits": 0,
@@ -198,46 +290,13 @@
         "saved_ms_total": 0.0,
         "saved_ms_per_hit": 0.0
       },
-      "calls": 120,
-      "turns": 310,
-      "outcome_accuracy": 1.0,
-      "entity_error_rate": 0.0,
-      "entities_evaluated": 75,
-      "latency_ms": {
-        "mean": 107.0,
-        "p50": 52.0,
-        "p90": 254.2,
-        "p95": 290.6,
-        "max": 1204.7
-      },
-      "tool_turn_latency_ms": {
-        "n": 180,
-        "mean": 173.2,
-        "p50": 160.0,
-        "p90": 284.6,
-        "p95": 322.6
-      },
-      "read_turn_latency_ms": {
-        "n": 90,
-        "mean": 237.6,
-        "p50": 234.6,
-        "p90": 314.7,
-        "p95": 330.7
-      },
-      "write_turn_latency_ms": {
-        "n": 90,
-        "mean": 108.8,
-        "p50": 99.3,
-        "p90": 197.3,
-        "p95": 220.7
-      },
-      "correction_quality": {
-        "beneficial": 55,
-        "neutral": 0,
-        "harmful": 0
-      },
       "unconfirmed_writes": 0,
       "per_pack": {
+        "clinic_chennai": {
+          "calls": 25,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
         "clinic_kolkata": {
           "calls": 15,
           "outcome_accuracy": 1.0,
@@ -245,6 +304,11 @@
         },
         "clinic_pune": {
           "calls": 15,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "coaching_ahmedabad": {
+          "calls": 25,
           "outcome_accuracy": 1.0,
           "entity_error_rate": 0.0
         },
@@ -263,6 +327,16 @@
           "outcome_accuracy": 1.0,
           "entity_error_rate": 0.0
         },
+        "lab_hyderabad": {
+          "calls": 25,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "salon_ludhiana": {
+          "calls": 25,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
         "salon_spa": {
           "calls": 20,
           "outcome_accuracy": 1.0,
@@ -271,146 +345,171 @@
       },
       "metrics": {
         "counters": {
-          "corrections": 55,
-          "tool_check_availability": 55,
-          "tool_book_appointment": 45,
-          "outcome_BOOKED": 45,
-          "tool_search_knowledge": 35,
-          "outcome_FAQ_ANSWERED": 30,
+          "corrections": 95,
+          "tool_check_availability": 110,
+          "tool_book_appointment": 70,
+          "outcome_BOOKED": 70,
+          "tool_search_knowledge": 60,
+          "outcome_FAQ_ANSWERED": 55,
           "tool_handoff": 35,
           "outcome_HANDED_OFF": 35,
-          "tool_capture_lead": 10,
-          "outcome_LEAD_CAPTURED": 10
+          "tool_refuse": 30,
+          "outcome_REFUSED": 30,
+          "tool_capture_lead": 30,
+          "outcome_LEAD_CAPTURED": 30
         },
         "latency": {
           "bhasha_ms": {
-            "n": 310,
-            "mean": 5.5,
-            "p50": 1.1,
-            "p90": 16.2,
-            "p95": 29.1,
-            "max": 98.9
+            "n": 530,
+            "mean": 9.9,
+            "p50": 2.9,
+            "p90": 36.4,
+            "p95": 45.2,
+            "max": 133.9
           },
           "read_turn_latency_ms": {
-            "n": 90,
-            "mean": 237.6,
-            "p50": 234.6,
-            "p90": 314.7,
-            "p95": 330.7,
-            "max": 657.5
+            "n": 160,
+            "mean": 282.4,
+            "p50": 270.5,
+            "p90": 363.0,
+            "p95": 520.4,
+            "max": 575.7
           },
           "tool_book_appointment_ms": {
-            "n": 45,
-            "mean": 82.5,
-            "p50": 81.0,
-            "p90": 153.4,
-            "p95": 173.4,
-            "max": 190
+            "n": 70,
+            "mean": 92.5,
+            "p50": 95.0,
+            "p90": 126.0,
+            "p95": 132.6,
+            "max": 186
           },
           "tool_capture_lead_ms": {
-            "n": 10,
-            "mean": 70.3,
-            "p50": 71.0,
-            "p90": 110.5,
-            "p95": 112.8,
-            "max": 115
+            "n": 30,
+            "mean": 73.0,
+            "p50": 84.0,
+            "p90": 92.0,
+            "p95": 92.5,
+            "max": 95
           },
           "tool_check_availability_ms": {
-            "n": 55,
-            "mean": 236.5,
-            "p50": 226.0,
-            "p90": 251.0,
-            "p95": 262.9,
-            "max": 620
+            "n": 110,
+            "mean": 244.0,
+            "p50": 244.5,
+            "p90": 256.1,
+            "p95": 261.1,
+            "max": 291
           },
           "tool_handoff_ms": {
             "n": 35,
-            "mean": 56.0,
-            "p50": 44.0,
-            "p90": 99.4,
-            "p95": 116.3,
-            "max": 190
+            "mean": 59.1,
+            "p50": 59.0,
+            "p90": 84.6,
+            "p95": 85.6,
+            "max": 91
+          },
+          "tool_refuse_ms": {
+            "n": 30,
+            "mean": 59.1,
+            "p50": 69.5,
+            "p90": 81.0,
+            "p95": 81.5,
+            "max": 83
           },
           "tool_search_knowledge_ms": {
-            "n": 35,
-            "mean": 151.3,
-            "p50": 149.0,
-            "p90": 160.6,
-            "p95": 165.3,
-            "max": 218
+            "n": 60,
+            "mean": 162.8,
+            "p50": 163.0,
+            "p90": 169.1,
+            "p95": 171.1,
+            "max": 201
           },
           "tool_turn_latency_ms": {
-            "n": 180,
-            "mean": 173.2,
-            "p50": 160.0,
-            "p90": 284.6,
-            "p95": 322.6,
-            "max": 1204.7
+            "n": 325,
+            "mean": 193.4,
+            "p50": 166.9,
+            "p90": 336.1,
+            "p95": 362.7,
+            "max": 575.7
           },
           "turn_latency_ms": {
-            "n": 310,
-            "mean": 107.0,
-            "p50": 52.0,
-            "p90": 254.2,
-            "p95": 290.6,
-            "max": 1204.7
+            "n": 530,
+            "mean": 128.9,
+            "p50": 99.7,
+            "p90": 314.8,
+            "p95": 344.3,
+            "max": 575.7
           }
         }
       },
-      "wall_seconds": 17.0
+      "wall_seconds": 46.2
     },
     "no_bhasha": {
       "config": "no_bhasha",
       "noise": null,
       "bhasha": false,
-      "speculation": {
-        "started": 130,
-        "hits": 25,
-        "wasted": 105,
-        "hit_rate": 0.192,
-        "saved_ms_total": 5256.0,
-        "saved_ms_per_hit": 210.2
+      "speculation_enabled": true,
+      "calls": 220,
+      "turns": 530,
+      "outcome_accuracy": 0.6818,
+      "entity_error_rate": 0.6296,
+      "entities_evaluated": 135,
+      "date_time": {
+        "turns": 125,
+        "corrupted": 0,
+        "unrestored": 0,
+        "error_rate": 0.0
       },
-      "calls": 120,
-      "turns": 310,
-      "outcome_accuracy": 0.6667,
-      "entity_error_rate": 0.6667,
-      "entities_evaluated": 75,
+      "date_time_error_rate": 0.0,
       "latency_ms": {
-        "mean": 60.7,
-        "p50": 18.4,
-        "p90": 176.7,
-        "p95": 211.4,
-        "max": 453.1
+        "mean": 69.6,
+        "p50": 31.3,
+        "p90": 188.2,
+        "p95": 202.2,
+        "max": 435.2
       },
       "tool_turn_latency_ms": {
-        "n": 100,
-        "mean": 149.8,
-        "p50": 152.7,
-        "p90": 260.8,
-        "p95": 277.7
+        "n": 185,
+        "mean": 151.9,
+        "p50": 148.4,
+        "p90": 247.4,
+        "p95": 294.5
       },
       "read_turn_latency_ms": {
-        "n": 50,
-        "mean": 184.9,
-        "p50": 176.2,
-        "p90": 277.7,
-        "p95": 297.0
+        "n": 90,
+        "mean": 195.5,
+        "p50": 192.5,
+        "p90": 293.7,
+        "p95": 299.7
       },
       "write_turn_latency_ms": {
-        "n": 50,
-        "mean": 114.7,
-        "p50": 113.9,
-        "p90": 192.4,
-        "p95": 201.7
+        "n": 95,
+        "mean": 110.6,
+        "p50": 101.2,
+        "p90": 154.3,
+        "p95": 162.5
       },
       "correction_quality": {
         "beneficial": 0,
         "neutral": 0,
-        "harmful": 0
+        "harmful": 0,
+        "temporal_restored": 0,
+        "temporal_neutral": 0
+      },
+      "speculation": {
+        "started": 235,
+        "hits": 55,
+        "wasted": 180,
+        "hit_rate": 0.234,
+        "saved_ms_total": 11502.0,
+        "saved_ms_per_hit": 209.1
       },
       "unconfirmed_writes": 0,
       "per_pack": {
+        "clinic_chennai": {
+          "calls": 25,
+          "outcome_accuracy": 0.6,
+          "entity_error_rate": 0.6667
+        },
         "clinic_kolkata": {
           "calls": 15,
           "outcome_accuracy": 0.667,
@@ -420,6 +519,11 @@
           "calls": 15,
           "outcome_accuracy": 0.667,
           "entity_error_rate": 0.5
+        },
+        "coaching_ahmedabad": {
+          "calls": 25,
+          "outcome_accuracy": 0.6,
+          "entity_error_rate": 1.0
         },
         "coaching_institute": {
           "calls": 15,
@@ -436,6 +540,16 @@
           "outcome_accuracy": 1.0,
           "entity_error_rate": 0.0
         },
+        "lab_hyderabad": {
+          "calls": 25,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "salon_ludhiana": {
+          "calls": 25,
+          "outcome_accuracy": 0.6,
+          "entity_error_rate": 0.75
+        },
         "salon_spa": {
           "calls": 20,
           "outcome_accuracy": 0.5,
@@ -444,90 +558,158 @@
       },
       "metrics": {
         "counters": {
-          "tool_check_availability": 45,
+          "tool_check_availability": 100,
           "corrections": 0,
-          "outcome_ABANDONED": 35,
-          "tool_search_knowledge": 100,
-          "speculation_hits": 25,
-          "outcome_FAQ_ANSWERED": 35,
+          "outcome_ABANDONED": 65,
+          "tool_search_knowledge": 160,
+          "speculation_hits": 55,
+          "outcome_FAQ_ANSWERED": 60,
           "tool_handoff": 35,
           "outcome_HANDED_OFF": 35,
-          "tool_book_appointment": 15,
-          "outcome_BOOKED": 15
+          "tool_refuse": 30,
+          "outcome_REFUSED": 30,
+          "tool_book_appointment": 25,
+          "outcome_BOOKED": 25,
+          "tool_capture_lead": 5,
+          "outcome_LEAD_CAPTURED": 5
         },
         "latency": {
           "bhasha_ms": {
-            "n": 310,
+            "n": 530,
             "mean": 0.2,
             "p50": 0.2,
-            "p90": 0.3,
-            "p95": 0.4,
-            "max": 3.4
+            "p90": 0.2,
+            "p95": 0.3,
+            "max": 2.5
           },
           "read_turn_latency_ms": {
-            "n": 50,
-            "mean": 184.9,
-            "p50": 176.2,
-            "p90": 277.7,
-            "p95": 297.0,
-            "max": 370.1
+            "n": 90,
+            "mean": 195.5,
+            "p50": 192.5,
+            "p90": 293.7,
+            "p95": 299.7,
+            "max": 314.3
           },
           "tool_book_appointment_ms": {
-            "n": 15,
-            "mean": 124.1,
-            "p50": 111.0,
-            "p90": 170.2,
-            "p95": 188.9,
-            "max": 226
+            "n": 25,
+            "mean": 126.5,
+            "p50": 117.0,
+            "p90": 139.6,
+            "p95": 160.4,
+            "max": 409
+          },
+          "tool_capture_lead_ms": {
+            "n": 5,
+            "mean": 91.2,
+            "p50": 89.0,
+            "p90": 102.0,
+            "p95": 102.0,
+            "max": 102
           },
           "tool_check_availability_ms": {
-            "n": 45,
-            "mean": 238.8,
-            "p50": 235.0,
-            "p90": 254.2,
-            "p95": 257.6,
-            "max": 345
+            "n": 100,
+            "mean": 246.3,
+            "p50": 248.0,
+            "p90": 262.1,
+            "p95": 266.1,
+            "max": 292
           },
           "tool_handoff_ms": {
             "n": 35,
-            "mean": 79.5,
-            "p50": 86.0,
-            "p90": 124.2,
-            "p95": 129.0,
-            "max": 137
+            "mean": 71.5,
+            "p50": 77.0,
+            "p90": 87.0,
+            "p95": 92.8,
+            "max": 98
+          },
+          "tool_refuse_ms": {
+            "n": 30,
+            "mean": 73.0,
+            "p50": 76.5,
+            "p90": 86.0,
+            "p95": 86.0,
+            "max": 97
           },
           "tool_search_knowledge_ms": {
-            "n": 100,
-            "mean": 152.2,
-            "p50": 148.0,
-            "p90": 163.2,
-            "p95": 172.6,
-            "max": 250
+            "n": 160,
+            "mean": 161.6,
+            "p50": 161.0,
+            "p90": 169.1,
+            "p95": 172.0,
+            "max": 237
           },
           "tool_turn_latency_ms": {
-            "n": 100,
-            "mean": 149.8,
-            "p50": 152.7,
-            "p90": 260.8,
-            "p95": 277.7,
-            "max": 370.1
+            "n": 185,
+            "mean": 151.9,
+            "p50": 148.4,
+            "p90": 247.4,
+            "p95": 294.5,
+            "max": 435.2
           },
           "turn_latency_ms": {
-            "n": 310,
-            "mean": 60.7,
-            "p50": 18.4,
-            "p90": 176.7,
-            "p95": 211.4,
-            "max": 453.1
+            "n": 530,
+            "mean": 69.6,
+            "p50": 31.3,
+            "p90": 188.2,
+            "p95": 202.2,
+            "max": 435.2
           }
         }
       },
-      "wall_seconds": 16.5
+      "wall_seconds": 44.5
     },
     "baseline": {
       "config": "baseline",
       "noise": null,
       "bhasha": false,
+      "speculation_enabled": false,
+      "calls": 220,
+      "turns": 530,
+      "outcome_accuracy": 0.6818,
+      "entity_error_rate": 0.6296,
+      "entities_evaluated": 135,
+      "date_time": {
+        "turns": 125,
+        "corrupted": 0,
+        "unrestored": 0,
+        "error_rate": 0.0
+      },
+      "date_time_error_rate": 0.0,
+      "latency_ms": {
+        "mean": 80.6,
+        "p50": 34.5,
+        "p90": 200.0,
+        "p95": 277.4,
+        "max": 1233.3
+      },
+      "tool_turn_latency_ms": {
+        "n": 185,
+        "mean": 181.8,
+        "p50": 171.4,
+        "p90": 302.5,
+        "p95": 325.3
+      },
+      "read_turn_latency_ms": {
+        "n": 90,
+        "mean": 252.8,
+        "p50": 204.1,
+        "p90": 325.1,
+        "p95": 486.2
+      },
+      "write_turn_latency_ms": {
+        "n": 95,
+        "mean": 114.5,
+        "p50": 103.5,
+        "p90": 161.9,
+        "p95": 173.6
+      },
+      "correction_quality": {
+        "beneficial": 0,
+        "neutral": 0,
+        "harmful": 0,
+        "temporal_restored": 0,
+        "temporal_neutral": 0
+      },
       "speculation": {
         "started": 0,
         "hits": 0,
@@ -536,46 +718,13 @@
         "saved_ms_total": 0.0,
         "saved_ms_per_hit": 0.0
       },
-      "calls": 120,
-      "turns": 310,
-      "outcome_accuracy": 0.6667,
-      "entity_error_rate": 0.6667,
-      "entities_evaluated": 75,
-      "latency_ms": {
-        "mean": 70.6,
-        "p50": 21.3,
-        "p90": 206.8,
-        "p95": 258.5,
-        "max": 549.4
-      },
-      "tool_turn_latency_ms": {
-        "n": 100,
-        "mean": 177.0,
-        "p50": 182.5,
-        "p90": 277.6,
-        "p95": 297.0
-      },
-      "read_turn_latency_ms": {
-        "n": 50,
-        "mean": 227.2,
-        "p50": 204.3,
-        "p90": 293.3,
-        "p95": 298.2
-      },
-      "write_turn_latency_ms": {
-        "n": 50,
-        "mean": 126.8,
-        "p50": 122.0,
-        "p90": 212.1,
-        "p95": 236.8
-      },
-      "correction_quality": {
-        "beneficial": 0,
-        "neutral": 0,
-        "harmful": 0
-      },
       "unconfirmed_writes": 0,
       "per_pack": {
+        "clinic_chennai": {
+          "calls": 25,
+          "outcome_accuracy": 0.6,
+          "entity_error_rate": 0.6667
+        },
         "clinic_kolkata": {
           "calls": 15,
           "outcome_accuracy": 0.667,
@@ -585,6 +734,11 @@
           "calls": 15,
           "outcome_accuracy": 0.667,
           "entity_error_rate": 0.5
+        },
+        "coaching_ahmedabad": {
+          "calls": 25,
+          "outcome_accuracy": 0.6,
+          "entity_error_rate": 1.0
         },
         "coaching_institute": {
           "calls": 15,
@@ -601,6 +755,16 @@
           "outcome_accuracy": 1.0,
           "entity_error_rate": 0.0
         },
+        "lab_hyderabad": {
+          "calls": 25,
+          "outcome_accuracy": 1.0,
+          "entity_error_rate": 0.0
+        },
+        "salon_ludhiana": {
+          "calls": 25,
+          "outcome_accuracy": 0.6,
+          "entity_error_rate": 0.75
+        },
         "salon_spa": {
           "calls": 20,
           "outcome_accuracy": 0.5,
@@ -610,127 +774,159 @@
       "metrics": {
         "counters": {
           "corrections": 0,
-          "outcome_ABANDONED": 35,
-          "tool_search_knowledge": 35,
-          "outcome_FAQ_ANSWERED": 35,
+          "outcome_ABANDONED": 65,
+          "tool_search_knowledge": 60,
+          "outcome_FAQ_ANSWERED": 60,
           "tool_handoff": 35,
           "outcome_HANDED_OFF": 35,
-          "tool_check_availability": 15,
-          "tool_book_appointment": 15,
-          "outcome_BOOKED": 15
+          "tool_refuse": 30,
+          "outcome_REFUSED": 30,
+          "tool_check_availability": 35,
+          "tool_book_appointment": 25,
+          "outcome_BOOKED": 25,
+          "tool_capture_lead": 5,
+          "outcome_LEAD_CAPTURED": 5
         },
         "latency": {
           "bhasha_ms": {
-            "n": 310,
-            "mean": 0.5,
+            "n": 530,
+            "mean": 0.2,
             "p50": 0.2,
-            "p90": 0.3,
-            "p95": 0.4,
-            "max": 100.0
+            "p90": 0.2,
+            "p95": 0.2,
+            "max": 0.4
           },
           "read_turn_latency_ms": {
-            "n": 50,
-            "mean": 227.2,
-            "p50": 204.3,
-            "p90": 293.3,
-            "p95": 298.2,
-            "max": 549.4
+            "n": 90,
+            "mean": 252.8,
+            "p50": 204.1,
+            "p90": 325.1,
+            "p95": 486.2,
+            "max": 1233.3
           },
           "tool_book_appointment_ms": {
-            "n": 15,
-            "mean": 129.3,
-            "p50": 108.0,
-            "p90": 190.2,
-            "p95": 255.2,
-            "max": 391
+            "n": 25,
+            "mean": 113.1,
+            "p50": 119.0,
+            "p90": 135.2,
+            "p95": 143.6,
+            "max": 167
+          },
+          "tool_capture_lead_ms": {
+            "n": 5,
+            "mean": 72.0,
+            "p50": 78.0,
+            "p90": 102.6,
+            "p95": 103.8,
+            "max": 105
           },
           "tool_check_availability_ms": {
-            "n": 15,
-            "mean": 274.4,
+            "n": 35,
+            "mean": 246.9,
             "p50": 253.0,
-            "p90": 291.0,
-            "p95": 373.6,
-            "max": 529
+            "p90": 261.6,
+            "p95": 266.5,
+            "max": 271
           },
           "tool_handoff_ms": {
             "n": 35,
-            "mean": 93.9,
-            "p50": 92.0,
-            "p90": 123.6,
-            "p95": 167.5,
-            "max": 494
+            "mean": 93.5,
+            "p50": 81.0,
+            "p90": 119.2,
+            "p95": 151.7,
+            "max": 395
+          },
+          "tool_refuse_ms": {
+            "n": 30,
+            "mean": 72.6,
+            "p50": 76.0,
+            "p90": 83.2,
+            "p95": 85.5,
+            "max": 87
           },
           "tool_search_knowledge_ms": {
-            "n": 35,
-            "mean": 168.0,
-            "p50": 167.0,
-            "p90": 179.8,
-            "p95": 184.6,
-            "max": 222
+            "n": 60,
+            "mean": 162.8,
+            "p50": 165.0,
+            "p90": 168.0,
+            "p95": 169.1,
+            "max": 177
           },
           "tool_turn_latency_ms": {
-            "n": 100,
-            "mean": 177.0,
-            "p50": 182.5,
-            "p90": 277.6,
-            "p95": 297.0,
-            "max": 549.4
+            "n": 185,
+            "mean": 181.8,
+            "p50": 171.4,
+            "p90": 302.5,
+            "p95": 325.3,
+            "max": 1233.3
           },
           "turn_latency_ms": {
-            "n": 310,
-            "mean": 70.6,
-            "p50": 21.3,
-            "p90": 206.8,
-            "p95": 258.5,
-            "max": 549.4
+            "n": 530,
+            "mean": 80.6,
+            "p50": 34.5,
+            "p90": 200.0,
+            "p95": 277.4,
+            "max": 1233.3
           }
         }
       },
-      "wall_seconds": 17.8
+      "wall_seconds": 44.4
     }
   },
   "transcripts": {
     "0.15": {
-      "sentences": 4050,
-      "entities": 5505,
-      "entity_error_rate_off": 0.1775,
-      "entity_error_rate_on": 0.0038,
-      "relative_reduction_pct": 97.9,
+      "sentences": 6990,
+      "entities": 9540,
+      "entity_error_rate_off": 0.1766,
+      "entity_error_rate_on": 0.0045,
+      "relative_reduction_pct": 97.4,
       "corrections": {
-        "beneficial": 1248,
-        "neutral": 10,
+        "beneficial": 2152,
+        "neutral": 20,
         "harmful": 0
       },
-      "precision": 0.9921,
-      "median_correct_ms": 0.008
+      "temporal_corrections": {
+        "restored": 0,
+        "neutral": 0
+      },
+      "precision": 0.9908,
+      "median_correct_ms": 0.032
     },
     "0.30": {
-      "sentences": 4050,
-      "entities": 5505,
-      "entity_error_rate_off": 0.3092,
-      "entity_error_rate_on": 0.0091,
-      "relative_reduction_pct": 97.1,
+      "sentences": 6990,
+      "entities": 9540,
+      "entity_error_rate_off": 0.3081,
+      "entity_error_rate_on": 0.0096,
+      "relative_reduction_pct": 96.9,
       "corrections": {
-        "beneficial": 2166,
-        "neutral": 15,
+        "beneficial": 3717,
+        "neutral": 39,
         "harmful": 0
       },
-      "precision": 0.9931,
-      "median_correct_ms": 0.083
+      "temporal_corrections": {
+        "restored": 0,
+        "neutral": 0
+      },
+      "precision": 0.9896,
+      "median_correct_ms": 0.105
     },
     "0.45": {
-      "sentences": 4050,
-      "entities": 5505,
-      "entity_error_rate_off": 0.4856,
-      "entity_error_rate_on": 0.0162,
-      "relative_reduction_pct": 96.7,
+      "sentences": 6990,
+      "entities": 9540,
+      "entity_error_rate_off": 0.4783,
+      "entity_error_rate_on": 0.0181,
+      "relative_reduction_pct": 96.2,
       "corrections": {
-        "beneficial": 3170,
-        "neutral": 26,
+        "beneficial": 5407,
+        "neutral": 52,
         "harmful": 0
       },
-      "precision": 0.9919,
-      "median_correct_ms": 0.134
+      "temporal_corrections": {
+        "restored": 0,
+        "neutral": 0
+      },
+      "precision": 0.9905,
+      "median_correct_ms": 0.162
     }
   },
   "noise_sweep": {
@@ -739,54 +935,69 @@
         "config": "full",
         "noise": 0.15,
         "bhasha": true,
-        "speculation": {
-          "started": 150,
-          "hits": 67,
-          "wasted": 83,
-          "hit_rate": 0.447,
-          "saved_ms_total": 16020.0,
-          "saved_ms_per_hit": 239.1
-        },
-        "calls": 120,
-        "turns": 310,
-        "outcome_accuracy": 0.9583,
+        "speculation_enabled": true,
+        "calls": 220,
+        "turns": 530,
+        "outcome_accuracy": 0.9318,
         "entity_error_rate": 0.0,
-        "entities_evaluated": 75,
+        "entities_evaluated": 135,
+        "date_time": {
+          "turns": 125,
+          "corrupted": 12,
+          "unrestored": 4,
+          "error_rate": 0.032
+        },
+        "date_time_error_rate": 0.032,
         "latency_ms": {
-          "mean": 84.0,
-          "p50": 38.3,
-          "p90": 206.9,
-          "p95": 257.2,
-          "max": 442.6
+          "mean": 105.2,
+          "p50": 81.6,
+          "p90": 221.3,
+          "p95": 281.3,
+          "max": 403.3
         },
         "tool_turn_latency_ms": {
-          "n": 174,
-          "mean": 130.7,
-          "p50": 135.3,
-          "p90": 248.6,
-          "p95": 282.5
+          "n": 310,
+          "mean": 151.6,
+          "p50": 144.3,
+          "p90": 278.6,
+          "p95": 309.3
         },
         "read_turn_latency_ms": {
-          "n": 87,
-          "mean": 139.0,
-          "p50": 166.5,
-          "p90": 272.0,
-          "p95": 332.1
+          "n": 154,
+          "mean": 169.9,
+          "p50": 185.8,
+          "p90": 309.8,
+          "p95": 327.9
         },
         "write_turn_latency_ms": {
-          "n": 87,
-          "mean": 122.3,
-          "p50": 114.6,
-          "p90": 207.4,
-          "p95": 229.3
+          "n": 156,
+          "mean": 133.6,
+          "p50": 135.4,
+          "p90": 172.9,
+          "p95": 188.1
         },
         "correction_quality": {
-          "beneficial": 17,
-          "neutral": 2,
-          "harmful": 0
+          "beneficial": 36,
+          "neutral": 3,
+          "harmful": 0,
+          "temporal_restored": 8,
+          "temporal_neutral": 3
+        },
+        "speculation": {
+          "started": 256,
+          "hits": 122,
+          "wasted": 134,
+          "hit_rate": 0.477,
+          "saved_ms_total": 27918.0,
+          "saved_ms_per_hit": 228.8
         },
         "unconfirmed_writes": 0,
         "per_pack": {
+          "clinic_chennai": {
+            "calls": 25,
+            "outcome_accuracy": 0.92,
+            "entity_error_rate": 0.0
+          },
           "clinic_kolkata": {
             "calls": 15,
             "outcome_accuracy": 1.0,
@@ -794,7 +1005,12 @@
           },
           "clinic_pune": {
             "calls": 15,
-            "outcome_accuracy": 0.933,
+            "outcome_accuracy": 1.0,
+            "entity_error_rate": 0.0
+          },
+          "coaching_ahmedabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.96,
             "entity_error_rate": 0.0
           },
           "coaching_institute": {
@@ -812,6 +1028,16 @@
             "outcome_accuracy": 1.0,
             "entity_error_rate": 0.0
           },
+          "lab_hyderabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.84,
+            "entity_error_rate": 0.0
+          },
+          "salon_ludhiana": {
+            "calls": 25,
+            "outcome_accuracy": 0.84,
+            "entity_error_rate": 0.0
+          },
           "salon_spa": {
             "calls": 20,
             "outcome_accuracy": 0.95,
@@ -820,91 +1046,101 @@
         },
         "metrics": {
           "counters": {
-            "tool_check_availability": 73,
-            "corrections": 19,
-            "speculation_hits": 67,
-            "tool_book_appointment": 44,
-            "outcome_BOOKED": 44,
-            "tool_search_knowledge": 91,
-            "outcome_FAQ_ANSWERED": 28,
+            "tool_check_availability": 137,
+            "corrections": 50,
+            "speculation_hits": 122,
+            "tool_book_appointment": 68,
+            "outcome_BOOKED": 68,
+            "tool_search_knowledge": 147,
+            "outcome_FAQ_ANSWERED": 49,
             "tool_handoff": 33,
             "outcome_HANDED_OFF": 33,
-            "outcome_ABANDONED": 5,
-            "tool_capture_lead": 10,
-            "outcome_LEAD_CAPTURED": 10
+            "tool_refuse": 25,
+            "outcome_REFUSED": 25,
+            "tool_capture_lead": 30,
+            "outcome_LEAD_CAPTURED": 30,
+            "outcome_ABANDONED": 15
           },
           "latency": {
             "bhasha_ms": {
-              "n": 310,
-              "mean": 13.0,
-              "p50": 1.6,
-              "p90": 27.5,
-              "p95": 61.1,
-              "max": 220.2
+              "n": 530,
+              "mean": 18.0,
+              "p50": 5.8,
+              "p90": 44.1,
+              "p95": 94.8,
+              "max": 217.0
             },
             "read_turn_latency_ms": {
-              "n": 87,
-              "mean": 139.0,
-              "p50": 166.5,
-              "p90": 272.0,
-              "p95": 332.1,
-              "max": 442.6
+              "n": 154,
+              "mean": 169.9,
+              "p50": 185.8,
+              "p90": 309.8,
+              "p95": 327.9,
+              "max": 403.3
             },
             "tool_book_appointment_ms": {
-              "n": 44,
-              "mean": 105.1,
-              "p50": 106.5,
-              "p90": 166.4,
-              "p95": 192.3,
-              "max": 317
+              "n": 68,
+              "mean": 117.1,
+              "p50": 120.0,
+              "p90": 133.0,
+              "p95": 138.3,
+              "max": 194
             },
             "tool_capture_lead_ms": {
-              "n": 10,
-              "mean": 76.8,
-              "p50": 60.0,
-              "p90": 121.7,
-              "p95": 138.3,
-              "max": 155
+              "n": 30,
+              "mean": 78.2,
+              "p50": 79.0,
+              "p90": 93.5,
+              "p95": 102.4,
+              "max": 136
             },
             "tool_check_availability_ms": {
-              "n": 73,
-              "mean": 255.0,
-              "p50": 251.0,
-              "p90": 274.0,
-              "p95": 277.0,
-              "max": 402
+              "n": 137,
+              "mean": 244.2,
+              "p50": 247.0,
+              "p90": 261.0,
+              "p95": 264.0,
+              "max": 294
             },
             "tool_handoff_ms": {
               "n": 33,
-              "mean": 71.2,
-              "p50": 69.0,
-              "p90": 120.0,
-              "p95": 132.0,
-              "max": 150
+              "mean": 69.8,
+              "p50": 73.0,
+              "p90": 85.0,
+              "p95": 93.8,
+              "max": 114
+            },
+            "tool_refuse_ms": {
+              "n": 25,
+              "mean": 65.7,
+              "p50": 65.0,
+              "p90": 83.8,
+              "p95": 87.4,
+              "max": 92
             },
             "tool_search_knowledge_ms": {
-              "n": 91,
-              "mean": 166.0,
-              "p50": 162.0,
-              "p90": 176.0,
-              "p95": 184.0,
-              "max": 327
+              "n": 147,
+              "mean": 163.1,
+              "p50": 160.0,
+              "p90": 170.0,
+              "p95": 174.4,
+              "max": 435
             },
             "tool_turn_latency_ms": {
-              "n": 174,
-              "mean": 130.7,
-              "p50": 135.3,
-              "p90": 248.6,
-              "p95": 282.5,
-              "max": 442.6
+              "n": 310,
+              "mean": 151.6,
+              "p50": 144.3,
+              "p90": 278.6,
+              "p95": 309.3,
+              "max": 403.3
             },
             "turn_latency_ms": {
-              "n": 310,
-              "mean": 84.0,
-              "p50": 38.3,
-              "p90": 206.9,
-              "p95": 257.2,
-              "max": 442.6
+              "n": 530,
+              "mean": 105.2,
+              "p50": 81.6,
+              "p90": 221.3,
+              "p95": 281.3,
+              "max": 403.3
             }
           }
         }
@@ -913,54 +1149,69 @@
         "config": "no_bhasha",
         "noise": 0.15,
         "bhasha": false,
-        "speculation": {
-          "started": 143,
-          "hits": 59,
-          "wasted": 84,
-          "hit_rate": 0.413,
-          "saved_ms_total": 14166.0,
-          "saved_ms_per_hit": 240.1
+        "speculation_enabled": true,
+        "calls": 220,
+        "turns": 530,
+        "outcome_accuracy": 0.8364,
+        "entity_error_rate": 0.1926,
+        "entities_evaluated": 135,
+        "date_time": {
+          "turns": 125,
+          "corrupted": 12,
+          "unrestored": 12,
+          "error_rate": 0.096
         },
-        "calls": 120,
-        "turns": 310,
-        "outcome_accuracy": 0.8833,
-        "entity_error_rate": 0.2,
-        "entities_evaluated": 75,
+        "date_time_error_rate": 0.096,
         "latency_ms": {
-          "mean": 77.2,
-          "p50": 25.4,
-          "p90": 201.2,
-          "p95": 254.6,
-          "max": 495.6
+          "mean": 84.4,
+          "p50": 39.4,
+          "p90": 199.3,
+          "p95": 263.0,
+          "max": 389.6
         },
         "tool_turn_latency_ms": {
-          "n": 157,
-          "mean": 135.9,
-          "p50": 133.6,
-          "p90": 253.8,
-          "p95": 303.8
+          "n": 272,
+          "mean": 141.8,
+          "p50": 142.7,
+          "p90": 257.6,
+          "p95": 291.5
         },
         "read_turn_latency_ms": {
-          "n": 79,
-          "mean": 139.0,
-          "p50": 169.6,
-          "p90": 297.2,
-          "p95": 310.8
+          "n": 137,
+          "mean": 160.6,
+          "p50": 187.6,
+          "p90": 290.1,
+          "p95": 299.9
         },
         "write_turn_latency_ms": {
-          "n": 78,
-          "mean": 132.7,
-          "p50": 125.6,
-          "p90": 207.9,
-          "p95": 234.8
+          "n": 135,
+          "mean": 122.7,
+          "p50": 123.9,
+          "p90": 159.6,
+          "p95": 167.9
         },
         "correction_quality": {
           "beneficial": 0,
           "neutral": 0,
-          "harmful": 0
+          "harmful": 0,
+          "temporal_restored": 0,
+          "temporal_neutral": 0
+        },
+        "speculation": {
+          "started": 237,
+          "hits": 105,
+          "wasted": 132,
+          "hit_rate": 0.443,
+          "saved_ms_total": 23928.0,
+          "saved_ms_per_hit": 227.9
         },
         "unconfirmed_writes": 0,
         "per_pack": {
+          "clinic_chennai": {
+            "calls": 25,
+            "outcome_accuracy": 0.76,
+            "entity_error_rate": 0.2667
+          },
           "clinic_kolkata": {
             "calls": 15,
             "outcome_accuracy": 1.0,
@@ -970,6 +1221,11 @@
             "calls": 15,
             "outcome_accuracy": 0.867,
             "entity_error_rate": 0.3
+          },
+          "coaching_ahmedabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.84,
+            "entity_error_rate": 0.0
           },
           "coaching_institute": {
             "calls": 15,
@@ -986,6 +1242,16 @@
             "outcome_accuracy": 1.0,
             "entity_error_rate": 0.0
           },
+          "lab_hyderabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.76,
+            "entity_error_rate": 0.2
+          },
+          "salon_ludhiana": {
+            "calls": 25,
+            "outcome_accuracy": 0.76,
+            "entity_error_rate": 0.2
+          },
           "salon_spa": {
             "calls": 20,
             "outcome_accuracy": 0.8,
@@ -994,91 +1260,101 @@
         },
         "metrics": {
           "counters": {
-            "tool_check_availability": 67,
             "corrections": 0,
-            "speculation_hits": 59,
-            "tool_book_appointment": 38,
-            "outcome_BOOKED": 38,
-            "tool_search_knowledge": 92,
-            "outcome_FAQ_ANSWERED": 30,
+            "outcome_ABANDONED": 31,
+            "tool_search_knowledge": 147,
+            "speculation_hits": 105,
+            "outcome_FAQ_ANSWERED": 54,
             "tool_handoff": 33,
             "outcome_HANDED_OFF": 33,
-            "outcome_ABANDONED": 12,
-            "tool_capture_lead": 7,
-            "outcome_LEAD_CAPTURED": 7
+            "tool_refuse": 25,
+            "outcome_REFUSED": 25,
+            "tool_check_availability": 118,
+            "tool_book_appointment": 55,
+            "outcome_BOOKED": 55,
+            "tool_capture_lead": 22,
+            "outcome_LEAD_CAPTURED": 22
           },
           "latency": {
             "bhasha_ms": {
-              "n": 310,
-              "mean": 0.5,
+              "n": 530,
+              "mean": 0.2,
               "p50": 0.2,
-              "p90": 0.3,
-              "p95": 0.4,
-              "max": 69.2
+              "p90": 0.2,
+              "p95": 0.3,
+              "max": 5.7
             },
             "read_turn_latency_ms": {
-              "n": 79,
-              "mean": 139.0,
-              "p50": 169.6,
-              "p90": 297.2,
-              "p95": 310.8,
-              "max": 375.2
+              "n": 137,
+              "mean": 160.6,
+              "p50": 187.6,
+              "p90": 290.1,
+              "p95": 299.9,
+              "max": 389.6
             },
             "tool_book_appointment_ms": {
-              "n": 38,
-              "mean": 126.0,
-              "p50": 113.0,
-              "p90": 176.2,
-              "p95": 207.4,
-              "max": 470
+              "n": 55,
+              "mean": 111.2,
+              "p50": 118.0,
+              "p90": 131.2,
+              "p95": 138.0,
+              "max": 169
             },
             "tool_capture_lead_ms": {
-              "n": 7,
-              "mean": 93.0,
-              "p50": 95.0,
-              "p90": 133.8,
-              "p95": 156.9,
-              "max": 180
+              "n": 22,
+              "mean": 82.9,
+              "p50": 84.5,
+              "p90": 96.6,
+              "p95": 98.9,
+              "max": 103
             },
             "tool_check_availability_ms": {
-              "n": 67,
-              "mean": 263.6,
-              "p50": 262.0,
-              "p90": 279.6,
-              "p95": 298.9,
-              "max": 387
+              "n": 118,
+              "mean": 249.0,
+              "p50": 249.5,
+              "p90": 262.3,
+              "p95": 265.0,
+              "max": 438
             },
             "tool_handoff_ms": {
               "n": 33,
-              "mean": 89.6,
-              "p50": 89.0,
-              "p90": 134.0,
-              "p95": 147.6,
-              "max": 212
+              "mean": 75.5,
+              "p50": 75.0,
+              "p90": 87.0,
+              "p95": 93.0,
+              "max": 158
+            },
+            "tool_refuse_ms": {
+              "n": 25,
+              "mean": 79.2,
+              "p50": 77.0,
+              "p90": 103.6,
+              "p95": 109.6,
+              "max": 143
             },
             "tool_search_knowledge_ms": {
-              "n": 92,
-              "mean": 168.9,
-              "p50": 164.0,
-              "p90": 179.0,
-              "p95": 186.0,
-              "max": 342
+              "n": 147,
+              "mean": 161.3,
+              "p50": 161.0,
+              "p90": 169.0,
+              "p95": 171.7,
+              "max": 188
             },
             "tool_turn_latency_ms": {
-              "n": 157,
-              "mean": 135.9,
-              "p50": 133.6,
-              "p90": 253.8,
-              "p95": 303.8,
-              "max": 495.6
+              "n": 272,
+              "mean": 141.8,
+              "p50": 142.7,
+              "p90": 257.6,
+              "p95": 291.5,
+              "max": 389.6
             },
             "turn_latency_ms": {
-              "n": 310,
-              "mean": 77.2,
-              "p50": 25.4,
-              "p90": 201.2,
-              "p95": 254.6,
-              "max": 495.6
+              "n": 530,
+              "mean": 84.4,
+              "p50": 39.4,
+              "p90": 199.3,
+              "p95": 263.0,
+              "max": 389.6
             }
           }
         }
@@ -1089,54 +1365,69 @@
         "config": "full",
         "noise": 0.3,
         "bhasha": true,
-        "speculation": {
-          "started": 148,
-          "hits": 69,
-          "wasted": 79,
-          "hit_rate": 0.466,
-          "saved_ms_total": 16650.0,
-          "saved_ms_per_hit": 241.3
-        },
-        "calls": 120,
-        "turns": 310,
-        "outcome_accuracy": 0.8917,
+        "speculation_enabled": true,
+        "calls": 220,
+        "turns": 530,
+        "outcome_accuracy": 0.8773,
         "entity_error_rate": 0.0,
-        "entities_evaluated": 75,
+        "entities_evaluated": 135,
+        "date_time": {
+          "turns": 125,
+          "corrupted": 26,
+          "unrestored": 12,
+          "error_rate": 0.096
+        },
+        "date_time_error_rate": 0.096,
         "latency_ms": {
-          "mean": 96.2,
-          "p50": 58.6,
-          "p90": 220.8,
-          "p95": 267.9,
-          "max": 460.6
+          "mean": 112.7,
+          "p50": 87.1,
+          "p90": 237.1,
+          "p95": 304.6,
+          "max": 433.3
         },
         "tool_turn_latency_ms": {
-          "n": 165,
-          "mean": 152.9,
-          "p50": 141.9,
-          "p90": 258.8,
-          "p95": 340.0
+          "n": 300,
+          "mean": 162.4,
+          "p50": 149.7,
+          "p90": 299.9,
+          "p95": 325.3
         },
         "read_turn_latency_ms": {
-          "n": 87,
-          "mean": 163.8,
-          "p50": 184.7,
-          "p90": 318.2,
-          "p95": 379.5
+          "n": 159,
+          "mean": 184.7,
+          "p50": 197.4,
+          "p90": 319.4,
+          "p95": 349.1
         },
         "write_turn_latency_ms": {
-          "n": 78,
-          "mean": 140.8,
-          "p50": 125.0,
-          "p90": 221.8,
-          "p95": 247.5
+          "n": 141,
+          "mean": 137.1,
+          "p50": 137.3,
+          "p90": 175.6,
+          "p95": 191.0
         },
         "correction_quality": {
-          "beneficial": 32,
-          "neutral": 7,
-          "harmful": 0
+          "beneficial": 56,
+          "neutral": 9,
+          "harmful": 0,
+          "temporal_restored": 16,
+          "temporal_neutral": 8
+        },
+        "speculation": {
+          "started": 252,
+          "hits": 127,
+          "wasted": 125,
+          "hit_rate": 0.504,
+          "saved_ms_total": 28758.0,
+          "saved_ms_per_hit": 226.4
         },
         "unconfirmed_writes": 0,
         "per_pack": {
+          "clinic_chennai": {
+            "calls": 25,
+            "outcome_accuracy": 0.8,
+            "entity_error_rate": 0.0
+          },
           "clinic_kolkata": {
             "calls": 15,
             "outcome_accuracy": 0.933,
@@ -1144,7 +1435,12 @@
           },
           "clinic_pune": {
             "calls": 15,
-            "outcome_accuracy": 0.733,
+            "outcome_accuracy": 0.867,
+            "entity_error_rate": 0.0
+          },
+          "coaching_ahmedabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.8,
             "entity_error_rate": 0.0
           },
           "coaching_institute": {
@@ -1162,6 +1458,16 @@
             "outcome_accuracy": 1.0,
             "entity_error_rate": 0.0
           },
+          "lab_hyderabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.84,
+            "entity_error_rate": 0.0
+          },
+          "salon_ludhiana": {
+            "calls": 25,
+            "outcome_accuracy": 0.92,
+            "entity_error_rate": 0.0
+          },
           "salon_spa": {
             "calls": 20,
             "outcome_accuracy": 1.0,
@@ -1170,91 +1476,101 @@
         },
         "metrics": {
           "counters": {
-            "tool_check_availability": 69,
-            "corrections": 39,
-            "speculation_hits": 69,
-            "tool_book_appointment": 42,
-            "outcome_BOOKED": 42,
-            "tool_search_knowledge": 91,
-            "outcome_FAQ_ANSWERED": 29,
-            "tool_handoff": 26,
-            "outcome_HANDED_OFF": 26,
-            "outcome_ABANDONED": 13,
-            "tool_capture_lead": 10,
-            "outcome_LEAD_CAPTURED": 10
+            "tool_check_availability": 137,
+            "corrections": 89,
+            "speculation_hits": 127,
+            "tool_book_appointment": 65,
+            "outcome_BOOKED": 65,
+            "tool_search_knowledge": 146,
+            "outcome_FAQ_ANSWERED": 54,
+            "outcome_ABANDONED": 25,
+            "tool_refuse": 22,
+            "outcome_REFUSED": 22,
+            "tool_capture_lead": 30,
+            "outcome_LEAD_CAPTURED": 30,
+            "tool_handoff": 24,
+            "outcome_HANDED_OFF": 24
           },
           "latency": {
             "bhasha_ms": {
-              "n": 310,
-              "mean": 21.1,
-              "p50": 3.1,
-              "p90": 58.9,
-              "p95": 112.7,
-              "max": 211.4
+              "n": 530,
+              "mean": 27.7,
+              "p50": 13.3,
+              "p90": 73.3,
+              "p95": 121.2,
+              "max": 208.9
             },
             "read_turn_latency_ms": {
-              "n": 87,
-              "mean": 163.8,
-              "p50": 184.7,
-              "p90": 318.2,
-              "p95": 379.5,
-              "max": 460.6
+              "n": 159,
+              "mean": 184.7,
+              "p50": 197.4,
+              "p90": 319.4,
+              "p95": 349.1,
+              "max": 433.3
             },
             "tool_book_appointment_ms": {
-              "n": 42,
-              "mean": 116.0,
-              "p50": 102.5,
-              "p90": 168.3,
-              "p95": 194.8,
-              "max": 378
+              "n": 65,
+              "mean": 105.4,
+              "p50": 109.0,
+              "p90": 123.6,
+              "p95": 127.8,
+              "max": 141
             },
             "tool_capture_lead_ms": {
-              "n": 10,
-              "mean": 89.9,
-              "p50": 87.0,
-              "p90": 111.2,
-              "p95": 148.1,
-              "max": 185
+              "n": 30,
+              "mean": 75.0,
+              "p50": 80.0,
+              "p90": 92.2,
+              "p95": 105.5,
+              "max": 142
             },
             "tool_check_availability_ms": {
-              "n": 69,
-              "mean": 263.0,
-              "p50": 260.0,
-              "p90": 285.8,
-              "p95": 293.8,
-              "max": 376
+              "n": 137,
+              "mean": 244.4,
+              "p50": 245.0,
+              "p90": 261.4,
+              "p95": 264.0,
+              "max": 315
             },
             "tool_handoff_ms": {
-              "n": 26,
-              "mean": 72.2,
-              "p50": 72.5,
-              "p90": 114.0,
-              "p95": 118.2,
-              "max": 119
+              "n": 24,
+              "mean": 63.6,
+              "p50": 65.5,
+              "p90": 82.5,
+              "p95": 84.8,
+              "max": 92
+            },
+            "tool_refuse_ms": {
+              "n": 22,
+              "mean": 65.0,
+              "p50": 67.0,
+              "p90": 85.3,
+              "p95": 87.9,
+              "max": 113
             },
             "tool_search_knowledge_ms": {
-              "n": 91,
-              "mean": 166.3,
-              "p50": 165.0,
-              "p90": 178.0,
-              "p95": 184.5,
-              "max": 191
+              "n": 146,
+              "mean": 160.9,
+              "p50": 160.0,
+              "p90": 169.5,
+              "p95": 170.8,
+              "max": 303
             },
             "tool_turn_latency_ms": {
-              "n": 165,
-              "mean": 152.9,
-              "p50": 141.9,
-              "p90": 258.8,
-              "p95": 340.0,
-              "max": 460.6
+              "n": 300,
+              "mean": 162.4,
+              "p50": 149.7,
+              "p90": 299.9,
+              "p95": 325.3,
+              "max": 433.3
             },
             "turn_latency_ms": {
-              "n": 310,
-              "mean": 96.2,
-              "p50": 58.6,
-              "p90": 220.8,
-              "p95": 267.9,
-              "max": 460.6
+              "n": 530,
+              "mean": 112.7,
+              "p50": 87.1,
+              "p90": 237.1,
+              "p95": 304.6,
+              "max": 433.3
             }
           }
         }
@@ -1263,54 +1579,69 @@
         "config": "no_bhasha",
         "noise": 0.3,
         "bhasha": false,
-        "speculation": {
-          "started": 138,
-          "hits": 53,
-          "wasted": 85,
-          "hit_rate": 0.384,
-          "saved_ms_total": 12492.0,
-          "saved_ms_per_hit": 235.7
+        "speculation_enabled": true,
+        "calls": 220,
+        "turns": 530,
+        "outcome_accuracy": 0.7091,
+        "entity_error_rate": 0.3185,
+        "entities_evaluated": 135,
+        "date_time": {
+          "turns": 125,
+          "corrupted": 26,
+          "unrestored": 26,
+          "error_rate": 0.208
         },
-        "calls": 120,
-        "turns": 310,
-        "outcome_accuracy": 0.7667,
-        "entity_error_rate": 0.36,
-        "entities_evaluated": 75,
+        "date_time_error_rate": 0.208,
         "latency_ms": {
-          "mean": 61.5,
-          "p50": 19.3,
-          "p90": 181.5,
-          "p95": 205.3,
-          "max": 355.7
+          "mean": 77.7,
+          "p50": 36.0,
+          "p90": 194.0,
+          "p95": 226.7,
+          "max": 316.2
         },
         "tool_turn_latency_ms": {
-          "n": 134,
-          "mean": 123.3,
-          "p50": 119.5,
-          "p90": 208.9,
-          "p95": 256.2
+          "n": 227,
+          "mean": 146.3,
+          "p50": 145.2,
+          "p90": 245.9,
+          "p95": 298.4
         },
         "read_turn_latency_ms": {
-          "n": 71,
-          "mean": 130.4,
-          "p50": 171.1,
-          "p90": 235.2,
-          "p95": 289.7
+          "n": 123,
+          "mean": 170.9,
+          "p50": 190.0,
+          "p90": 294.9,
+          "p95": 303.7
         },
         "write_turn_latency_ms": {
-          "n": 63,
-          "mean": 115.4,
-          "p50": 107.8,
-          "p90": 199.4,
-          "p95": 209.3
+          "n": 104,
+          "mean": 117.2,
+          "p50": 115.2,
+          "p90": 159.6,
+          "p95": 162.2
         },
         "correction_quality": {
           "beneficial": 0,
           "neutral": 0,
-          "harmful": 0
+          "harmful": 0,
+          "temporal_restored": 0,
+          "temporal_neutral": 0
+        },
+        "speculation": {
+          "started": 221,
+          "hits": 92,
+          "wasted": 129,
+          "hit_rate": 0.416,
+          "saved_ms_total": 20280.0,
+          "saved_ms_per_hit": 220.4
         },
         "unconfirmed_writes": 0,
         "per_pack": {
+          "clinic_chennai": {
+            "calls": 25,
+            "outcome_accuracy": 0.6,
+            "entity_error_rate": 0.4
+          },
           "clinic_kolkata": {
             "calls": 15,
             "outcome_accuracy": 0.8,
@@ -1320,6 +1651,11 @@
             "calls": 15,
             "outcome_accuracy": 0.6,
             "entity_error_rate": 0.6
+          },
+          "coaching_ahmedabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.6,
+            "entity_error_rate": 0.1
           },
           "coaching_institute": {
             "calls": 15,
@@ -1336,6 +1672,16 @@
             "outcome_accuracy": 0.933,
             "entity_error_rate": 0.2
           },
+          "lab_hyderabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.68,
+            "entity_error_rate": 0.3333
+          },
+          "salon_ludhiana": {
+            "calls": 25,
+            "outcome_accuracy": 0.68,
+            "entity_error_rate": 0.2
+          },
           "salon_spa": {
             "calls": 20,
             "outcome_accuracy": 0.95,
@@ -1344,91 +1690,101 @@
         },
         "metrics": {
           "counters": {
-            "tool_check_availability": 57,
             "corrections": 0,
-            "outcome_ABANDONED": 26,
-            "tool_search_knowledge": 91,
-            "speculation_hits": 53,
-            "outcome_FAQ_ANSWERED": 31,
-            "tool_handoff": 26,
-            "outcome_HANDED_OFF": 26,
-            "tool_book_appointment": 28,
-            "outcome_BOOKED": 28,
-            "tool_capture_lead": 9,
-            "outcome_LEAD_CAPTURED": 9
+            "outcome_ABANDONED": 55,
+            "tool_search_knowledge": 146,
+            "speculation_hits": 92,
+            "outcome_FAQ_ANSWERED": 61,
+            "tool_refuse": 22,
+            "outcome_REFUSED": 22,
+            "tool_check_availability": 94,
+            "tool_capture_lead": 15,
+            "outcome_LEAD_CAPTURED": 15,
+            "tool_book_appointment": 43,
+            "outcome_BOOKED": 43,
+            "tool_handoff": 24,
+            "outcome_HANDED_OFF": 24
           },
           "latency": {
             "bhasha_ms": {
-              "n": 310,
-              "mean": 0.3,
+              "n": 530,
+              "mean": 0.2,
               "p50": 0.2,
-              "p90": 0.3,
-              "p95": 0.4,
-              "max": 33.0
+              "p90": 0.2,
+              "p95": 0.3,
+              "max": 1.7
             },
             "read_turn_latency_ms": {
-              "n": 71,
-              "mean": 130.4,
-              "p50": 171.1,
-              "p90": 235.2,
-              "p95": 289.7,
-              "max": 355.7
+              "n": 123,
+              "mean": 170.9,
+              "p50": 190.0,
+              "p90": 294.9,
+              "p95": 303.7,
+              "max": 316.2
             },
             "tool_book_appointment_ms": {
-              "n": 28,
-              "mean": 110.2,
-              "p50": 108.0,
-              "p90": 172.3,
-              "p95": 180.8,
-              "max": 205
+              "n": 43,
+              "mean": 111.8,
+              "p50": 115.0,
+              "p90": 128.0,
+              "p95": 137.0,
+              "max": 175
             },
             "tool_capture_lead_ms": {
-              "n": 9,
-              "mean": 72.2,
-              "p50": 80.0,
-              "p90": 102.4,
-              "p95": 103.2,
-              "max": 104
+              "n": 15,
+              "mean": 83.3,
+              "p50": 88.0,
+              "p90": 91.0,
+              "p95": 91.0,
+              "max": 91
             },
             "tool_check_availability_ms": {
-              "n": 57,
-              "mean": 266.2,
-              "p50": 259.0,
-              "p90": 302.0,
-              "p95": 325.0,
-              "max": 454
+              "n": 94,
+              "mean": 260.1,
+              "p50": 250.5,
+              "p90": 270.0,
+              "p95": 316.8,
+              "max": 618
             },
             "tool_handoff_ms": {
-              "n": 26,
-              "mean": 74.0,
-              "p50": 68.5,
-              "p90": 120.5,
-              "p95": 127.8,
-              "max": 145
+              "n": 24,
+              "mean": 70.1,
+              "p50": 73.0,
+              "p90": 85.7,
+              "p95": 92.4,
+              "max": 103
+            },
+            "tool_refuse_ms": {
+              "n": 22,
+              "mean": 76.6,
+              "p50": 81.0,
+              "p90": 87.0,
+              "p95": 95.5,
+              "max": 107
             },
             "tool_search_knowledge_ms": {
-              "n": 91,
-              "mean": 167.5,
-              "p50": 164.0,
-              "p90": 177.0,
-              "p95": 189.0,
-              "max": 297
+              "n": 146,
+              "mean": 160.7,
+              "p50": 160.5,
+              "p90": 169.0,
+              "p95": 171.0,
+              "max": 177
             },
             "tool_turn_latency_ms": {
-              "n": 134,
-              "mean": 123.3,
-              "p50": 119.5,
-              "p90": 208.9,
-              "p95": 256.2,
-              "max": 355.7
+              "n": 227,
+              "mean": 146.3,
+              "p50": 145.2,
+              "p90": 245.9,
+              "p95": 298.4,
+              "max": 316.2
             },
             "turn_latency_ms": {
-              "n": 310,
-              "mean": 61.5,
-              "p50": 19.3,
-              "p90": 181.5,
-              "p95": 205.3,
-              "max": 355.7
+              "n": 530,
+              "mean": 77.7,
+              "p50": 36.0,
+              "p90": 194.0,
+              "p95": 226.7,
+              "max": 316.2
             }
           }
         }
@@ -1439,54 +1795,69 @@
         "config": "full",
         "noise": 0.45,
         "bhasha": true,
-        "speculation": {
-          "started": 133,
-          "hits": 68,
-          "wasted": 65,
-          "hit_rate": 0.511,
-          "saved_ms_total": 16173.0,
-          "saved_ms_per_hit": 237.8
-        },
-        "calls": 120,
-        "turns": 310,
-        "outcome_accuracy": 0.7917,
+        "speculation_enabled": true,
+        "calls": 220,
+        "turns": 530,
+        "outcome_accuracy": 0.7818,
         "entity_error_rate": 0.0,
-        "entities_evaluated": 75,
+        "entities_evaluated": 135,
+        "date_time": {
+          "turns": 125,
+          "corrupted": 34,
+          "unrestored": 19,
+          "error_rate": 0.152
+        },
+        "date_time_error_rate": 0.152,
         "latency_ms": {
-          "mean": 97.6,
-          "p50": 55.1,
-          "p90": 220.1,
-          "p95": 296.9,
-          "max": 445.4
+          "mean": 117.7,
+          "p50": 99.3,
+          "p90": 246.9,
+          "p95": 321.6,
+          "max": 471.2
         },
         "tool_turn_latency_ms": {
-          "n": 151,
-          "mean": 156.8,
-          "p50": 160.2,
-          "p90": 307.3,
-          "p95": 351.4
+          "n": 276,
+          "mean": 172.3,
+          "p50": 155.6,
+          "p90": 320.8,
+          "p95": 343.7
         },
         "read_turn_latency_ms": {
-          "n": 83,
-          "mean": 162.4,
-          "p50": 164.8,
-          "p90": 343.9,
-          "p95": 370.8
+          "n": 150,
+          "mean": 194.0,
+          "p50": 193.1,
+          "p90": 341.5,
+          "p95": 363.0
         },
         "write_turn_latency_ms": {
-          "n": 68,
-          "mean": 150.0,
-          "p50": 150.5,
-          "p90": 214.8,
-          "p95": 257.8
+          "n": 126,
+          "mean": 146.5,
+          "p50": 145.2,
+          "p90": 195.8,
+          "p95": 220.9
         },
         "correction_quality": {
-          "beneficial": 38,
-          "neutral": 6,
-          "harmful": 0
+          "beneficial": 68,
+          "neutral": 8,
+          "harmful": 0,
+          "temporal_restored": 22,
+          "temporal_neutral": 11
+        },
+        "speculation": {
+          "started": 235,
+          "hits": 121,
+          "wasted": 114,
+          "hit_rate": 0.515,
+          "saved_ms_total": 27948.0,
+          "saved_ms_per_hit": 231.0
         },
         "unconfirmed_writes": 0,
         "per_pack": {
+          "clinic_chennai": {
+            "calls": 25,
+            "outcome_accuracy": 0.56,
+            "entity_error_rate": 0.0
+          },
           "clinic_kolkata": {
             "calls": 15,
             "outcome_accuracy": 0.867,
@@ -1494,7 +1865,12 @@
           },
           "clinic_pune": {
             "calls": 15,
-            "outcome_accuracy": 0.533,
+            "outcome_accuracy": 0.733,
+            "entity_error_rate": 0.0
+          },
+          "coaching_ahmedabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.76,
             "entity_error_rate": 0.0
           },
           "coaching_institute": {
@@ -1512,6 +1888,16 @@
             "outcome_accuracy": 0.933,
             "entity_error_rate": 0.0
           },
+          "lab_hyderabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.72,
+            "entity_error_rate": 0.0
+          },
+          "salon_ludhiana": {
+            "calls": 25,
+            "outcome_accuracy": 0.92,
+            "entity_error_rate": 0.0
+          },
           "salon_spa": {
             "calls": 20,
             "outcome_accuracy": 0.85,
@@ -1520,91 +1906,101 @@
         },
         "metrics": {
           "counters": {
-            "tool_check_availability": 65,
-            "corrections": 44,
-            "speculation_hits": 68,
-            "tool_book_appointment": 41,
-            "outcome_BOOKED": 41,
-            "tool_search_knowledge": 80,
-            "outcome_FAQ_ANSWERED": 28,
-            "tool_handoff": 17,
-            "outcome_HANDED_OFF": 17,
-            "outcome_ABANDONED": 24,
-            "tool_capture_lead": 10,
-            "outcome_LEAD_CAPTURED": 10
+            "tool_check_availability": 135,
+            "corrections": 109,
+            "speculation_hits": 121,
+            "tool_book_appointment": 63,
+            "outcome_BOOKED": 63,
+            "outcome_ABANDONED": 46,
+            "tool_handoff": 23,
+            "outcome_HANDED_OFF": 23,
+            "tool_search_knowledge": 131,
+            "tool_refuse": 12,
+            "outcome_REFUSED": 12,
+            "tool_capture_lead": 28,
+            "outcome_LEAD_CAPTURED": 28,
+            "outcome_FAQ_ANSWERED": 48
           },
           "latency": {
             "bhasha_ms": {
-              "n": 310,
-              "mean": 27.7,
-              "p50": 8.9,
-              "p90": 83.8,
-              "p95": 142.2,
-              "max": 273.8
+              "n": 530,
+              "mean": 37.6,
+              "p50": 20.3,
+              "p90": 113.1,
+              "p95": 139.0,
+              "max": 270.1
             },
             "read_turn_latency_ms": {
-              "n": 83,
-              "mean": 162.4,
-              "p50": 164.8,
-              "p90": 343.9,
-              "p95": 370.8,
-              "max": 445.4
+              "n": 150,
+              "mean": 194.0,
+              "p50": 193.1,
+              "p90": 341.5,
+              "p95": 363.0,
+              "max": 471.2
             },
             "tool_book_appointment_ms": {
-              "n": 41,
-              "mean": 120.5,
-              "p50": 123.0,
-              "p90": 177.0,
-              "p95": 193.0,
-              "max": 288
+              "n": 63,
+              "mean": 111.7,
+              "p50": 117.0,
+              "p90": 130.8,
+              "p95": 134.0,
+              "max": 192
             },
             "tool_capture_lead_ms": {
-              "n": 10,
-              "mean": 99.9,
-              "p50": 95.5,
-              "p90": 160.3,
-              "p95": 161.7,
-              "max": 163
+              "n": 28,
+              "mean": 72.4,
+              "p50": 67.0,
+              "p90": 93.0,
+              "p95": 98.8,
+              "max": 108
             },
             "tool_check_availability_ms": {
-              "n": 65,
-              "mean": 258.5,
-              "p50": 253.0,
-              "p90": 274.2,
-              "p95": 277.0,
-              "max": 582
+              "n": 135,
+              "mean": 246.6,
+              "p50": 246.0,
+              "p90": 262.6,
+              "p95": 267.6,
+              "max": 581
             },
             "tool_handoff_ms": {
-              "n": 17,
-              "mean": 73.2,
-              "p50": 65.0,
-              "p90": 129.4,
-              "p95": 137.2,
-              "max": 154
+              "n": 23,
+              "mean": 66.8,
+              "p50": 75.0,
+              "p90": 89.4,
+              "p95": 92.7,
+              "max": 107
+            },
+            "tool_refuse_ms": {
+              "n": 12,
+              "mean": 64.8,
+              "p50": 72.5,
+              "p90": 80.7,
+              "p95": 84.6,
+              "max": 89
             },
             "tool_search_knowledge_ms": {
-              "n": 80,
-              "mean": 163.5,
+              "n": 131,
+              "mean": 159.7,
               "p50": 160.0,
-              "p90": 178.0,
-              "p95": 180.1,
-              "max": 249
+              "p90": 168.0,
+              "p95": 169.0,
+              "max": 181
             },
             "tool_turn_latency_ms": {
-              "n": 151,
-              "mean": 156.8,
-              "p50": 160.2,
-              "p90": 307.3,
-              "p95": 351.4,
-              "max": 445.4
+              "n": 276,
+              "mean": 172.3,
+              "p50": 155.6,
+              "p90": 320.8,
+              "p95": 343.7,
+              "max": 471.2
             },
             "turn_latency_ms": {
-              "n": 310,
-              "mean": 97.6,
-              "p50": 55.1,
-              "p90": 220.1,
-              "p95": 296.9,
-              "max": 445.4
+              "n": 530,
+              "mean": 117.7,
+              "p50": 99.3,
+              "p90": 246.9,
+              "p95": 321.6,
+              "max": 471.2
             }
           }
         }
@@ -1613,54 +2009,69 @@
         "config": "no_bhasha",
         "noise": 0.45,
         "bhasha": false,
-        "speculation": {
-          "started": 117,
-          "hits": 43,
-          "wasted": 74,
-          "hit_rate": 0.368,
-          "saved_ms_total": 9783.0,
-          "saved_ms_per_hit": 227.5
+        "speculation_enabled": true,
+        "calls": 220,
+        "turns": 530,
+        "outcome_accuracy": 0.55,
+        "entity_error_rate": 0.4444,
+        "entities_evaluated": 135,
+        "date_time": {
+          "turns": 125,
+          "corrupted": 34,
+          "unrestored": 34,
+          "error_rate": 0.272
         },
-        "calls": 120,
-        "turns": 310,
-        "outcome_accuracy": 0.5917,
-        "entity_error_rate": 0.4533,
-        "entities_evaluated": 75,
+        "date_time_error_rate": 0.272,
         "latency_ms": {
-          "mean": 53.6,
-          "p50": 18.0,
-          "p90": 180.7,
-          "p95": 198.5,
-          "max": 358.7
+          "mean": 69.5,
+          "p50": 33.0,
+          "p90": 193.5,
+          "p95": 213.1,
+          "max": 378.5
         },
         "tool_turn_latency_ms": {
-          "n": 102,
-          "mean": 130.6,
-          "p50": 148.9,
-          "p90": 220.1,
-          "p95": 253.7
+          "n": 174,
+          "mean": 152.1,
+          "p50": 153.1,
+          "p90": 245.9,
+          "p95": 288.8
         },
         "read_turn_latency_ms": {
-          "n": 58,
-          "mean": 133.0,
-          "p50": 169.9,
-          "p90": 224.9,
-          "p95": 285.4
+          "n": 99,
+          "mean": 177.6,
+          "p50": 193.9,
+          "p90": 283.4,
+          "p95": 296.1
         },
         "write_turn_latency_ms": {
-          "n": 44,
-          "mean": 127.3,
-          "p50": 116.3,
-          "p90": 200.1,
-          "p95": 235.6
+          "n": 75,
+          "mean": 118.4,
+          "p50": 122.3,
+          "p90": 153.6,
+          "p95": 159.9
         },
         "correction_quality": {
           "beneficial": 0,
           "neutral": 0,
-          "harmful": 0
+          "harmful": 0,
+          "temporal_restored": 0,
+          "temporal_neutral": 0
+        },
+        "speculation": {
+          "started": 191,
+          "hits": 74,
+          "wasted": 117,
+          "hit_rate": 0.387,
+          "saved_ms_total": 15462.0,
+          "saved_ms_per_hit": 208.9
         },
         "unconfirmed_writes": 0,
         "per_pack": {
+          "clinic_chennai": {
+            "calls": 25,
+            "outcome_accuracy": 0.48,
+            "entity_error_rate": 0.5333
+          },
           "clinic_kolkata": {
             "calls": 15,
             "outcome_accuracy": 0.733,
@@ -1670,6 +2081,11 @@
             "calls": 15,
             "outcome_accuracy": 0.4,
             "entity_error_rate": 0.5
+          },
+          "coaching_ahmedabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.52,
+            "entity_error_rate": 0.1
           },
           "coaching_institute": {
             "calls": 15,
@@ -1686,6 +2102,16 @@
             "outcome_accuracy": 0.867,
             "entity_error_rate": 0.2
           },
+          "lab_hyderabad": {
+            "calls": 25,
+            "outcome_accuracy": 0.48,
+            "entity_error_rate": 0.5333
+          },
+          "salon_ludhiana": {
+            "calls": 25,
+            "outcome_accuracy": 0.52,
+            "entity_error_rate": 0.45
+          },
           "salon_spa": {
             "calls": 20,
             "outcome_accuracy": 0.7,
@@ -1694,91 +2120,101 @@
         },
         "metrics": {
           "counters": {
-            "tool_check_availability": 45,
             "corrections": 0,
-            "outcome_ABANDONED": 47,
-            "tool_search_knowledge": 80,
-            "speculation_hits": 43,
-            "outcome_FAQ_ANSWERED": 29,
-            "tool_handoff": 17,
-            "outcome_HANDED_OFF": 17,
-            "tool_book_appointment": 21,
-            "outcome_BOOKED": 21,
-            "tool_capture_lead": 6,
-            "outcome_LEAD_CAPTURED": 6
+            "tool_search_knowledge": 132,
+            "speculation_hits": 74,
+            "outcome_FAQ_ANSWERED": 57,
+            "outcome_ABANDONED": 88,
+            "tool_handoff": 23,
+            "outcome_HANDED_OFF": 23,
+            "tool_refuse": 12,
+            "outcome_REFUSED": 12,
+            "tool_check_availability": 73,
+            "tool_capture_lead": 12,
+            "outcome_LEAD_CAPTURED": 12,
+            "tool_book_appointment": 28,
+            "outcome_BOOKED": 28
           },
           "latency": {
             "bhasha_ms": {
-              "n": 310,
+              "n": 530,
               "mean": 0.2,
               "p50": 0.2,
-              "p90": 0.3,
-              "p95": 0.4,
-              "max": 1.4
+              "p90": 0.2,
+              "p95": 0.3,
+              "max": 2.4
             },
             "read_turn_latency_ms": {
-              "n": 58,
-              "mean": 133.0,
-              "p50": 169.9,
-              "p90": 224.9,
-              "p95": 285.4,
-              "max": 358.7
+              "n": 99,
+              "mean": 177.6,
+              "p50": 193.9,
+              "p90": 283.4,
+              "p95": 296.1,
+              "max": 378.5
             },
             "tool_book_appointment_ms": {
-              "n": 21,
-              "mean": 108.4,
-              "p50": 107.0,
-              "p90": 148.0,
-              "p95": 172.0,
-              "max": 199
+              "n": 28,
+              "mean": 114.6,
+              "p50": 116.0,
+              "p90": 130.5,
+              "p95": 142.4,
+              "max": 150
             },
             "tool_capture_lead_ms": {
-              "n": 6,
-              "mean": 136.5,
-              "p50": 127.5,
-              "p90": 242.5,
-              "p95": 263.8,
-              "max": 285
+              "n": 12,
+              "mean": 84.5,
+              "p50": 89.0,
+              "p90": 96.7,
+              "p95": 97.5,
+              "max": 98
             },
             "tool_check_availability_ms": {
-              "n": 45,
-              "mean": 265.0,
-              "p50": 263.0,
-              "p90": 290.8,
-              "p95": 320.0,
-              "max": 347
+              "n": 73,
+              "mean": 247.3,
+              "p50": 248.0,
+              "p90": 263.0,
+              "p95": 265.4,
+              "max": 329
             },
             "tool_handoff_ms": {
-              "n": 17,
-              "mean": 87.6,
-              "p50": 79.0,
-              "p90": 146.4,
-              "p95": 156.4,
-              "max": 158
+              "n": 23,
+              "mean": 78.0,
+              "p50": 80.0,
+              "p90": 91.8,
+              "p95": 92.9,
+              "max": 103
+            },
+            "tool_refuse_ms": {
+              "n": 12,
+              "mean": 71.5,
+              "p50": 75.0,
+              "p90": 83.9,
+              "p95": 102.4,
+              "max": 125
             },
             "tool_search_knowledge_ms": {
-              "n": 80,
-              "mean": 167.7,
-              "p50": 164.0,
-              "p90": 179.1,
-              "p95": 189.2,
-              "max": 266
+              "n": 132,
+              "mean": 161.5,
+              "p50": 161.0,
+              "p90": 169.0,
+              "p95": 171.0,
+              "max": 182
             },
             "tool_turn_latency_ms": {
-              "n": 102,
-              "mean": 130.6,
-              "p50": 148.9,
-              "p90": 220.1,
-              "p95": 253.7,
-              "max": 358.7
+              "n": 174,
+              "mean": 152.1,
+              "p50": 153.1,
+              "p90": 245.9,
+              "p95": 288.8,
+              "max": 378.5
             },
             "turn_latency_ms": {
-              "n": 310,
-              "mean": 53.6,
-              "p50": 18.0,
-              "p90": 180.7,
-              "p95": 198.5,
-              "max": 358.7
+              "n": 530,
+              "mean": 69.5,
+              "p50": 33.0,
+              "p90": 193.5,
+              "p95": 213.1,
+              "max": 378.5
             }
           }
         }
@@ -1838,38 +2274,42 @@
     "forged_signature_rejected": true,
     "forged_reason": "signature does not verify against the tenant public key",
     "unconfirmed_writes_accepted": 0,
-    "daily_anchor": "fb2a6fd768afd31d435445e7b1cc2f63..."
+    "daily_anchor": "f9e5a53a1d01e0cef7016674c099c960..."
   },
   "headline": {
     "noise_rate": 0.3,
-    "sentences_scored": 4050,
-    "entities_scored": 5505,
-    "entity_error_rate_without_bhasha": 0.3092,
-    "entity_error_rate_with_bhasha": 0.0091,
-    "entity_error_reduction_pct": 97.1,
-    "correction_precision": 0.9931,
+    "sentences_scored": 6990,
+    "entities_scored": 9540,
+    "entity_error_rate_without_bhasha": 0.3081,
+    "entity_error_rate_with_bhasha": 0.0096,
+    "entity_error_reduction_pct": 96.9,
+    "correction_precision": 0.9896,
     "harmful_corrections_transcript": 0,
-    "bhasha_median_ms": 0.083,
-    "task_success_without_bhasha": 0.7667,
-    "task_success_with_bhasha": 0.8917,
+    "bhasha_median_ms": 0.105,
+    "task_success_without_bhasha": 0.7091,
+    "task_success_with_bhasha": 0.8773,
+    "date_time_turns": 125,
+    "date_time_turns_corrupted": 26,
+    "date_time_error_rate_without_bhasha": 0.208,
+    "date_time_error_rate_with_bhasha": 0.096,
     "harmful_corrections": 0,
-    "beneficial_corrections": 32,
-    "neutral_corrections": 7,
-    "read_turn_p50_without_speculation": 234.6,
-    "read_turn_p50_with_speculation": 123.9,
-    "read_turn_p50_reduction_pct": 47.2,
-    "read_turn_p90_without_speculation": 314.7,
-    "read_turn_p90_with_speculation": 234.7,
-    "read_turn_p90_reduction_pct": 25.4,
-    "write_turn_p90_with_speculation": 200.2,
-    "write_turn_p90_without_speculation": 197.3,
-    "tool_turn_p90_with_speculation": 215.5,
-    "tool_turn_p90_without_speculation": 284.6,
-    "speculation_hit_rate": 0.419,
-    "speculations_started": 155,
-    "wasted_speculations": 90,
-    "saved_ms_per_hit": 218.8,
+    "beneficial_corrections": 56,
+    "neutral_corrections": 9,
+    "read_turn_p50_without_speculation": 270.5,
+    "read_turn_p50_with_speculation": 172.2,
+    "read_turn_p50_reduction_pct": 36.3,
+    "read_turn_p90_without_speculation": 363.0,
+    "read_turn_p90_with_speculation": 289.2,
+    "read_turn_p90_reduction_pct": 20.3,
+    "write_turn_p90_with_speculation": 163.4,
+    "write_turn_p90_without_speculation": 157.4,
+    "tool_turn_p90_with_speculation": 248.4,
+    "tool_turn_p90_without_speculation": 336.1,
+    "speculation_hit_rate": 0.463,
+    "speculations_started": 270,
+    "wasted_speculations": 145,
+    "saved_ms_per_hit": 225.5,
     "outcome_accuracy_clean": 1.0,
-    "total_wall_seconds": 183.4
+    "total_wall_seconds": 462.1
   }
 }

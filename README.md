@@ -27,8 +27,8 @@ implemented, measured and testable rather than described:
 
 | | What it is | What it is worth |
 |---|---|---|
-| **Bhasha Bridge** | A per-tenant phonetic index built from the business's own catalogue, used both to bias the recogniser and to repair its output — but only when the recogniser was unsure *and* the sound key matches exactly. | Entity error rate **30.9% → 0.9%** at 30% recognition noise, with **zero** harmful corrections over 4,050 sentences. |
-| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **235 ms → 124 ms**, a 47.2% reduction, with a 41.9% prediction hit rate. |
+| **Bhasha Bridge** | A per-tenant phonetic index built from the business's own catalogue, used both to bias the recogniser and to repair its output — but only when the recogniser was unsure *and* the sound key matches exactly. | Entity error rate **30.8% → 0.96%** at 30% recognition noise, with **zero** harmful corrections over 6,990 sentences in seven languages. |
+| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **270 ms → 172 ms**, a 36.3% reduction, with a 46.3% prediction hit rate. |
 | **Pramaan Ledger** | Every write is sealed into an Ed25519-signed, hash-chained receipt that binds the action to the caller's recorded confirmation. Daily Merkle anchors; an independent verifier. | **80/80** single-field tampering attempts detected; deletion and forgery detected; **0** unconfirmed writes accepted. |
 
 Every number above was produced by `python -m haanji.bench` on this repository and
@@ -224,15 +224,17 @@ good transcript is worse than no layer at all. Personal names the caller has jus
 introduced are never touched — "mera naam Wijay hai" stays *Wijay*, even though
 *Vijay Nagar* is in the lexicon.
 
-Measured over 4,050 independently corrupted sentences at three noise levels:
+Measured over 6,990 independently corrupted sentences (ten packs, seven languages) at three noise levels:
 
 | noise | entity error, off | entity error, on | reduction | precision | harmful |
 |---|---|---|---|---|---|
-| 15% | 17.8% | 0.38% | 97.9% | 99.2% | 0 |
-| 30% | 30.9% | 0.91% | 97.1% | 99.3% | 0 |
-| 45% | 48.6% | 1.62% | 96.7% | 99.2% | 0 |
+| 15% | 17.7% | 0.45% | 97.4% | 99.1% | 0 |
+| 30% | 30.8% | 0.96% | 96.9% | 99.0% | 0 |
+| 45% | 47.8% | 1.81% | 96.2% | 99.1% | 0 |
 
-Median cost: **0.08 ms** per utterance.
+Median cost: **0.10 ms** per utterance. End to end, under 30% noise, task
+success rises from 70.9% to 87.7%; the date and time words a 1.1 closed
+vocabulary also repairs go from 20.8% to 9.6% unrestored.
 
 Against the classic keys, with the lexicon, the two-condition rule and the
 edit-distance bound held fixed (entity error *after* correction; synthetic at
@@ -283,10 +285,14 @@ with_speculation_on_and_off` asserts the strong form of this — the transcript 
 the call must be identical whether speculation is on or off, because it is a
 latency optimisation and nothing else.
 
-Measured: **235 ms → 124 ms** median on read turns (47.2% lower), 41.9% hit rate
-over 155 speculations, 219 ms saved per hit. Write turns are never speculated, so
-the booking turn itself is not faster: its p90 is 197 ms without
-speculation and 200 ms with it — reported rather than averaged away.
+Measured: **270 ms → 172 ms** median on read turns (36.3% lower), 46.3% hit rate
+over 270 speculations, 226 ms saved per hit. Write turns are never speculated, so
+the booking turn itself is not faster: its p90 is 157 ms without
+speculation and 163 ms with it — reported rather than averaged away. (1.0
+reported 47.2% on read turns; 1.1 asks availability with more specific
+arguments — a part of the day, an exact time, a staff member — and no longer
+guesses a day the caller has not named, so fewer speculations fire; §7.1 of
+the report says why that trade was made.)
 
 ### Pramaan Ledger — proof, not logs
 
