@@ -54,6 +54,8 @@ nav:
       - WhatsApp: whatsapp-setup.md
       - A phone number: phone-setup.md
       - Console sign-in: console-auth.md
+      - Reminders, deposits, waitlist, backup: operations.md
+      - The console's API: console-api.md
       - Your own domain: custom-domain.md
       - Demo script: demo-script.md
   - Trust:

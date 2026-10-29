@@ -106,3 +106,26 @@ Test number ke bajaye apna business number jodne ke liye Meta Business
 verification chahiye (GST/udyam jaisa document) aur ek number jo pehle se
 WhatsApp pe na ho. Ye college demo ke liye zaroori nahi — test number +
 5 recipients kaafi hai.
+
+## Templates (24 ghante ki window ke bahar)
+
+Meta free text sirf customer ke aakhri message ke 24 ghante tak deliver karta
+hai. Jo messages dukaan khud shuru karti hai — login code, reminder, receipt
+link, digest, missed-call outreach, waitlist offer — unke liye Meta Business
+Manager mein **template** banao (approval 1–2 din), phir naam env mein:
+
+| key | template ka kaam | body params |
+|---|---|---|
+| `HAANJI_WA_TEMPLATE_OTP` | authentication template | `{{1}}` = code |
+| `HAANJI_WA_TEMPLATE_REMINDER` | utility: "aapki {{1}} booking {{2}} ko hai; 1 = haan, 2 = cancel" | service, date time |
+| `HAANJI_WA_TEMPLATE_RECEIPT` | utility: receipt link | code |
+| `HAANJI_WA_TEMPLATE_OUTREACH` | utility: missed call / waitlist | business name |
+| `HAANJI_WA_TEMPLATE_DIGEST` | utility: owner ka digest | — |
+
+`HAANJI_WA_TEMPLATE_LANG` (default `en`). Template na ho to engine text
+bhejta hai aur `delivered: false` log karta hai — "sent" kabhi jhooth nahi.
+
+**Security:** public server (`RENDER_EXTERNAL_URL`/`HAANJI_PUBLIC_URL` set) pe
+`HAANJI_WA_APP_SECRET` zaroori hai; bina iske webhook unsigned deliveries
+reject karta hai. `HAANJI_WA_VERIFY_TOKEN` bhi set karo (default sirf local
+ke liye hai).
