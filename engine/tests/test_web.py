@@ -126,3 +126,18 @@ def test_the_lexicon_endpoint_lists_entries_and_resolves_a_probe(client):
     assert "root canal" in body["probe"]["matches"]
     assert "probe" not in client.get("/api/lexicon?pack=dental_clinic").json()
     assert client.get("/api/lexicon?pack=nope").status_code == 404
+
+
+def test_the_talk_page_has_a_3d_counter_and_lines_to_try(client):
+    html = client.get("/talk").text
+    for el_id in ("stage", "stage-canvas", "stage-toggle", "suggest", "suggest-row"):
+        assert f'id="{el_id}"' in html, el_id
+    assert 'type="module" src="static/talk3d.js"' in html
+    assert 'id="stage-canvas" aria-hidden="true"' in html, "the counter is decoration; the cards are the record"
+    assert '$("transcript")' not in html, "deposit links go into the reply's meta row"
+    mod = client.get("/static/talk3d.js")
+    assert mod.status_code == 200 and mod.headers["content-type"].startswith("text/javascript")
+    assert 'import("./three-0.170.0.module.min.js")' in mod.text and "prefers-reduced-motion" in mod.text
+    three = client.get("/static/three-0.170.0.module.min.js")
+    assert three.status_code == 200 and "immutable" in three.headers.get("cache-control", "")
+    assert three.text.startswith("/**\n * @license\n * Copyright 2010-2024 Three.js Authors")

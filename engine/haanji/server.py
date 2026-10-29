@@ -2204,7 +2204,10 @@ async def static_file(name: str):
         raise HTTPException(404)
     media = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml",
              ".html": "text/html"}.get(os.path.splitext(name)[1], "text/plain")
-    return FileResponse(path, media_type=media)
+    # Vendored libraries carry their version in the name, so they never change
+    # under a URL: a browser keeps them (three.js is 690 kB).
+    headers = {"Cache-Control": "public, max-age=31536000, immutable"} if re.match(r"three-\d", name) else None
+    return FileResponse(path, media_type=media, headers=headers)
 
 
 # ───────────────────────────────────────────────── the operator console's routes

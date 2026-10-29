@@ -17,7 +17,7 @@
   .controls .field { min-width: 150px; }
   .notice { margin: 10px 20px 0; padding: 10px 14px; border-radius: var(--r-ctl); background: rgba(226, 85, 58, .18); color: #FFB3A3; font-size: 14px; }
   main.talk { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.15fr 1fr; }
-  .call { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid rgba(245, 185, 30, .28); }
+  .call { display: flex; flex-direction: column; min-height: 0; min-width: 0; border-right: 1px solid rgba(245, 185, 30, .28); }
   .call .transcript { flex: 1; overflow-y: auto; padding: 22px 20px; }
   .interim { min-height: 22px; padding: 4px 20px; font-size: 14px; font-style: italic; color: var(--haze); }
   .engine { min-height: 0; overflow-y: auto; background: var(--cobalt-deep); padding: 16px; }
@@ -44,9 +44,38 @@
   .mic:disabled { opacity: .45; cursor: default; }
   @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(226, 85, 58, .5); } 70% { box-shadow: 0 0 0 14px rgba(226, 85, 58, 0); } 100% { box-shadow: 0 0 0 0 rgba(226, 85, 58, 0); } }
   .bar .wave { flex: none; }
+
+  /* the lines a visitor can say, in the order the pack's own scenario says them */
+  .suggest { display: flex; align-items: center; gap: 12px; padding: 4px 0 0 20px; min-width: 0; }
+  .suggest-label { flex: none; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--marigold); }
+  .suggest ul { display: flex; gap: 8px; list-style: none; margin: 0; padding: 6px 28px 10px 14px; overflow-x: auto; min-width: 0; scrollbar-width: thin; scrollbar-color: rgba(245, 185, 30, .4) transparent;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%); }
+  .say { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid rgba(255, 247, 230, .35); background: transparent; white-space: nowrap; font-size: 14px; transition: border-color var(--t-micro), background var(--t-micro), opacity var(--t-micro); }
+  .say:hover:not(:disabled) { border-color: var(--chalk); background: rgba(255, 247, 230, .06); }
+  .say.next { border-color: var(--marigold); color: var(--marigold); }
+  .say.done { opacity: .6; }
+  .say.done .ic-sm { color: var(--leaf); }
+  .say:disabled { cursor: progress; }
+
+  /* the 3D counter above the cards */
+  .stage { position: relative; border-radius: var(--r-card); background: var(--cobalt-deep); overflow: hidden; }
+  .stage canvas { display: block; width: 100%; height: clamp(240px, 42vh, 400px); }
+  .stage::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: var(--frame); pointer-events: none; }
+  .stage-ph { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--haze); }
+  .stage.ready .stage-ph { display: none; }
+  .stage-off-note { display: none; }
+  .stage.off canvas, .stage.off .stage-ph { display: none; }
+  .stage.off .stage-off-note { display: flex; align-items: center; min-height: 68px; padding: 0 96px 0 22px; font-size: 14px; color: var(--haze); }
+  .stage-toggle { position: absolute; top: 14px; right: 14px; z-index: 1; min-height: 40px; padding: 0 14px; font-size: 14px; background: rgba(16, 42, 102, .82); }
+  .stage-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--haze); }
+  .stage-toggle[aria-pressed="true"] .dot { background: var(--leaf); }
+  .stage.off .stage-toggle { top: 14px; }
   @media (max-width: 900px) {
     main.talk { grid-template-columns: 1fr; }
-    .call { border-right: 0; }
+    /* the collapsed sheet shows its top 76px above the bar: keep the transcript's
+       end and the lines to try clear of it */
+    .call { border-right: 0; padding-bottom: 76px; }
     .engine { position: fixed; left: 0; right: 0; bottom: 84px; z-index: 5; max-height: 62dvh; border-top: 1px solid rgba(245, 185, 30, .4); border-radius: 16px 16px 0 0; transform: translateY(calc(100% - 76px)); transition: transform var(--t-base) var(--ease-out); }
     .engine.open { transform: none; }
     /* The bar sits above the sheet, so the collapsed sheet slides behind it rather than over it. */
@@ -55,6 +84,8 @@
     .sheet-toggle .ic { transition: transform var(--t-base); }
     .engine.open .sheet-toggle .ic { transform: rotate(180deg); }
     .controls .field { min-width: 120px; }
+    .stage canvas { height: 210px; }
+    .suggest { padding-left: 16px; }
   }
 </style>
 </head>
@@ -77,15 +108,25 @@
 
 <main id="main" class="talk">
   <section class="call" aria-label="Call">
-    <div class="transcript" id="log" aria-live="polite">
-      <p class="sys" id="empty">Pack chuniye aur "Start call" dabaiye — phir mic se boliye ya neeche type kijiye.<br>Phone 9876543210 daaloge to returning-caller greeting dikhega.</p>
+    <div class="transcript" id="log" aria-live="polite" tabindex="0" aria-label="Baatcheet">
+      <p class="sys" id="empty">Neeche ki koi line dabaiye — call apne aap shuru ho jayegi. Ya "Start call" dabakar mic se boliye ya type kijiye.<br>Kuch lines mein jaan-boojh kar galat spelling hai: Bhasha Bridge unhe sudhaarta dikhega. Phone 9876543210 daaloge to returning-caller greeting milega.</p>
     </div>
     <p class="interim" id="interim"></p>
+    <div class="suggest" id="suggest" hidden>
+      <span class="suggest-label" id="suggest-label">Ye boliye</span>
+      <ul id="suggest-row" aria-labelledby="suggest-label"></ul>
+    </div>
   </section>
 
   <aside class="engine" id="engine" aria-label="Engine ka sheesha">
     <button type="button" class="btn btn-ghost sheet-toggle" id="sheet-toggle" aria-expanded="false" aria-controls="engine-cards">Engine ka sheesha <i data-icon="chevron"></i></button>
     <div class="engine-cards" id="engine-cards">
+      <section class="stage" id="stage" aria-label="3D counter — neeche ke cards yahi baat shabdon mein batate hain">
+        <canvas id="stage-canvas" aria-hidden="true"></canvas>
+        <p class="stage-ph" aria-hidden="true">Counter saja rahe hain…</p>
+        <p class="stage-off-note">3D counter band hai. Har turn ka hisaab neeche ke cards mein hai.</p>
+        <button type="button" class="btn btn-ghost stage-toggle" id="stage-toggle" aria-pressed="true" title="3D counter band karo"><i class="dot" aria-hidden="true"></i>3D</button>
+      </section>
       <section class="frame ecard" id="panel-bhasha" aria-live="polite">
         <header><h2>Bhasha Bridge</h2><span class="mono muted" id="bhasha-count">0 repairs</span></header>
         <div class="ebody" id="bhasha-body"><p class="muted">Call shuru hone pe yahan har sudhaar dikhega — kya suna, kya padha, aur kyun.</p></div>
@@ -113,6 +154,7 @@
 </footer>
 
 <script src="static/signboard.js"></script>
+<script type="module" src="static/talk3d.js"></script>
 <script>
 (function () {
   "use strict";
@@ -164,11 +206,29 @@
     });
   }
   const $ = function (id) { return document.getElementById(id); };
-  let sid = null, muted = false, recog = null, listening = false;
+  let sid = null, muted = true, recog = null, listening = false;
+  try {
+    const savedMute = localStorage.getItem("haanji.muted");
+    if (savedMute !== null) muted = savedMute === "1";
+  } catch (e) {}
   let repairsTotal = 0, specHits = 0, specStarted = 0;
   const receipts = [], repairsLog = [];
+  // The 3D counter (static/talk3d.js) listens for these; the page never waits on it.
+  function emit(type, extra) {
+    document.dispatchEvent(new CustomEvent("haanji:call", { detail: Object.assign({ type: type }, extra || {}) }));
+  }
+  window.HaanjiTalk = { receipts: receipts, repairs: repairsLog };
   const tm = S.timer($("timer"));
   const wave = S.waveform($("wave"));
+  function paintMute() {
+    $("mute").setAttribute("aria-pressed", String(muted));
+    $("mute").innerHTML = S.icon(muted ? "speakerOff" : "speaker") + "<span>" + (muted ? "Awaaz off" : "Awaaz on") + "</span>";
+  }
+  paintMute();
+  if (muted && window.speechSynthesis) speechSynthesis.cancel();
+  window.addEventListener("pagehide", function () {
+    if (window.speechSynthesis) speechSynthesis.cancel();
+  });
   let audioCtx = null, stream = null;
 
   async function api(path, opts) {
@@ -179,12 +239,80 @@
 
   function notice(text) { const n = $("notice"); n.textContent = text || ""; n.hidden = !text; }
 
+  // The lines to try: the pack's own booking scenario, turn by turn, exactly as
+  // its recogniser "heard" them (misspellings included, so the repair shows).
+  // A server with sign-in on does not hand packs to strangers; then a generic
+  // Hinglish booking is offered instead.
+  const FALLBACK_LINES = ["haan ji mujhe appointment chahiye", "kal subah ka time mil jayega", "haan ji wahi theek hai",
+    "mera naam Vijay Sharma hai number 9876543210", "haan confirm kar do"];
+  let lines = [], said = new Set();
+  async function loadSuggest() {
+    let got = null;
+    try {
+      const d = await api("api/packs/" + encodeURIComponent($("pack").value));
+      const sc = (d.parsed && d.parsed.scenarios) || [];
+      const pick = sc.find(function (x) { return x.expect === "BOOKED"; }) || sc[0];
+      if (pick && pick.turns) got = pick.turns.map(function (t) { return t.heard; }).filter(Boolean);
+    } catch (e) { got = null; }
+    lines = got && got.length ? got : FALLBACK_LINES;
+    said = new Set();
+    renderSuggest();
+  }
+  function renderSuggest() {
+    const ul = $("suggest-row");
+    ul.innerHTML = "";
+    let next = -1;
+    for (let i = 0; i < lines.length; i++) { if (!said.has(i)) { next = i; break; } }
+    lines.forEach(function (line, i) {
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "say" + (said.has(i) ? " done" : "") + (i === next ? " next" : "");
+      b.innerHTML = (said.has(i) ? S.icon("check", "ic-sm") : "") + "<span>" + S.esc(line) + "</span>";
+      if (i === next) b.setAttribute("aria-current", "step");
+      b.disabled = saying;
+      b.onclick = async function () {
+        saying = true;
+        ul.querySelectorAll(".say").forEach(function (x) { x.disabled = true; });
+        try { await sayLine(line); if (sid) said.add(i); } finally { saying = false; renderSuggest(); }
+      };
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    $("suggest").hidden = !lines.length;
+    const nb = ul.querySelector(".say.next");
+    if (nb) {
+      const left = nb.getBoundingClientRect().left - ul.getBoundingClientRect().left + ul.scrollLeft - 14;
+      ul.scrollTo({ left: Math.max(0, left), behavior: S.REDUCED ? "auto" : "smooth" });
+    }
+  }
+  // A line is said the way a caller says it: word by word. Each growing prefix
+  // goes to the engine as a partial transcript, exactly as the browser's
+  // recogniser sends them, so speculation gets its early signal and can be
+  // ready before the sentence ends.
+  let saying = false;
+  async function sayLine(line) {
+    if (!sid) await startCall();
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    const words = line.trim().split(/\s+/);
+    for (let k = 1; k < words.length; k++) {
+      const prefix = words.slice(0, k).join(" ");
+      $("interim").textContent = prefix + " …";
+      sendPartial(prefix);
+      await new Promise(function (r) { setTimeout(r, 170); });
+    }
+    $("interim").textContent = "";
+    await sendUtterance(line);
+  }
+
   S.status().then(function (s) {
     if (!s) { notice("Server se connect nahi ho pa raha — thodi der mein dobara try kijiye."); $("pack").disabled = true; $("start").disabled = true; return; }
     const q = new URLSearchParams(location.search), wanted = q.get("pack");
     $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === (s.packs.indexOf(wanted) >= 0 ? wanted : s.default_pack) ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
     if (q.get("study")) notice("Study task " + q.get("study") + " — kaam poora hone pe study tab mein wapas jaiye.");
+    loadSuggest();
   });
+  $("pack").addEventListener("change", loadSuggest);
 
   function row(who, text) {
     if ($("empty")) $("empty").remove();
@@ -308,6 +436,8 @@
     sid = res.session_id;
     $("log").innerHTML = "";
     resetPanel();
+    emit("reset", { business: res.business });
+    said = new Set(); renderSuggest();
     document.title = res.business + " — HaanJi";
     $("biz").textContent = res.business;
     row("agent", res.greeting); speak(res.greeting);
@@ -332,6 +462,7 @@
     if (!sid) await startCall();
     if (window.speechSynthesis) speechSynthesis.cancel();          // barge-in
     const callerBubble = row("caller", text);
+    emit("caller", { text: text });
     const typing = S.typingDots(); $("log").appendChild(typing); $("log").scrollTop = $("log").scrollHeight;
     let t;
     try { t = await api("api/sessions/" + sid + "/utterance", { method: "POST", body: JSON.stringify({ text: text }) }); }
@@ -346,25 +477,29 @@
     if (t.human) { if (!window.__humanNoted) { sys("Aapki baat ek insaan tak pahunch gayi — jawab ka intezaar…"); window.__humanNoted = true; } return; }
     const agent = row("agent", t.reply);
     const meta = metaFor(t);
+    // A deposit was configured: the link the caller would get on WhatsApp.
+    // (1.1 appended these to an element that does not exist, which threw and
+    // skipped the end-of-call handling below.)
+    (t.payment_links || []).forEach(function (pl) {
+      const pay = document.createElement("a"); pay.className = "stamp leaf"; pay.href = pl.link; pay.target = "_blank"; pay.rel = "noopener";
+      pay.innerHTML = S.icon("lock") + "DEPOSIT ₹" + S.esc(String(pl.amount_inr));
+      meta.appendChild(pay);
+    });
     if (meta.children.length) agent.appendChild(meta);
     meta.querySelectorAll(".stamp").forEach(function (st) { S.stamp(st); });
     updatePanel(t);
+    emit("turn", { turn: t });
     speak(t.reply);
-    if (t.payment_links && t.payment_links.length) {
-      // A deposit was configured: the link the caller would get on WhatsApp.
-      t.payment_links.forEach(function (pl) {
-        const pay = document.createElement("a"); pay.className = "stamp pay"; pay.href = pl.link; pay.target = "_blank"; pay.rel = "noopener";
-        pay.innerHTML = S.icon("lock") + "DEPOSIT ₹" + S.esc(String(pl.amount_inr));
-        $("transcript").appendChild(pay);
-      });
-    }
     if (t.end_call) {
       sid = null; $("start").hidden = false; $("end").hidden = true; tm.stop(); stopMic();
       sys("Call khatam — outcome " + (t.outcome || "").replace(/_/g, " ").toLowerCase());
+      emit("end", { outcome: t.outcome });
+      said = new Set(); setTimeout(renderSuggest, 0);           // the lines are ready for the next call
     }
   }
 
   function sendPartial(text) {
+    if (sid && text.trim()) emit("partial", { text: text });
     if (sid && text.trim()) {
       fetch("api/sessions/" + sid + "/partial", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text }) });
     }
@@ -436,11 +571,12 @@
   });
   $("mute").onclick = function () {
     muted = !muted;
-    $("mute").setAttribute("aria-pressed", String(muted));
-    $("mute").innerHTML = S.icon(muted ? "speakerOff" : "speaker") + "<span>" + (muted ? "Awaaz off" : "Awaaz on") + "</span>";
+    try { localStorage.setItem("haanji.muted", muted ? "1" : "0"); } catch (e) {}
+    paintMute();
     if (muted && window.speechSynthesis) speechSynthesis.cancel();
   };
   $("send").onclick = function () { sendUtterance($("text").value); $("text").value = ""; };
+  $("text").addEventListener("input", function () { if (sid && $("text").value.trim()) emit("partial", { text: $("text").value }); });
   $("text").addEventListener("keydown", function (e) {
     if (e.key === "Enter") { sendUtterance($("text").value); $("text").value = ""; }
     else if (sid && $("text").value.length % 6 === 5) sendPartial($("text").value);

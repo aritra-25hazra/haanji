@@ -2,6 +2,26 @@
 
 All notable changes to HaanJi. Dates are when the work reached `main`.
 
+## Unreleased
+
+### Talk page
+* **A 3D counter** above the engine cards (three.js 0.170.0, vendored, loaded
+  only when WebGL2 is available): the shop's own signboard hangs over a painted
+  counter; Bhasha repairs are sign plates that turn round from what was heard
+  to what was read; speculation is a race between the caller's sentence and
+  the tool's answer to the "sawaal" line; each receipt is a slip a rubber
+  stamp comes down on, chained to the last. Toon-shaded in the Signboard
+  palette, framed by projecting its corners, paused off-screen, still under
+  reduced motion, switchable off (remembered), aria-hidden: the cards remain
+  the record.
+* **"Ye boliye"**: the pack's own booking scenario as one-tap lines, said word
+  by word as partial transcripts so speculation can hit exactly as it does
+  from the microphone.
+* Fixed: a deposit link was appended to an element that did not exist, which
+  threw and skipped the end-of-call handling; on phones the collapsed engine
+  sheet covered the end of the transcript; small text in the bubbles is now
+  AA contrast and the transcript is keyboard-scrollable (axe: no violations).
+
 ## 1.1.0 — 2026-10-29 (phase G, from the review of the same day)
 
 A whole-project review found the engine understanding scripted callers and

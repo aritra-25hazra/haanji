@@ -130,7 +130,7 @@ p { margin: 0; }
 .repair small { font-family: var(--font-mono); font-size: 12px; color: var(--haze); }
 .bubble.caller .repair s { color: rgba(27, 59, 140, .55); }
 .bubble.caller .repair b { color: var(--cobalt); }
-.bubble.caller .repair small { color: rgba(27, 59, 140, .7); }
+.bubble.caller .repair small { color: var(--cobalt); }                /* 5.8:1 on marigold; .7 was 3.5:1 */
 .bubble.caller .repair s svg.stroke path { stroke: var(--cobalt); stroke-width: 2.5; opacity: .7; }
 
 /* ── stamp ────────────────────────────────────────────────────────────── */
@@ -151,7 +151,9 @@ a.frame:hover { transform: translateY(-2px); }
 .bubble.caller { align-self: flex-end; background: var(--marigold); color: var(--cobalt); border-bottom-right-radius: 4px; }
 .bubble .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
 .bubble.caller .chip, .bubble.caller .chip-spec, .bubble.caller .chip-tool { background: rgba(27, 59, 140, .14); color: var(--cobalt); }
-.bubble.caller .mono.muted { color: rgba(27, 59, 140, .75); }
+.bubble.caller .mono.muted { color: var(--cobalt); }
+/* haze on the agent bubble's tint is 3.8:1; chalk at .8 is 5.4:1 */
+.bubble.agent .mono.muted { color: rgba(255, 247, 230, .8); }
 @keyframes bubble { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .typing { display: inline-flex; gap: 4px; padding: 12px 14px; background: rgba(255, 247, 230, .1); border-radius: 14px; border-bottom-left-radius: 4px; align-self: flex-start; }
 .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--haze); animation: blink 900ms infinite; }

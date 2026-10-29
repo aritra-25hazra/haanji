@@ -3,7 +3,7 @@
 [![ci](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml)
 [![engine](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-engine.onrender.com%2Fapi%2Fstatus&label=engine&up_message=live&down_message=waking)](https://haanji-engine.onrender.com)
 [![console](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-kappa.vercel.app&label=console&up_message=live)](https://haanji-kappa.vercel.app)
-![tests](https://img.shields.io/badge/tests-585%20passing-1F6B45)
+![tests](https://img.shields.io/badge/tests-590%20passing-1F6B45)
 [![security](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/aritra-25hazra/haanji?quickstart=1)
 ![licence](https://img.shields.io/badge/licence-Apache--2.0-1B3B8C)
@@ -88,7 +88,7 @@ pip install -e ".[dev]"
 
 python -m haanji.cli demo          # one narrated call, at real speaking speed
 python -m haanji.cli selftest      # all 44 packaged scenarios, all ten packs
-pytest -q                          # 585 tests
+pytest -q                          # 590 tests
 python -m haanji.bench             # regenerates research/results.json
 ```
 
@@ -110,7 +110,7 @@ One process, still no keys, gives you the whole platform:
 
 | Page | What it shows |
 |---|---|
-| `/talk` | **Talk to HaanJi** — speak into your mic (Chrome/Edge), watch partial transcripts drive speculation live, interrupt it mid-sentence |
+| `/talk` | **Talk to HaanJi** — speak into your mic (Chrome/Edge) or tap the pack's own lines to say them word by word; watch partial transcripts drive speculation live, and a 3D counter show each repair turn its plate round, each answer race the caller to the line, and each receipt get stamped and chained |
 | `/whatsapp` | **WhatsApp simulator** — the same brain over text, plus a *missed call* button that triggers the recovery flow |
 | `/verify` | **Public Pramaan verifier** — re-checks every hash and signature *in your browser*; a tamper button proves it isn't decorative |
 | `/` | Landing page linking everything, plus `/api/insights` — outcomes, peak hours, recovered revenue, and a costed ₹/call comparison |
@@ -184,7 +184,7 @@ PRAMAAN LEDGER
 │   │   ├── insights.py      outcome/revenue/cost analytics behind /api/insights
 │   │   ├── bench.py         the evaluation harness that produces every number
 │   │   └── cli.py           demo · selftest · bench · verify · serve · packs
-│   └── tests/               585 tests, including the safety properties and the demo pages
+│   └── tests/               590 tests, including the safety properties and the demo pages
 │   │   ├── admin.py         the console's operations: calendar, customers, settings, waitlist, payments, backup
 │   │   ├── reminders.py     the day-before WhatsApp reminder and the "1 / 2" replies
 │   │   ├── payments.py      deposit links (Razorpay, or this server's mock), the signed webhook
@@ -591,7 +591,7 @@ keeps the free instance warm; delete
 
 A project report should say what was verified and what was not.
 
-* **The Python engine is fully executed here.** 585 tests, 44 scenarios across
+* **The Python engine is fully executed here.** 590 tests, 44 scenarios across
   ten packs and seven languages, and the entire benchmark run on this
   machine. Every number in this README comes from that run.
 * **The React console builds here.** `npm run build` type-checks the whole
