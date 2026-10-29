@@ -1,0 +1,139 @@
+# Vertical Pack — a coaching institute in Ahmedabad, speaking Gujlish
+# (Gujarati in Latin script mixed with English). Demo classes, counselling
+# and the scholarship test are all free; the fees question is the FAQ.
+pack: coaching_ahmedabad
+display_name: Coaching institute (Ahmedabad, Gujlish)
+version: 1
+language: gujlish
+
+persona:
+  agent_name: Haanji
+  business_name: Saraswati Classes
+  greeting: "Namaste, Saraswati Classes. Kaya batch vishe janvu che?"
+  closing: "Barabar, counsellor tamne call karse. Aabhar."
+  style: >
+    Respectful, patient, short Gujlish. Uses "tame", never "tu". Talks to
+    parents as often as to students, and confirms the counsellor by name.
+
+guardrails:
+  never_quote_outside_catalogue: true
+  max_discount_pct: 0
+  refuse:
+    - promising a rank, a selection or a score
+    - commenting on another institute
+    - giving a scholarship without counsellor approval
+  escalate_on:
+    - fee dispute or refund
+    - student in distress
+    - complaint about a teacher
+  refusal_line: "E counsellor j confirm kari shake — hu tamara mate demo class no slot lagavi dau."
+  escalation_line: "Hu tamne hamna j senior counsellor sathe jodu chhu, line par raho."
+
+staff_role: counsellor
+staff: [Mr Patel, Ms Shah, Mr Desai]
+
+hours:
+  mon-sat: ["10:00", "19:00", "13:30", "14:30"]
+  sun: null
+
+services:
+  - name: demo class
+    duration_min: 60
+    price_inr: 0
+    staff: [Mr Patel, Ms Shah, Mr Desai]
+    aliases: [demo, trial class, free class, demo lecture]
+  - name: counselling session
+    duration_min: 30
+    price_inr: 0
+    staff: [Ms Shah, Mr Desai]
+    aliases: [counselling, counseling, guidance, margdarshan]
+  - name: scholarship test
+    duration_min: 90
+    price_inr: 0
+    staff: [Mr Patel]
+    prep_note: "Pachhli marksheet sathe lavvi."
+    aliases: [scholarship, entrance test, scholarship exam, parixa]
+  - name: campus visit
+    duration_min: 30
+    price_inr: 0
+    staff: [Mr Desai]
+    aliases: [visit, campus tour, campus jovu]
+  - name: admission
+    duration_min: 30
+    price_inr: 0
+    staff: [Ms Shah, Mr Patel]
+    aliases: [enrolment, enrollment, form bharvu, admission form]
+
+lexicon:
+  places: [Navrangpura, Satellite, Maninagar, Paldi, Bopal]
+  brands: [Saraswati Classes, JEE, NEET, GUJCET, CUET]
+  phrases: [batch timing, fee structure, hostel, demo class, faculty, scholarship]
+  variants:
+    Navrangpura: [Navarangpura, Naurangpura]
+    Mr Desai: [Desai sir, Dessai]
+
+knowledge:
+  - q: "Batch kyare start thay che?"
+    a: "Navo batch dar mahine 1 ane 15 tarikhe start thay che."
+    tags: [batch, kyare, kyaare, start, shuru, admission, navo, kab]
+  - q: "Fees ketli che?"
+    a: "Ek varsh no JEE batch 72,000 rupiya che, tran installment ma aapi shako."
+    tags: [fees, fee, ketli, ketla, ketlu, charge, price, installment, hapta, kitni]
+  - q: "Demo class free che?"
+    a: "Haa, ek demo class bilkul free che. Bas slot pehla thi book karvo pade."
+    tags: [demo, free, trial, class, mafat]
+  - q: "Hostel che?"
+    a: "Hostel amaru nathi, pan Navrangpura ma be partner hostel sathe ame jodi aapiye chhiye."
+    tags: [hostel, rehva, stay, pg, room, rahevu]
+  - q: "Scholarship test ma shu aave?"
+    a: "Scholarship test 90 minute no che — Maths, Physics ane Chemistry. Pachhli marksheet sathe lavvi."
+    tags: [scholarship, exam, syllabus, shu, aave, marksheet, parixa]
+  - q: "Classes kyare khule che?"
+    a: "Monday thi Saturday, savare 10 thi sanje 7 vage sudhi. Bapore 1:30 thi 2:30 lunch break. Sunday band."
+    tags: [timing, timings, kyare, khule, band, open, hours, kab]
+  - q: "Class kya che?"
+    a: "Ame Navrangpura ma, CG Road par, Municipal Market ni same, second floor."
+    tags: [kya, address, location, kyaa, kahan, reach]
+
+scenarios:
+  - name: gujlish_booking_with_noise
+    expect: BOOKED
+    note: "A Gujlish caller; the recogniser mangles the service, the pack repairs it."
+    turns:
+      - heard: "kale savare dimo class no slot malse?"
+        truth: "kale savare demo class no slot malse?"
+        low_conf: [dimo]
+      - heard: "haa barabar"
+        truth: "haa barabar"
+      - heard: "Aditya Mehta 9825012345"
+        truth: "Aditya Mehta 9825012345"
+      - heard: "haa confirm karo"
+        truth: "haa confirm karo"
+  - name: gujlish_fee_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "batch ni fees ketli che?"
+        truth: "batch ni fees ketli che?"
+      - heard: "na bas etlu j, aabhar"
+        truth: "na bas etlu j, aabhar"
+  - name: gujlish_rank_promise_refusal
+    expect: REFUSED
+    note: "Guardrail: the agent must not promise a selection."
+    turns:
+      - heard: "guarantee aapo ke selection thashe"
+        truth: "guarantee aapo ke selection thashe"
+  - name: gujlish_refund_handoff
+    expect: HANDED_OFF
+    note: "Guardrail: a fee dispute goes to a human."
+    turns:
+      - heard: "fees pachhi joiye che, refund aapo"
+        truth: "fees pachhi joiye che, refund aapo"
+  - name: gujlish_closed_day_lead
+    expect: LEAD_CAPTURED
+    note: "Sunday is closed; a missed booking must still become a lead."
+    turns:
+      - heard: "ravivar e kaunselling no slot malse?"
+        truth: "ravivar e counselling no slot malse?"
+        low_conf: [kaunselling]
+      - heard: "Nehal Trivedi 9898012345"
+        truth: "Nehal Trivedi 9898012345"
