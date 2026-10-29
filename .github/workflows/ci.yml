@@ -15,9 +15,14 @@ jobs:
       - name: install
         working-directory: engine
         run: pip install -e ".[dev,web,llm]" jellyfish metaphone
+      - name: lint
+        working-directory: engine
+        run: pip install ruff && ruff check haanji
       - name: unit and property tests
         working-directory: engine
         run: pytest -q
+      - name: the README and the report quote the repository's real counts
+        run: python research/harness/readme_sync.py --check
       - name: every packaged scenario must still reach its expected outcome
         working-directory: engine
         run: python -m haanji.cli selftest --speed 60

@@ -1,22 +1,34 @@
 # Everything a reviewer needs, without reading the README first.
-.PHONY: help setup test selftest demo bench verify docker clean dist docs-sync docs report
+.PHONY: help setup test lint selftest demo bench verify docker clean dist docs-sync docs report readme-sync readme-check
 
 help:
 	@echo "make setup     install the engine and its test dependencies"
 	@echo "make demo      run one narrated call at real speed"
 	@echo "make test      run the engine test suite"
+	@echo "make lint      ruff over the engine package"
 	@echo "make selftest  run every packaged scenario in every vertical pack"
 	@echo "make bench     regenerate research/results.json from scratch"
 	@echo "make docker    bring the whole system up with Docker Compose"
 	@echo "make dist      build the engine sdist and wheel (packs bundled) in engine/dist"
 	@echo "make docs      build the documentation site into site/"
 	@echo "make report    regenerate research/REPORT.pdf and PAPER.pdf"
+	@echo "make readme-sync   rewrite the test/pack/scenario/language counts in README.md and research/REPORT.md"
+	@echo "make readme-check  fail if those counts are stale (CI runs this)"
 
 setup:
-	cd engine && pip install -e ".[dev]"
+	cd engine && pip install -e ".[dev]" ruff
 
 test:
 	cd engine && pytest -q
+
+lint:
+	cd engine && ruff check haanji
+
+readme-sync:
+	cd engine && python ../research/harness/readme_sync.py
+
+readme-check:
+	cd engine && python ../research/harness/readme_sync.py --check
 
 selftest:
 	cd engine && python -m haanji.cli selftest --speed 60

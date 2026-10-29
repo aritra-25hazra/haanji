@@ -16,7 +16,6 @@ import os
 import sqlite3
 import tarfile
 import tempfile
-from typing import Iterable
 
 log = logging.getLogger("haanji.backup")
 KEEP_FILES = (".sqlite", ".json", ".secret", ".jsonl", ".yaml")
@@ -43,7 +42,7 @@ def make_backup(var_dir: str, out: io.BytesIO | None = None, *, include_recordin
     """Everything that matters in ``var_dir`` as a tar.gz (bytes)."""
     buf = out or io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:
-        for root, dirs, files in os.walk(var_dir):
+        for root, _dirs, files in os.walk(var_dir):
             rel_root = os.path.relpath(root, var_dir)
             if rel_root.startswith("recordings") and not include_recordings:
                 continue
@@ -93,7 +92,7 @@ def upload_s3(data: bytes, name: str) -> str:
     """Put the archive in HAANJI_BACKUP_S3_BUCKET (prefix HAANJI_BACKUP_S3_PREFIX,
     endpoint HAANJI_BACKUP_S3_ENDPOINT for R2/MinIO). boto3 is the optional
     ``[backup]`` extra; the usual AWS_* variables carry the credentials."""
-    import boto3                                              # the optional extra
+    import boto3  # the optional extra
     bucket = os.environ["HAANJI_BACKUP_S3_BUCKET"]
     key = os.environ.get("HAANJI_BACKUP_S3_PREFIX", "haanji/").rstrip("/") + "/" + name
     client = boto3.client("s3", endpoint_url=os.environ.get("HAANJI_BACKUP_S3_ENDPOINT") or None)

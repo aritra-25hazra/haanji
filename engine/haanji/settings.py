@@ -51,7 +51,7 @@ class SettingsStore:
                 try:
                     value = int(value)
                 except (TypeError, ValueError):
-                    raise SettingsError(f"'{key}' must be a whole number")
+                    raise SettingsError(f"'{key}' must be a whole number") from None
                 lo, hi = LIMITS.get(key, (None, None))
                 if lo is not None and not (lo <= value <= hi):
                     raise SettingsError(f"'{key}' must be between {lo} and {hi}")

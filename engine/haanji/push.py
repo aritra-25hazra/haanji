@@ -31,6 +31,7 @@ def _vapid_keys(path: str) -> tuple[str, str]:
     # A VAPID key is a P-256 ECDSA key; `cryptography` is already a hard
     # dependency, so the engine never needs the push library just to start.
     import base64
+
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric import ec
     key = ec.generate_private_key(ec.SECP256R1())

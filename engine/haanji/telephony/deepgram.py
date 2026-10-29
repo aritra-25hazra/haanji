@@ -31,7 +31,7 @@ class DeepgramStream:
         return f"{DEFAULT_URL}&language={self.language}"
 
     async def start(self) -> None:
-        import websockets                                  # the optional [live] extra
+        import websockets  # the optional [live] extra
         self._ws = await websockets.connect(self.url, additional_headers={"Authorization": f"Token {self.api_key}"})
         self._reader = asyncio.create_task(self._read())
 

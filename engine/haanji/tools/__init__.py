@@ -20,7 +20,7 @@ rest of the engine depends on:
 from __future__ import annotations
 import inspect
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable
+from typing import Any, Callable
 
 from ..models import ToolResult
 
@@ -108,6 +108,6 @@ class ToolRegistry:
             return ToolResult(name, ok=False, error=str(exc))
 
 
-from .builtin import build_registry            # noqa: E402  (cyclic by design)
+from .builtin import build_registry  # noqa: E402  (cyclic by design)
 
 __all__ = ["Tool", "ToolRegistry", "ToolError", "build_registry"]

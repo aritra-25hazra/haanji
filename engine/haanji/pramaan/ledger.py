@@ -7,8 +7,7 @@ import uuid
 from typing import Any
 
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.ed25519 import (
-    Ed25519PrivateKey, Ed25519PublicKey)
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
 from .receipt import GENESIS, ConfirmationProof, Receipt
 
@@ -81,6 +80,7 @@ class Ledger:
         if key_secret:
             import base64
             import hashlib
+
             from cryptography.fernet import Fernet
             raw = key_secret.encode() if isinstance(key_secret, str) else key_secret
             self._fernet = Fernet(base64.urlsafe_b64encode(hashlib.sha256(raw).digest()))

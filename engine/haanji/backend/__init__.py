@@ -6,6 +6,6 @@ engine only ever sees this interface, so the same conversation code runs
 against a real clinic and against the local SQLite backend used by the demo,
 the tests and the benchmark.
 """
-from .local import LocalBackend, Booking, Slot, BackendError
+from .local import BackendError, Booking, LocalBackend, Slot
 
 __all__ = ["LocalBackend", "Booking", "Slot", "BackendError"]

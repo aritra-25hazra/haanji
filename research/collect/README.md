@@ -42,6 +42,29 @@ python research/collect/evaluate.py --pairs research/collect/data/volunteers/pai
 If the server runs on a host with an ephemeral disk (Render), download
 `/api/record/export` (a zip of the audio and manifest) before each redeploy.
 
+### Other recognisers (REPORT §4.12)
+
+`transcribe.py --engine <name>` runs the same manifest through a hosted Indic
+recogniser; `engines.py` holds the adapters and names the key each one needs.
+Without the key the script prints why and writes nothing.
+
+```bash
+export SARVAM_API_KEY=...                        # Sarvam Saarika (hi-IN)
+export BHASHINI_USER_ID=... BHASHINI_API_KEY=... # Bhashini / ULCA ASR (hi)
+export HAANJI_DEEPGRAM_KEY=...                   # Deepgram nova-2, hi-Latn (the telephony key)
+export GOOGLE_APPLICATION_CREDENTIALS=sa.json    # Google Speech-to-Text v1 (hi-IN); pip install google-auth requests
+for e in sarvam bhashini deepgram google; do
+  python research/collect/transcribe.py --manifest research/collect/data/synthetic/manifest.jsonl --engine $e
+done                                             # -> data/synthetic/pairs_<engine>.jsonl
+python research/harness/stt_compare.py           # -> research/stt_compare.json, stt_compare_tables.md
+```
+
+Clips are converted to 16 kHz mono WAV first (`ffmpeg`, or `afconvert` on
+macOS; cached in `wav16k/`). Devanagari output is romanised with the engine's
+own table; engines that score no words get the text channel's
+out-of-vocabulary confidences, and each pairs row says which
+(`confidence_source`).
+
 ## For volunteers (Hinglish)
 
 `/record` page kholo, pack chuno, apna code likho, "Shuru karo". Har vaakya
@@ -54,7 +77,8 @@ number kahin nahi jaata.
 | path | what |
 |---|---|
 | `synth.py` | prompts → `say` → `manifest.jsonl` + audio (synthetic, labelled) |
-| `transcribe.py` | manifest → faster-whisper → `pairs.jsonl` (word probabilities become confidences) |
+| `transcribe.py` | manifest → a recogniser → `pairs.jsonl` (word probabilities become confidences); `--engine` picks one from `engines.py` |
+| `engines.py` | whisper, sarvam, bhashini, deepgram, google behind `transcribe(path) -> [(word, confidence)]`; a missing key is named, never guessed around |
 | `evaluate.py` | pairs → `research/real_asr.json` + Markdown table |
 | `data/<set>/pairs.jsonl` | committed; audio under `data/<set>/audio/` is not |
 | `engine/haanji/collect.py` | prompt list, pair format, the scoring (shared with the server's `/record`) |
