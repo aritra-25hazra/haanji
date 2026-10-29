@@ -46,8 +46,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: npm, cache-dependency-path: console/package.json }
-      - working-directory: console
+        with: { node-version: "20", cache: npm, cache-dependency-path: console/package-lock.json }
+      - name: install
+        working-directory: console
         run: npm install
-      - working-directory: console
+      - name: lint
+        working-directory: console
+        run: npm run lint
+      - name: component and unit tests (jsdom, mocked engine)
+        working-directory: console
+        run: npm test
+      - name: typecheck and build
+        working-directory: console
         run: npm run build

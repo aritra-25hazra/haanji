@@ -2,21 +2,24 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { engine } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Chip, Empty, Icon, Loading, Page, Panel, Register, useData } from "../components/Common";
+import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register, useData, type ChipKind } from "../components/Common";
 
-const KIND: Record<string, "ok" | "warn" | "bad" | "muted" | undefined> = {
+const KIND: Record<string, ChipKind | undefined> = {
   SERVICE: "ok", STAFF: undefined, PLACE: "warn", BRAND: "muted", PHRASE: "muted",
 };
+const SUB = "Is business ke apne shabd, awaaz ke hisaab se indexed. Catalogue se khud banta hai — ye list koi type nahi karta.";
 
 export default function Lexicon() {
-  const { pack, online } = useApp();
+  const { pack, mode } = useApp();
   const [probe, setProbe] = useState("");
   const [debounced, setDebounced] = useState("");
   useEffect(() => { const t = setTimeout(() => setDebounced(probe.trim()), 300); return () => clearTimeout(t); }, [probe]);
 
-  const { data, loading, error, reload } = useData(
-    () => (online ? engine.lexicon(pack, debounced || undefined) : Promise.resolve(sample.lexicon())), [pack, online, debounced]);
+  const live = mode === "live";
+  const loader = live ? () => engine.lexicon(pack, debounced || undefined) : mode === "demo" ? () => Promise.resolve(sample.lexicon()) : null;
+  const { data, loading, error, reload } = useData(loader, [pack, mode, debounced]);
 
+  if (!live && mode !== "demo") return <NotLive title="Bhasha lexicon" sub={SUB} />;
   if (loading && !data) return <Loading />;
   if (!data) {
     return (
@@ -27,10 +30,10 @@ export default function Lexicon() {
   }
 
   return (
-    <Page title="Bhasha lexicon" sub="Is business ke apne shabd, awaaz ke hisaab se indexed. Catalogue se khud banta hai — ye list koi type nahi karta.">
-      <Panel title="Jo suna gaya, wo likho" hint={online ? "engine batayega ye awaaz kahan land karti hai" : "live engine chahiye"}>
+    <Page title="Bhasha lexicon" sub={SUB}>
+      <Panel title="Jo suna gaya, wo likho" hint={live ? "engine batayega ye awaaz kahan land karti hai" : "live engine chahiye"}>
         <div className="body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <input className="input" value={probe} onChange={(e) => setProbe(e.target.value)} disabled={!online}
+          <input className="input" value={probe} onChange={(e) => setProbe(e.target.value)} disabled={!live}
                  placeholder='jaise "rut kanal" ya "sheikh"' aria-label="Suna hua phrase" style={{ maxWidth: 420 }} />
           {data.probe && (
             <div className="row" style={{ fontSize: 15 }}>

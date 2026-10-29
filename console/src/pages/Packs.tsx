@@ -2,13 +2,17 @@ import type { CSSProperties } from "react";
 import { engine } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Chip, Empty, Loading, Page, Panel, Register, useData } from "../components/Common";
+import { Chip, Empty, Loading, NotLive, Page, Panel, Register, useData } from "../components/Common";
+
+const SUB = "Ek file batati hai agent kya jaanta hai, kya mana karta hai, aur kaise bolta hai.";
 
 export default function Packs() {
-  const { pack, online, setPack } = useApp();
-  const { data, loading, error, reload } = useData(
-    () => (online ? engine.packs().then((r) => r.packs) : Promise.resolve(sample.packs())), [online]);
+  const { pack, mode, setPack } = useApp();
+  const live = mode === "live";
+  const loader = live ? () => engine.packs().then((r) => r.packs) : mode === "demo" ? () => Promise.resolve(sample.packs()) : null;
+  const { data, loading, error, reload } = useData(loader, [mode]);
 
+  if (!live && mode !== "demo") return <NotLive title="Vertical packs" sub={SUB} />;
   if (loading && !data) return <Loading />;
   if (!data) {
     return (
@@ -19,7 +23,7 @@ export default function Packs() {
   }
 
   return (
-    <Page title="Vertical packs" sub="Ek file batati hai agent kya jaanta hai, kya mana karta hai, aur kaise bolta hai.">
+    <Page title="Vertical packs" sub={SUB}>
       <Panel title="Installed" hint={`${data.length} packs`}>
         <Register head={<><th>Pack</th><th>Language</th><th className="right">Services</th><th className="right">Staff</th><th className="right">Scenarios</th><th>Health</th><th></th></>}>
           {data.map((p, i) => (

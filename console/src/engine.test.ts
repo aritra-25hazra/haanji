@@ -1,11 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { enginePath, fmtMs, parseReceipts, parseTurns, tamper } from "./engine";
+import { enginePath, errorMessage, fmtMs, parseReceipts, parseTurns, tamper } from "./engine";
 import type { Export } from "./types";
 
 describe("enginePath", () => {
   it("prefixes with /engine and strips leading slashes", () => {
     expect(enginePath("api/status")).toBe("/engine/api/status");
     expect(enginePath("/api/status")).toBe("/engine/api/status");
+  });
+});
+
+describe("errorMessage", () => {
+  it("replaces a proxy's HTML error page with a plain sentence", () => {
+    expect(errorMessage(502, "text/html", "<html><body><h1>502 Bad Gateway</h1></body></html>")).toBe("Engine jawab nahi de raha (502)");
+    expect(errorMessage(503, null, "<!DOCTYPE html><html><head></head><body>Service Unavailable</body></html>")).toBe("Engine jawab nahi de raha (503)");
+  });
+  it("surfaces the engine's own detail", () => {
+    expect(errorMessage(422, "application/json", JSON.stringify({ detail: "unknown setting: foo" }))).toBe("unknown setting: foo");
+    expect(errorMessage(422, "application/json", JSON.stringify({ detail: [{ loc: ["body", "phone"], msg: "field required" }] }))).toBe("field required");
+    expect(errorMessage(500, "text/plain", "boom")).toBe("boom");
+    expect(errorMessage(500, null, "")).toBe("Engine error 500");
   });
 });
 

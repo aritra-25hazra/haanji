@@ -3,14 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { engine, fmtMs } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Empty, Icon, Loading, OutcomeChip, Page, Panel, Register, fmtDate, fmtTime, useData } from "../components/Common";
+import { Empty, Icon, Loading, NotLive, OutcomeChip, Page, Panel, Register, fmtDate, fmtTime, rowButton, useData } from "../components/Common";
+
+const SUB = "Nayi pehle. Transcript aur receipt ke liye row kholo.";
 
 export default function Calls() {
-  const { pack, online } = useApp();
+  const { pack, mode } = useApp();
   const nav = useNavigate();
-  const { data, loading, error, reload } = useData(
-    () => (online ? engine.calls(pack).then((r) => r.conversations) : Promise.resolve(sample.calls())), [pack, online]);
+  const live = mode === "live";
+  const loader = live ? () => engine.calls(pack).then((r) => r.conversations) : mode === "demo" ? () => Promise.resolve(sample.calls()) : null;
+  const { data, loading, error, reload } = useData(loader, [pack, mode]);
 
+  if (!live && mode !== "demo") return <NotLive title="Calls" sub={SUB} />;
   if (loading && !data) return <Loading />;
   if (!data) {
     return (
@@ -21,8 +25,8 @@ export default function Calls() {
   }
 
   return (
-    <Page title="Calls" sub="Nayi pehle. Transcript aur receipt ke liye row kholo.">
-      <Panel title={online ? "Engine ki calls" : "Sample calls"} hint={`${data.length} calls · ${pack.replace(/_/g, " ")}`}>
+    <Page title="Calls" sub={SUB}>
+      <Panel title={live ? "Engine ki calls" : "Sample calls"} hint={`${data.length} calls · ${pack.replace(/_/g, " ")}`}>
         {data.length === 0 ? (
           <Empty>
             <p>Abhi koi call nahi.</p>
@@ -31,9 +35,8 @@ export default function Calls() {
         ) : (
           <Register head={<><th>Kab</th><th>Channel</th><th>Caller</th><th>Outcome</th><th className="right">Repairs</th><th className="right">Spec hits</th><th className="right">Latency p50</th></>}>
             {data.map((c, i) => (
-              <tr key={c.call_id} className="click" data-reveal style={{ "--i": i } as CSSProperties}
-                  onClick={() => nav(`/calls/${c.call_id}`)} tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === "Enter") nav(`/calls/${c.call_id}`); }}>
+              <tr key={c.call_id} {...rowButton(() => nav(`/calls/${c.call_id}`), `Call ${fmtDate(c.started_at)} ${fmtTime(c.started_at)} kholo`)}
+                  data-reveal style={{ "--i": i } as CSSProperties}>
                 <td className="mono">{fmtDate(c.started_at)} {fmtTime(c.started_at)}</td>
                 <td>{c.channel.toLowerCase()}</td>
                 <td className="mono">{c.phone ?? "—"}</td>
