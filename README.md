@@ -315,17 +315,25 @@ the signature; 0 unconfirmed writes accepted.
 
 A pack is one YAML file that describes a *kind* of business: catalogue, hours,
 staff, persona, refusals, escalations, seed vocabulary, knowledge base, and the
-scenarios the pack must pass before it ships. Five are included — dental clinic,
-salon and spa, diagnostic lab, coaching institute, and a dental clinic in
-Kolkata that speaks **Benglish** (Bengali-English).
+scenarios the pack must pass before it ships. Ten are included: a dental
+clinic, a salon and spa, a diagnostic lab and a coaching institute in
+Hinglish; a dental clinic in Kolkata that speaks **Benglish**; a clinic in Pune
+(**Marathinglish**); and, since 1.1, a dental clinic in Chennai
+(**Tanglish**), a diagnostic lab in Hyderabad (**Tenglish**), a coaching
+institute in Ahmedabad (**Gujlish**) and a salon in Ludhiana (**Punglish**).
 
-The Kolkata pack is the proof of the whole claim. Supporting a second language
-took a phrase table in `speak.py` and one YAML file — surface forms, vocabulary,
-scenarios. Zero engine code was forked: the same extractor resolves "porshu
-bikel char te" the way it resolves "parso shaam char baje", and the agent
-replies "Aapnar naam ta bolben?". Nothing in the engine knows what a dentist is,
-and now nothing in it knows what Hindi is either. Onboarding a business is
-filling in a pack; supporting a new industry — or a new city — is writing one.
+The Kolkata pack was the proof of the whole claim, and the six packs that
+followed it are the same proof repeated. Supporting a language takes a
+phrase-table row in `speak.py`, the caller's words in `nlu.py` and one YAML
+file — surface forms, vocabulary, scenarios. Zero engine code was forked: the
+same extractor resolves "porshu bikel char te", "naalai kaalai pathu mani"
+and "udya sakali daha vajta" the way it resolves "kal subah das baje", and the
+agent replies in kind ("Aapnar naam ta bolben?", "Unga peru enna?"). Nothing in
+the engine knows what a dentist is, and nothing in it knows what Hindi is
+either. Onboarding a business is filling in a pack; supporting a new industry
+— or a new city — is writing one. The collisions a new language brings
+("sare" is Telugu for *ok* and Hindi for *half*; "nai" is Punjabi *no* and
+Hindi *new*) are decided one word at a time and pinned by tests.
 
 ---
 
