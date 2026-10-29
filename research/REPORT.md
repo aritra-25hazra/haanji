@@ -70,16 +70,16 @@ One pass through `CallSession.handle_utterance` is the whole hot path. The engin
 
 ### 3.2 Vertical packs
 
-A pack is one YAML file describing a kind of business: catalogue with durations and prices, staff, hours, persona, refusals and escalations, seed vocabulary (places, brands, phrases), a small knowledge base, and the scenarios the pack must pass before it ships. Five packs are included:
+A pack is one YAML file describing a kind of business: catalogue with durations and prices, staff, hours, persona, refusals and escalations, seed vocabulary (places, brands, phrases), a small knowledge base, and the scenarios the pack must pass before it ships. Six packs are included:
 
 | pack | language | services | staff | scenarios |
 |---|---|---|---|---|
-| dental_clinic | Hinglish | 6 | 3 | 8 |
-| salon_spa | Hinglish | 6 | 4 | 4 |
-| diagnostic_lab | Hinglish | 6 | 3 | 3 |
-| coaching_institute | Hinglish | 4 | 3 | 3 |
 | clinic_kolkata | Benglish | 4 | 2 | 3 |
 | clinic_pune | Marathinglish | 4 | 2 | 3 |
+| coaching_institute | Hinglish | 4 | 3 | 3 |
+| dental_clinic | Hinglish | 6 | 3 | 8 |
+| diagnostic_lab | Hinglish | 6 | 3 | 3 |
+| salon_spa | Hinglish | 6 | 4 | 4 |
 
 The Kolkata and Pune packs are the test of the claim that the engine knows nothing about any particular language: supporting Benglish, and then Marathinglish, took a phrase-table row and one YAML file each, with no engine code forked. (The Pune pack was added after the evaluation runs below, which cover the first five packs and 21 scenarios; the selftest covers all 24.)
 
@@ -534,7 +534,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 317 tests, about 6 s
+pytest -q                                   # 516 tests, about 6 s
 python -m haanji.cli selftest               # 24 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -582,18 +582,23 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (317 tests)
+## Appendix C. Test inventory (516 tests)
 
 | file | tests | what it guards |
 |---|---|---|
+| test_adversarial.py | 89 | prompt injection against the model adapter still meets the read-back gate; the guardrail corpus (research/benchmark/guardrail_corpus.yaml) in every pack; random Latin, Devanagari and digit text never crashes, books or silences the agent |
+| test_numeric_repair.py | 49 | the closed-vocabulary date/time/number pass: what it restores, what it must never turn into a different number, the benchmark's date_time score |
 | test_pipeline.py | 34 | the turn controller, barge-in, confirmation flow, receipts per call, speculation on/off identity, a Devanagari turn |
 | test_web.py | 30 | the demo server, design tokens, relative URLs, no emoji (every page, including the research pages) |
 | test_packs.py | 29 | every pack validates and every scenario reaches its outcome |
 | test_bhasha.py | 28 | the two-condition rule, name protection, harmful-correction detection, the pilot's guards, the merged-token rule and its ordering |
+| test_phase_g.py | 28 | the real-phrasing failures of §7.1 and the identity gate on cancelling or moving a booking |
 | test_phonetics.py | 24 | each key rule, the known b/p collision |
 | test_backend_guardrails.py | 24 | availability, bookings, guardrail subject/qualifier pairs |
 | test_pramaan.py | 19 | chain, signatures, refusal of unconfirmed writes, verifier, daily anchor |
+| test_stt_engines.py | 18 | the five recogniser adapters against the vendors' documented response shapes; a missing key is named; stt_compare.json never carries a number for an engine that did not run |
 | test_speculation.py | 14 | purity, argument identity, freshness, invalidation, budget |
+| test_phase_g2.py | 11 | reminders, deposits, the waitlist, the console's calendar and settings, backups, the audio hash in a receipt |
 | test_claude_adapter.py | 10 | the hosted-model adapter and its confirmation gate |
 | test_whatsapp_webhook.py | 9 | Meta signature, dedup, handshake |
 | test_auth.py | 9 | one-time codes over WhatsApp, signed scoped tokens, roles, per-pack scope, lockout |
@@ -610,6 +615,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_live.py | 4 | the event bus and the server-sent feed |
 | test_hardening.py | 4 | security headers, per-client rate limiting of writes, the signed webhook exempt |
 | test_calibration.py | 4 | ROC, Youden's J, loading thresholds per recogniser |
+| test_readme_sync.py | 4 | the counts in this report and the README match the repository |
 | test_takeover.py | 3 | human takeover and hand-back; WhatsApp waits for the person |
 | test_stats.py | 3 | McNemar and the paired t-interval |
 | test_ops.py | 3 | Prometheus text, spans and the ops view, the refused-write counter |
