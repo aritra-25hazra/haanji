@@ -1,6 +1,6 @@
 [project]
 name = "haanji-engine"
-version = "1.0.0"
+version = "1.1.0"
 description = "Real-time voice-agent engine for Indian languages: Bhasha Bridge, Speculative Turn Execution and the Pramaan Ledger"
 readme = "README.md"
 requires-python = ">=3.11"

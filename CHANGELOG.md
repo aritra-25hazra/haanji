@@ -2,7 +2,7 @@
 
 All notable changes to HaanJi. Dates are when the work reached `main`.
 
-## 1.1.0 — unreleased (phase G, from the 2026-10-29 review)
+## 1.1.0 — 2026-10-29 (phase G, from the review of the same day)
 
 A whole-project review found the engine understanding scripted callers and
 mishearing real ones, and a set of security holes in front of a real shop.
