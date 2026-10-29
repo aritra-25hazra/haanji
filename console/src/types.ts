@@ -1,4 +1,4 @@
-/** The engine's JSON, exactly as /engine/api/* returns it. */
+/** The engine's JSON, exactly as /engine/api/* returns it (docs/console-api.md). */
 
 export interface Status {
   name: string;
@@ -9,14 +9,16 @@ export interface Status {
   public_url?: string;
   whatsapp?: { configured: boolean; number: string | null };
   digest?: { owner_configured: boolean; hour_ist: number };
-  auth?: { enabled: boolean; dev: boolean };
+  auth?: { enabled: boolean };
   google?: { configured: boolean; connected: string[] };
   phone?: { configured: boolean; number: string | null };
 }
 
+export type Role = "owner" | "staff";
+
 export interface User {
   phone: string;
-  role: "owner" | "staff" | string;
+  role: Role | string;
   packs: string[];
   name: string;
 }
@@ -59,8 +61,14 @@ export interface Insights {
   insights: string[];
 }
 
+/** How a call ended. REFUSED (1.1): the agent declined and the caller went no further. */
 export type Outcome =
-  | "BOOKED" | "FAQ_ANSWERED" | "LEAD_CAPTURED" | "HANDED_OFF" | "ABANDONED" | "IN_PROGRESS";
+  | "BOOKED" | "RESCHEDULED" | "FAQ_ANSWERED" | "LEAD_CAPTURED" | "HANDED_OFF"
+  | "REFUSED" | "ABANDONED" | "IN_PROGRESS";
+
+export const OUTCOMES: Outcome[] = [
+  "BOOKED", "RESCHEDULED", "FAQ_ANSWERED", "LEAD_CAPTURED", "HANDED_OFF", "REFUSED", "ABANDONED", "IN_PROGRESS",
+];
 
 /** One row of the engine's `calls` table. */
 export interface CallRow {
@@ -241,4 +249,77 @@ export interface LiveSession {
   turns: number;
   last_caller: string;
   idle_s: number;
+}
+
+// ── phase G: the receptionist's desk ────────────────────────────────────────
+
+export type BookingStatus = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "COMPLETED";
+/** The `status=` filter: one status, or everything. */
+export type BookingFilter = BookingStatus | "ALL";
+
+/** One row of GET /api/bookings. Staff see `phone` masked ("…3210"). */
+export interface Booking {
+  booking_id: string;
+  service: string;
+  staff: string;
+  date: string;              // YYYY-MM-DD
+  time: string;              // HH:MM
+  duration_min: number;
+  customer_name: string;
+  phone: string;
+  status: BookingStatus;
+  receipt_code: string;
+  created_at: string;
+  paid: boolean;
+  deposit_inr: number;
+  payment_link: string | null;
+  reminder_sent_at: string | null;
+}
+
+/** One row per number, GET /api/customers. */
+export interface Customer {
+  phone: string;
+  name: string;
+  last_service: string | null;
+  last_visit: string | null;
+  visits: number;
+  bookings: number;
+  no_shows: number;
+}
+
+/** GET/PUT /api/settings — the pack's knobs, defaults filled in. */
+export interface Settings {
+  reminders_on: boolean;
+  reminder_hour_ist: number;
+  reminder_day_before: boolean;
+  deposit_inr: number;
+  waitlist_on: boolean;
+  digest_hour_ist: number;
+  language_script: "latin" | "devanagari" | string;
+}
+
+export type WaitlistStatus = "WAITING" | "OFFERED" | "BOOKED" | "EXPIRED";
+
+export interface WaitlistEntry {
+  entry_id: string;
+  phone: string;
+  name: string;
+  service: string;
+  date: string;
+  period: string;
+  created_at: string;
+  offered_at: string | null;
+  status: WaitlistStatus;
+}
+
+export type PaymentStatus = "CREATED" | "PAID" | "FAILED" | "EXPIRED";
+
+export interface Payment {
+  payment_id: string;
+  booking_id: string;
+  amount_inr: number;
+  status: PaymentStatus;
+  link: string;
+  created_at: string;
+  paid_at: string | null;
 }

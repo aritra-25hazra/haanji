@@ -35,3 +35,6 @@ research/paper-latex/*.pdf
 research/paper-latex/*.log
 research/paper-latex/*.aux
 research/paper-latex/*.xdv
+
+# TypeScript incremental build state
+*.tsbuildinfo

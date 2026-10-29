@@ -1,9 +1,10 @@
 /**
- * What the console shows when the engine cannot be reached: the README's demo
- * call and the benchmark's numbers, in the engine's own shapes. Every page
- * labels it as sample data.
+ * What the public demo shows when the engine cannot be reached and nobody is
+ * signed in: the README's demo call and the benchmark's numbers, in the
+ * engine's own shapes. Every page labels it as sample data, and the console
+ * never substitutes it for a signed-in owner (see state.tsx `mode`).
  */
-import type { CallRow, Export, Insights, Lexicon, PackSummary, Status, Turn } from "./types";
+import type { Booking, CallRow, Customer, Export, Insights, Lexicon, PackSummary, Payment, Status, Turn, WaitlistEntry } from "./types";
 
 export const SAMPLE_STATUS: Status = {
   name: "HaanJi demo server", version: "0.4.0", default_pack: "dental_clinic",
@@ -41,6 +42,13 @@ const CALLS: CallRow[] = [
   { call_id: "sample-003", channel: "PHONE", phone: "99XXXXXX33", started_at: "2026-09-07T10:33:47",
     ended_at: null, outcome: "LEAD_CAPTURED", corrections: 2, spec_started: 1, spec_hits: 0,
     latency_p50: 180, turns_json: "[]", receipts_json: "[]" },
+  { call_id: "sample-006", channel: "PHONE", phone: "97XXXXXX41", started_at: "2026-09-07T10:20:31",
+    ended_at: "2026-09-07T10:21:02", outcome: "REFUSED", corrections: 0, spec_started: 0, spec_hits: 0,
+    latency_p50: 0.7,
+    turns_json: JSON.stringify([{ heard: "daant mein dard hai koi dawai bata do", corrected: "daant mein dard hai koi dawai bata do",
+      said: "Dawai main nahi bata sakti — doctor dekh ke batayenge. Aaj shaam ka time dekhun?", tools: [], speculation_hits: [],
+      guard: "no_medical_advice", latency_ms: 0.7, interrupted: false, corrections: [] }]),
+    receipts_json: "[]" },
   { call_id: "sample-004", channel: "PHONE", phone: null, started_at: "2026-09-07T10:12:09",
     ended_at: null, outcome: "HANDED_OFF", corrections: 0, spec_started: 0, spec_hits: 0,
     latency_p50: 0.5, turns_json: "[]", receipts_json: "[]" },
@@ -49,6 +57,44 @@ const CALLS: CallRow[] = [
     latency_p50: 137, turns_json: "[]", receipts_json: JSON.stringify(["1F3A-90C2"]) },
 ];
 
+/** A week of demo bookings laid over whatever dates are on screen, so the
+ *  calendar always has something to show. Deterministic per weekday. */
+const DAY_PLAN: Record<number, Omit<Booking, "booking_id" | "date" | "created_at" | "receipt_code">[]> = {
+  1: [
+    { service: "root canal", staff: "Dr Sheikh", time: "09:30", duration_min: 60, customer_name: "Vijay Sharma", phone: "9876543210", status: "CONFIRMED", paid: false, deposit_inr: 500, payment_link: "/pay/sample-1", reminder_sent_at: null },
+    { service: "cleaning", staff: "Dr Mehta", time: "11:00", duration_min: 30, customer_name: "Pooja Verma", phone: "9898989878", status: "CONFIRMED", paid: true, deposit_inr: 300, payment_link: null, reminder_sent_at: "2026-10-27T18:00:00" },
+  ],
+  2: [
+    { service: "braces consult", staff: "Dr Mehta", time: "16:00", duration_min: 30, customer_name: "Arjun Nair", phone: "9812345602", status: "CONFIRMED", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: null },
+  ],
+  3: [
+    { service: "cleaning", staff: "Dr Sheikh", time: "10:30", duration_min: 30, customer_name: "Rekha Jain", phone: "9933221133", status: "NO_SHOW", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: "2026-10-28T18:00:00" },
+    { service: "root canal", staff: "Dr Sheikh", time: "12:00", duration_min: 60, customer_name: "Imran Khan", phone: "9700011141", status: "CONFIRMED", paid: true, deposit_inr: 500, payment_link: null, reminder_sent_at: null },
+    { service: "filling", staff: "Dr Mehta", time: "17:30", duration_min: 30, customer_name: "Sana Sheikh", phone: "9811112222", status: "CANCELLED", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: null },
+  ],
+  4: [
+    { service: "filling", staff: "Dr Mehta", time: "11:30", duration_min: 30, customer_name: "Meera Iyer", phone: "9822334455", status: "COMPLETED", paid: true, deposit_inr: 300, payment_link: null, reminder_sent_at: "2026-10-28T18:00:00" },
+  ],
+  5: [
+    { service: "cleaning", staff: "Dr Sheikh", time: "09:00", duration_min: 30, customer_name: "Vijay Sharma", phone: "9876543210", status: "CONFIRMED", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: null },
+    { service: "braces consult", staff: "Dr Mehta", time: "15:00", duration_min: 30, customer_name: "Kabir Das", phone: "9845612378", status: "CONFIRMED", paid: false, deposit_inr: 500, payment_link: "/pay/sample-2", reminder_sent_at: null },
+  ],
+  6: [
+    { service: "root canal", staff: "Dr Sheikh", time: "10:00", duration_min: 60, customer_name: "Pooja Verma", phone: "9898989878", status: "CONFIRMED", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: null },
+  ],
+};
+
+function eachDay(from: string, to: string): string[] {
+  const out: string[] = [];
+  const d = new Date(`${from}T00:00:00`);
+  const end = new Date(`${to}T00:00:00`);
+  for (let i = 0; d <= end && i < 62; i++) {
+    out.push(d.toISOString().slice(0, 10));
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+
 export const sample = {
   status: SAMPLE_STATUS,
 
@@ -56,7 +102,7 @@ export const sample = {
     return {
       tenant_id: "dental_clinic", generated_at: "2026-09-07T19:00:00",
       calls_total: 63, calls_today: 63,
-      outcomes: { BOOKED: 28, FAQ_ANSWERED: 19, LEAD_CAPTURED: 7, HANDED_OFF: 6, ABANDONED: 3 },
+      outcomes: { BOOKED: 28, FAQ_ANSWERED: 19, LEAD_CAPTURED: 7, HANDED_OFF: 4, REFUSED: 2, ABANDONED: 3 },
       by_hour: [
         { hour: "09", calls: 4, booked: 2 }, { hour: "10", calls: 9, booked: 5 },
         { hour: "11", calls: 11, booked: 6 }, { hour: "12", calls: 8, booked: 3 },
@@ -73,6 +119,7 @@ export const sample = {
         "Peak hour is 11:00 — 11 calls, 6 of them booked.",
         "6 of 9 missed calls were recovered on WhatsApp — ₹8,400 that would have been lost.",
         "Bhasha Bridge repaired 41 words today; the most common was 'rut kanal' → 'root canal'.",
+        "2 callers asked for medicine advice; the agent declined and offered a slot instead.",
       ],
     };
   },
@@ -115,6 +162,46 @@ export const sample = {
       { pack_id: "diagnostic_lab", display_name: "Diagnostic lab", version: 2, language: "hinglish", services: 5, staff: 2, scenarios: 3, issues: [] },
       { pack_id: "coaching_institute", display_name: "Coaching institute", version: 2, language: "hinglish", services: 4, staff: 3, scenarios: 4, issues: [] },
       { pack_id: "clinic_kolkata", display_name: "Dental clinic (Kolkata, Benglish)", version: 1, language: "benglish", services: 4, staff: 2, scenarios: 3, issues: [] },
+    ];
+  },
+
+  bookings(from: string, to: string): Booking[] {
+    const out: Booking[] = [];
+    for (const date of eachDay(from, to)) {
+      const dow = new Date(`${date}T00:00:00`).getDay();
+      (DAY_PLAN[dow] ?? []).forEach((b, i) => {
+        const n = (Number(date.replace(/-/g, "")) * 7 + i * 131) % 9000 + 1000;
+        out.push({ ...b, booking_id: `sample-${date}-${i}`, date, created_at: `${date}T08:00:00`, receipt_code: `${n}-${(n * 3) % 9000 + 1000}` });
+      });
+    }
+    return out;
+  },
+
+  customers(query = ""): Customer[] {
+    const all: Customer[] = [
+      { phone: "9876543210", name: "Vijay Sharma", last_service: "root canal", last_visit: "2026-10-27", visits: 4, bookings: 5, no_shows: 0 },
+      { phone: "9898989878", name: "Pooja Verma", last_service: "cleaning", last_visit: "2026-10-20", visits: 6, bookings: 6, no_shows: 0 },
+      { phone: "9933221133", name: "Rekha Jain", last_service: "cleaning", last_visit: "2026-08-02", visits: 1, bookings: 3, no_shows: 2 },
+      { phone: "9812345602", name: "Arjun Nair", last_service: "braces consult", last_visit: null, visits: 0, bookings: 1, no_shows: 0 },
+      { phone: "9700011141", name: "Imran Khan", last_service: "root canal", last_visit: "2026-09-14", visits: 2, bookings: 2, no_shows: 0 },
+      { phone: "9822334455", name: "Meera Iyer", last_service: "filling", last_visit: "2026-10-29", visits: 3, bookings: 3, no_shows: 0 },
+    ];
+    const needle = query.trim().toLowerCase();
+    return needle ? all.filter((c) => c.name.toLowerCase().includes(needle) || c.phone.endsWith(needle)) : all;
+  },
+
+  waitlist(): WaitlistEntry[] {
+    return [
+      { entry_id: "wl-sample-1", phone: "9811112222", name: "Sana Sheikh", service: "filling", date: "2026-10-30", period: "evening", created_at: "2026-10-28T19:12:00", offered_at: null, status: "WAITING" },
+      { entry_id: "wl-sample-2", phone: "9845612378", name: "Kabir Das", service: "braces consult", date: "2026-10-31", period: "morning", created_at: "2026-10-28T20:40:00", offered_at: "2026-10-29T09:02:00", status: "OFFERED" },
+    ];
+  },
+
+  payments(): Payment[] {
+    return [
+      { payment_id: "pay-sample-1", booking_id: "sample-1", amount_inr: 500, status: "CREATED", link: "/pay/sample-1", created_at: "2026-10-29T10:05:00", paid_at: null },
+      { payment_id: "pay-sample-2", booking_id: "sample-2", amount_inr: 500, status: "PAID", link: "/pay/sample-2", created_at: "2026-10-28T16:40:00", paid_at: "2026-10-28T16:43:12" },
+      { payment_id: "pay-sample-3", booking_id: "sample-3", amount_inr: 300, status: "EXPIRED", link: "/pay/sample-3", created_at: "2026-10-26T11:00:00", paid_at: null },
     ];
   },
 };
