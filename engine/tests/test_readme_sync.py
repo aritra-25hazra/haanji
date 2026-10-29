@@ -76,7 +76,7 @@ def test_the_report_table_headers_and_inventory_follow_the_facts():
 
 def test_the_facts_come_from_the_repository():
     f = rs.facts()
-    assert f.pack_count == 6 and f.scenarios >= 24 and f.languages == 3
+    assert f.pack_count >= 6 and f.scenarios >= 24 and f.languages >= 3      # the repository, not a constant
     assert f.tests > 400 and sum(f.tests_per_file.values()) == f.tests
     assert f.tests_per_file["test_readme_sync.py"] >= 4
 

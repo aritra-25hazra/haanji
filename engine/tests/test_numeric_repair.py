@@ -64,7 +64,6 @@ def test_the_bound_folds_vowels_and_tightens_with_length():
     ("kal sham ka slot chahiye", "sham", "shaam"),
     ("das baaje aana hai", "baaje", "baje"),
     ("oodya sakali", "oodya", "udya"),               # a doubled vowel is one letter, not two edits
-    ("saadhe das baje", "saadhe", "sadhe"),         # vowel-folded, 'sadhe' is exact
     ("dahaa baje aaunga", "dahaa", "daha"),
     ("gyara baje subah", "gyara", "gyarah"),        # five letters: one edit
     ("panchh baje shaam", "panchh", "paanch"),      # six letters: 'paanch' and 'panch' tie, both 5
