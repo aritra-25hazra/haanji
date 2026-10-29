@@ -24,7 +24,7 @@ jobs:
           - language: javascript-typescript
             build-mode: none
           - language: java-kotlin
-            build-mode: autobuild
+            build-mode: manual          # the Java code lives under experimental/, where autobuild does not look
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -34,6 +34,10 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+      - name: build the experimental control plane for CodeQL
+        if: matrix.language == 'java-kotlin'
+        working-directory: experimental/core-api
+        run: mvn -B -q -DskipTests compile
       - uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
