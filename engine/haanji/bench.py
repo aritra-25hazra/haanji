@@ -22,24 +22,29 @@ Tamper detection
 Unconfirmed writes
     Number of write actions the ledger allowed without a confirmation proof.
     The design target is zero, and the harness tries to make it non-zero.
+Date/time error rate
+    Share of the scenario turns that carry a date, time or number word whose
+    such word was corrupted by the recogniser and not restored by the
+    closed-vocabulary pass (haanji/bhasha/numeric.py). Entity error rate is
+    blind to these words by construction, and §8 of the report says so; this
+    is the companion number.
 """
 from __future__ import annotations
 import argparse
 import asyncio
 import copy
-import dataclasses
 import datetime as dt
 import json
 import os
-import sqlite3
 import random
+import sqlite3
 import statistics
-import zlib
 import time
+import zlib
 from typing import Any
 
 from . import nlu
-from .backend.local import LocalBackend
+from .bhasha.numeric import temporal_lexicon, temporal_tokens
 from .corrupt import corrupt
 from .clock import CLOCK, set_speed
 from .config import (BhashaConfig, EngineConfig, LedgerConfig, SpeculationConfig)
@@ -88,6 +93,27 @@ def score_transcripts(report: CallReport, scenario: Scenario, index: dict[str, s
     return gold_total, err_total
 
 
+def classify_correction(c, truth: str, gold: set[str], temporal_gold: set[str]) -> str:
+    """beneficial / neutral / harmful for a catalogue repair; temporal_restored /
+    temporal_neutral for a repair into the closed date-time vocabulary.
+
+    Harm is judged the same way for both: the recogniser had heard the span
+    correctly and the layer overwrote it. Temporal repairs are kept out of the
+    entity tallies because they can never produce a catalogue entity and would
+    otherwise read as misses of a measurement they are not part of."""
+    if f" {c.from_token.lower()} " in f" {truth.lower()} ":
+        return "harmful"
+    if c.to_surface in gold:
+        return "beneficial"
+    if c.to_surface.lower() in temporal_lexicon().forms:
+        return "temporal_restored" if c.to_surface.lower() in temporal_gold else "temporal_neutral"
+    return "neutral"
+
+
+def fresh_tally() -> dict[str, int]:
+    return {"beneficial": 0, "neutral": 0, "harmful": 0, "temporal_restored": 0, "temporal_neutral": 0}
+
+
 def score_corrections(report: CallReport, index: dict[str, str]) -> dict[str, int]:
     """Was each repair an improvement, a no-op, or damage?
 
@@ -95,19 +121,32 @@ def score_corrections(report: CallReport, index: dict[str, str]) -> dict[str, in
     correctly and the layer overwrote it. That is the failure mode this
     design exists to avoid, so the harness counts it explicitly rather than
     reporting only the wins."""
-    tally = {"beneficial": 0, "neutral": 0, "harmful": 0}
+    tally = fresh_tally()
     for record in report.turns:
-        truth = f" {record.truth.lower()} "
         gold = nlu.find_entities(record.truth, index)
+        temporal_gold = temporal_tokens(record.truth)
         for c in record.corrections:
-            heard_was_right = f" {c.from_token.lower()} " in truth
-            if heard_was_right:
-                tally["harmful"] += 1
-            elif c.to_surface in gold:
-                tally["beneficial"] += 1
-            else:
-                tally["neutral"] += 1
+            tally[classify_correction(c, record.truth, gold, temporal_gold)] += 1
     return tally
+
+
+def score_date_time(report: CallReport, scenario: Scenario, use_corrected: bool) -> tuple[int, int, int]:
+    """Over the turns that carry a date, time or number word: how many had one
+    corrupted by the recogniser, and how many were still wrong after the
+    bridge. The pair is what the date_time_error_rate is made of."""
+    turns = corrupted = unrestored = 0
+    for record, utt in zip(report.turns, scenario.utterances):
+        gold = temporal_tokens(utt.truth)
+        if not gold:
+            continue
+        turns += 1
+        if gold <= temporal_tokens(record.heard):
+            continue
+        corrupted += 1
+        final = record.corrected if use_corrected else record.heard
+        if not gold <= temporal_tokens(final):
+            unrestored += 1
+    return turns, corrupted, unrestored
 
 
 def noisy(scenario: Scenario, rate: float, rng: random.Random) -> Scenario:
@@ -129,7 +168,8 @@ async def run_config(name: str, packs: list[Pack], reps: int,
     metrics = Metrics()
     gold_total = err_total = 0
     correct_outcomes = calls = 0
-    quality = {"beneficial": 0, "neutral": 0, "harmful": 0}
+    quality = fresh_tally()
+    dt_turns = dt_corrupted = dt_unrestored = 0
     latencies: list[float] = []
     tool_latencies: list[float] = []
     read_latencies: list[float] = []
@@ -159,6 +199,10 @@ async def run_config(name: str, packs: list[Pack], reps: int,
                 err_total += e
                 pack_gold += g
                 pack_err += e
+                t_dt, c_dt, u_dt = score_date_time(report, scenario, flags["bhasha"])
+                dt_turns += t_dt
+                dt_corrupted += c_dt
+                dt_unrestored += u_dt
                 ok = report.outcome.value == scenario.expect
                 correct_outcomes += ok
                 pack_ok += ok
@@ -192,12 +236,17 @@ async def run_config(name: str, packs: list[Pack], reps: int,
         "config": name,
         "noise": noise,
         "bhasha": flags["bhasha"],
-        "speculation": flags["speculation"],
+        "speculation_enabled": flags["speculation"],
         "calls": calls,
         "turns": len(latencies),
         "outcome_accuracy": round(correct_outcomes / calls, 4) if calls else 0.0,
         "entity_error_rate": round(err_total / gold_total, 4) if gold_total else 0.0,
         "entities_evaluated": gold_total,
+        "date_time": {
+            "turns": dt_turns, "corrupted": dt_corrupted, "unrestored": dt_unrestored,
+            "error_rate": round(dt_unrestored / dt_turns, 4) if dt_turns else 0.0,
+        },
+        "date_time_error_rate": round(dt_unrestored / dt_turns, 4) if dt_turns else 0.0,
         "latency_ms": {
             "mean": round(statistics.fmean(latencies), 1) if latencies else 0.0,
             "p50": round(percentile(latencies, 0.50), 1),
@@ -293,7 +342,7 @@ def transcript_experiment(packs: list[Pack], rates: list[float],
     results: dict[str, Any] = {}
     for rate in rates:
         gold_off = err_off = gold_on = err_on = 0
-        beneficial = neutral = harmful = 0
+        tally = fresh_tally()
         sentences = 0
         elapsed: list[float] = []
         wrong_off: list[bool] = []
@@ -321,15 +370,11 @@ def transcript_experiment(packs: list[Pack], rates: list[float],
                     if detail:
                         wrong_off.append(e > 0)
                         wrong_on.append(e2 > 0)
-                    truth_padded = f" {truth.lower()} "
                     gold_entities = nlu.find_entities(truth, index)
+                    temporal_gold = temporal_tokens(truth)
                     for c in corrected.corrections:
-                        if f" {c.from_token.lower()} " in truth_padded:
-                            harmful += 1
-                        elif c.to_surface in gold_entities:
-                            beneficial += 1
-                        else:
-                            neutral += 1
+                        tally[classify_correction(c, truth, gold_entities, temporal_gold)] += 1
+        n_entity = tally["beneficial"] + tally["neutral"] + tally["harmful"]
         results[f"{rate:.2f}"] = {
             "sentences": sentences,
             "entities": gold_off,
@@ -337,9 +382,11 @@ def transcript_experiment(packs: list[Pack], rates: list[float],
             "entity_error_rate_on": round(err_on / gold_on, 4) if gold_on else 0.0,
             "relative_reduction_pct": round(100 * (err_off - err_on) / err_off, 1)
                 if err_off else 0.0,
-            "corrections": {"beneficial": beneficial, "neutral": neutral, "harmful": harmful},
-            "precision": round(beneficial / (beneficial + neutral + harmful), 4)
-                if (beneficial + neutral + harmful) else 0.0,
+            "corrections": {"beneficial": tally["beneficial"], "neutral": tally["neutral"],
+                            "harmful": tally["harmful"]},
+            "temporal_corrections": {"restored": tally["temporal_restored"],
+                                     "neutral": tally["temporal_neutral"]},
+            "precision": round(tally["beneficial"] / n_entity, 4) if n_entity else 0.0,
             "median_correct_ms": round(statistics.median(elapsed), 3) if elapsed else 0.0,
         }
         if detail:
@@ -501,6 +548,10 @@ async def main_async(reps: int, speed: float, out: str) -> dict[str, Any]:
             "bhasha_median_ms": mid_tx["median_correct_ms"],
             "task_success_without_bhasha": mid_off["outcome_accuracy"],
             "task_success_with_bhasha": mid_full["outcome_accuracy"],
+            "date_time_turns": mid_full["date_time"]["turns"],
+            "date_time_turns_corrupted": mid_full["date_time"]["corrupted"],
+            "date_time_error_rate_without_bhasha": mid_off["date_time_error_rate"],
+            "date_time_error_rate_with_bhasha": mid_full["date_time_error_rate"],
             "harmful_corrections": mid_full["correction_quality"]["harmful"],
             "beneficial_corrections": mid_full["correction_quality"]["beneficial"],
             "neutral_corrections": mid_full["correction_quality"]["neutral"],
@@ -549,7 +600,7 @@ def print_report(p: dict[str, Any]) -> None:
               f"{r['speculation']['hit_rate']*100:>9.1f}%"
               f"{r['speculation']['wasted']:>8d}")
 
-    print(f"\nB. Transcript-level correction, independently generated noise")
+    print("\nB. Transcript-level correction, independently generated noise")
     print(f"   {'rate':>6s}{'sentences':>11s}{'entities':>10s}{'EER off':>10s}{'EER on':>9s}"
           f"{'reduction':>11s}{'precision':>11s}{'harmful':>9s}")
     for rate, r in p["transcripts"].items():
@@ -558,7 +609,7 @@ def print_report(p: dict[str, Any]) -> None:
               f"{r['relative_reduction_pct']:>10.1f}%{r['precision']*100:>10.1f}%"
               f"{r['corrections']['harmful']:>9d}")
 
-    print(f"\nC. End-to-end calls under the same noise")
+    print("\nC. End-to-end calls under the same noise")
     print(f"   {'rate':>6s}{'EER off':>10s}{'EER on':>9s}{'task off':>10s}"
           f"{'task on':>9s}{'good':>7s}{'neutral':>9s}{'harmful':>9s}")
     for rate, block in p["noise_sweep"].items():
@@ -569,8 +620,16 @@ def print_report(p: dict[str, Any]) -> None:
               f"{off['outcome_accuracy']*100:>9.1f}%{on['outcome_accuracy']*100:>8.1f}%"
               f"{q['beneficial']:>7d}{q['neutral']:>9d}{q['harmful']:>9d}")
 
+    print("\nC2. Date, time and number words in the same calls (turns that carry one)")
+    print(f"   {'rate':>6s}{'turns':>7s}{'corrupted':>11s}{'unrestored off':>16s}{'unrestored on':>15s}"
+          f"{'dt-error off':>14s}{'dt-error on':>13s}")
+    for rate, block in p["noise_sweep"].items():
+        on, off = block["full"]["date_time"], block["no_bhasha"]["date_time"]
+        print(f"   {rate:>6s}{on['turns']:>7d}{on['corrupted']:>11d}{off['unrestored']:>16d}"
+              f"{on['unrestored']:>15d}{off['error_rate']*100:>13.1f}%{on['error_rate']*100:>12.1f}%")
+
     led = p["ledger"]
-    print(f"\nD. Pramaan Ledger")
+    print("\nD. Pramaan Ledger")
     print(f"   single-field mutations detected : {led['mutations_detected']}/"
           f"{led['mutations_attempted']} ({led['detection_rate']*100:.1f}%)")
     print(f"   receipt deleted from the chain  : "
@@ -591,6 +650,10 @@ def print_report(p: dict[str, Any]) -> None:
     print(f"                  end to end, task success rises "
           f"{h['task_success_without_bhasha']*100:.1f}% -> "
           f"{h['task_success_with_bhasha']*100:.1f}%")
+    print(f"  Date/time words {h['date_time_turns']} turns carry one; corrupted and not restored "
+          f"{h['date_time_error_rate_without_bhasha']*100:.1f}% -> "
+          f"{h['date_time_error_rate_with_bhasha']*100:.1f}% "
+          f"({h['date_time_turns_corrupted']} corrupted)")
     print(f"  Speculation     read-turn p50 {h['read_turn_p50_without_speculation']:.0f} -> "
           f"{h['read_turn_p50_with_speculation']:.0f} ms "
           f"({h['read_turn_p50_reduction_pct']:.1f}% lower), p90 "

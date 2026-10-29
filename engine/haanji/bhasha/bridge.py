@@ -13,9 +13,11 @@ from __future__ import annotations
 import re
 import time
 
+from .. import nlu
 from ..config import BhashaConfig
-from ..models import Correction, CorrectedTranscript, Token, Transcript
+from ..models import Correction, CorrectedTranscript, Transcript
 from .lexicon import TYPE_PRIOR, LexEntry, TenantLexicon
+from .numeric import NUMERIC_WEIGHT, number_runs, temporal_lexicon
 from .phonetics import edit_distance, phonetic_key, phrase_key
 
 # Tokens that are never corrected: grammar words, the words of the booking
@@ -53,6 +55,7 @@ class BhashaBridge:
     def __init__(self, lexicon: TenantLexicon, config: BhashaConfig | None = None):
         self.lexicon = lexicon
         self.cfg = config or BhashaConfig()
+        self.temporal = temporal_lexicon()      # the closed date/time/number vocabulary
 
     # ------------------------------------------------------------------ biasing
     def hints(self) -> list[str]:
@@ -101,8 +104,48 @@ class BhashaBridge:
                     from_token=phrase, to_surface=best.surface,
                     asr_confidence=span_conf, entry_weight=best.weight, ngram=n))
 
+        if self.cfg.numeric_repair:
+            corrections += self._repair_temporal(words, confs, used, out)
+
         text = " ".join(w for w in out if w)
         return CorrectedTranscript(text, corrections, (time.perf_counter() - t0) * 1000)
+
+    # --------------------------------------------------------- dates and times
+    def _tenant_words(self) -> set[str]:
+        """Every word of every form the tenant registered. A tenant's own word
+        is never a number: "Pune" is a place, not "paune"."""
+        cache = getattr(self, "_tenant_word_cache", None)
+        if cache is None or cache[0] != len(self.lexicon):
+            table = {w.lower() for e in self.lexicon.entries for f in e.forms() for w in f.split()}
+            self._tenant_word_cache = (len(self.lexicon), table)
+            cache = self._tenant_word_cache
+        return cache[1]
+
+    def _repair_temporal(self, words: list[str], confs: list[float], used: list[bool],
+                         out: list[str]) -> list[Correction]:
+        """The closed-vocabulary pass (haanji/bhasha/numeric.py) over the tokens
+        the tenant pass left alone: the same two conditions, single tokens
+        only, plus the guards the module states."""
+        found: list[Correction] = []
+        inside_number = number_runs(words, self.temporal, self.cfg.max_edit)
+        for i, word in enumerate(words):
+            if used[i] or inside_number[i]:
+                continue
+            low = word.lower()
+            if not low.isalpha() or len(low) < MIN_SINGLE_LEN:
+                continue
+            if not self._correctable([word], confs[i], words, i):
+                continue
+            if low in nlu.YES_WORDS or low in nlu.NO_WORDS or low in self._tenant_words():
+                continue
+            entry = self.temporal.repair(low, self.cfg.max_edit)
+            if entry is None:
+                continue
+            out[i] = entry.surface
+            used[i] = True
+            found.append(Correction(from_token=word, to_surface=entry.surface,
+                                    asr_confidence=confs[i], entry_weight=NUMERIC_WEIGHT, ngram=1))
+        return found
 
     # ------------------------------------------------------------ merged tokens
     MIN_MERGED_LEN = 8
@@ -158,14 +201,16 @@ class BhashaBridge:
             low = word.lower()
             if (len(low) < self.MIN_MERGED_LEN or conf >= self.cfg.conf_high or not low.isalpha()
                     or self._known_word(low) is not None):
-                out_w.append(word); out_c.append(conf)
+                out_w.append(word)
+                out_c.append(conf)
                 continue
             # A token the lexicon can explain as a whole ("koolkarni" is two
             # edits from Kulkarni) is the n-gram pass's job; splitting it
             # first would hand it to the grammar words ("ko karni") instead.
             key = phonetic_key(low)
             if key and self._best_candidate(low, key, conf, 1) is not None:
-                out_w.append(word); out_c.append(conf)
+                out_w.append(word)
+                out_c.append(conf)
                 continue
             found = None
             for cut in range(3, len(low) - 2):
@@ -174,10 +219,12 @@ class BhashaBridge:
                     found = (left[0], right[0])
                     break
             if found is None:
-                out_w.append(word); out_c.append(conf)
+                out_w.append(word)
+                out_c.append(conf)
                 continue
             left, right = found
-            out_w += [left, right]; out_c += [conf, conf]
+            out_w += [left, right]
+            out_c += [conf, conf]
             splits.append(Correction(from_token=word, to_surface=f"{left} {right}",
                                      asr_confidence=conf, entry_weight=0.0, ngram=1))
         return out_w, out_c, splits
