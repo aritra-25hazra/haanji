@@ -37,8 +37,8 @@ const LINKS: NavItem[] = [
 const PILL: Record<Mode, { text: string; title: string }> = {
   checking: { text: "…", title: "engine check ho raha hai" },
   live: { text: "LIVE", title: "engine se live" },
-  demo: { text: "SAMPLE", title: "engine nahi mila — sample data" },
-  offline: { text: "OFFLINE", title: "engine nahi mil raha — signed in, isliye sample nahi" },
+  demo: { text: "SAMPLE", title: "engine nahi mila, sample data" },
+  offline: { text: "OFFLINE", title: "engine nahi mil raha; aap signed in ho, isliye sample nahi" },
 };
 
 export default function App() {

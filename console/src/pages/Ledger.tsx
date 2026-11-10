@@ -5,7 +5,7 @@ import { useApp } from "../state";
 import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register, Stamp, Tile, useData } from "../components/Common";
 import type { Export, Verdict } from "../types";
 
-const SUB = "Har booking ek signed, chained receipt — aur ye page usse aapke browser mein dobara jaanchta hai, server pe bharosa kiye bina.";
+const SUB = "Har booking ek signed, chained receipt hai. Ye page use aapke browser mein dobara jaanchta hai, server pe bharosa kiye bina.";
 
 export default function Ledger() {
   const { pack, mode } = useApp();
@@ -88,7 +88,7 @@ export default function Ledger() {
               <i className="next" />
             </div>
             <div className="mono muted" style={{ fontSize: 12, wordBreak: "break-all" }}>public key (Ed25519): {data.public_key || "—"}</div>
-            <p className="muted" style={{ fontSize: 13 }}>"Chhedo" wala button sirf aapke browser ki copy badalta hai — server pe kuch nahi jaata.</p>
+            <p className="muted" style={{ fontSize: 13 }}>"Chhedo" wala button sirf aapke browser ki copy badalta hai, server pe kuch nahi jaata.</p>
           </div>
         </Panel>
       )}

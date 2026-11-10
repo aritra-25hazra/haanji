@@ -20,7 +20,7 @@ export default function CallDetail() {
   if (!data) {
     return (
       <Page title="Call">
-        <Empty>Ye call nahi mili{error ? ` — ${error}` : ""}. <Link to="/calls">Calls pe wapas</Link></Empty>
+        <Empty>Ye call nahi mili{error ? `: ${error}` : ""}. <Link to="/calls">Calls pe wapas</Link></Empty>
       </Page>
     );
   }
@@ -40,7 +40,7 @@ export default function CallDetail() {
               foot={receipts.length ? "signed aur chained" : "kuch likha nahi gaya"} />
       </div>
 
-      <Panel title="Transcript" hint={dev.on ? "Devanagari approximate hai — naam aur English shabd galat ho sakte hain" : "jo suna gaya, aur agent ne kya padha aur bola"}>
+      <Panel title="Transcript" hint={dev.on ? "Devanagari approximate hai: naam aur English shabd galat ho sakte hain" : "jo suna gaya, aur agent ne kya padha aur bola"}>
         <div className="body transcript">
           {turns.length === 0 && <p className="muted">Is call ke turns record nahi hue.</p>}
           {turns.map((t, i) => (

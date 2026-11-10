@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { engine } from "../engine";
 import { useApp } from "../state";
-import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register, rowButton } from "../components/Common";
+import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register } from "../components/Common";
 import type { PackSummary } from "../types";
 
-const SUB = "Edit karo, validate karo, uske apne scenarios chalao — phir ship karo.";
+const SUB = "Upar chuna hua pack yahan khulta hai. Edit karo, validate karo, uske scenarios chalao, phir save karo.";
 
 export default function PackStudio() {
-  const { mode, isOwner: owner, readOnly } = useApp();
+  const { pack, mode, isOwner: owner, readOnly } = useApp();
   const isOwner = owner && !readOnly;
   const live = mode === "live";
   const [packs, setPacks] = useState<PackSummary[] | null>(null);
@@ -26,19 +26,23 @@ export default function PackStudio() {
     return () => { alive = false; };
   }, [live]);
 
-  async function openPack(id: string) {
-    try {
-      const r = await engine.packYaml(id);
-      setCurrent(id); setYamlText(r.yaml); setDirty(false); setMessages([]); setResults([]);
-    } catch (e) { setMessages([{ kind: "bad", text: (e as Error).message }]); }
-  }
+  // The header's pack is the one being edited: the Packs page already lists
+  // them all, so this page opens the chosen one instead of listing them again.
+  useEffect(() => {
+    if (!live) return;
+    let alive = true;
+    engine.packYaml(pack)
+      .then((r) => { if (alive) { setCurrent(pack); setYamlText(r.yaml); setDirty(false); setMessages([]); setResults([]); } })
+      .catch((e: Error) => { if (alive) setMessages([{ kind: "bad", text: e.message }]); });
+    return () => { alive = false; };
+  }, [live, pack]);
   const report = (kind: "ok" | "bad", text: string) => setMessages((m) => [...m, { kind, text }]);
 
   async function doValidate(): Promise<boolean> {
     setBusy("validating"); setMessages([]);
     try {
       const r = await engine.validate(yamlText);
-      if (r.ok) report("ok", "Pack valid hai — koi problem nahi mili."); else r.problems.forEach((p) => report("bad", p));
+      if (r.ok) report("ok", "Pack valid hai, koi problem nahi mili."); else r.problems.forEach((p) => report("bad", p));
       return r.ok;
     } catch (e) { report("bad", String((e as Error).message)); return false; }
     finally { setBusy(null); }
@@ -64,7 +68,7 @@ export default function PackStudio() {
     finally { setBusy(null); }
   }
 
-  if (!live) return <NotLive title="Pack Studio" sub={SUB} demo={<p>Pack Studio live engine ke bina kaam nahi karta — ye files ko sach mein badalta hai.</p>} />;
+  if (!live) return <NotLive title="Pack Studio" sub={SUB} demo={<p>Pack Studio live engine ke bina kaam nahi karta, kyunki ye files ko sach mein badalta hai.</p>} />;
   if (packs === null) {
     return (
       <Page title="Pack Studio" sub={SUB}>
@@ -73,25 +77,13 @@ export default function PackStudio() {
     );
   }
 
+  const summary = packs.find((p) => p.pack_id === current);
   return (
     <Page title="Pack Studio" sub={SUB}>
-      <Panel title="Installed packs" hint="kholne ke liye row chuno">
-        <Register head={<><th>Pack</th><th>Language</th><th className="right">Services</th><th className="right">Scenarios</th><th>Health</th></>}>
-          {packs.map((p) => (
-            <tr key={p.pack_id} {...rowButton(() => void openPack(p.pack_id), `${p.display_name} kholo`)}
-                style={p.pack_id === current ? { background: "rgba(245,185,30,.14)" } : undefined}>
-              <td><strong>{p.display_name}</strong> <span className="muted mono" style={{ fontSize: 12 }}>v{p.version}</span></td>
-              <td>{p.language}</td>
-              <td className="num right">{p.services}</td>
-              <td className="num right">{p.scenarios}</td>
-              <td>{p.issues.length === 0 ? <Chip kind="ok">valid</Chip> : <Chip kind="bad">{p.issues.length} issues</Chip>}</td>
-            </tr>
-          ))}
-        </Register>
-      </Panel>
-
+      {!current && (messages.length ? null : <Loading />)}
       {current && (
-        <Panel title={`${current}.yaml`} hint={dirty ? "unsaved changes" : "disk ke saath sync"}>
+        <Panel title={`${current}.yaml`} hint={`${summary ? `${summary.display_name} v${summary.version} · ` : ""}${dirty ? "unsaved changes" : "disk ke saath sync"}`}
+               actions={summary && (summary.issues.length === 0 ? <Chip kind="ok">valid</Chip> : <Chip kind="bad">{summary.issues.length} issues</Chip>)}>
           <div className="body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <textarea className="input" value={yamlText} onChange={(e) => { setYamlText(e.target.value); setDirty(true); }}
                       spellCheck={false} style={{ height: 440 }} aria-label="Pack YAML" readOnly={!isOwner} />
@@ -122,6 +114,7 @@ export default function PackStudio() {
           </div>
         </Panel>
       )}
+      {!current && messages.map((m, i) => <Empty key={i}>{m.text}</Empty>)}
     </Page>
   );
 }

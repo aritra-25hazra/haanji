@@ -11,7 +11,7 @@
       repair: { from_token: "rut kanal", to_surface: "root canal", asr_confidence: 0.32 } },
     { who: "agent", text: "Theek hai. Kis din ka time dekhun?", ms: 22 },
     { who: "caller", text: "kal subah ka time mil jayega",
-      chip: { kind: "spec", text: "check_availability — pehle se taiyaar" } },
+      chip: { kind: "spec", text: "check_availability · pehle se taiyaar" } },
     { who: "agent", text: "Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah saade 10 baje. Chalega?", ms: 31 },
     { who: "caller", text: "haan confirm kar do", chip: { kind: "tool", text: "book_appointment" } },
     { who: "agent", text: "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 2504-7863.",

@@ -53,14 +53,14 @@
 <main id="main" class="wrap">
   <span class="eyebrow">Pramaan ledger</span>
   <h1>Public <span class="dev">सबूत</span> verifier</h1>
-  <p class="sub">Har hash aur har Ed25519 signature <b>aapke browser mein</b> dobara compute hota hai — server pe bharosa kiye bina. Export load kijiye, verify kijiye, phir kisi field se chhedchhad karke dekhiye ki chain kaise tootti hai.</p>
+  <p class="sub">Har hash aur har Ed25519 signature <b>aapke browser mein</b> dobara compute hota hai, server pe bharosa kiye bina. Export load kijiye, verify kijiye, phir kisi field se chhedchhad karke dekhiye ki chain kaise tootti hai.</p>
 
   <div class="controls">
     <label class="field"><span>Pack</span><select id="pack" class="input"></select></label>
     <button type="button" class="btn btn-primary" id="load">Is server ka export load karo</button>
     <button type="button" class="btn btn-ghost" id="paste">Pasted JSON verify karo</button>
     <button type="button" class="btn btn-danger" id="tamper" disabled><i data-icon="x"></i>Ek field chhedo aur dobara check karo</button>
-    <span class="tamper-note">sirf aapke browser mein — server pe kuch nahi badalta</span>
+    <span class="tamper-note">sirf aapke browser mein, server pe kuch nahi badalta</span>
   </div>
   <textarea id="json" class="input" aria-label="Export JSON" placeholder='…ya kisi bhi HaanJi export ka JSON yahan paste kijiye ({"tenant_id": …, "public_key": …, "receipts": […]})'></textarea>
 
@@ -68,7 +68,7 @@
   <section id="mine" class="frame mine" hidden aria-label="Aapki receipt">
     <header><h2>Aapki receipt</h2><span class="mono" id="mine-code"></span></header>
     <dl id="mine-body"></dl>
-    <p class="muted">Yeh page aapke browser mein hash aur signature dobara banata hai. Agar upar <b>VALID</b> hai, to yeh booking waise hi hai jaise aapne confirm ki thi — isko koi badal nahi saka.</p>
+    <p class="muted">Yeh page aapke browser mein hash aur signature dobara banata hai. Agar upar <b>VALID</b> hai, to yeh booking waise hi hai jaise aapne confirm ki thi. Isme koi badlaav nahi hua.</p>
   </section>
   <div class="keyline" id="key"></div>
   <div class="chain chainstrip" id="chainstrip" aria-hidden="true"></div>
@@ -81,7 +81,7 @@
   </div>
 
   <div class="how">
-    <b>Ye page kya karta hai:</b> har receipt ka payload hash uske stored fields se dobara banata hai (canonical JSON — sorted keys, no whitespace), chain link (<i>prev_hash‖payload_hash</i>) recompute karta hai, aur signature ko tenant ki public key se check karta hai (Ed25519, TweetNaCl). Ek bhi character badla → us receipt ka hash badla → aage ki poori chain toot gayi. Kuch bhi is server pe wapas nahi jaata.
+    <b>Ye page kya karta hai:</b> har receipt ka payload hash uske stored fields se dobara banata hai (canonical JSON: sorted keys, no whitespace), chain link (<i>prev_hash‖payload_hash</i>) recompute karta hai, aur signature ko tenant ki public key se check karta hai (Ed25519, TweetNaCl). Ek bhi character badla → us receipt ka hash badla → aage ki poori chain toot gayi. Kuch bhi is server pe wapas nahi jaata.
   </div>
 </main>
 
@@ -135,7 +135,7 @@
         "<td>" + verdict + "</td><td>" + S.esc(r.reason || "hash + link + signature, teeno dobara bane") + "</td></tr>";
     }).join("");
     if (!rep.rows.length) {
-      $("rows").innerHTML = '<tr><td colspan="5" class="muted">Export mein koi receipt nahi — pehle <a href="talk">Talk</a> ya <a href="whatsapp">WhatsApp</a> pe ek booking kijiye.</td></tr>';
+      $("rows").innerHTML = '<tr><td colspan="5" class="muted">Export mein koi receipt nahi. Pehle <a href="talk">Talk</a> ya <a href="whatsapp">WhatsApp</a> pe ek booking kijiye.</td></tr>';
     }
   }
 

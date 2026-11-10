@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Keep the counts quoted in README.md and research/REPORT.md equal to what the
 repository actually contains: how many tests pytest collects, how many packs
-ship, how many scenarios they carry, how many languages they speak.
+ship, how many scenarios they carry, how many languages they speak. The landing
+page's three headline numbers and its version follow research/results.json and
+the engine's __version__ the same way.
 
     python research/harness/readme_sync.py            # rewrite both files
     python research/harness/readme_sync.py --check    # exit 1 when anything is stale
@@ -15,6 +17,7 @@ sentence it guarded has probably been rewritten by hand.
 """
 from __future__ import annotations
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -26,10 +29,13 @@ from typing import Callable
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "engine"))
 
+from haanji import __version__                       # noqa: E402
 from haanji.vertical import list_packs, load_pack     # noqa: E402
 
 README = ROOT / "README.md"
 REPORT = ROOT / "research" / "REPORT.md"
+LANDING = ROOT / "engine" / "haanji" / "web" / "index.html"
+RESULTS = ROOT / "research" / "results.json"
 WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight",
          9: "nine", 10: "ten", 11: "eleven", 12: "twelve"}
 LANGUAGE_LABEL = {"hinglish": "Hinglish", "benglish": "Benglish", "marathinglish": "Marathinglish"}
@@ -47,6 +53,9 @@ class Facts:
     packs: list[dict]                 # id, language, services, staff, scenarios
     scenarios: int
     languages: int
+    headline: dict = field(default_factory=dict)      # research/results.json, as the bench wrote it
+    ledger: dict = field(default_factory=dict)
+    version: str = ""
 
     @property
     def pack_count(self) -> int:
@@ -81,9 +90,11 @@ def facts() -> Facts:
         p = load_pack(pid)
         packs.append({"id": pid, "language": LANGUAGE_LABEL.get(p.language, p.language.capitalize()),
                       "services": len(p.services), "staff": len(p.staff), "scenarios": len(p.scenarios)})
+    results = json.loads(RESULTS.read_text(encoding="utf-8"))
     return Facts(tests=total, tests_per_file=per_file, packs=packs,
                  scenarios=sum(p["scenarios"] for p in packs),
-                 languages=len({p["language"] for p in packs}))
+                 languages=len({p["language"] for p in packs}),
+                 headline=results["headline"], ledger=results["ledger"], version=__version__)
 
 
 # ------------------------------------------------------------------ rules
@@ -159,6 +170,38 @@ REPORT_RULES: list[Rule] = [
 ]
 
 
+def pct(rate: float) -> str:
+    """0.3081 -> "30.8", 0.0096 -> "0.96": the README's own rounding."""
+    v = rate * 100
+    return f"{v:.1f}" if v >= 1 else f"{v:.2f}"
+
+
+def _bhasha(m: re.Match, f: Facts) -> str:
+    h = f.headline
+    return (f"{m.group(1)}{pct(h['entity_error_rate_without_bhasha'])}% → {pct(h['entity_error_rate_with_bhasha'])}%"
+            f"{m.group(2)}{h['noise_rate'] * 100:.0f}% noise pe · {h['harmful_corrections_transcript']} harmful")
+
+
+def _spec_bars(m: re.Match, f: Facts) -> str:
+    before, after = f.headline["read_turn_p50_without_speculation"], f.headline["read_turn_p50_with_speculation"]
+    return f"{m.group(1)}{before:.0f}{m.group(2)}{round(100 * after / before)}{m.group(3)}{after:.0f}{m.group(4)}"
+
+
+LANDING_RULES: list[Rule] = [
+    Rule("Bhasha pillar", _rx(r"(<b>)[\d.]+% → [\d.]+%(</b><span>galat sune shabd, )\d+% noise pe · \d+ harmful"), _bhasha),
+    Rule("speculation pillar", _rx(r"(<b>)\d+ → \d+( ms</b><span>read turns pe median · )[\d.]+(% hit rate)"),
+         lambda m, f: f"{m.group(1)}{f.headline['read_turn_p50_without_speculation']:.0f} → "
+                      f"{f.headline['read_turn_p50_with_speculation']:.0f}{m.group(2)}"
+                      f"{pct(f.headline['speculation_hit_rate'])}{m.group(3)}"),
+    Rule("speculation bars", _rx(r'(<span>pehle</span><i style="--w:100%"></i><em>)\d+(</em></div>\s*<div><span>ab</span><i style="--w:)'
+                                 r'\d+(%"></i><em>)\d+(</em>)'), _spec_bars),
+    Rule("ledger pillar", _rx(r"(<b>)\d+ / \d+(</b><span>chhedchhad pakdi · )\d+( bina-confirm writes)"),
+         lambda m, f: f"{m.group(1)}{f.ledger['mutations_detected']} / {f.ledger['mutations_attempted']}"
+                      f"{m.group(2)}{f.ledger['unconfirmed_writes_accepted']}{m.group(3)}"),
+    Rule("footer version", _rx(r"(HaanJi v)\d+\.\d+\.\d+"), lambda m, f: f"{m.group(1)}{f.version}"),
+]
+
+
 # ------------------------------------------------------------------ driver
 def rewrite(text: str, rules: list[Rule], f: Facts) -> str:
     for rule in rules:
@@ -178,7 +221,7 @@ def main(argv=None) -> int:
     f = facts()
     print(f"repository: {f.tests} tests, {f.pack_count} packs, {f.scenarios} scenarios, {f.languages} languages")
     stale: list[str] = []
-    for path, rules in ((README, README_RULES), (REPORT, REPORT_RULES)):
+    for path, rules in ((README, README_RULES), (REPORT, REPORT_RULES), (LANDING, LANDING_RULES)):
         before = path.read_text(encoding="utf-8")
         after = rewrite(before, rules, f)
         for rule in rules:

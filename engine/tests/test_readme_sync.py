@@ -1,4 +1,5 @@
 """The README and the report quote counts the repository can prove."""
+import dataclasses
 import sys
 from pathlib import Path
 
@@ -72,6 +73,32 @@ def test_the_report_table_headers_and_inventory_follow_the_facts():
     assert "## Appendix C. Test inventory (321 tests)" in out
     assert "| test_a.py | 300 | the turn controller |" in out
     assert rs.missing_inventory_rows(out, FAKE) == ["test_new.py"]
+
+
+LANDING_SNIPPET = """<p class="num"><b>31.6% → 1.1%</b><span>galat sune shabd, 30% noise pe · 0 harmful corrections</span></p>
+<p class="num"><b>239 → 137 ms</b><span>read turns pe median · 45.5% hit rate</span></p>
+<div class="widget bars" id="w-spec">
+  <div><span>pehle</span><i style="--w:100%"></i><em>239</em></div>
+  <div><span>ab</span><i style="--w:57%"></i><em>137</em></div>
+</div>
+<p class="num"><b>80 / 80</b><span>chhedchhad pakdi · 0 bina-confirm writes</span></p>
+<span class="mono muted">HaanJi v0.4.0</span>
+"""
+
+
+def test_the_landing_page_quotes_the_benchmark_and_the_version():
+    f = dataclasses.replace(FAKE, version="9.9.9", headline={
+        "entity_error_rate_without_bhasha": 0.3081, "entity_error_rate_with_bhasha": 0.0096, "noise_rate": 0.3,
+        "harmful_corrections_transcript": 0, "read_turn_p50_without_speculation": 270.5,
+        "read_turn_p50_with_speculation": 172.2, "speculation_hit_rate": 0.463},
+        ledger={"mutations_detected": 79, "mutations_attempted": 80, "unconfirmed_writes_accepted": 0})
+    rules = lambda: [rs.Rule(r.name, r.pattern, r.replacement) for r in rs.LANDING_RULES]    # noqa: E731
+    out = rs.rewrite(LANDING_SNIPPET, rules(), f)
+    assert "<b>30.8% → 0.96%</b><span>galat sune shabd, 30% noise pe · 0 harmful" in out
+    assert "<b>270 → 172 ms</b><span>read turns pe median · 46.3% hit rate" in out
+    assert '--w:100%"></i><em>270</em>' in out and '--w:64%"></i><em>172</em>' in out
+    assert "<b>79 / 80</b>" in out and "HaanJi v9.9.9" in out
+    assert rs.rewrite(out, rules(), f) == out
 
 
 def test_the_facts_come_from_the_repository():

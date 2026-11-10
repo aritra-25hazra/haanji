@@ -77,6 +77,14 @@ hai aur console buttons ko "demo: read-only" dikhata hai. Asli dukaan ke liye
 mein signing keys aur vault secret hote hain); host pe `haanji backup` hamesha
 chalta hai.
 
+Public demo par koi bhi console padh sakta hai, isliye customers ke number wahan
+poore nahi dikhte: calls, bookings, customers, waitlist aur payments mein sirf
+aakhri chaar digits (`…3210`) aate hain. Calendar feed ka secret URL aur kisi
+number ka poora privacy record (`GET /api/privacy/customer/{phone}`) wahan `403`
+dete hain, aur WhatsApp simulator doosron ki chats ki list nahi dikhata (har
+visitor apna number daal ke apna thread kholta hai). Naam abhi bhi dikhte hain,
+isliye asli WhatsApp test mein sirf first name do.
+
 ## Security knobs (asli dukaan ke liye)
 
 | key | kya |

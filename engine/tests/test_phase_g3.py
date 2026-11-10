@@ -50,6 +50,8 @@ def test_the_public_demo_refuses_the_console_s_destructive_operations(client, mo
         ("POST", f"/api/bookings/{b.booking_id}/cancel", None),
         ("POST", f"/api/bookings/{b.booking_id}/status", {"status": "NO_SHOW"}),
         ("DELETE", f"/api/privacy/customer/{phone}", None),
+        ("GET", f"/api/privacy/customer/{phone}", None),
+        ("GET", "/api/calendar/feed-url", None),
         ("GET", "/api/admin/backup", None),
         ("GET", "/api/auth/users", None),
         ("POST", "/api/digest/send", None),
@@ -60,6 +62,25 @@ def test_the_public_demo_refuses_the_console_s_destructive_operations(client, mo
     assert client.get("/api/status").json()["demo_readonly"] is True
     monkeypatch.setattr(server, "DEMO_READONLY", False)
     assert client.post(f"/api/bookings/{b.booking_id}/status", params={"pack": PACK}, json={"status": "NO_SHOW"}).status_code == 200
+
+
+def test_the_public_demo_shows_strangers_no_whole_phone_number(client, monkeypatch):
+    phone = "9844400044"
+    b = _book(client, phone)
+    monkeypatch.setattr(server, "DEMO_READONLY", True)
+    calls = client.get("/api/conversations", params={"pack": PACK}).json()["conversations"]
+    mine = [c for c in calls if (c["phone"] or "").endswith("0044")]
+    assert mine and all(c["phone"] == "…0044" for c in mine)
+    assert client.get(f"/api/conversations/{mine[0]['call_id']}", params={"pack": PACK}).json()["phone"] == "…0044"
+    booked = client.get("/api/bookings", params={"pack": PACK, "from": b.date, "to": b.date}).json()["bookings"]
+    assert phone not in str(booked) and any(x["phone"] == "…0044" for x in booked)
+    assert phone not in str(client.get("/api/customers", params={"pack": PACK}).json())
+    threads = client.get("/api/wa/threads", params={"pack": PACK}).json()
+    assert threads == {"threads": [], "hidden": True}
+    monkeypatch.setattr(server, "DEMO_READONLY", False)
+    assert any(c["phone"] == phone for c in client.get("/api/conversations", params={"pack": PACK}).json()["conversations"])
+    assert any(x["phone"] == phone for x in client.get("/api/bookings", params={"pack": PACK, "from": b.date, "to": b.date}).json()["bookings"])
+    assert any(t["phone"] == phone for t in client.get("/api/wa/threads", params={"pack": PACK}).json()["threads"])
 
 
 def test_backups_leave_a_public_server_only_with_sign_in(client, monkeypatch):

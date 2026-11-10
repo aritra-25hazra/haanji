@@ -26,7 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return (
       <div className="empty crash" role="alert">
         <h2>Kuch toot gaya</h2>
-        <p>Yeh page render nahi ho paya. Baaki console theek hai — doosra page kholo ya dobara try karo.</p>
+        <p>Yeh page render nahi ho paya. Baaki console theek hai. Doosra page kholo ya dobara try karo.</p>
         <p className="muted mono small">{error.message}</p>
         <div className="row">
           <button className="btn btn-primary" onClick={() => this.setState({ error: null })}>Dobara try karo</button>

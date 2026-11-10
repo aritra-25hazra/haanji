@@ -1,5 +1,4 @@
 import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { OWNER, SETTINGS, STAFF, STATUS_AUTH, mockEngine, renderApp } from "./mock";
 
@@ -24,9 +23,7 @@ describe("role gating", () => {
       "api/packs": () => PACKS,
       "api/packs/dental_clinic": () => ({ pack_id: "dental_clinic", yaml: "display_name: Dental clinic\n" }),
     });
-    const user = userEvent.setup();
     renderApp("/studio");
-    await user.click(await screen.findByRole("button", { name: "Dental clinic kholo" }));
     await screen.findByLabelText("Pack YAML");
     expect(screen.queryByRole("button", { name: /Validate & save/ })).toBeNull();
     expect(screen.getByText("save sirf owner")).toBeInTheDocument();

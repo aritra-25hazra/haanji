@@ -21,7 +21,7 @@
   .wa-live p { font-size: 12.5px; }
   .missed { padding: 12px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); display: flex; flex-direction: column; gap: 8px; }
   .missed .btn { width: 100%; }
-  .missed p { color: var(--haze); font-size: 13px; }
+  .missed p, #threads-note { color: var(--haze); font-size: 13px; }
   #threads { flex: 1; overflow-y: auto; }
   .thread { width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid rgba(255, 247, 230, .08); padding: 13px 16px; display: flex; flex-direction: column; gap: 2px; min-height: 56px; color: var(--chalk); }
   .thread:hover, .thread.active { background: rgba(255, 247, 230, .07); }
@@ -73,6 +73,7 @@
     <button type="button" id="missed" class="btn btn-primary"><i data-icon="phoneMissed"></i>Simulate a missed call</button>
     <p>Telephony webhook fire hota hai → HaanJi khud WhatsApp pe pehla message bhejta hai → reply se booking hui to missed call "recovered" ginti hai.</p>
   </div>
+  <p id="threads-note" hidden>Public demo: doosron ki chats yahan nahi dikhti. Apna number daal ke apna thread kholo.</p>
   <div id="threads" role="list"></div>
 </aside>
 <main>
@@ -84,7 +85,7 @@
   <div id="msgs" tabindex="-1">
     <div class="empty">
       <h2>WhatsApp channel demo</h2>
-      <p>Left mein number daal ke thread kholo — ya "Simulate a missed call" dabao aur dekho HaanJi khud pehla message bhejta hai. Same engine, same policy, same ledger — sirf channel alag.</p>
+      <p>Left mein number daal ke thread kholo, ya "Simulate a missed call" dabao aur dekho HaanJi khud pehla message bhejta hai. Engine, policy aur ledger wahi hain jo phone call ke; sirf channel alag hai.</p>
     </div>
   </div>
   <div class="compose">
@@ -115,7 +116,7 @@
       live.className = "wa-live";
       live.innerHTML = '<span class="chip chip-spec">' + S.icon("phone") + "Asli number juda hai" +
         (s.whatsapp.number ? " · " + S.esc(s.whatsapp.number) : "") + "</span>" +
-        '<p class="muted">Is number pe WhatsApp karo — wahi engine, wahi ledger. Neeche wala simulator alag chalta hai.</p>';
+        '<p class="muted">Is number pe asli WhatsApp karo; engine aur ledger wahi hain. Neeche wala simulator alag chalta hai.</p>';
       document.querySelector("aside .head").insertAdjacentElement("afterend", live);
     }
     loadThreads();
@@ -123,6 +124,7 @@
 
   async function loadThreads() {
     const t = await api("api/wa/threads?pack=" + encodeURIComponent($("pack").value));
+    $("threads-note").hidden = !t.hidden;
     $("threads").innerHTML = t.threads.map(function (x) {
       return '<button type="button" class="thread' + (x.phone === phone ? " active" : "") + '" data-p="' + S.esc(x.phone) + '" role="listitem">' +
         "<b>+91 " + S.esc(x.phone) + "</b><span>" + x.messages + " messages · " + S.esc(x.last_at.slice(11, 16)) + "</span></button>";

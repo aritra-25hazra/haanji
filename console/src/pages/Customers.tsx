@@ -30,7 +30,7 @@ export default function Customers() {
       <Panel title="Register" hint={data ? `${data.length} customers${debounced ? ` · "${debounced}"` : ""}` : ""}>
         {loading && !data ? <Loading />
           : !data ? <Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></Empty>
-          : data.length === 0 ? <Empty><p>{debounced ? `"${debounced}" se koi customer nahi mila.` : "Abhi koi customer nahi — pehli booking ke saath aayega."}</p></Empty>
+          : data.length === 0 ? <Empty><p>{debounced ? `"${debounced}" se koi customer nahi mila.` : "Abhi koi customer nahi. Pehli booking ke saath aayega."}</p></Empty>
           : (
             <Register head={<><th>Naam</th><th>Phone</th><th className="right">Visits</th><th>Last visit</th><th>Last service</th><th className="right">No-shows</th></>}>
               {data.map((c, i) => (
@@ -97,8 +97,8 @@ function CustomerDrawer({ customer: c, pack, live, isOwner, onClose, onErased }:
             <dt>Last service</dt><dd>{c.last_service ?? "—"}</dd>
           </dl>
           {!isOwner && <p className="muted small">Poora privacy record (calls, WhatsApp, receipts) sirf owner dekh sakta hai.</p>}
-          {isOwner && !live && <p className="muted small">Sample customer — privacy record live engine se aata hai.</p>}
-          {isOwner && live && !full && <p className="muted small">Masked number pe record nahi khulta — poore 10 digits chahiye.</p>}
+          {isOwner && !live && <p className="muted small">Sample customer hai. Privacy record live engine se aata hai.</p>}
+          {isOwner && live && !full && <p className="muted small">Masked number pe record nahi khulta, poore 10 digits chahiye.</p>}
           {canRecord && rec.loading && !r && <p className="muted small">Record aa raha hai…</p>}
           {rec.error && <p className="muted" role="status">{rec.error}</p>}
           {r && (

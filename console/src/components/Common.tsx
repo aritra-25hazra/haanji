@@ -48,13 +48,13 @@ export function Page({ title, sub, actions, children }:
       {mode === "demo" && (
         <div className="banner" role="status" data-testid="sample-banner">
           <Icon name="refresh" small />
-          Engine se connect nahi ho pa raha — sample data dikha raha hoon. Thodi der mein dobara try karo.
+          Engine se connect nahi ho pa raha, isliye sample data dikha raha hoon. Thodi der mein dobara try karo.
         </div>
       )}
       {mode === "offline" && (
         <div className="banner bad" role="alert" data-testid="offline-banner">
           <Icon name="x" small />
-          <span>Engine se connect nahi ho pa raha. Aap signed-in hain, isliye sample data nahi dikhaunga — asli numbers engine wapas aate hi.</span>
+          <span>Engine se connect nahi ho pa raha. Aap signed-in hain, isliye sample data nahi dikhaunga. Asli numbers engine wapas aate hi dikhenge.</span>
           <button className="btn btn-ghost btn-sm" onClick={() => void refresh()}>Dobara try karo</button>
         </div>
       )}
@@ -194,7 +194,7 @@ export function Repair({ c }: { c: { from_token: string; to_surface: string; asr
 
 export function Register({ head, children }: { head: ReactNode; children: ReactNode }) {
   return (
-    <div className="register-wrap" tabIndex={0} role="region" aria-label="Register — chhoti screen pe side mein scroll hota hai">
+    <div className="register-wrap" tabIndex={0} role="region" aria-label="Register, chhoti screen pe side mein scroll hota hai">
       <table className="register">
         <thead><tr>{head}</tr></thead>
         <tbody>{children}</tbody>

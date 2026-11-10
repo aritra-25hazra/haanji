@@ -47,7 +47,7 @@ export default function Packs() {
             <dt className="muted">Hours</dt><dd style={{ margin: 0 }}>din, khulne-band hone ka time, breaks</dd>
             <dt className="muted">Persona</dt><dd style={{ margin: 0 }}>greeting, tone, ek baar mein kitna bolna</dd>
             <dt className="muted">Guardrails</dt><dd style={{ margin: 0 }}>kya seedha mana karna, kya insaan ko dena</dd>
-            <dt className="muted">Vocabulary</dt><dd style={{ margin: 0 }}>sound-index ke seed shabd — ilaake, brands, aam phrases</dd>
+            <dt className="muted">Vocabulary</dt><dd style={{ margin: 0 }}>sound-index ke seed shabd: ilaake, brands, aam phrases</dd>
             <dt className="muted">Knowledge</dt><dd style={{ margin: 0 }}>jo sawaal log sach mein poochte hain, aur jawab</dd>
             <dt className="muted">Scenarios</dt><dd style={{ margin: 0 }}>wo calls jo pack ko ship hone se pehle paas karni hain</dd>
           </dl>

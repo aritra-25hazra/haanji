@@ -4,6 +4,22 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
 
 ## Unreleased
 
+### Public demo
+* **Strangers no longer see whole phone numbers.** With sign-in off on a public
+  server, calls, bookings, customers, the waitlist and payments show only the
+  last four digits; the calendar feed's secret URL and the per-number privacy
+  record answer 403; the WhatsApp simulator stops listing other people's
+  threads. Real WhatsApp numbers reach the demo once it is connected, which is
+  why this matters now.
+* **The landing page quoted the 1.0 benchmark** (31.6% → 1.1%, 239 → 137 ms,
+  45.5%) and called itself v0.4.0. It now shows `research/results.json`
+  (30.8% → 0.96%, 270 → 172 ms, 46.3%) and v1.1.0, and `readme_sync.py --check`
+  fails CI if either drifts again.
+* Console: "Calls kaise khatam huin" said "1 calls" with no calls; empty charts
+  and a "100% SLO" on zero turns are now a plain empty line. Pack Studio opens
+  the pack chosen in the header instead of repeating the Packs table. UI copy
+  lost its slogans, a joke, and most em dashes.
+
 ### Talk page
 * **A 3D counter** above the engine cards (three.js 0.170.0, vendored, loaded
   only when WebGL2 is available): the shop's own signboard hangs over a painted

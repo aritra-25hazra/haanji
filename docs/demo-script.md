@@ -27,3 +27,40 @@ hero on the landing page by hovering so it does not distract while you talk.
 
 Upload (YouTube unlisted or Loom), then put the link in the README under
 "See it live" — the placeholder line is already there.
+
+## Demo day: WhatsApp live (Fri 18 Dec 2026)
+
+### The day before (17 Dec)
+
+1. Add the examiner's number. In Meta, open the Haanji app → Use cases →
+   WhatsApp → Customize → API Setup → **To** → *Manage phone number list*, and
+   enter their WhatsApp number with +91. Meta sends them an OTP on WhatsApp, so
+   ask for the number a day early. The test number answers at most 5 numbers;
+   remove an old one if the list is full.
+2. Plan the token. The temporary token lasts 24 hours. Unless you have made a
+   permanent system-user token, generate a new one on the morning of the demo
+   (API Setup → *Generate access token*), paste it into Render → `haanji-engine`
+   → Environment → `HAANJI_WA_TOKEN`, and save. The engine restarts in 1–2
+   minutes.
+3. Leave `main` alone on demo day. Render redeploys on every push: the engine
+   goes down for 1–2 minutes and loses its bookings and receipts.
+4. The dental pack is closed on Sundays. On a Friday, "kal" means Saturday and
+   books fine; if the demo moves to a Saturday, ask for another day, because a
+   Sunday request ends as a lead instead of a booking.
+
+### Five minutes before
+
+5. Open https://haanji-engine.onrender.com/api/status to wake the free Render
+   instance, and wait for `"whatsapp": {"configured": true, …}`.
+6. From your phone, send `hi` to the test number. A greeting back means
+   WhatsApp works.
+7. Keep three Chrome tabs open: `/talk`, `/verify`, and the console on Calls
+   and Pramaan.
+
+### If something breaks
+
+8. WhatsApp stays silent (expired token, number not on the list, Meta outage):
+   switch to `/talk` and click the "Ye boliye" lines. The browser call runs on
+   the same engine, and its receipt opens on `/verify` like a WhatsApp one.
+9. Render is down: on the laptop, run `cd engine && .venv/bin/haanji serve` and
+   open http://localhost:8090/talk.

@@ -86,7 +86,7 @@ def compute(tenant_id: str, store: DemoStore, backend: LocalBackend) -> dict[str
                      f"they were asked for.")
     lines.append(f"Cost per answered call ≈ ₹{costs['ai_per_call_inr']:.2f}, against "
                  f"≈ ₹{costs['receptionist_per_call_inr']:.2f} per call for a part-time "
-                 f"receptionist — and this desk never misses lunch.")
+                 f"receptionist.")
 
     return {
         "tenant_id": tenant_id,

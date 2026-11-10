@@ -19,6 +19,8 @@ var/
 
 # research audio is reproducible from the scripts; only the pairs are kept
 research/collect/data/*/audio/
+# volunteers' voices and transcripts stay on the machine that recorded them
+research/collect/data/volunteers/
 research/REPORT.html
 engine/var-load/
 research/collect/data/gramvaani/GV_Dev_5h/

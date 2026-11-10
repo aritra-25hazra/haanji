@@ -44,6 +44,7 @@ class Deps:
     notify: Callable[..., Awaitable[Any]] | None = None       # (pack, phone, text, meta=…) -> delivered
     auth_enabled: Callable[[], bool] = lambda: False
     is_public: Callable[[], bool] = lambda: False
+    demo_readonly: Callable[[], bool] = lambda: False
 
 
 class StatusIn(BaseModel):
@@ -57,7 +58,9 @@ def _who(request: Request, deps: Deps) -> str:
 
 def _is_owner(request: Request, deps: Deps) -> bool:
     who = deps.user_of(request)
-    return who is None or who.role == "owner"        # auth off: the console is the owner's
+    if who is None:                                  # auth off: the console is the owner's,
+        return not deps.demo_readonly()              # unless strangers are reading a public demo
+    return who.role == "owner"
 
 
 def _seal(rt, action: str, args: dict[str, Any], who: str) -> str | None:
@@ -195,9 +198,13 @@ def build_router(deps: Deps) -> APIRouter:
 
     # ----------------------------------------------------------- waitlist
     @r.get("/api/waitlist")
-    async def waitlist(pack: str = deps.default_pack, status: str | None = None):
+    async def waitlist(request: Request, pack: str = deps.default_pack, status: str | None = None):
         rt = _pack(pack)
-        return {"pack": pack, "entries": rt.backend.waitlist(pack, status)}
+        entries = rt.backend.waitlist(pack, status)
+        if not _is_owner(request, deps):
+            for e in entries:
+                e["phone"] = deps.mask(e["phone"])
+        return {"pack": pack, "entries": entries}
 
     @r.delete("/api/waitlist/{entry_id}")
     async def waitlist_remove(entry_id: str, pack: str = deps.default_pack):
@@ -206,10 +213,14 @@ def build_router(deps: Deps) -> APIRouter:
 
     # ----------------------------------------------------------- payments
     @r.get("/api/payments")
-    async def payments(pack: str = deps.default_pack):
+    async def payments(request: Request, pack: str = deps.default_pack):
         _pack(pack)
+        rows = deps.payments.list(pack)
+        if not _is_owner(request, deps):
+            for row in rows:
+                row["phone"] = deps.mask(row["phone"])
         return {"pack": pack, "provider": "razorpay" if payments_configured() else "mock",
-                "payments": deps.payments.list(pack), "summary": deps.payments.summary(pack)}
+                "payments": rows, "summary": deps.payments.summary(pack)}
 
     async def _settle(payment_id: str, status: str, provider_id: str | None) -> dict[str, Any] | None:
         pay = deps.payments.get(payment_id)

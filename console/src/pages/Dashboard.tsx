@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { engine, subscribeLive, enablePush } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Chip, Icon, Loading, NotLive, OutcomeChip, Page, Panel, Repair, Tile, fmtInr, fmtTime, useData } from "../components/Common";
+import { Chip, Empty, Icon, Loading, NotLive, OutcomeChip, Page, Panel, Repair, Tile, fmtInr, fmtTime, useData } from "../components/Common";
 import { OUTCOMES, type LiveEvent, type LiveSession } from "../types";
 
 const SWATCH: Record<string, string> = {
@@ -33,12 +33,13 @@ export default function Dashboard() {
     );
   }
 
-  const total = Object.values(data.outcomes).reduce((a, b) => a + b, 0) || 1;
+  const total = Object.values(data.outcomes).reduce((a, b) => a + b, 0);
   const peak = data.by_hour.reduce((m, h) => (h.calls > m.calls ? h : m), { hour: "—", calls: 0, booked: 0 });
+  const quiet = <Empty><p>Abhi koi call nahi aayi. Pehli call ke baad yahan graph banega.</p></Empty>;
   const present = OUTCOMES.filter((o) => data.outcomes[o]);
 
   return (
-    <Page title="Aaj" sub={`${pack.replace(/_/g, " ")} — har call jo agent ne uthayi, aur usse kya nikla.`}
+    <Page title="Aaj" sub={`${pack.replace(/_/g, " ")}: har call jo agent ne uthayi, aur usse kya nikla.`}
           actions={<>
             {status?.whatsapp?.configured && <Chip kind="ok"><Icon name="phone" small />Asli WhatsApp juda hai{status.whatsapp.number ? ` · ${status.whatsapp.number}` : ""}</Chip>}
             <Link className="btn btn-ghost btn-sm" to="/calendar"><Icon name="calendar" small />Calendar</Link>
@@ -52,8 +53,8 @@ export default function Dashboard() {
         <Tile index={5} label="Speculation hits" value={Math.round(data.speculation.hit_rate * 100)} suffix="%" foot={`${data.speculation.hits} of ${data.speculation.started} tool calls`} />
       </div>
 
-      <Panel title="Din bhar ki calls" hint={`peak ${peak.hour}:00 — ${peak.calls} calls · booked marigold mein`}>
-        <div className="body" style={{ height: 260 }}>
+      <Panel title="Din bhar ki calls" hint={peak.calls ? `peak ${peak.hour}:00 · ${peak.calls} calls · booked marigold mein` : undefined}>
+        {peak.calls === 0 ? quiet : <div className="body" style={{ height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.by_hour} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
               <CartesianGrid stroke="rgba(27,59,140,.14)" vertical={false} />
@@ -65,11 +66,11 @@ export default function Dashboard() {
               <Bar dataKey="booked" name="booked" fill="#F5B91E" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </div>}
       </Panel>
 
-      <Panel title="Calls kaise khatam huin" hint={`${total} calls`}>
-        <div className="body">
+      <Panel title="Calls kaise khatam huin" hint={total ? `${total} ${total === 1 ? "call" : "calls"}` : undefined}>
+        {total === 0 ? quiet : <div className="body">
           <div className="obar" role="img" aria-label={present.map((o) => `${o.toLowerCase().replace(/_/g, " ")} ${data.outcomes[o]}`).join(", ")}>
             {present.map((o) => <i key={o} className={o} style={{ width: `${((data.outcomes[o] ?? 0) / total) * 100}%` }} />)}
           </div>
@@ -78,14 +79,14 @@ export default function Dashboard() {
               <span key={o}><i style={{ background: SWATCH[o] }} />{o.replace(/_/g, " ").toLowerCase()} · {data.outcomes[o]}</span>
             ))}
           </div>
-        </div>
+        </div>}
       </Panel>
 
       {live && <LivePanel key={pack} pack={pack} onEnded={reload} />}
 
       <Panel title="Engine ne kya dekha" hint={`${fmtTime(data.generated_at)} pe bana${live ? " · har 5 s refresh" : ""}`}>
         <div className="body">
-          {data.insights.length === 0 && <p className="muted">Abhi kuch kehne layak nahi — kuch calls hone do.</p>}
+          {data.insights.length === 0 && <p className="muted">Kuch calls hone do, phir yahan engine ki baatein dikhengi.</p>}
           {data.insights.map((line, i) => <p key={i} data-reveal style={{ "--i": i, margin: "6px 0" } as CSSProperties}>• {line}</p>)}
         </div>
       </Panel>
@@ -147,12 +148,12 @@ function LivePanel({ pack, onEnded }: { pack: string; onEnded: () => void }) {
         )}
         {live.map(([sid, t]) => <p key={sid} className="ev partial"><i className="dot" />bol rahe hain… <span className="muted">{t}</span></p>)}
         {events.length === 0 && live.length === 0 && (
-          <p className="muted">Ek call karke dekho — <a href="/engine/talk" target="_blank" rel="noopener noreferrer">/talk</a> ya WhatsApp simulator se. Har turn yahan turant aayega.</p>
+          <p className="muted">Ek call karke dekho: <a href="/engine/talk" target="_blank" rel="noopener noreferrer">/talk</a> ya WhatsApp simulator se. Har turn yahan turant aayega.</p>
         )}
         {events.map((e) => (
           <div key={e.seq} className={"ev " + e.kind.replace(".", "-")}>
             <span className="when mono">{fmtTime(e.at)}</span>
-            {e.kind === "session.started" && <span>Call shuru · {e.channel?.toLowerCase()}{e.phone ? ` · ${e.phone}` : ""} — <em>{e.greeting}</em></span>}
+            {e.kind === "session.started" && <span>Call shuru · {e.channel?.toLowerCase()}{e.phone ? ` · ${e.phone}` : ""} · <em>{e.greeting}</em></span>}
             {e.kind === "session.takeover" && <span><Chip kind="warn">insaan ne call li</Chip> {e.by}</span>}
             {e.kind === "session.handback" && <span><Chip kind="ok">wapas agent ke paas</Chip></span>}
             {e.kind === "turn" && e.awaiting_human && <span className="muted"> · aapka jawab chahiye</span>}

@@ -7,7 +7,7 @@ import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register, useData, ty
 const KIND: Record<string, ChipKind | undefined> = {
   SERVICE: "ok", STAFF: undefined, PLACE: "warn", BRAND: "muted", PHRASE: "muted",
 };
-const SUB = "Is business ke apne shabd, awaaz ke hisaab se indexed. Catalogue se khud banta hai — ye list koi type nahi karta.";
+const SUB = "Is business ke apne shabd, awaaz ke hisaab se indexed. Ye list catalogue se khud banti hai, koi type nahi karta.";
 
 export default function Lexicon() {
   const { pack, mode } = useApp();
@@ -63,7 +63,7 @@ export default function Lexicon() {
 
       <Panel title="Ek repair kab hota hai">
         <div className="body" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <p>Ek shabd tabhi badla jaata hai jab do alag-alag cheezein ek saath sach hon: recogniser us shabd pe <strong>sure nahi</strong> tha (confidence 0.85 se kam), <em>aur</em> uski sound key is list ki kisi entry se <strong>bilkul match</strong> karti hai, chhoti si spelling doori ke andar. Dono mein se koi ek akela galat corrections deta hai — aur jo layer achhe transcript ko bigaade, wo na hone se buri hai.</p>
+          <p>Ek shabd tabhi badla jaata hai jab do alag-alag cheezein ek saath sach hon: recogniser us shabd pe <strong>sure nahi</strong> tha (confidence 0.85 se kam), <em>aur</em> uski sound key is list ki kisi entry se <strong>bilkul match</strong> karti hai, chhoti si spelling doori ke andar. Dono mein se koi ek akela galat corrections deta hai, aur jo layer achhe transcript ko bigaade, wo na hone se buri hai.</p>
           <p className="muted">Caller ne abhi-abhi jo naam bataya, usse kabhi nahi chheda jaata, chahe wo kaisa bhi sune.</p>
         </div>
       </Panel>

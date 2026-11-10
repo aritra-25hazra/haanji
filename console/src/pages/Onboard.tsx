@@ -48,7 +48,7 @@ export default function Onboard() {
 
   async function build() {
     setBusy("draft"); setNotes([]); setResults([]); setSaved(false);
-    try { const d = await engine.draft(request()); setDraft(d); if (d.problems.length) d.problems.forEach((p) => note("bad", p)); else note("ok", `Pack "${d.pack_id}" taiyaar hai — abhi save nahi hua.`); }
+    try { const d = await engine.draft(request()); setDraft(d); if (d.problems.length) d.problems.forEach((p) => note("bad", p)); else note("ok", `Pack "${d.pack_id}" taiyaar hai, par abhi save nahi hua.`); }
     catch (e) { setDraft(null); note("bad", e instanceof Error ? e.message : String(e)); }
     finally { setBusy(null); }
   }
@@ -70,7 +70,7 @@ export default function Onboard() {
   const talkBase = status?.public_url || "/engine";
 
   if (mode !== "live") {
-    return <NotLive title="Nayi dukaan" sub="Paanch sawaal, ek pack." demo={<p>Yeh page live engine ke bina kaam nahi karta — yeh sach mein ek pack banata hai.</p>} />;
+    return <NotLive title="Nayi dukaan" sub="Paanch sawaal, ek pack." demo={<p>Yeh page live engine ke bina kaam nahi karta, kyunki yeh sach mein ek pack banata hai.</p>} />;
   }
 
   return (
@@ -141,12 +141,12 @@ export default function Onboard() {
                 </div>
               );
             })}
-            <label className="field"><span>Ilaaka / branch ke naam (comma) — recogniser inhe galat sunta hai, isliye poochte hain</span><input className="input" value={placesText} onChange={(e) => setPlacesText(e.target.value)} placeholder="Vijay Nagar, Bhawarkuan" /></label>
+            <label className="field"><span>Ilaaka / branch ke naam (comma se alag). Recogniser inhe galat sunta hai, isliye poochte hain</span><input className="input" value={placesText} onChange={(e) => setPlacesText(e.target.value)} placeholder="Vijay Nagar, Bhawarkuan" /></label>
           </div>
         </Panel>
       )}
       {step === 4 && (
-        <Panel title="5 · Taiyaar" hint={draft ? `pack ${draft.pack_id}${draft.exists ? " (pehle se hai — save karne se overwrite hoga)" : ""}` : "pehle pack banao"}
+        <Panel title="5 · Taiyaar" hint={draft ? `pack ${draft.pack_id}${draft.exists ? " (pehle se hai, save karne se overwrite hoga)" : ""}` : "pehle pack banao"}
                actions={<>
                  <button className="btn btn-primary btn-sm" onClick={build} disabled={busy !== null}>{busy === "draft" ? "Bana raha…" : "Pack banao"}</button>
                  {isOwner

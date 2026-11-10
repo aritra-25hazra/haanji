@@ -36,7 +36,7 @@ export default function Login() {
       <div className="login-card">
         <span className="eyebrow">Receptionist console</span>
         <h1>Sign in</h1>
-        <p className="muted">Jis WhatsApp number se aap owner ya staff hain, wahi number. Password nahi — ek baar ka code.</p>
+        <p className="muted">Jis WhatsApp number se aap owner ya staff hain, wahi number. Password nahi, ek baar ka code aata hai.</p>
         {stage === "phone" ? (
           <form className="form" onSubmit={(e) => { e.preventDefault(); void sendCode(); }}>
             <label className="field"><span>WhatsApp number</span><input className="input" inputMode="numeric" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" autoFocus /></label>

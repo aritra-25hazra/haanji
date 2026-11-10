@@ -27,7 +27,9 @@ export default function Ops() {
   return (
     <Page title="Ops" sub={`SLO: har turn ${slo.target_ms} ms ke andar · pichhli ${data.calls} calls, ${data.turns} turns · engine-side time`}
           actions={<>
-            <Chip kind={within >= 99 ? "ok" : within >= 95 ? "warn" : "bad"}>{within}% turns SLO ke andar</Chip>
+            {data.turns
+              ? <Chip kind={within >= 99 ? "ok" : within >= 95 ? "warn" : "bad"}>{within}% turns SLO ke andar</Chip>
+              : <Chip kind="muted">abhi koi turn nahi</Chip>}
             <a className="btn btn-ghost btn-sm" href="/engine/metrics" target="_blank" rel="noopener noreferrer">/metrics (Prometheus)</a>
           </>}>
       <div className="tiles">
@@ -39,8 +41,8 @@ export default function Ops() {
         <Tile index={5} label="Live sessions" value={data.live_sessions} foot={`up ${Math.round(data.uptime_s / 60)} min · ${data.providers.llm} llm`} />
       </div>
 
-      <Panel title="Turn latency ka batwara" hint="kitne turns kis bucket mein (ms)">
-        <div className="body" style={{ height: 220 }}>
+      <Panel title="Turn latency ka batwara" hint={data.turns ? "kitne turns kis bucket mein (ms)" : undefined}>
+        {data.turns === 0 ? <Empty><p>Abhi koi turn nahi hua. Pehli call ke baad yahan latency dikhegi.</p></Empty> : <div className="body" style={{ height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.histogram} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
               <CartesianGrid stroke="rgba(27,59,140,.14)" vertical={false} />
@@ -50,7 +52,7 @@ export default function Ops() {
               <Bar dataKey="turns" name="turns" fill="#1B3B8C" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </div>}
       </Panel>
 
       <Panel title="Time kahan jaata hai" hint="har span ka p50 / p90, saari turns pe">

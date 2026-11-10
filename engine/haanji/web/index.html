@@ -81,7 +81,7 @@
         <a class="btn btn-ghost" href="#pillars">Kaise kaam karta hai</a>
       </div>
     </div>
-    <div class="frame phone" id="hero-call" tabindex="0" aria-label="Ek asli call ka replay — hover ya focus karne pe rukta hai">
+    <div class="frame phone" id="hero-call" tabindex="0" aria-label="Ek sample call ka replay; hover ya focus karne pe rukta hai">
       <div class="phone-head"><span class="live"><i></i>LIVE CALL · SMILE CARE DENTAL</span><span class="mono timer">00:00</span></div>
       <div class="transcript" aria-live="polite"></div>
     </div>
@@ -89,27 +89,27 @@
 
   <section class="wall section" id="pillars">
     <div class="wrap">
-      <span class="eyebrow">Teen cheezein jo kahin aur nahi hain</span>
-      <h2>Har ek napi hui hai, likhi nahi.</h2>
+      <span class="eyebrow">Engine ke teen hisse</span>
+      <h2>Galat suna shabd, late jawab, aur baad ka jhagda.</h2>
       <div class="grid-3 pillars">
         <article class="pillar" data-reveal>
           <span class="badge">Bhasha Bridge</span>
-          <p>Aapke apne catalogue se bana sound-index. Recogniser ko bhi batata hai, aur uski galti bhi sudhaarta hai — sirf tab jab wo khud sure na ho aur awaaz bilkul match kare.</p>
-          <p class="num"><b>31.6% → 1.1%</b><span>galat sune shabd, 30% noise pe · 0 harmful corrections</span></p>
+          <p>Aapke apne catalogue se bana sound-index. Recogniser ko bhi batata hai, aur uski galti bhi sudhaarta hai, par sirf tab jab wo khud sure na ho aur awaaz bilkul match kare.</p>
+          <p class="num"><b>30.8% → 0.96%</b><span>galat sune shabd, 30% noise pe · 0 harmful corrections</span></p>
           <div class="widget" id="w-bhasha"></div>
         </article>
         <article class="pillar" data-reveal style="--i:1">
           <span class="badge">Speculative turns</span>
           <p>Jab caller bol hi raha hota hai, read-only kaam pehle se shuru ho jaata hai. Jawab tab use hota hai jab asli sawaal byte-by-byte wahi nikle.</p>
-          <p class="num"><b>239 → 137 ms</b><span>read turns pe median · 45.5% hit rate</span></p>
+          <p class="num"><b>270 → 172 ms</b><span>read turns pe median · 46.3% hit rate</span></p>
           <div class="widget bars" id="w-spec">
-            <div><span>pehle</span><i style="--w:100%"></i><em>239</em></div>
-            <div><span>ab</span><i style="--w:57%"></i><em>137</em></div>
+            <div><span>pehle</span><i style="--w:100%"></i><em>270</em></div>
+            <div><span>ab</span><i style="--w:64%"></i><em>172</em></div>
           </div>
         </article>
         <article class="pillar" data-reveal style="--i:2">
           <span class="badge">Pramaan ledger</span>
-          <p>Har booking ek signed, chained receipt mein seal hoti hai — caller ki "haan" ke saath. Koi bhi, kahin bhi, bina humpe bharosa kiye verify kar sakta hai.</p>
+          <p>Har booking caller ki "haan" ke saath ek signed, chained receipt mein seal hoti hai. Koi bhi use bina humpe bharosa kiye verify kar sakta hai.</p>
           <p class="num"><b>80 / 80</b><span>chhedchhad pakdi · 0 bina-confirm writes</span></p>
           <div class="widget chain" id="w-chain" aria-hidden="true"><i></i><i></i><i></i><i class="bad"></i><i class="bad"></i></div>
         </article>
@@ -120,18 +120,18 @@
   <section class="section">
     <div class="wrap">
       <span class="eyebrow">Khud try karo</span>
-      <h2>Koi key nahi, koi signup nahi.</h2>
+      <h2>Teeno pages bina login ke khulte hain.</h2>
       <div class="grid-3" style="margin-top:36px">
         <a class="frame try" href="talk" data-reveal>
           <span class="eyebrow">Live call</span>
           <h3>Talk to HaanJi</h3>
-          <p>Mic se bolo ya type karo. Bhasha repair, speculation aur receipt — sab live, engine ke sheeshe mein.</p>
+          <p>Mic se bolo ya type karo. Bagal ke panel mein Bhasha repair, speculation aur receipt live dikhte hain.</p>
           <span class="go"><i data-icon="arrow"></i></span>
         </a>
         <a class="frame try" href="whatsapp" data-reveal style="--i:1">
           <span class="eyebrow">WhatsApp</span>
           <h3>Same brain, chat pe</h3>
-          <p>Wahi agent, text pe. Aur ek missed call button — jo call chhoot gayi usse WhatsApp pe wapas pakadta hai.</p>
+          <p>Wahi agent, text pe. Missed call button dabao to HaanJi khud WhatsApp pe pehla message bhejta hai.</p>
           <span class="go"><i data-icon="arrow"></i></span>
         </a>
         <a class="frame try" href="verify" data-reveal style="--i:2">
@@ -146,8 +146,8 @@
 
   <section class="wall section">
     <div class="wrap grid-3 open">
-      <div data-reveal><h3>Ek file = ek business</h3><p>Dental clinic, salon, lab, coaching — har ek ek YAML pack hai: catalogue, hours, persona, guardrails, aur wo calls jo pack ko ship hone se pehle paas karni hain.</p></div>
-      <div data-reveal style="--i:1"><h3>Napa hua, andaaza nahi</h3><p>Upar ka har number <code>python -m haanji.bench</code> se aata hai aur <code>research/results.json</code> mein likha jaata hai. README mein koi estimate nahi hai.</p></div>
+      <div data-reveal><h3>Har business ek YAML file</h3><p>Dental clinic, salon, lab aur coaching, sab ke apne YAML pack hain: catalogue, hours, persona, guardrails, aur wo calls jo pack ko ship hone se pehle paas karni hain.</p></div>
+      <div data-reveal style="--i:1"><h3>Number kahan se aate hain</h3><p>Upar ka har number <code>python -m haanji.bench</code> se aata hai aur <code>research/results.json</code> mein likha jaata hai. README mein koi estimate nahi hai.</p></div>
       <div data-reveal style="--i:2"><h3>Khud verify karo</h3><p>Receipts ka export lo aur <a href="verify">browser mein</a> har hash aur signature dobara check karo. Humpe bharosa karna zaroori nahi.</p></div>
     </div>
   </section>
@@ -155,7 +155,7 @@
 
 <footer class="wrap foot">
   <span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a></span>
-  <span class="mono muted">HaanJi v0.4.0</span>
+  <span class="mono muted">HaanJi v1.1.0</span>
 </footer>
 
 <script src="static/signboard.js"></script>

@@ -39,10 +39,10 @@ export default function Calendar() {
       : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode, from, to, filter]);
 
-  if (!live && mode !== "demo") return <NotLive title="Calendar" sub="Din ya hafta — har booking, staff ke hisaab se." />;
+  if (!live && mode !== "demo") return <NotLive title="Calendar" sub="Din ya hafte ki har booking, staff ke hisaab se." />;
 
   const act = async (b: Booking, what: Action) => {
-    if (!live) { setNote("Sample calendar — yahan badlaav nahi hota."); return; }
+    if (!live) { setNote("Sample calendar hai, yahan badlaav nahi hota."); return; }
     setBusy(b.booking_id); setNote(null);
     try {
       if (what === "cancel") {
@@ -136,7 +136,7 @@ function WeekGrid({ days, today: now, bookings, busy, onAct, readOnly = false }:
 function BookingCard({ b, showStaff = false, busy, onAct, readOnly = false }: { b: Booking; showStaff?: boolean; busy: boolean; onAct: (a: Action) => void; readOnly?: boolean }) {
   const [confirm, setConfirm] = useState(false);
   return (
-    <article className={"bk " + b.status} aria-label={`${b.time} ${b.service} — ${b.customer_name}`} data-testid={`booking-${b.booking_id}`}>
+    <article className={"bk " + b.status} aria-label={`${b.time} ${b.service}, ${b.customer_name}`} data-testid={`booking-${b.booking_id}`}>
       <div className="top">
         <span className="time">{b.time} · {b.duration_min} min</span>
         {b.status !== "CONFIRMED" && <Chip kind={STATUS_KIND[b.status]}>{STATUS_LABEL[b.status]}</Chip>}
@@ -186,7 +186,7 @@ function WaitlistPanel({ pack, live }: { pack: string; live: boolean }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const remove = async (id: string) => {
-    if (!live) { setNote("Sample waitlist — yahan badlaav nahi hota."); setRemoving(null); return; }
+    if (!live) { setNote("Sample waitlist hai, yahan badlaav nahi hota."); setRemoving(null); return; }
     setBusy(true); setNote(null);
     try { await engine.removeWaitlist(pack, id); setNote("Waitlist se hata diya."); reload(); }
     catch (e) { setNote(e instanceof Error ? e.message : String(e)); }
@@ -197,7 +197,7 @@ function WaitlistPanel({ pack, live }: { pack: string; live: boolean }) {
   return (
     <Panel title="Waitlist" hint={data ? `${waiting} intezaar mein` : error ? `load nahi hua: ${error}` : ""}>
       {rows.length === 0 ? (
-        <Empty><p>Koi intezaar mein nahi. Din full ho aur caller number chhode, to woh yahan aata hai — aur cancel pe usse slot milta hai.</p></Empty>
+        <Empty><p>Koi intezaar mein nahi. Din full ho aur caller number chhode, to woh yahan aata hai, aur cancel hone pe usse slot milta hai.</p></Empty>
       ) : (
         <Register head={<><th>Naam</th><th>Phone</th><th>Service</th><th>Din</th><th>Period</th><th>Status</th><th></th></>}>
           {rows.map((w) => (
@@ -230,7 +230,7 @@ function PaymentsPanel({ pack, live }: { pack: string; live: boolean }) {
   return (
     <Panel title="Payments" hint={data ? `${rows.length} links · ${fmtInr(paid)} aaya` : error ? `load nahi hua: ${error}` : ""}>
       {rows.length === 0 ? (
-        <Empty><p>Abhi koi payment link nahi. Settings mein deposit set karo — har nayi booking pe link jayega.</p></Empty>
+        <Empty><p>Abhi koi payment link nahi. Settings mein deposit set karo, phir har nayi booking pe link jayega.</p></Empty>
       ) : (
         <Register head={<><th>Kab</th><th>Booking</th><th className="right">₹</th><th>Status</th><th>Link</th></>}>
           {rows.map((p) => (

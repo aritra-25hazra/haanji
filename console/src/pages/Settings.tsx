@@ -10,27 +10,27 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  *  door out. Staff are told so; the server enforces regardless. */
 export default function Settings() {
   const { pack, mode, isOwner, status } = useApp();
-  if (mode !== "live") return <NotLive title="Settings" sub="Reminders, deposit, waitlist, digest, users." demo={<p>Settings live engine pe hi badalti hain — demo mein nahi.</p>} />;
+  if (mode !== "live") return <NotLive title="Settings" sub="Reminders, deposit, waitlist, digest, users." demo={<p>Settings sirf live engine pe badalti hain, demo mein nahi.</p>} />;
   if (!isOwner) {
     return (
       <Page title="Settings">
         <Empty>
           <p>Yeh page sirf owner ke liye hai.</p>
-          <p className="muted small">Reminders, deposit, users — owner set karta hai. Kuch badalna ho to owner se kaho.</p>
+          <p className="muted small">Reminders, deposit aur users owner set karta hai. Kuch badalna ho to owner se kaho.</p>
         </Empty>
       </Page>
     );
   }
   const authOn = !!status?.auth?.enabled;
   return (
-    <Page title="Settings" sub={`${pack.replace(/_/g, " ")} — reminders, deposit, waitlist, digest, aur kaun console mein aa sakta hai.`}>
+    <Page title="Settings" sub={`${pack.replace(/_/g, " ")}: reminders, deposit, waitlist, digest, aur kaun console mein aa sakta hai.`}>
       <Connections pack={pack} />
       <SettingsForm key={pack} pack={pack} />
       <GooglePanel pack={pack} />
       <DigestPanel pack={pack} />
       {authOn
         ? <UsersPanel />
-        : <Panel title="Users" hint="HAANJI_AUTH off"><Empty><p>Engine auth ke bina chal raha hai — har koi owner hai. Users tab kaam karega jab HAANJI_AUTH=on ho.</p></Empty></Panel>}
+        : <Panel title="Users" hint="HAANJI_AUTH off"><Empty><p>Engine auth ke bina chal raha hai, isliye har koi owner hai. Users tab kaam karega jab HAANJI_AUTH=on ho.</p></Empty></Panel>}
       {authOn && <SessionPanel />}
     </Page>
   );
@@ -46,7 +46,7 @@ function Connections({ pack }: { pack: string }) {
         <Chip kind={wa?.configured ? "ok" : "muted"}><Icon name="phone" small />WhatsApp · {wa?.configured ? `juda${wa.number ? ` · ${wa.number}` : ""}` : "set nahi"}</Chip>
         <Chip kind={ph?.configured ? "ok" : "muted"}><Icon name="mic" small />Phone line · {ph?.configured ? `judi${ph.number ? ` · ${ph.number}` : ""}` : "set nahi"}</Chip>
         <Chip kind={status?.backup?.s3 ? "ok" : "warn"} title={status?.backup?.s3 ? "Roz raat S3 par backup" : "HAANJI_BACKUP_S3_BUCKET set nahi: redeploy par bookings aur ledger chale jaate hain (docs/operations.md)"}>
-          <Icon name="lock" small />Backup · {status?.backup?.s3 ? "S3 nightly" : "set nahi — redeploy par data jaata hai"}
+          <Icon name="lock" small />Backup · {status?.backup?.s3 ? "S3 nightly" : "set nahi, redeploy par data jaata hai"}
         </Chip>
         <Chip kind={g.data?.connected ? "ok" : g.data?.configured ? "warn" : "muted"}>
           <Icon name="calendar" small />Google Calendar · {g.data ? (g.data.connected ? "juda" : g.data.configured ? "keys hain, connect nahi" : "keys set nahi") : g.error ? "pata nahi" : "…"}
@@ -103,7 +103,7 @@ function SettingsForm({ pack }: { pack: string }) {
               <option value="latin">Roman (Hinglish)</option><option value="devanagari">Devanagari</option>
             </select></label>
         </div>
-        <p className="muted small">Deposit 0 se zyada ho to har nayi booking pe payment link jaata hai — Razorpay, ya keys na hon to is server ka mock link.</p>
+        <p className="muted small">Deposit 0 se zyada ho to har nayi booking pe payment link jaata hai: Razorpay ka, ya keys na hon to is server ka mock link.</p>
         <div className="row">
           <button className="btn btn-primary" type="submit" disabled={!dirty || busy || readOnly} title={readOnly ? "Public demo: settings read-only hain" : undefined}>{busy ? "Save…" : readOnly ? "Read-only (demo)" : "Save karo"}</button>
           {dirty && <button className="btn btn-ghost" type="button" onClick={() => setDraft({})} disabled={busy}>Wapas</button>}
@@ -117,15 +117,17 @@ function SettingsForm({ pack }: { pack: string }) {
 /** The bookings on the owner's own calendar: a feed URL any app subscribes
  *  to, and a Google Calendar connection when credentials are configured. */
 function GooglePanel({ pack }: { pack: string }) {
-  const feed = useData(() => engine.feedUrl(pack), [pack]);
+  // The feed lists customers' names and numbers, so a public demo never hands out its secret URL.
+  const { readOnly } = useApp();
+  const feed = useData(readOnly ? null : () => engine.feedUrl(pack), [pack, readOnly]);
   const g = useData(() => engine.googleStatus(pack), [pack]);
   const [note, setNote] = useState<string | null>(null);
   const copy = async (text: string) => {
-    try { await navigator.clipboard.writeText(text); setNote("Copy ho gaya — apne calendar app mein 'subscribe by URL' mein paste karo."); }
+    try { await navigator.clipboard.writeText(text); setNote("Copy ho gaya. Apne calendar app mein 'subscribe by URL' mein paste karo."); }
     catch { setNote(text); }
   };
   const connect = async () => {
-    try { const r = await engine.googleConnect(pack); window.open(r.url, "_blank", "noopener"); setNote("Google ki tab khuli — permission do, phir yahan refresh karo."); }
+    try { const r = await engine.googleConnect(pack); window.open(r.url, "_blank", "noopener"); setNote("Google ki tab khul gayi. Permission do, phir yahan refresh karo."); }
     catch (e) { setNote(msg(e)); }
   };
   const disconnect = async () => {
@@ -143,12 +145,13 @@ function GooglePanel({ pack }: { pack: string }) {
       <div className="body form">
         {feed.data ? (
           <div className="row">
-            <label className="field grow"><span>Subscribe URL (Google / Apple / Outlook — "add by URL")</span>
+            <label className="field grow"><span>Subscribe URL (Google / Apple / Outlook mein "add by URL")</span>
               <input className="input mono" readOnly value={url} onFocus={(e) => e.currentTarget.select()} /></label>
             <button className="btn btn-ghost" onClick={() => void copy(url)}>Copy</button>
             <a className="btn btn-ghost" href={feed.data.webcal}>Apple Calendar</a>
           </div>
-        ) : <p className="muted">{feed.error ? `Feed URL nahi mila: ${feed.error}` : "Feed URL aa raha hai…"}</p>}
+        ) : <p className="muted">{readOnly ? "Public demo mein feed URL nahi dikhaya jaata, kyunki usme customers ke naam aur number hote hain."
+          : feed.error ? `Feed URL nahi mila: ${feed.error}` : "Feed URL aa raha hai…"}</p>}
         {g.data?.connected && <p className="muted">Google Calendar juda hai{g.data.connected_at ? ` · ${fmtTime(g.data.connected_at)} se` : ""}. Nayi bookings apne aap event banti hain.</p>}
         {note && <p className="muted" role="status">{note}</p>}
       </div>
@@ -230,7 +233,7 @@ function UsersPanel() {
             </td>
           </tr>
         ))}
-        {data && users.length === 0 && <tr><td colSpan={5} className="muted">Abhi koi user nahi — pehla owner HAANJI_OWNER_PHONE se banta hai.</td></tr>}
+        {data && users.length === 0 && <tr><td colSpan={5} className="muted">Abhi koi user nahi. Pehla owner HAANJI_OWNER_PHONE se banta hai.</td></tr>}
       </Register>
       <form className="body form" onSubmit={(e) => void add(e)}>
         <div className="row">
@@ -264,7 +267,7 @@ function SessionPanel() {
   return (
     <Panel title="Session" hint={user ? `${user.name || user.phone} · ${user.role}` : ""}>
       <div className="body form">
-        <p className="muted">Har device aur browser se sign out — is number ke saare tokens engine pe revoke ho jaate hain. Dobara OTP se andar aana hoga.</p>
+        <p className="muted">Har device aur browser se sign out. Is number ke saare tokens engine pe revoke ho jaate hain. Dobara OTP se andar aana hoga.</p>
         <div>
           <button className="btn btn-danger" onClick={() => { setBusy(true); void signOutEverywhere(); }} disabled={busy}>
             <Icon name="lock" small />{busy ? "Sign out…" : "Sign out everywhere"}

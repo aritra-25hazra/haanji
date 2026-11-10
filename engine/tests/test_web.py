@@ -5,6 +5,7 @@ import re
 import pytest
 from fastapi.testclient import TestClient
 
+from haanji import __version__
 from haanji.server import app
 
 WEB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "haanji", "web")
@@ -64,7 +65,9 @@ def test_the_landing_page_has_its_hero_pillars_and_links(client):
     for href in ('href="talk"', 'href="whatsapp"', 'href="verify"'):
         assert href in html, href
     assert 'href="static/signboard.css"' in html and 'src="static/hero-call.js"' in html
-    assert "31.6% → 1.1%" in html and "239 → 137 ms" in html and "80 / 80" in html
+    # The numbers themselves follow research/results.json (readme_sync.py --check).
+    assert html.count('<p class="num"><b>') == 3
+    assert f"HaanJi v{__version__}" in html
     assert "http://localhost" not in html
 
 

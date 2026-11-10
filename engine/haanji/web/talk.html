@@ -97,7 +97,7 @@
   <span id="timer" class="mono timer">00:00</span>
   <div class="controls">
     <label class="field"><span>Pack</span><select id="pack" class="input"></select></label>
-    <label class="field"><span>Phone (optional — try 9876543210)</span><input id="phone" class="input" type="tel" inputmode="numeric" maxlength="10" pattern="\d*" placeholder="9876543210"></label>
+    <label class="field"><span>Phone (optional, try 9876543210)</span><input id="phone" class="input" type="tel" inputmode="numeric" maxlength="10" pattern="\d*" placeholder="9876543210"></label>
     <button type="button" class="btn btn-primary" id="start"><i data-icon="phone"></i>Start call</button>
     <button type="button" class="btn btn-danger" id="end" hidden><i data-icon="x"></i>Call khatam karo</button>
     <button type="button" class="btn btn-ghost" id="mute" aria-pressed="false"><i data-icon="speaker"></i><span>Awaaz on</span></button>
@@ -109,7 +109,7 @@
 <main id="main" class="talk">
   <section class="call" aria-label="Call">
     <div class="transcript" id="log" aria-live="polite" tabindex="0" aria-label="Baatcheet">
-      <p class="sys" id="empty">Neeche ki koi line dabaiye — call apne aap shuru ho jayegi. Ya "Start call" dabakar mic se boliye ya type kijiye.<br>Kuch lines mein jaan-boojh kar galat spelling hai: Bhasha Bridge unhe sudhaarta dikhega. Phone 9876543210 daaloge to returning-caller greeting milega.</p>
+      <p class="sys" id="empty">Neeche ki koi line dabaiye, call apne aap shuru ho jayegi. Ya "Start call" dabakar mic se boliye ya type kijiye.<br>Kuch lines mein jaan-boojh kar galat spelling hai: Bhasha Bridge unhe sudhaarta dikhega. Phone 9876543210 daaloge to returning-caller greeting milega.</p>
     </div>
     <p class="interim" id="interim"></p>
     <div class="suggest" id="suggest" hidden>
@@ -121,7 +121,7 @@
   <aside class="engine" id="engine" aria-label="Engine ka sheesha">
     <button type="button" class="btn btn-ghost sheet-toggle" id="sheet-toggle" aria-expanded="false" aria-controls="engine-cards">Engine ka sheesha <i data-icon="chevron"></i></button>
     <div class="engine-cards" id="engine-cards">
-      <section class="stage" id="stage" aria-label="3D counter — neeche ke cards yahi baat shabdon mein batate hain">
+      <section class="stage" id="stage" aria-label="3D counter; neeche ke cards yahi baat shabdon mein batate hain">
         <canvas id="stage-canvas" aria-hidden="true"></canvas>
         <p class="stage-ph" aria-hidden="true">Counter saja rahe hain…</p>
         <p class="stage-off-note">3D counter band hai. Har turn ka hisaab neeche ke cards mein hai.</p>
@@ -129,17 +129,17 @@
       </section>
       <section class="frame ecard" id="panel-bhasha" aria-live="polite">
         <header><h2>Bhasha Bridge</h2><span class="mono muted" id="bhasha-count">0 repairs</span></header>
-        <div class="ebody" id="bhasha-body"><p class="muted">Call shuru hone pe yahan har sudhaar dikhega — kya suna, kya padha, aur kyun.</p></div>
+        <div class="ebody" id="bhasha-body"><p class="muted">Call shuru hone pe yahan har sudhaar dikhega: kya suna, kya padha, aur kyun.</p></div>
       </section>
       <section class="frame ecard" id="panel-spec" aria-live="polite">
         <header><h2>Speculation</h2><span class="mono muted" id="spec-count">0 / 0 hits</span></header>
-        <div class="ebody" id="spec-body"><p class="muted">Tool calls aur unka timing yahan — kaunsa jawab poochne se pehle hi taiyaar tha.</p></div>
+        <div class="ebody" id="spec-body"><p class="muted">Yahan tool calls aur unka timing dikhega: kaunsa jawab poochne se pehle hi taiyaar tha.</p></div>
       </section>
       <section class="frame ecard" id="panel-pramaan" aria-live="polite">
         <header><h2>Pramaan</h2><a href="verify">Verify karo <i data-icon="arrow" class="ic-sm"></i></a></header>
         <div class="ebody" id="pramaan-body">
           <div class="chain" id="chain" aria-hidden="true"><i class="empty"></i></div>
-          <p class="muted" id="pramaan-note">Booking hote hi receipt yahan seal hogi — Ed25519 signed, pichhli se chained.</p>
+          <p class="muted" id="pramaan-note">Booking hote hi receipt yahan seal hogi: Ed25519 signed, pichhli receipt se chained.</p>
         </div>
       </section>
     </div>
@@ -147,7 +147,7 @@
 </main>
 
 <footer class="bar">
-  <button type="button" class="mic" id="mic" aria-label="Mic — bolne ke liye dabao" aria-pressed="false"><i data-icon="mic"></i></button>
+  <button type="button" class="mic" id="mic" aria-label="Mic: bolne ke liye dabao" aria-pressed="false"><i data-icon="mic"></i></button>
   <div class="wave" id="wave" aria-hidden="true"></div>
   <input class="input input-pill" id="text" placeholder="…ya yahan type karke Enter" aria-label="Message">
   <button type="button" class="btn btn-primary btn-icon" id="send" aria-label="Bhejo"><i data-icon="send"></i></button>
@@ -173,7 +173,7 @@
         } catch (err) {}
       });
       humanSource.addEventListener("session.takeover", function (ev) {
-        try { const e = JSON.parse(ev.data); if (e.sid === sid) sys("Ek insaan ne call li hai — ab wo jawab denge."); } catch (err) {}
+        try { const e = JSON.parse(ev.data); if (e.sid === sid) sys("Ek insaan ne call li hai. Ab wo jawab denge."); } catch (err) {}
       });
       humanSource.addEventListener("session.handback", function (ev) {
         try { const e = JSON.parse(ev.data); if (e.sid === sid) sys("Agent wapas aa gaya."); } catch (err) {}
@@ -306,10 +306,10 @@
   }
 
   S.status().then(function (s) {
-    if (!s) { notice("Server se connect nahi ho pa raha — thodi der mein dobara try kijiye."); $("pack").disabled = true; $("start").disabled = true; return; }
+    if (!s) { notice("Server se connect nahi ho pa raha. Thodi der mein dobara try kijiye."); $("pack").disabled = true; $("start").disabled = true; return; }
     const q = new URLSearchParams(location.search), wanted = q.get("pack");
     $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === (s.packs.indexOf(wanted) >= 0 ? wanted : s.default_pack) ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
-    if (q.get("study")) notice("Study task " + q.get("study") + " — kaam poora hone pe study tab mein wapas jaiye.");
+    if (q.get("study")) notice("Study task " + q.get("study") + ". Kaam poora hone pe study tab mein wapas jaiye.");
     loadSuggest();
   });
   $("pack").addEventListener("change", loadSuggest);
@@ -378,7 +378,7 @@
         requestAnimationFrame(function () { S.paintRepair(r); });
       });
     } else {
-      bb.innerHTML = '<p class="muted">Ab tak kuch sudhaarna nahi pada — recogniser sure tha.</p>';
+      bb.innerHTML = '<p class="muted">Ab tak kuch sudhaarna nahi pada, recogniser sure tha.</p>';
     }
     $("bhasha-count").textContent = repairsTotal + (repairsTotal === 1 ? " repair" : " repairs");
 
@@ -422,12 +422,12 @@
   function resetPanel() {
     repairsTotal = 0; specHits = 0; specStarted = 0; receipts.length = 0;
     repairsLog.length = 0;
-    $("bhasha-body").innerHTML = '<p class="muted">Call shuru — pehla turn aane do.</p>';
+    $("bhasha-body").innerHTML = '<p class="muted">Call shuru ho gayi. Pehla turn aane do.</p>';
     $("bhasha-count").textContent = "0 repairs";
     $("spec-body").innerHTML = '<p class="muted">Tool calls aur unka timing yahan.</p>';
     $("spec-count").textContent = "0 / 0 hits";
     $("chain").innerHTML = '<i class="empty"></i>';
-    $("pramaan-note").innerHTML = '<p class="muted">Booking hote hi receipt yahan seal hogi — Ed25519 signed, pichhli se chained.</p>';
+    $("pramaan-note").innerHTML = '<p class="muted">Booking hote hi receipt yahan seal hogi: Ed25519 signed, pichhli receipt se chained.</p>';
   }
 
   async function startCall() {
@@ -466,7 +466,7 @@
     const typing = S.typingDots(); $("log").appendChild(typing); $("log").scrollTop = $("log").scrollHeight;
     let t;
     try { t = await api("api/sessions/" + sid + "/utterance", { method: "POST", body: JSON.stringify({ text: text }) }); }
-    catch (e) { typing.remove(); sys("Jawab nahi aaya — dobara try kijiye."); return; }
+    catch (e) { typing.remove(); sys("Jawab nahi aaya. Dobara try kijiye."); return; }
     typing.remove();
     if (t.corrections && t.corrections.length) {
       const meta = document.createElement("div"); meta.className = "meta";
@@ -474,7 +474,7 @@
       callerBubble.appendChild(meta);
       meta.querySelectorAll(".repair").forEach(function (r) { S.paintRepair(r); });
     }
-    if (t.human) { if (!window.__humanNoted) { sys("Aapki baat ek insaan tak pahunch gayi — jawab ka intezaar…"); window.__humanNoted = true; } return; }
+    if (t.human) { if (!window.__humanNoted) { sys("Aapki baat ek insaan tak pahunch gayi. Jawab ka intezaar…"); window.__humanNoted = true; } return; }
     const agent = row("agent", t.reply);
     const meta = metaFor(t);
     // A deposit was configured: the link the caller would get on WhatsApp.
@@ -492,7 +492,7 @@
     speak(t.reply);
     if (t.end_call) {
       sid = null; $("start").hidden = false; $("end").hidden = true; tm.stop(); stopMic();
-      sys("Call khatam — outcome " + (t.outcome || "").replace(/_/g, " ").toLowerCase());
+      sys("Call khatam · outcome " + (t.outcome || "").replace(/_/g, " ").toLowerCase());
       emit("end", { outcome: t.outcome });
       said = new Set(); setTimeout(renderSuggest, 0);           // the lines are ready for the next call
     }
@@ -522,10 +522,10 @@
       const text = finalText.trim(); finalText = ""; $("interim").textContent = "";
       if (text) sendUtterance(text);
     };
-    recog.onerror = function () { listening = false; setMic(false); $("interim").textContent = "Mic error — type kijiye, ya Chrome try kijiye."; };
+    recog.onerror = function () { listening = false; setMic(false); $("interim").textContent = "Mic error. Type kijiye, ya Chrome try kijiye."; };
   } else {
     $("mic").disabled = true;
-    $("mic").title = "Is browser mein mic nahi — type kijiye (Chrome best)";
+    $("mic").title = "Is browser mein mic nahi. Type kijiye (Chrome best)";
   }
 
   function setMic(on) {

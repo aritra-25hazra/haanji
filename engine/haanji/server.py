@@ -267,8 +267,10 @@ AUTH_ENABLED = os.environ.get("HAANJI_AUTH", "off").lower() in ("on", "1", "true
 AUTH_DEV = os.environ.get("HAANJI_AUTH_DEV", "0").lower() in ("1", "true", "yes", "on")
 # A public server with sign-in off is a demo for strangers: the console's
 # destructive operations (settings, cancelling bookings, users, pack saves,
-# erasure, backups) are refused there. HAANJI_DEMO_WRITES=1 re-opens them for
-# a private demo behind someone's own firewall.
+# erasure, backups) are refused there, and so are the two reads that hand a
+# stranger someone's whole record or the calendar feed's secret. Phone numbers
+# in what stays readable are masked (_shown). HAANJI_DEMO_WRITES=1 re-opens all
+# of it for a private demo behind someone's own firewall.
 DEMO_WRITES = os.environ.get("HAANJI_DEMO_WRITES", "").lower() in ("1", "true", "yes", "on")
 DEMO_READONLY = IS_PUBLIC and not AUTH_ENABLED and not DEMO_WRITES
 DEMO_LOCKED: list[tuple[str, re.Pattern]] = [
@@ -278,7 +280,8 @@ DEMO_LOCKED: list[tuple[str, re.Pattern]] = [
     ("GET|POST|DELETE", re.compile(r"^/api/auth/users(/.*)?$")),
     ("GET", re.compile(r"^/api/admin/backup$")),
     ("POST", re.compile(r"^/api/(digest/send|push/test|anchors/seal)$")),
-    ("DELETE", re.compile(r"^/api/privacy/customer/.*$")),
+    ("GET|DELETE", re.compile(r"^/api/privacy/customer/.*$")),
+    ("GET", re.compile(r"^/api/calendar/feed-url$")),
     ("PUT", re.compile(r"^/api/packs/[^/]+$")),
     ("DELETE", re.compile(r"^/api/google/disconnect$")),
 ]
@@ -507,6 +510,12 @@ async def events_recent(request: Request, pack: str | None = None, since: int = 
 def _mask(phone: str | None) -> str | None:
     """A live feed is seen by everyone in the shop; show the last four digits."""
     return f"…{phone[-4:]}" if phone and len(phone) >= 4 else phone
+
+
+def _shown(phone: str | None) -> str | None:
+    """A number as the console may show it: whole to the shop, masked to the
+    strangers reading a public demo."""
+    return _mask(phone) if DEMO_READONLY else phone
 
 
 def holder_sid(holder: Holder) -> str | None:
@@ -914,6 +923,10 @@ async def wa_incoming(body: WaIn):
 
 @app.get("/api/wa/threads")
 async def wa_threads(pack: str = DEFAULT_PACK):
+    # A thread is opened by its number, so a masked list would be useless; on
+    # a public demo the list is withheld and each visitor opens their own.
+    if DEMO_READONLY:
+        return {"threads": [], "hidden": True}
     return {"threads": store.wa_threads(pack)}
 
 
@@ -1019,7 +1032,10 @@ async def insights(pack: str = DEFAULT_PACK):
 
 @app.get("/api/conversations")
 async def conversations(pack: str = DEFAULT_PACK, limit: int = 50):
-    return {"conversations": store.calls(pack, limit)}
+    rows = store.calls(pack, limit)
+    for row in rows:
+        row["phone"] = _shown(row.get("phone"))
+    return {"conversations": rows}
 
 
 @app.get("/api/conversations/{call_id}")
@@ -1027,6 +1043,7 @@ async def conversation(call_id: str, pack: str = DEFAULT_PACK):
     row = store.call(pack, call_id)
     if row is None:
         raise HTTPException(404, "no such call")
+    row["phone"] = _shown(row.get("phone"))
     return row
 
 
@@ -2232,4 +2249,5 @@ app.include_router(admin_mod.build_router(admin_mod.Deps(
     payments=payments, vault=vault, publish=publish, mask=_mask,
     user_of=lambda request: getattr(request.state, "user", None),
     offer_waitlist=offer_waitlist, var_dir=VAR_DIR, public_url=PUBLIC_URL,
-    notify=notify_customer, auth_enabled=lambda: AUTH_ENABLED, is_public=lambda: IS_PUBLIC)))
+    notify=notify_customer, auth_enabled=lambda: AUTH_ENABLED, is_public=lambda: IS_PUBLIC,
+    demo_readonly=lambda: DEMO_READONLY)))
