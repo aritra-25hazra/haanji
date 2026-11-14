@@ -2165,6 +2165,9 @@ async def status():
             # Where the owner console lives, so the pages can link to it
             # without hard-coding a host.
             "console_url": os.environ.get("HAANJI_CONSOLE_URL", "http://localhost:5173"),
+            # The number a prospective shop messages to ask for a pilot; the
+            # landing page shows its button only when this is set.
+            "sales_whatsapp": os.environ.get("HAANJI_SALES_WHATSAPP") or None,
             "whatsapp": wa_channel.status()}
 
 
@@ -2220,7 +2223,7 @@ async def static_file(name: str):
     if not os.path.exists(path):
         raise HTTPException(404)
     media = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml",
-             ".html": "text/html"}.get(os.path.splitext(name)[1], "text/plain")
+             ".html": "text/html", ".webp": "image/webp", ".png": "image/png"}.get(os.path.splitext(name)[1], "text/plain")
     # Vendored libraries carry their version in the name, so they never change
     # under a URL: a browser keeps them (three.js is 690 kB).
     headers = {"Cache-Control": "public, max-age=31536000, immutable"} if re.match(r"three-\d", name) else None

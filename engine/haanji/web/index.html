@@ -3,23 +3,71 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HaanJi — AI receptionist jo Hinglish mein phone uthata hai</title>
-<meta name="description" content="Clinic, salon ya lab ke liye AI voice receptionist. Har call uthata hai, booking likhta hai, aur saabit kar sakta hai ki caller ne kya haan boli.">
+<title>HaanJi · AI receptionist jo Hinglish mein phone uthata hai</title>
+<meta name="description" content="Clinic, salon, lab aur coaching ke liye AI receptionist. Customer call ya WhatsApp kare, HaanJi Hinglish mein baat karke booking karta hai, aur har booking ka signed saboot rakhta hai.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="HaanJi · AI receptionist jo Hinglish mein phone uthata hai">
+<meta property="og:description" content="Customer call ya WhatsApp kare, HaanJi slot book karta hai. Owner ko calendar, callback list aur har booking ka saboot milta hai. 2 minute ka demo browser mein.">
+<meta name="theme-color" content="#1B3B8C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/signboard.css">
 <style>
-  .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding: 32px 24px 96px; }
+  ::selection { background: var(--marigold); color: var(--cobalt); }
+  .wall ::selection { background: var(--cobalt); color: var(--chalk); }
+  h1 { font-size: clamp(40px, 5.4vw, 70px); text-wrap: balance; }
+  h2 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  .nav ul { align-items: center; }
+  .nav .nav-cta { min-height: 40px; padding: 0 16px; opacity: 1; margin-left: 6px; }
+  .nav .nav-cta:hover { background: #FFC83D; }
+  /* On a phone the bar keeps the demo and the ask; the rest is on the page. */
+  @media (max-width: 720px) { .nav ul { flex-wrap: nowrap; gap: 0; } .nav li.wide { display: none; } .nav .nav-cta { padding: 0 12px; } }
+
+  .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding: 40px 24px 96px; }
   .hero-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
-  .hero-copy .chip { height: 32px; }
+  .hero-note { font-size: 14px; color: var(--haze); max-width: 48ch; }
   .phone { min-height: 440px; display: flex; flex-direction: column; gap: 14px; }
   .phone-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; letter-spacing: .1em; color: var(--marigold); }
   .phone-head .live { display: inline-flex; align-items: center; gap: 8px; }
   .phone-head .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--leaf); box-shadow: 0 0 0 4px rgba(143, 214, 148, .25); }
   .phone .transcript { flex: 1; max-height: 420px; overflow: hidden; padding: 0 4px 16px 0; }
+  .phone .meta .muted { color: rgba(255, 247, 230, .78); }
+  .phone .bubble .repair s { color: rgba(20, 33, 61, .8); }
   @media (max-width: 900px) { .hero { grid-template-columns: 1fr; padding-bottom: 56px; } .phone { min-height: 360px; } }
 
+  /* how it works: three steps, each beside the real screen it produces */
+  .flow { list-style: none; margin: 48px 0 0; padding: 0; display: flex; flex-direction: column; gap: 72px; }
+  .flow > li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 56px; align-items: center; }
+  .flow > li:nth-child(even) .flow-text { order: 2; }
+  .flow-text { display: flex; flex-direction: column; gap: 14px; max-width: 46ch; }
+  .flow-text p { color: rgba(20, 33, 61, .8); font-size: 17px; }
+  .step { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--cobalt); color: var(--marigold); font-family: var(--font-display); font-size: 20px; }
+  .shot { margin: 0; border-radius: 16px; overflow: hidden; background: #fff; border: 1px solid rgba(27, 59, 140, .14); box-shadow: 0 24px 48px -24px rgba(16, 42, 102, .45), 0 2px 8px rgba(16, 42, 102, .08); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot-chat { max-width: 440px; justify-self: center; background: #0B141A; }
+  .shot-chat img { aspect-ratio: 840 / 1120; object-fit: cover; object-position: bottom; }
+  .shot-chat figcaption { background: #0B141A; color: rgba(255, 247, 230, .72); border-top-color: rgba(255, 247, 230, .1); }
+  .shot figcaption { padding: 10px 16px; font-size: 13px; color: rgba(20, 33, 61, .72); border-top: 1px solid rgba(27, 59, 140, .1); background: #fff; }
+  @media (max-width: 900px) {
+    .flow { gap: 56px; }
+    .flow > li { grid-template-columns: 1fr; gap: 24px; }
+    .flow > li:nth-child(even) .flow-text { order: 0; }
+  }
+
+  /* who it is for */
+  .two { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 56px; align-items: start; }
+  @media (max-width: 900px) { .two { grid-template-columns: 1fr; gap: 28px; } }
+  .two .lead { margin-top: 16px; }
+  .kinds { list-style: none; margin: 0; padding: 0; border-top: 1px solid rgba(255, 247, 230, .2); }
+  .kinds li { display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 18px 0; border-bottom: 1px solid rgba(255, 247, 230, .2); }
+  .kinds b { font-family: var(--font-display); font-size: 20px; letter-spacing: -.01em; color: var(--marigold); }
+  .kinds span { color: var(--haze); }
+  @media (max-width: 560px) { .kinds li { grid-template-columns: 1fr; gap: 4px; } }
+
+  /* the engine's numbers */
+  .pillars-note { margin-top: 14px; max-width: 64ch; color: rgba(20, 33, 61, .78); }
   .pillars { margin-top: 36px; }
   .pillar { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 28px; border-radius: var(--r-card); background: rgba(255, 247, 230, .55); border: 1px solid rgba(27, 59, 140, .12); }
   .pillar .badge { color: var(--cobalt); }
@@ -27,7 +75,7 @@
   .pillar .num b { font-family: var(--font-display); font-weight: 800; font-size: 32px; letter-spacing: -.02em; color: var(--cobalt); }
   .pillar .num span { font-size: 13px; color: rgba(20, 33, 61, .7); }
   .widget { width: 100%; margin-top: 4px; min-height: 36px; }
-  .widget .repair s { color: rgba(20, 33, 61, .45); }
+  .widget .repair s { color: rgba(20, 33, 61, .62); }
   .widget .repair b { color: var(--cobalt); }
   .widget .repair s svg.stroke path { stroke: var(--cobalt); }
   .widget .repair small { color: rgba(20, 33, 61, .78); }
@@ -44,28 +92,62 @@
   .widget.chain i.bad::before { border-top-color: var(--cobalt); transition: border-color 300ms 700ms; }
   .in .widget.chain i.bad::before { border-top-color: var(--sindoor); }
 
-  .try { display: flex; flex-direction: column; gap: 10px; min-height: 220px; color: var(--chalk); }
-  .try .eyebrow { margin: 0; }
+  /* trust */
+  .trust { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 28px 36px; }
+  .trust dt { font-family: var(--font-display); font-size: 20px; letter-spacing: -.01em; color: var(--cobalt); margin-bottom: 6px; }
+  .trust dd { margin: 0; color: rgba(20, 33, 61, .78); }
+  @media (max-width: 640px) { .trust { grid-template-columns: 1fr; } }
+
+  /* try it */
+  .try { display: flex; flex-direction: column; gap: 10px; min-height: 200px; color: var(--chalk); text-decoration: none; }
   .try p { color: var(--haze); font-size: 15px; }
   .try .go { margin-top: auto; align-self: flex-end; color: var(--marigold); }
+  .try-grid { margin-top: 32px; }
+
+  /* getting started */
+  .start { margin: 24px 0 0; padding: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 18px; }
+  .start li { counter-increment: s; display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; font-size: 17px; color: var(--haze); }
+  .start li::before { content: counter(s); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--marigold); color: var(--cobalt); font-family: var(--font-display); }
+  .start b { color: var(--chalk); }
+  .start a { color: var(--marigold); }
+  .ask { align-self: center; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 32px; border-radius: 16px; background: var(--cobalt-deep); border: 1px solid rgba(255, 247, 230, .16); color: var(--chalk); box-shadow: 0 24px 48px -28px rgba(0, 0, 0, .5); }
+  .ask h3 { color: var(--chalk); }
+  .ask p { color: var(--haze); }
+  .ask .btn { min-height: 52px; padding: 0 24px; font-size: 17px; }
+
+  /* questions */
+  .faq { margin-top: 28px; border-top: 1px solid rgba(27, 59, 140, .16); }
+  .faq details { border-bottom: 1px solid rgba(27, 59, 140, .16); }
+  .faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 64px; padding: 14px 0; font-family: var(--font-display); font-size: 20px; letter-spacing: -.01em; color: var(--ink); }
+  .faq summary:hover { color: var(--cobalt); }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: ""; flex: none; width: 12px; height: 12px; border-right: 2.5px solid var(--cobalt); border-bottom: 2.5px solid var(--cobalt); transform: rotate(45deg) translateY(-3px); transition: transform var(--t-micro) var(--ease-out); }
+  .faq details[open] summary::after { transform: rotate(225deg) translateY(-3px); }
+  .faq details p { margin: 0 0 20px; max-width: 70ch; color: rgba(20, 33, 61, .8); }
+  .faq details p a { color: var(--cobalt); }
+
+  .wall .btn-ghost { border-color: rgba(27, 59, 140, .45); color: var(--cobalt); }
+  .wall .btn-ghost:hover { border-color: var(--cobalt); }
   .open h3 { margin-bottom: 10px; }
   .open p { color: rgba(20, 33, 61, .78); }
   .open a { color: var(--cobalt); }
   .foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 28px 24px; border-top: 1px solid rgba(255, 247, 230, .15); font-size: 14px; }
-  .foot a { color: var(--marigold); }
+  .foot a { color: var(--marigold); display: inline-flex; align-items: center; min-height: 24px; padding: 0 2px; }
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Seedha content pe jao</a>
+
 <header class="wrap">
   <nav class="nav" aria-label="Main">
     <a class="wordmark paint" href="./">HaanJi <span class="dev">हाँजी</span></a>
     <ul>
+      <li class="wide"><a href="#kaise">Kaise kaam karta hai</a></li>
       <li><a href="talk">Demo</a></li>
-      <li><a href="whatsapp">WhatsApp</a></li>
-      <li><a href="verify">Verify</a></li>
-      <li><a href="https://github.com/aritra-25hazra/haanji" rel="noopener"><i data-icon="github" class="ic-sm"></i>GitHub</a></li>
-      <li id="console-li" hidden><a id="console-link" href="#" rel="noopener">Console <i data-icon="arrow" class="ic-sm"></i></a></li>
+      <li class="wide"><a href="#sawaal">Sawaal</a></li>
+      <li class="wide"><a href="https://github.com/aritra-25hazra/haanji" rel="noopener"><i data-icon="github" class="ic-sm"></i>GitHub</a></li>
+      <li id="console-li" class="wide" hidden><a id="console-link" href="#" rel="noopener">Console <i data-icon="arrow" class="ic-sm"></i></a></li>
+      <li data-pilot-only hidden><a class="btn btn-primary nav-cta" data-pilot href="#shuru">Free pilot maango</a></li>
     </ul>
   </nav>
 </header>
@@ -73,13 +155,14 @@
 <main id="main">
   <section class="hero wrap">
     <div class="hero-copy">
-      <span class="chip" data-reveal>AI receptionist · Hinglish</span>
       <h1 data-reveal style="--i:1">Phone uthata hai.<br>Hinglish mein.<br><span class="dev">सबूत</span> ke saath.</h1>
-      <p class="lead" data-reveal style="--i:2">Clinic, salon ya lab ke liye. Har call uthata hai, booking likhta hai, aur baad mein saabit kar sakta hai ki caller ne kya haan boli.</p>
+      <p class="lead" data-reveal style="--i:2">Clinic, salon, lab aur coaching ke liye AI receptionist. Customer call ya WhatsApp kare, HaanJi uski bhasha mein baat karke slot book karta hai, aur har booking ka signed saboot aapke paas rehta hai.</p>
       <div class="row" data-reveal style="--i:3">
-        <a class="btn btn-primary" href="talk">Baat karke dekho <i data-icon="arrow"></i></a>
-        <a class="btn btn-ghost" href="#pillars">Kaise kaam karta hai</a>
+        <a class="btn btn-primary" href="talk">Abhi baat karke dekho <i data-icon="arrow"></i></a>
+        <a class="btn btn-ghost" data-pilot-alt href="#kaise">Kaise kaam karta hai</a>
+        <a class="btn btn-ghost" data-pilot-only data-pilot href="#shuru" hidden>Free pilot maango</a>
       </div>
+      <p class="hero-note" data-reveal style="--i:4">Demo ke liye na login chahiye na app: browser mein mic se bolo ya type karo.</p>
     </div>
     <div class="frame phone" id="hero-call" tabindex="0" aria-label="Ek sample call ka replay; hover ya focus karne pe rukta hai">
       <div class="phone-head"><span class="live"><i></i>LIVE CALL · SMILE CARE DENTAL</span><span class="mono timer">00:00</span></div>
@@ -87,10 +170,69 @@
     </div>
   </section>
 
+  <section class="wall section" id="kaise">
+    <div class="wrap">
+      <h2>Customer ki call se aapke calendar tak</h2>
+      <ol class="flow">
+        <li>
+          <div class="flow-text">
+            <span class="step" aria-hidden="true">1</span>
+            <h3>Customer call ya WhatsApp karta hai</h3>
+            <p>Hinglish, Hindi ya English, jaise woh roz bolta hai. Recogniser "rut kanal" sune, tab bhi HaanJi aapki services ki list se "root canal" padhta hai.</p>
+          </div>
+          <figure class="shot shot-chat">
+            <img src="static/shot-chat.webp" width="840" height="2442" loading="lazy" decoding="async"
+                 alt="WhatsApp chat: customer ne 'rut kanal' likha, HaanJi ne root canal padha, slot aur naam dohra ke poocha, aur 'haan confirm kar do' ke baad confirmation code 69ED-F4E3 aur receipt ka link bheja.">
+            <figcaption>Asli engine, sample customer: WhatsApp par booking.</figcaption>
+          </figure>
+        </li>
+        <li>
+          <div class="flow-text">
+            <span class="step" aria-hidden="true">2</span>
+            <h3>Haan bolne par hi booking pakki</h3>
+            <p>HaanJi slot, doctor aur naam dohra ke poochta hai. Customer haan bole tabhi booking banti hai, aur use ek code milta hai jisse woh apni receipt khud khol sakta hai.</p>
+          </div>
+          <figure class="shot">
+            <img src="static/shot-receipt.webp" width="1094" height="789" loading="lazy" decoding="async"
+                 alt="Customer ki receipt 69ED-F4E3: VALID, root canal, Somvaar 16 Nov, 10:30 subah, Dr Sheikh, agent ka sawaal aur customer ka jawab 'haan confirm kar do'.">
+            <figcaption>Customer ka link: receipt jo browser mein khud verify hoti hai.</figcaption>
+          </figure>
+        </li>
+        <li>
+          <div class="flow-text">
+            <span class="step" aria-hidden="true">3</span>
+            <h3>Aapko sab ek jagah dikhta hai</h3>
+            <p>Aaj ki calls, bookings aur unki kamaai, aur kise wapas call karna hai. Console phone ke browser mein bhi chalta hai, aur chahein to roz shaam din ka hisaab WhatsApp par aata hai.</p>
+          </div>
+          <figure class="shot">
+            <img src="static/shot-dashboard.webp" width="1448" height="924" loading="lazy" decoding="async"
+                 alt="Owner console ka Aaj page: 7 calls, 4 bookings 15,200 rupaye ki, 2 callback chahiye, aur 'Inhe wapas call karo' list mein do customers ke number aur unki maang.">
+            <figcaption>Owner console: aaj ka din aur callback list.</figcaption>
+          </figure>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="kiske">
+    <div class="wrap two">
+      <div>
+        <h2>Aapke business ke shabd pehle se jaanta hai</h2>
+        <p class="lead">Har business ek pack hai: services, daam, timing, staff, aur woh shabd jo log galat bolte hain. Naya business console ke "Nayi dukaan" mein paanch sawaalon se judta hai.</p>
+      </div>
+      <ul class="kinds">
+        <li><b>Dental clinic</b><span>Hinglish · Tanglish (Chennai) · Benglish (Kolkata) · Marathinglish (Pune)</span></li>
+        <li><b>Salon aur spa</b><span>Hinglish · Punglish (Ludhiana)</span></li>
+        <li><b>Diagnostic lab</b><span>Hinglish · Tenglish (Hyderabad)</span></li>
+        <li><b>Coaching institute</b><span>Hinglish · Gujlish (Ahmedabad)</span></li>
+      </ul>
+    </div>
+  </section>
+
   <section class="wall section" id="pillars">
     <div class="wrap">
-      <span class="eyebrow">Engine ke teen hisse</span>
       <h2>Galat suna shabd, late jawab, aur baad ka jhagda.</h2>
+      <p class="pillars-note">Teeno ka hal engine mein hai. Neeche ke number benchmark ke hain: recogniser ki galtiyan simulate karke naape gaye, asli calls par nahi.</p>
       <div class="grid-3 pillars">
         <article class="pillar" data-reveal>
           <span class="badge">Bhasha Bridge</span>
@@ -117,25 +259,33 @@
     </div>
   </section>
 
-  <section class="section">
+  <section class="wall section" id="bharosa">
+    <div class="wrap two">
+      <h2>Customer ka data, customer ki marzi</h2>
+      <dl class="trust">
+        <div><dt>Call ki shuruaat mein bataata hai</dt><dd>Har call ek line se shuru ho sakti hai ki baat record ho rahi hai. Line aap khud likhte ho.</dd></div>
+        <div><dt>180 din baad apne aap mit jaata hai</dt><dd>Purani calls, WhatsApp messages aur missed calls hat jaate hain. Bookings aur receipts aapka record hain, woh rehti hain.</dd></div>
+        <div><dt>Maange to poora record, ya kuch nahi</dt><dd>Customer ke kehne par uska sab data dikhao ya mita do. Mitane ke baad uski receipts mein naam aur number padhe hi nahi ja sakte.</dd></div>
+        <div><dt>Har booking ka signed saboot</dt><dd>Ed25519 signature aur chain: customer apne code se khud check kar sakta hai ki booking baad mein badli nahi.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section" id="try">
     <div class="wrap">
-      <span class="eyebrow">Khud try karo</span>
-      <h2>Teeno pages bina login ke khulte hain.</h2>
-      <div class="grid-3" style="margin-top:36px">
+      <h2>Teeno pages bina login ke khulte hain</h2>
+      <div class="grid-3 try-grid">
         <a class="frame try" href="talk" data-reveal>
-          <span class="eyebrow">Live call</span>
           <h3>Talk to HaanJi</h3>
           <p>Mic se bolo ya type karo. Bagal ke panel mein Bhasha repair, speculation aur receipt live dikhte hain.</p>
           <span class="go"><i data-icon="arrow"></i></span>
         </a>
         <a class="frame try" href="whatsapp" data-reveal style="--i:1">
-          <span class="eyebrow">WhatsApp</span>
-          <h3>Same brain, chat pe</h3>
+          <h3>WhatsApp simulator</h3>
           <p>Wahi agent, text pe. Missed call button dabao to HaanJi khud WhatsApp pe pehla message bhejta hai.</p>
           <span class="go"><i data-icon="arrow"></i></span>
         </a>
         <a class="frame try" href="verify" data-reveal style="--i:2">
-          <span class="eyebrow">Pramaan</span>
           <h3>Receipt verifier</h3>
           <p>Har hash aur signature aapke browser mein dobara check hota hai. Ek field chhedo aur dekho chain kaise tootti hai.</p>
           <span class="go"><i data-icon="arrow"></i></span>
@@ -144,17 +294,61 @@
     </div>
   </section>
 
-  <section class="wall section">
-    <div class="wrap grid-3 open">
-      <div data-reveal><h3>Har business ek YAML file</h3><p>Dental clinic, salon, lab aur coaching, sab ke apne YAML pack hain: catalogue, hours, persona, guardrails, aur wo calls jo pack ko ship hone se pehle paas karni hain.</p></div>
-      <div data-reveal style="--i:1"><h3>Number kahan se aate hain</h3><p>Upar ka har number <code>python -m haanji.bench</code> se aata hai aur <code>research/results.json</code> mein likha jaata hai. README mein koi estimate nahi hai.</p></div>
-      <div data-reveal style="--i:2"><h3>Khud verify karo</h3><p>Receipts ka export lo aur <a href="verify">browser mein</a> har hash aur signature dobara check karo. Humpe bharosa karna zaroori nahi.</p></div>
+  <section class="section" id="shuru">
+    <div class="wrap two">
+      <div>
+        <h2>Shuru kaise karein</h2>
+        <ol class="start">
+          <li><span><b>Demo dekho.</b> Do minute: <a href="talk">browser mein baat karo</a> ya <a href="whatsapp">WhatsApp simulator</a> chalao.</span></li>
+          <li><span><b>Apni dukaan jodo.</b> Services, timing aur staff ke paanch sawaal, phir apni hi dukaan ke saath test call.</span></li>
+          <li><span><b>WhatsApp number jodo.</b> Aapka WhatsApp Business number engine se judta hai, aur bookings pehle din se console mein aati hain.</span></li>
+        </ol>
+      </div>
+      <div class="ask">
+        <h3>Apni dukaan par try karna hai?</h3>
+        <p data-pilot-only hidden>WhatsApp par apna business aur shehar likh do. Free pilot ki baat wahin se shuru hoti hai.</p>
+        <a class="btn btn-primary" data-pilot-only data-pilot href="#shuru" hidden><i data-icon="phone"></i>WhatsApp par pilot maango</a>
+        <p data-pilot-alt>Pehle demo chala ke dekho; code GitHub par khula hai.</p>
+        <a class="btn btn-primary" data-pilot-alt href="talk">Demo kholo <i data-icon="arrow"></i></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="wall section" id="sawaal">
+    <div class="wrap">
+      <h2>Aksar pooche jaane wale sawaal</h2>
+      <div class="faq">
+        <details>
+          <summary>Kya ye asli phone call uthata hai?</summary>
+          <p>WhatsApp par haan: Meta ke WhatsApp Cloud API number se seedha judta hai. Phone line ka code bhi taiyaar hai (Twilio number, Deepgram aur ElevenLabs ki awaaz), lekin uska kharcha alag hai aur keys aapki lagti hain. Browser demo mic se chalta hai.</p>
+        </details>
+        <details>
+          <summary>Kaunsi bhashayein bolta hai?</summary>
+          <p>Hinglish ke saath Tanglish, Benglish, Marathinglish, Punglish, Tenglish aur Gujlish: abhi 10 packs aur 7 bhashayein. Jawab Roman script mein aate hain, jaise log WhatsApp par likhte hain.</p>
+        </details>
+        <details>
+          <summary>Agent ko samajh na aaye, ya caller insaan se baat karna chahe?</summary>
+          <p>Jo pack mein nahi hai woh nahi bolta, daam bhi nahi. Caller insaan maange ya kaam call par na ho, to woh number le leta hai aur call console ki "Inhe wapas call karo" list mein aa jaati hai. Chalti WhatsApp chat aap "Khud jawab do" se khud bhi le sakte ho.</p>
+        </details>
+        <details>
+          <summary>Galat booking ho gayi to?</summary>
+          <p>Booking tabhi banti hai jab caller slot sunke haan bolta hai, aur agent ka sawaal aur caller ka jawab dono receipt mein sign hote hain. Console ke calendar se booking cancel ho sakti hai, aur customer ko WhatsApp par khabar chali jaati hai.</p>
+        </details>
+        <details>
+          <summary>Mera aur customers ka data kahan rehta hai?</summary>
+          <p>Aapke apne server par; code <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub par khula hai</a>. Calls 180 din baad mit jaati hain, aur customer ke kehne par uska record turant mit sakta hai.</p>
+        </details>
+        <details>
+          <summary>Owner ko kya chahiye?</summary>
+          <p>Bas phone ya laptop ka browser. Console mein aaj ki calls, calendar, customers aur settings hain; har nayi booking aapke Google, Apple ya Outlook calendar mein bhi aa sakti hai.</p>
+        </details>
+      </div>
     </div>
   </section>
 </main>
 
 <footer class="wrap foot">
-  <span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a></span>
+  <span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a> · <a href="#sawaal">Sawaal</a> · <a href="verify">Receipt verifier</a></span>
   <span class="mono muted">HaanJi v1.1.0</span>
 </footer>
 
@@ -168,6 +362,18 @@
       document.getElementById("console-link").href = s.console_url;
       document.getElementById("console-li").hidden = false;
       Signboard.mountIcons(document.getElementById("console-li"));
+    }
+    // "Free pilot maango" opens a WhatsApp chat with the shop that runs this
+    // server, when it has said which number (HAANJI_SALES_WHATSAPP).
+    const digits = s && s.sales_whatsapp ? String(s.sales_whatsapp).replace(/\D/g, "") : "";
+    if (digits.length >= 10) {
+      const text = encodeURIComponent("Namaste, mujhe HaanJi ka free pilot chahiye. Business: , Shehar: ");
+      document.querySelectorAll("[data-pilot]").forEach(function (a) {
+        a.href = "https://wa.me/" + digits + "?text=" + text;
+        a.target = "_blank"; a.rel = "noopener";
+      });
+      document.querySelectorAll("[data-pilot-only]").forEach(function (el) { el.hidden = false; });
+      document.querySelectorAll("[data-pilot-alt]").forEach(function (el) { el.hidden = true; });
     }
   });
   // The Bhasha widget replays three real repairs from the packs.

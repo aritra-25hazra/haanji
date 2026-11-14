@@ -87,6 +87,10 @@
     .stage canvas { height: 210px; }
     .suggest { padding-left: 16px; }
   }
+  /* the opening hint reads as a paragraph, not one 110-character line */
+  #empty { max-width: 60ch; margin-inline: auto; text-wrap: pretty; }
+  .ebody p { text-wrap: pretty; }
+  .engine header a { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; }
 </style>
 </head>
 <body>
