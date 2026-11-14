@@ -2229,7 +2229,7 @@ async def static_file(name: str):
         raise HTTPException(404)
     media = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml",
              ".html": "text/html", ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg",
-             ".woff2": "font/woff2"}.get(os.path.splitext(name)[1], "text/plain")
+             ".woff2": "font/woff2", ".mp4": "video/mp4"}.get(os.path.splitext(name)[1], "text/plain")
     # Vendored libraries and font files carry a version or a content hash in
     # the name, so they never change under a URL: a browser keeps them.
     headers = ({"Cache-Control": "public, max-age=31536000, immutable"}

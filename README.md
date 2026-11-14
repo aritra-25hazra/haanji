@@ -50,7 +50,7 @@ evidence is), [docs/competitors.md](docs/competitors.md),
 | **WhatsApp simulator** | https://haanji-engine.onrender.com/whatsapp | same brain over chat, plus missed-call recovery |
 | **Public verifier** | https://haanji-engine.onrender.com/verify | every hash and signature re-checked in your browser |
 | **Owner console** | https://haanji-kappa.vercel.app | dashboard, calls, Pack Studio |
-| **Demo video** | *coming — see [docs/demo-script.md](docs/demo-script.md)* | 90 seconds |
+| **Walkthrough** | [haanji-walkthrough.mp4](https://haanji-engine.onrender.com/static/haanji-walkthrough.mp4), silent with captions: a call, its receipt, the owner's day. A narrated cut follows [docs/demo-script.md](docs/demo-script.md) | 45 seconds |
 
 The engine runs on a free instance; the first visit after a quiet spell can take
 ~20 s to wake.
