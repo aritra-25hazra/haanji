@@ -127,7 +127,7 @@ export function Tile({ label, value, foot, mono = false, decimals = 0, prefix = 
   return (
     <div className={"tile" + (sample ? " sample" : "")} data-reveal style={{ "--i": index } as CSSProperties}>
       {sample && <span className="watermark" aria-label="sample data">SAMPLE</span>}
-      <h3>{label}</h3>
+      <p className="label">{label}</p>
       <div className={"value" + (mono ? " mono" : "")}>
         {typeof value === "number" ? <>{prefix}<CountUp value={value} decimals={decimals} />{suffix}</> : value}
       </div>

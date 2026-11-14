@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SplitText from "../components/SplitText";
 import { engine } from "../engine";
 import { useApp } from "../state";
 import { Icon } from "../components/Common";
@@ -35,7 +36,7 @@ export default function Login() {
     <div className="login">
       <div className="login-card">
         <span className="eyebrow">Receptionist console</span>
-        <h1>Sign in</h1>
+        <SplitText tag="h1" text="Sign in" trigger="load" splitType="chars" effect="rise" textAlign="left" delay={35} duration={0.7} />
         <p className="muted">Jis WhatsApp number se aap owner ya staff hain, wahi number. Password nahi, ek baar ka code aata hai.</p>
         {stage === "phone" ? (
           <form className="form" onSubmit={(e) => { e.preventDefault(); void sendCode(); }}>
