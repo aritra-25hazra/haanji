@@ -15,17 +15,19 @@ const SWATCH: Record<string, string> = {
 
 export default function Dashboard() {
   const { pack, mode, status } = useApp();
-  const live = mode === "live";
-  const loader = live ? () => engine.insights(pack) : mode === "demo" ? () => Promise.resolve(sample.insights()) : null;
-  const { data, loading, error, reload } = useData(loader, [pack, mode]);
+  // A shop with no calls yet can look at a full day first; it is labelled sample throughout.
+  const [preview, setPreview] = useState(false);
+  const live = mode === "live" && !preview;
+  const loader = live ? () => engine.insights(pack) : mode === "demo" || preview ? () => Promise.resolve(sample.insights()) : null;
+  const { data, loading, error, reload } = useData(loader, [pack, mode, preview]);
   useEffect(() => {
     if (!live) return;
     const t = setInterval(reload, 5000);
     return () => clearInterval(t);
   }, [live, reload]);
 
-  if (!live && mode !== "demo") return <NotLive title="Aaj" />;
-  if (loading && !data) return <Loading />;
+  if (!live && !preview && mode !== "demo") return <NotLive title="Aaj" />;
+  if (loading && !data) return <Loading kind="dashboard" />;
   if (!data) {
     return (
       <Page title="Aaj">
@@ -47,16 +49,22 @@ export default function Dashboard() {
             {status?.whatsapp?.configured && <Chip kind="ok"><Icon name="phone" small />Asli WhatsApp juda hai{status.whatsapp.number ? ` · ${status.whatsapp.number}` : ""}</Chip>}
             <Link className="btn btn-ghost btn-sm" to="/calendar"><Icon name="calendar" small />Calendar</Link>
           </>}>
+      {preview && (
+        <div className="preview-note" role="status">
+          <span><b>Sample din.</b> Ye asli data nahi hai; sirf dikhane ke liye ki bhara hua din kaisa dikhta hai.</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setPreview(false)}>Asli dashboard</button>
+        </div>
+      )}
       <div className="tiles">
-        <Tile index={0} label="Calls aaj" value={data.calls_today} foot={`${data.calls_total} kul`} />
-        <Tile index={1} label="Bookings" value={data.bookings_confirmed} foot={`${fmtInr(data.revenue_booked_inr)} ki`} />
-        <Tile index={2} label="Callback chahiye" value={callbacks} foot={callbacks ? "neeche list hai" : "koi baaki nahi"} />
-        <Tile index={3} label="Missed calls wapas" value={`${data.missed_calls.recovered}/${data.missed_calls.total}`} foot="WhatsApp se" />
-        <Tile index={4} label="₹ per call" value={data.cost.ai_per_call_inr} decimals={2} prefix="₹" mono foot={`receptionist ₹${data.cost.receptionist_per_call_inr.toFixed(2)}`} />
-        <Tile index={5} label="Shabd sudhaare" value={data.corrections_total} foot="galat sune naam aur services" />
+        <Tile sample={preview} index={0} label="Calls aaj" value={data.calls_today} foot={`${data.calls_total} kul`} />
+        <Tile sample={preview} index={1} label="Bookings" value={data.bookings_confirmed} foot={`${fmtInr(data.revenue_booked_inr)} ki`} />
+        <Tile sample={preview} index={2} label="Callback chahiye" value={callbacks} foot={callbacks ? "neeche list hai" : "koi baaki nahi"} />
+        <Tile sample={preview} index={3} label="Missed calls wapas" value={`${data.missed_calls.recovered}/${data.missed_calls.total}`} foot="WhatsApp se" />
+        <Tile sample={preview} index={4} label="₹ per call" value={data.cost.ai_per_call_inr} decimals={2} prefix="₹" mono foot={`receptionist ₹${data.cost.receptionist_per_call_inr.toFixed(2)}`} />
+        <Tile sample={preview} index={5} label="Shabd sudhaare" value={data.corrections_total} foot="galat sune naam aur services" />
       </div>
 
-      {live && data.calls_total === 0 && <FirstSteps whatsapp={!!status?.whatsapp?.configured} />}
+      {live && data.calls_total === 0 && <FirstSteps whatsapp={!!status?.whatsapp?.configured} onPreview={() => setPreview(true)} />}
       {data.calls_total > 0 && <Callbacks pack={pack} live={live} />}
 
       <Panel title="Din bhar ki calls" hint={peak.calls ? `peak ${peak.hour}:00 · ${peak.calls} calls · booked marigold mein` : undefined}>
@@ -115,7 +123,7 @@ function dayHours(rows: { hour: string; calls: number; booked: number }[]) {
 
 /** What a shop does before its first call, each step marked done from what
  *  the engine reports. Disappears once a call has come in. */
-function FirstSteps({ whatsapp }: { whatsapp: boolean }) {
+function FirstSteps({ whatsapp, onPreview }: { whatsapp: boolean; onPreview: () => void }) {
   const steps = [
     { done: false, title: "Ek test call karo", body: "Browser mein mic se ya type karke baat karo. Booking, receipt aur ye dashboard turant bharenge.",
       action: <a className="btn btn-primary btn-sm" href="/engine/talk" target="_blank" rel="noopener noreferrer">Test call kholo <Icon name="external" small /></a> },
@@ -127,7 +135,8 @@ function FirstSteps({ whatsapp }: { whatsapp: boolean }) {
       action: <Link className="btn btn-ghost btn-sm" to="/settings">Settings</Link> },
   ];
   return (
-    <Panel title="Shuru karne ke 4 kadam" hint={`${steps.filter((x) => x.done).length} of 4 ho gaye`}>
+    <Panel title="Shuru karne ke 4 kadam" hint={`${steps.filter((x) => x.done).length} of 4 ho gaye`}
+           actions={<button className="btn btn-ghost btn-sm" onClick={onPreview}>Sample din dekho</button>}>
       <ol className="body first-steps">
         {steps.map((x) => (
           <li key={x.title} className={x.done ? "done" : undefined}>

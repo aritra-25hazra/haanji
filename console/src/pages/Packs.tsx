@@ -13,7 +13,7 @@ export default function Packs() {
   const { data, loading, error, reload } = useData(loader, [mode]);
 
   if (!live && mode !== "demo") return <NotLive title="Vertical packs" sub={SUB} />;
-  if (loading && !data) return <Loading />;
+  if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (
       <Page title="Packs">

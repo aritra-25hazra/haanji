@@ -68,6 +68,7 @@ p { margin: 0; }
 @media (max-width: 720px) {
   .topbar { gap: 8px; padding: 8px 10px; flex-wrap: wrap; }
   .navrow { order: 3; flex-basis: 100%; }
+  .nav a, .engine-menu > button { padding: 0 10px; }
   .engine-menu ul { left: auto; right: 0; }
   .wordmark .dev { display: none; }
   .tools { gap: 6px; min-width: 0; }
@@ -356,3 +357,40 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 .status-row { display: flex; gap: 10px; flex-wrap: wrap; padding: 14px 18px; }
 .crash h2 { font-size: 22px; color: var(--sindoor-ink); }
 .tools .btn-sm { min-height: 36px; }
+
+/* ── skeletons: the shape of what is loading ─────────────────────────── */
+.skeleton > div { display: flex; flex-direction: column; gap: 12px; }
+.sk { display: block; border-radius: 6px; background: linear-gradient(90deg, rgba(27, 59, 140, .07) 0%, rgba(27, 59, 140, .13) 40%, rgba(27, 59, 140, .07) 80%); background-size: 300% 100%; animation: sk-shimmer 1.4s var(--ease-out) infinite; }
+.sk-title { width: 180px; height: 34px; }
+.sk-sub { width: min(420px, 80%); height: 14px; margin-bottom: 8px; }
+.sk-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+.sk-tile { height: 108px; border-radius: 10px; }
+.sk-panel { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: var(--r-card); background: var(--paper); border: 1px solid var(--rule); }
+.sk-head { width: 30%; height: 16px; margin-bottom: 6px; }
+.sk-line { height: 12px; }
+.sk-row { display: grid; grid-template-columns: 1.2fr 1fr 1.4fr .8fr; gap: 16px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
+.sk-row .sk { height: 12px; }
+.sk-chart { height: 180px; border-radius: 8px; }
+@keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+/* ── a register as cards on a phone ──────────────────────────────────── */
+@media (max-width: 720px) {
+  .register.cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .register.cards, .register.cards tbody { display: block; }
+  .register.cards tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; padding: 14px 16px; border-bottom: 1px solid var(--rule); }
+  .register.cards td { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; height: auto; padding: 0; border: 0; text-align: left; min-width: 0; }
+  .register.cards td.right { text-align: left; }
+  .register.cards td::before { content: attr(data-label); font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+  .register.cards td:first-child { grid-column: 1 / -1; font-weight: 600; }
+}
+
+/* ── the sample day on Aaj ───────────────────────────────────────────── */
+.preview-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; margin-bottom: 18px; border-radius: var(--r-card); background: rgba(245, 185, 30, .2); border: 1px solid rgba(138, 97, 0, .3); color: var(--ink); font-size: 14px; }
+
+/* ── the parts of the browser the design also owns ───────────────────── */
+::selection { background: var(--marigold); color: var(--cobalt-deep); }
+.topbar ::selection { background: var(--chalk); color: var(--cobalt); }
+html { scrollbar-color: rgba(27, 59, 140, .35) transparent; }
+input, textarea { caret-color: var(--cobalt); }
+.num, .tile .value, .mono { font-variant-numeric: tabular-nums; }

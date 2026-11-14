@@ -32,7 +32,7 @@ export default function Ledger() {
   const ops = useData(live ? () => engine.ops(pack) : null, [pack, mode]);
 
   if (!live && mode !== "demo") return <NotLive title="Pramaan ledger" sub={SUB} />;
-  if (loading && !data) return <Loading />;
+  if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (
       <Page title="Pramaan">

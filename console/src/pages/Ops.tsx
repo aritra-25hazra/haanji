@@ -17,7 +17,7 @@ export default function Ops() {
   }, [live, reload]);
 
   if (!live) return <NotLive title="Ops" sub={SUB} demo={<p>Ops view live engine se aata hai.</p>} />;
-  if (loading && !data) return <Loading />;
+  if (loading && !data) return <Loading kind="dashboard" />;
   if (!data) return <Page title="Ops"><Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara</button></Empty></Page>;
 
   const slo = data.slo;

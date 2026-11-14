@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { useApp } from "../state";
 import { engine, devanagariWanted, setDevanagariWanted } from "../engine";
 
@@ -120,10 +120,10 @@ function CountUp({ value, decimals }: { value: number; decimals: number }) {
 
 /** A number on the wall. In the demo it carries a SAMPLE watermark, so a
  *  screenshot can never pass a sample figure off as a real one. */
-export function Tile({ label, value, foot, mono = false, decimals = 0, prefix = "", suffix = "", index = 0 }:
-  { label: string; value: ReactNode | number; foot?: string; mono?: boolean; decimals?: number; prefix?: string; suffix?: string; index?: number }) {
+export function Tile({ label, value, foot, mono = false, decimals = 0, prefix = "", suffix = "", index = 0, sample: preview = false }:
+  { label: string; value: ReactNode | number; foot?: string; mono?: boolean; decimals?: number; prefix?: string; suffix?: string; index?: number; sample?: boolean }) {
   const { mode } = useApp();
-  const sample = mode === "demo";
+  const sample = mode === "demo" || preview;
   return (
     <div className={"tile" + (sample ? " sample" : "")} data-reveal style={{ "--i": index } as CSSProperties}>
       {sample && <span className="watermark" aria-label="sample data">SAMPLE</span>}
@@ -147,9 +147,15 @@ const OUTCOME_KIND: Record<string, ChipKind | undefined> = {
   BOOKED: "ok", RESCHEDULED: "ok", FAQ_ANSWERED: undefined, LEAD_CAPTURED: "warn", HANDED_OFF: "bad",
   REFUSED: "ink", ABANDONED: "muted", IN_PROGRESS: "muted",
 };
+// What an owner calls each ending; the engine's names stay in the data.
+const OUTCOME_LABEL: Record<string, string> = {
+  BOOKED: "booking hui", RESCHEDULED: "time badla", FAQ_ANSWERED: "jawab diya", LEAD_CAPTURED: "callback chahiye",
+  HANDED_OFF: "insaan ko diya", REFUSED: "mana kiya", ABANDONED: "beech mein kati", IN_PROGRESS: "chal rahi hai",
+};
+
 export function OutcomeChip({ outcome }: { outcome: string | null }) {
   const o = outcome || "IN_PROGRESS";
-  return <Chip kind={OUTCOME_KIND[o]}>{o.replace(/_/g, " ").toLowerCase()}</Chip>;
+  return <Chip kind={OUTCOME_KIND[o]}>{OUTCOME_LABEL[o] ?? o.replace(/_/g, " ").toLowerCase()}</Chip>;
 }
 
 export function Stamp({ tone = "red", big = false, children }:
@@ -192,10 +198,19 @@ export function Repair({ c }: { c: { from_token: string; to_surface: string; asr
   );
 }
 
-export function Register({ head, children }: { head: ReactNode; children: ReactNode }) {
+/** A table. With `cards`, each row becomes a labelled card on a phone
+ *  instead of a strip to scroll sideways; the labels are the header cells. */
+export function Register({ head, children, cards = false }: { head: ReactNode; children: ReactNode; cards?: boolean }) {
+  const ref = useRef<HTMLTableElement>(null);
+  useLayoutEffect(() => {
+    const t = ref.current;
+    if (!cards || !t) return;
+    const labels = [...t.querySelectorAll("thead th")].map((th) => th.textContent ?? "");
+    t.querySelectorAll("tbody tr").forEach((tr) => [...tr.children].forEach((td, i) => { (td as HTMLElement).dataset.label = labels[i] ?? ""; }));
+  });
   return (
     <div className="register-wrap" tabIndex={0} role="region" aria-label="Register, chhoti screen pe side mein scroll hota hai">
-      <table className="register">
+      <table className={"register" + (cards ? " cards" : "")} ref={ref}>
         <thead><tr>{head}</tr></thead>
         <tbody>{children}</tbody>
       </table>
@@ -233,7 +248,27 @@ export function Confirm({ text, yes = "Haan", no = "Nahi", busy = false, onYes, 
 }
 
 export function Empty({ children }: { children: ReactNode }) { return <div className="empty">{children}</div>; }
-export function Loading() { return <div className="loading">Loading…</div>; }
+/** The shape of what is coming, not a word: tiles and panels for the day,
+ *  rows for a register, lines for anything else. */
+export function Loading({ kind = "panel" }: { kind?: "panel" | "table" | "dashboard" }) {
+  const lines = (n: number) => Array.from({ length: n }, (_, i) => <span key={i} className="sk sk-line" style={{ width: `${88 - ((i * 17) % 40)}%` }} />);
+  return (
+    <div className={`skeleton skeleton-${kind}`} role="status" aria-live="polite">
+      <span className="sr-only">Loading…</span>
+      <div aria-hidden="true">
+        <span className="sk sk-title" /><span className="sk sk-sub" />
+        {kind === "dashboard" && <div className="sk-tiles">{Array.from({ length: 6 }, (_, i) => <span key={i} className="sk sk-tile" />)}</div>}
+        <div className="sk-panel">
+          <span className="sk sk-head" />
+          {kind === "table"
+            ? Array.from({ length: 6 }, (_, i) => <div key={i} className="sk-row"><span className="sk" /><span className="sk" /><span className="sk" /><span className="sk" /></div>)
+            : lines(kind === "dashboard" ? 3 : 4)}
+        </div>
+        {kind === "dashboard" && <div className="sk-panel"><span className="sk sk-head" /><span className="sk sk-chart" /></div>}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Load something whenever `deps` change (and on `reload()`). `load` may be

@@ -55,19 +55,36 @@ export function errorMessage(status: number, contentType: string | null, body: s
   if (text.startsWith("{")) {
     try {
       const j = JSON.parse(text) as { detail?: unknown };
-      if (typeof j.detail === "string") return j.detail;
+      if (typeof j.detail === "string") return plain(status, j.detail);
       if (Array.isArray(j.detail)) return j.detail.map((d) => (typeof d === "object" && d && "msg" in d ? String((d as { msg: unknown }).msg) : String(d))).join("; ");
     } catch { /* not JSON after all */ }
   }
-  return text || `Engine error ${status}`;
+  return text || `Engine mein dikkat aayi (${status}). Thodi der mein dobara try karo.`;
+}
+
+/** The engine's English detail, said the way the console speaks. A 422 keeps
+ *  its detail: it names the field that is wrong. */
+function plain(status: number, detail: string): string {
+  if (status === 403 && /read-only/.test(detail)) return "Public demo mein ye badlaav band hai (read-only). Asli dukaan ke liye login on karo.";
+  if (status === 403 && /owner/.test(detail)) return "Ye kaam sirf owner kar sakta hai.";
+  if (status === 403) return "Is kaam ki ijazat nahi hai.";
+  if (status === 401) return "Session khatam ho gaya. Dobara sign in karo.";
+  if (status === 429) return "Bahut jaldi-jaldi koshish hui. Ek minute ruk ke dobara try karo.";
+  if (status === 413) return "Ye bahut bada hai; chhota karke bhejo.";
+  return detail;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
-  const r = await fetch(enginePath(path), {
-    ...init,
-    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) },
-  });
+  let r: Response;
+  try {
+    r = await fetch(enginePath(path), {
+      ...init,
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) },
+    });
+  } catch {
+    throw new EngineError(0, "Engine se connect nahi ho pa raha. Internet check karo, ya thodi der mein dobara try karo.");
+  }
   if (r.status === 401) {
     setToken(null);
     window.dispatchEvent(new Event("haanji:signed-out"));

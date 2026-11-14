@@ -50,6 +50,10 @@ const PILL: Record<Mode, { text: string; title: string }> = {
 export default function App() {
   const { mode, pack, packs, setPack, authRequired, user, isOwner, signOut } = useApp();
   const location = useLocation();
+  // On a phone the tabs scroll sideways; keep the current one in view.
+  useEffect(() => {
+    document.querySelector(".nav a.active")?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [location.pathname]);
   if (authRequired) return <Suspense fallback={<Loading />}><Login /></Suspense>;
   const pill = PILL[mode];
   return (

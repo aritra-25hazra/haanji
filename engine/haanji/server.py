@@ -2210,6 +2210,11 @@ async def transparency_page():
     return _page("transparency.html")
 
 
+@app.get("/privacy")
+async def privacy_page():
+    return _page("privacy.html")
+
+
 @app.get("/design")
 async def design_page():
     return _page("design.html")
@@ -2223,10 +2228,12 @@ async def static_file(name: str):
     if not os.path.exists(path):
         raise HTTPException(404)
     media = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml",
-             ".html": "text/html", ".webp": "image/webp", ".png": "image/png"}.get(os.path.splitext(name)[1], "text/plain")
-    # Vendored libraries carry their version in the name, so they never change
-    # under a URL: a browser keeps them (three.js is 690 kB).
-    headers = {"Cache-Control": "public, max-age=31536000, immutable"} if re.match(r"three-\d", name) else None
+             ".html": "text/html", ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg",
+             ".woff2": "font/woff2"}.get(os.path.splitext(name)[1], "text/plain")
+    # Vendored libraries and font files carry a version or a content hash in
+    # the name, so they never change under a URL: a browser keeps them.
+    headers = ({"Cache-Control": "public, max-age=31536000, immutable"}
+               if re.match(r"three-\d|font-.*-[0-9a-f]{6}\.woff2$", name) else None)
     return FileResponse(path, media_type=media, headers=headers)
 
 

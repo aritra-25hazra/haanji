@@ -18,7 +18,12 @@ describe("errorMessage", () => {
     expect(errorMessage(422, "application/json", JSON.stringify({ detail: "unknown setting: foo" }))).toBe("unknown setting: foo");
     expect(errorMessage(422, "application/json", JSON.stringify({ detail: [{ loc: ["body", "phone"], msg: "field required" }] }))).toBe("field required");
     expect(errorMessage(500, "text/plain", "boom")).toBe("boom");
-    expect(errorMessage(500, null, "")).toBe("Engine error 500");
+    expect(errorMessage(500, null, "")).toBe("Engine mein dikkat aayi (500). Thodi der mein dobara try karo.");
+  });
+  it("says permission and rate errors in the console's words", () => {
+    expect(errorMessage(403, "application/json", JSON.stringify({ detail: "the public demo is read-only: set HAANJI_AUTH=on" }))).toMatch(/read-only/);
+    expect(errorMessage(403, "application/json", JSON.stringify({ detail: "owner role needed" }))).toBe("Ye kaam sirf owner kar sakta hai.");
+    expect(errorMessage(429, "application/json", JSON.stringify({ detail: "too many requests" }))).toMatch(/ruk ke/);
   });
 });
 

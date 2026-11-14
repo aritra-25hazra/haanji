@@ -146,6 +146,11 @@ def _mins(hhmm: str) -> int:
 
 
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
+
+
+def wall_today() -> dt.date:
+    """Today in India, when nothing is pinned. A function so tests can move it."""
+    return dt.datetime.now(IST).date()
 PERIODS = {"morning": (0, 12 * 60), "afternoon": (12 * 60, 16 * 60), "evening": (16 * 60, 24 * 60)}
 
 
@@ -173,7 +178,7 @@ class LocalBackend:
     def today(self) -> dt.date:
         if self._now is not None:
             return self._now.date()
-        return self._today or dt.datetime.now(IST).date()
+        return self._today or wall_today()
 
     @today.setter
     def today(self, value: dt.date | None) -> None:

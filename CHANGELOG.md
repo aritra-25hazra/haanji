@@ -24,6 +24,22 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
 * Accessibility: axe finds no serious or critical issue on 15 pages at 1440
   and 390 px; contrast, small targets (24 px checkboxes, links) and line
   lengths fixed; `.webp`/`.png` served with their media types.
+* **Premium pass.** Skeletons shaped like the page instead of "Loading…";
+  Calls and Customers become labelled cards on a phone; outcomes, table
+  headers and the engine's errors read in Hinglish; "Sample din dekho" shows
+  an empty shop a full day, watermarked SAMPLE; text selection, caret,
+  scrollbar and tabular numbers themed; the current tab scrolls into view.
+* **Fonts from this server.** The four families (latin, latin-ext for ₹,
+  devanagari; 186 kB in all, each file fetched only when a page needs it) are
+  self-hosted with their OFL notices, cached for a year; no visitor IP goes
+  to Google Fonts.
+* **Brand and pages.** Favicon on every page, a 1200×630 share image with
+  Open Graph and Twitter tags, and `/privacy`, which reads the retention days
+  and consent line from the server it runs on.
+* **Tests no longer fail at the weekend.** Server tests booked "kal" and
+  "parso" on the live clock, and the packs close on Sunday: 17 failed on a
+  Saturday. On Friday to Sunday the tests' today is now the Thursday before
+  (`wall_today()` in the backend; `@pytest.mark.real_today` opts out).
 
 ### Public demo
 * **Strangers no longer see whole phone numbers.** With sign-in off on a public
