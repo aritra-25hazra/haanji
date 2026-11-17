@@ -59,8 +59,8 @@ def test_a_word_the_tenant_spells_that_way_is_left_alone(bridge):
 
 
 def test_longer_spans_win_over_single_tokens(bridge):
-    out = bridge.correct(transcript("full body chekup chahiye", ["body", "chekup"]))
-    assert "full body checkup" in out.text
+    out = bridge.correct(transcript("dental chekup chahiye", ["dental", "chekup"]))
+    assert "dental checkup" in out.text
 
 
 def test_disabled_bridge_is_a_pass_through(pack):

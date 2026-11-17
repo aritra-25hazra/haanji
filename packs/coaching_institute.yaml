@@ -37,12 +37,12 @@ services:
     duration_min: 60
     price_inr: 0
     staff: [Mr Deshmukh, Ms Kulkarni, Mr Bansal]
-    aliases: [demo, trial class, free class]
+    aliases: [demo, trial class, free class, ek class dekhni, class dekhni hai]
   - name: counselling session
     duration_min: 30
     price_inr: 0
     staff: [Ms Kulkarni, Mr Bansal]
-    aliases: [counselling, counseling, guidance]
+    aliases: [counselling, counseling, guidance, salah, career guidance]
   - name: scholarship test
     duration_min: 90
     price_inr: 0

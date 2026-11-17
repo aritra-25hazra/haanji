@@ -132,6 +132,16 @@ class CallSession:
         self._speaking: asyncio.Task | None = None
 
     # ------------------------------------------------------------------ speech
+    def _open_now(self) -> bool:
+        """Whether the shop is open right now by its pack's hours."""
+        now = self.backend.now()
+        hours = self.pack.hours.get(now.weekday())
+        if not hours:
+            return False
+        minute = now.hour * 60 + now.minute
+        opens, closes = (int(t[:2]) * 60 + int(t[3:5]) for t in hours[:2])
+        return opens <= minute < closes
+
     async def say(self, text: str) -> None:
         """Start speaking. Returns as soon as audio is on its way, because the
         caller can interrupt at any point and the loop has to be listening
@@ -309,7 +319,15 @@ class CallSession:
         verdict = self.guard.check(corrected.text)
         if verdict.action is Action.ESCALATE:
             record.guard = verdict.rule
-            turn = LLMTurn(tool_calls=[ToolCall("handoff", {"reason": verdict.rule})])
+            args: dict = {"reason": verdict.rule}
+            if verdict.rule.startswith("emergency.") and not self._open_now():
+                # Nobody is there to take the call: no promise of a transfer.
+                # Say what to do, and leave an urgent callback for the owner.
+                g = self.pack.guardrails
+                contact = (f"Emergency ho to turant {g.emergency_contact} par sampark kijiye. " if g.emergency_contact
+                           else "Emergency ho to turant nazdeeki hospital jaaiye. ")
+                args.update({"urgent": True, "line": g.after_hours_line.format(contact=contact)})
+            turn = LLMTurn(tool_calls=[ToolCall("handoff", args)])
         elif verdict.action is Action.REFUSE:
             # A refusal is spoken in the pack's refusal line and the call goes
             # on; it used to be routed through the handoff tool, which told a

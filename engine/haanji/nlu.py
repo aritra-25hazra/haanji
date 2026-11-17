@@ -610,3 +610,30 @@ def availability_args(text: str, ctx, services, staff: list[str] | None = None,
     if party > 1:
         args["party"] = party
     return args
+
+
+# ── who is speaking, and a number that is not one ──────────────────────────
+_WHO_TALKS = re.compile(r"\bkaun (bol|baat kar) (raha|rahi|rahe)\b|\bkis se baat ho rahi\b")
+_BOT = re.compile(r"\b(robot|bot|chatbot)\b")
+_PERSON_Q = re.compile(r"\b(insaan|insan|human|aadmi|real person|asli insaan)\b.*\b(ho|hain|hai kya|ho kya)\b")
+_MACHINE_Q = re.compile(r"\b(aap|ap|tum)\b.*\b(ai|a\.i\.|machine|computer)\b")
+
+
+def asks_identity(text: str) -> bool:
+    """ "Aap insaan ho ya robot?", "AI ho kya?", "kaun bol raha hai?" — a caller
+    asking whether a person is on the line. "Insaan se baat karni hai" is a
+    request for one, which the guardrails turn into a hand-off before this."""
+    t = text.lower()
+    return bool(_WHO_TALKS.search(t) or _BOT.search(t) or _PERSON_Q.search(t) or _MACHINE_Q.search(t))
+
+
+_DIGITS_RUN = re.compile(r"\+?\d[\d\s\-]{3,}\d")
+
+
+def phone_attempt(text: str) -> bool:
+    """The caller gave digits that look meant as a phone number (five or more
+    in one run) but are not a valid Indian mobile. Times ("10:30") and counts
+    ("2 log") are shorter and never count."""
+    if extract_phone(text):
+        return False
+    return any(len(re.sub(r"\D", "", run)) >= 5 for run in _DIGITS_RUN.findall(text))

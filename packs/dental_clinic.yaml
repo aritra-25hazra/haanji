@@ -54,12 +54,14 @@ services:
     duration_min: 30
     price_inr: 1200
     staff: [Dr Sheikh, Dr Malhotra, Dr Iyer]
-    aliases: [cleaning, scaling, safai]
-  - name: full body checkup
+    aliases: [cleaning, scaling, safai, daant ki safai, daant saaf, daant saaf karwane]
+  - name: dental checkup
     duration_min: 30
     price_inr: 800
     staff: [Dr Malhotra]
-    aliases: [dental checkup, checkup]
+    # what callers say when they do not know the service: the doctor looks first
+    aliases: [checkup, daant ka checkup, daant dikhana, keeda, keede, cavity, filling, daant mein keeda,
+              masoodon se khoon, masudon se khoon, masoode, daant hil raha, daant hilna, daant mein dard]
   - name: braces consultation
     duration_min: 45
     price_inr: 1000
@@ -69,7 +71,8 @@ services:
     duration_min: 45
     price_inr: 2500
     staff: [Dr Sheikh, Dr Malhotra]
-    aliases: [extraction, tooth removal, dant nikalna]
+    aliases: [extraction, tooth removal, dant nikalna, daant nikalna, daant nikalwana, daant nikalwani,
+              daant ukhadwana, akal daad, akal daadh, akal dadh, wisdom tooth]
   - name: dental implant
     duration_min: 90
     price_inr: 28000
@@ -90,6 +93,15 @@ lexicon:
     Bhawarkuan: [Bhavarkua, Bhanwarkuan]
 
 knowledge:
+  - q: "Akal daad nikalwana"
+    a: "Akal daad nikalna tooth extraction mein aata hai, 2,500 rupaye se shuru. Doctor dekh ke exact batayenge. Slot dekhun?"
+    tags: [akal, daad, daadh, wisdom, nikalwani, nikalwana, ukhadwana]
+  - q: "Daant mein keeda ya cavity"
+    a: "Pehle dental checkup kara lijiye, 800 rupaye. Filling ya aur kuch chahiye to doctor wahin batayenge. Slot dekhun?"
+    tags: [keeda, keede, cavity, filling, sadan]
+  - q: "Masoodon se khoon"
+    a: "Iske liye dental checkup aur safai dono kaam aate hain. Doctor dekh ke batayenge. Checkup ka slot dekhun?"
+    tags: [masoode, masoodon, masudon, gums, brush]
   - q: "Clinic ke timings kya hain?"
     a: "Hum Monday se Saturday, subah 9:30 se raat 8 baje tak khule hain. Do se saade teen lunch break hota hai. Sunday band rehta hai."
     tags: [timing, timings, khulta, band, hours, kab, open]

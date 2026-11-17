@@ -44,6 +44,9 @@ class Persona:
     greeting: str = "Haanji, kaise madad karun?"
     closing: str = "Dhanyavaad, aapka din shubh ho."
     style: str = "warm, brief, Hinglish"
+    # Said after the greeting's first sentence, so no caller mistakes the agent
+    # for a person. Empty switches it off for a pack.
+    ai_note: str = "Main yahan ka AI assistant hoon."
 
 
 @dataclass
@@ -54,6 +57,11 @@ class Guardrails:
     max_discount_pct: int = 0
     refusal_line: str = "Iska sahi jawab hamari team hi de payegi, main aapko unse jodta hoon."
     escalation_line: str = "Yeh urgent lag raha hai — main abhi aapko humare staff se joddta hoon."
+    # Outside opening hours nobody can be put through: the caller is told what
+    # to do instead, and the call becomes an urgent callback for the owner.
+    after_hours_line: str = ("Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}"
+                             "Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.")
+    emergency_contact: str = ""      # e.g. "nazdeeki hospital ya 108"; empty: the generic advice
     # Extra rules a pack adds to the engine's built-in set, as
     # {id, action: refuse|escalate, match: <regex>, unless: <regex>?, line?}
     # and built-in rule ids the pack switches off. The built-in rules are in
@@ -186,7 +194,8 @@ def from_dict(data: dict[str, Any]) -> Pack:
         business_name=p.get("business_name", pack.display_name),
         greeting=p.get("greeting", Persona.greeting),
         closing=p.get("closing", Persona.closing),
-        style=p.get("style", Persona.style))
+        style=p.get("style", Persona.style),
+        ai_note=p.get("ai_note", Persona.ai_note))
 
     g = data.get("guardrails") or {}
     rules = []
@@ -212,6 +221,8 @@ def from_dict(data: dict[str, Any]) -> Pack:
         max_discount_pct=int(g.get("max_discount_pct", 0)),
         refusal_line=g.get("refusal_line", Guardrails.refusal_line),
         escalation_line=g.get("escalation_line", Guardrails.escalation_line),
+        after_hours_line=g.get("after_hours_line", Guardrails.after_hours_line),
+        emergency_contact=str(g.get("emergency_contact") or ""),
         rules=rules, disable=[str(x) for x in (g.get("disable") or [])])
 
     pack.staff = list(data.get("staff", []))

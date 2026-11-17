@@ -36,7 +36,7 @@ services:
     duration_min: 15
     price_inr: 350
     staff: [Meena, Arvind, Salma]
-    aliases: [cbc, blood count, blood test]
+    aliases: [cbc, blood count, blood test, khoon ki jaanch, khoon ka test]
   - name: lipid profile
     duration_min: 15
     price_inr: 700
@@ -63,7 +63,7 @@ services:
     duration_min: 30
     price_inr: 200
     staff: [Arvind, Salma]
-    aliases: [home collection, ghar se sample]
+    aliases: [home collection, ghar se sample, ghar aake sample, ghar par sample]
 
 lexicon:
   places: [Vijay Nagar, Bhawarkuan, Rau, Annapurna, Scheme 54]

@@ -184,6 +184,10 @@ class LocalBackend:
     def today(self, value: dt.date | None) -> None:
         self._today = value
 
+    def now(self) -> dt.datetime:
+        """The shop's clock: the pinned one in tests, India's time otherwise."""
+        return self._now if self._now is not None else dt.datetime.now(IST)
+
     def now_minutes(self, day: dt.date) -> int:
         """Minutes past midnight if ``day`` is today, else -1. With a pinned
         ``today`` but no pinned clock there is no "now" to compare against,

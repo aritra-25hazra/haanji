@@ -36,6 +36,7 @@ def pack_record(pid: str) -> dict:
         "hours": {str(d): list(v) for d, v in sorted(p.hours.items())},
         "knowledge": [{"q": q, "a": a} for q, a, _tags in p.knowledge],
         "refusal_line": p.guardrails.refusal_line, "escalation_line": p.guardrails.escalation_line,
+        "after_hours_line": p.guardrails.after_hours_line, "emergency_contact": p.guardrails.emergency_contact,
         "closing": p.persona.closing,
         "scenarios": len(p.scenarios), "issues": p.validate(),
         "lexicon": [{"surface": e.surface, "entry_type": e.entry_type.value, "variants": list(e.variants),

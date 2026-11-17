@@ -47,7 +47,7 @@ services:
     duration_min: 30
     price_inr: 500
     staff: [Neha, Farhan, Ritu, Sanjay]
-    aliases: [hair cut, trim]
+    aliases: [hair cut, trim, baal katwane, baal kataane, baal chhote]
   - name: bridal makeup
     duration_min: 180
     price_inr: 15000
@@ -58,7 +58,7 @@ services:
     duration_min: 20
     price_inr: 250
     staff: [Farhan, Sanjay]
-    aliases: [beard, dadhi]
+    aliases: [beard, dadhi, daadhi, daadhi trim, shave]
   - name: keratin treatment
     duration_min: 150
     price_inr: 6000

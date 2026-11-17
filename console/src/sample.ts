@@ -22,6 +22,7 @@ interface PackInfo {
   pack_id: string; display_name: string; version: number; language: string; business_name: string; agent_name: string;
   greeting: string; closing: string; staff: string[]; staff_role: string; services: PackService[];
   hours: Record<string, string[]>; knowledge: { q: string; a: string }[]; refusal_line: string; escalation_line: string;
+  after_hours_line: string; emergency_contact: string;
   scenarios: number; issues: string[]; lexicon: Lexicon["entries"];
 }
 const ALL = (PACKS as { packs: PackInfo[] }).packs;
@@ -255,7 +256,19 @@ function build(p: PackInfo, now: Date): Shop {
       turns = [turn(ask, `${why} Aapka number note kar leta hoon, team aapko call karegi.`),
                turn(`haan theek hai, naam ${person.name || "Ravi"} hai`, "Theek hai, team aapko call karegi.", { tools: ["capture_lead"] })];
     } else if (outcome === "HANDED_OFF") {
-      turns = [turn(`mujhe ${p.staff_role} se seedha baat karni hai`, "Zaroor. Main aapki baat staff tak pahuncha deta hoon; woh aapko call karenge.", { tools: ["handoff"] })];
+      if (r() < .45) {
+        // an emergency: the engine's guardrail hands it off; out of hours it promises no transfer
+        const at = atToday();
+        const hours = hoursOn(p, day);
+        const open = !!hours && toMin(at.slice(11, 16)) >= hours[0] && toMin(at.slice(11, 16)) < hours[1];
+        const contact = p.emergency_contact ? `Emergency ho to turant ${p.emergency_contact} par sampark kijiye. ` : "Emergency ho to turant nazdeeki hospital jaaiye. ";
+        turns = [turn(`haan ji ${pick(r, p.services).name} ke baare mein poochna tha`, "Zaroor. Batayiye kya hua?"),
+                 turn("bahut zyada khoon aa raha hai, ruk nahi raha", open ? p.escalation_line : p.after_hours_line.replace("{contact}", contact),
+                      { tools: ["handoff"], guard: "emergency.bleeding" })];
+        calls.push(finish(`sample-${p.pack_id}-o${i}`, channelOf(), person.phone, at, "HANDED_OFF", turns, []));
+        continue;
+      }
+      turns = [turn(`mujhe ${p.staff_role} se seedha baat karni hai`, "Zaroor. Main aapki baat staff tak pahuncha deta hoon; woh aapko call karenge.", { tools: ["handoff"], guard: "handoff.request" })];
     } else if (outcome === "REFUSED") {
       turns = [turn("koi discount mil jayega kya", p.refusal_line, { guard: "never_quote_outside_catalogue" })];
     } else {

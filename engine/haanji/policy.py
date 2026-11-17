@@ -61,7 +61,16 @@ class DialoguePolicy:
             if customer.get("last_service"):
                 line += f" Pichhli baar {customer['last_service']} karaya tha."
             return line + " Aaj kya madad karun?"
-        return self.pack.persona.greeting
+        return self._with_ai_note(self.pack.persona.greeting)
+
+    def _with_ai_note(self, greeting: str) -> str:
+        """The pack's greeting with its AI note after the first sentence, unless
+        the greeting already says so or the pack switched the note off."""
+        note = self._p("ai_note", self.pack.persona.ai_note) if self.pack.persona.ai_note else ""
+        if not note or "AI" in greeting:
+            return greeting
+        first, dot, rest = greeting.partition(". ")
+        return f"{first}. {note} {rest}".strip() if dot else f"{greeting} {note}"
 
     def closing(self) -> str:
         return self.pack.persona.closing
@@ -122,6 +131,9 @@ class DialoguePolicy:
             if ctx.customer_phone and phone != ctx.customer_phone:
                 ctx.phone_verified = False     # a different number than the one the channel gave us
             ctx.customer_phone = phone
+        elif nlu.phone_attempt(text):
+            ctx.flags["bad_phone"] = int(ctx.flags.get("bad_phone", 0)) + 1
+            ctx.flags["bad_phone_now"] = True
 
     # ------------------------------------------------------------- deciding
     def plan(self, text: str, ctx: ConversationContext) -> LLMTurn:
@@ -133,6 +145,27 @@ class DialoguePolicy:
             name = nlu.bare_name(text)
             if name:
                 ctx.customer_name = name
+
+        # 0. "Aap insaan ho ya robot?" gets the truth, then the call goes on where it was.
+        if nlu.asks_identity(text):
+            line = self._p("ai_disclosure", "Main {business} ka AI assistant hoon. Chahein to aapko staff se jod sakta hoon."
+                           ).format(business=self.pack.persona.business_name)
+            if ctx.pending_confirmation:
+                line += " " + self._p("yes_or_no", "Bas ek baar haan ya na keh dijiye, phir main confirm kar dunga.")
+            return LLMTurn(say=line)
+
+        # 0b. A booking is done and we asked "aur kuch?": a no (or thanks) ends the call;
+        #     anything new is handled as usual.
+        if ctx.flags.pop("asked_more", None):
+            w0 = nlu.words(text)
+            new_request = (w0 & (nlu.QUESTION_WORDS | nlu.CANCEL_WORDS | nlu.RESCHEDULE_WORDS)) or \
+                nlu.match_service(text, self.aliases) or self._wants_booking(w0, ctx)
+            if not new_request:
+                return LLMTurn(say=self.closing(), end_call=True)
+            ctx.service = ctx.date = ctx.time = None
+            ctx.last_offered_slots = []
+            ctx.flags.pop("time_checked", None)
+            self.absorb(text, ctx)
 
         # 1. An outstanding confirmation outranks everything else in the call.
         if ctx.pending_confirmation:
@@ -170,6 +203,14 @@ class DialoguePolicy:
         # 2b. The caller is winding up.
         if nlu.is_farewell(text) and not ctx.flags.get("await_details"):
             return LLMTurn(say=self.closing(), end_call=True)
+
+        # 2c. Digits that are not a mobile number: say why, and stop after two tries.
+        if ctx.flags.pop("bad_phone_now", None) and not ctx.customer_phone:
+            if int(ctx.flags.get("bad_phone", 0)) >= 2:
+                line = self._p("phone_give_up", "Number theek se nahi mil pa raha. Main aapki baat staff tak pahuncha deta hoon; "
+                                                "aap isi number par WhatsApp bhi kar sakte hain.")
+                return LLMTurn(tool_calls=[ToolCall("handoff", {"reason": "phone.invalid", "line": line})])
+            return LLMTurn(say=self._p("phone_invalid", "Number 10 digit ka hona chahiye, 6, 7, 8 ya 9 se shuru. Dobara bata dijiye."))
 
         # 3. We asked for a name and number in order to leave a callback note.
         if ctx.flags.get("await_details") and ctx.customer_phone:
@@ -271,7 +312,8 @@ class DialoguePolicy:
             ctx.pending_confirmation = None
             if r.ok:
                 ctx.outcome = Outcome.BOOKED
-                return LLMTurn(say=f"{r.spoken} {self.closing()}", end_call=True)
+                ctx.flags["asked_more"] = True        # once; the next "nahi" closes the call
+                return LLMTurn(say=f"{r.spoken} {self._p('anything_else', 'Aur kuch madad chahiye?')}")
             ctx.time = None
             ctx.last_offered_slots = []
             return LLMTurn(say=r.spoken or "Wo slot abhi nahi ho paya, doosra dekh lete hain.")
@@ -321,7 +363,13 @@ class DialoguePolicy:
                     if slots[0].get("party"):
                         ctx.flags["party_plan"] = slots[0]["party"]
                     ctx.flags["time_checked"] = True
-                    return self._advance_booking(ctx)
+                    nxt = self._advance_booking(ctx)
+                    when = (f"{_spoken_date(slots[0]['date'], self.backend, self.lang).capitalize()} "
+                            f"{_spoken_time(slots[0]['time'], self.lang)}")
+                    free = self._p("slot_free", "{when} {staff} ke saath khaali hai.").format(when=when, staff=slots[0]["staff"])
+                    if nxt.say:
+                        nxt.say = f"{free} {nxt.say}"
+                    return nxt
                 alts = data.get("alternatives") or []
                 ctx.time = None
                 ctx.flags.pop("time_checked", None)
@@ -424,6 +472,9 @@ class DialoguePolicy:
             # check that exact time before asking for their name and number.
             return LLMTurn(tool_calls=[ToolCall("check_availability", self._avail_args(ctx))])
         if not ctx.customer_phone:
+            if ctx.customer_name:                       # never ask again for what we have
+                return LLMTurn(say=self._p("ask_number", "{name} ji, bas aapka mobile number bata dijiye."
+                                           ).format(name=ctx.customer_name.split()[0]))
             return LLMTurn(say=self._p("ask_name_number", "Bas aapka naam aur mobile number bata dijiye."))
         if not ctx.customer_name and not ctx.flags.get("asked_name"):
             # The channel already gave us the number (WhatsApp, a web call with
@@ -482,9 +533,10 @@ class DialoguePolicy:
                 who=who, name=ctx.customer_name or "apnar")
         else:
             who = f" {ctx.staff} ke saath" if ctx.staff else ""
+            digits = f", mobile ke aakhri ank {' '.join(ctx.customer_phone[-4:])}" if ctx.customer_phone else ""
             say = (f"Ek baar dohra deta hoon — {what}, "
                    f"{_spoken_date(ctx.date, self.backend)} {_spoken_time(ctx.time)}{who}, "
-                   f"{ctx.customer_name or 'aapke'} naam se. Confirm kar dun?")
+                   f"{ctx.customer_name or 'aapke'} naam se{digits}. Confirm kar dun?")
         return LLMTurn(say=say, needs_confirmation=True)
 
     # ------------------------------------------------- who is on the line

@@ -419,6 +419,7 @@ class Holder:
     human: bool = False                       # a person at the console has taken the call
     speak: Any = None                         # telephony: how to say something on this call
     finished: bool = False                    # _finish ran (a DELETE after end_call must not run it twice)
+    kept_open: bool = False                   # finished at the booking, still listening for "aur kuch?"
 
 
 _sessions: dict[str, Holder] = {}
@@ -744,8 +745,17 @@ async def _after_turn(holder: Holder, record, payload: dict[str, Any]) -> list[d
     return links
 
 
-def _finish(sid: str, holder: Holder) -> None:
+def _finish(sid: str, holder: Holder, keep_open: bool = False) -> None:
+    """Record the call and do its after-work. With ``keep_open`` (a booking
+    has just been made and the agent asked "aur kuch madad chahiye?") the
+    call is recorded and counted now, but the session stays for that reply;
+    when it later ends, the record is rewritten with the last turn."""
     if holder.finished:
+        if holder.kept_open and not keep_open:
+            holder.kept_open = False
+            store.record_call(holder.session.finish(), channel=holder.channel, phone=holder.phone)
+            _sessions.pop(sid, None)
+            _wa_sessions.pop((holder.rt.pack_id, holder.phone or ""), None)
         return
     holder.finished = True
     report = holder.session.finish()
@@ -768,6 +778,9 @@ def _finish(sid: str, holder: Holder) -> None:
         for entry in holder.rt.backend.waitlist(holder.rt.pack_id):
             if entry["phone"] == holder.phone and entry["status"] in ("WAITING", "OFFERED"):
                 holder.rt.backend.waitlist_mark(holder.rt.pack_id, entry["entry_id"], "BOOKED")
+    if keep_open:
+        holder.kept_open = True
+        return
     _sessions.pop(sid, None)
     _wa_sessions.pop((holder.rt.pack_id, holder.phone or ""), None)
 
@@ -845,6 +858,8 @@ async def session_utterance(sid: str, body: TextIn):
             payload["payment_links"] = [{"amount_inr": l["amount_inr"], "link": l["link"]} for l in links]
         if payload["end_call"]:
             _finish(sid, holder)
+        elif payload["outcome"] in ("BOOKED", "RESCHEDULED") and not holder.finished:
+            _finish(sid, holder, keep_open=True)
     return payload
 
 
@@ -904,7 +919,9 @@ async def _wa_turn(pack_id: str, phone: str, text: str, *, verified: bool = True
                            "corrections": payload["corrections"]})
         replies.append({"text": text_out, **{k: payload[k] for k in
                        ("corrections", "tools", "speculation_hits", "receipts", "latency_ms")}})
-        if payload["end_call"]:
+        # A chat has no line to keep open: a booking closes this conversation,
+        # and the customer's next message (days later, often) starts a new one.
+        if payload["end_call"] or payload["outcome"] in ("BOOKED", "RESCHEDULED"):
             _finish(sid, holder)
     return replies
 

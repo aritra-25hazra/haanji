@@ -263,12 +263,14 @@ def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
         return ToolResult("capture_lead", ok=True, data={"lead_id": lead_id, "receipt_code": code,
                                                           "waitlist_entry": waitlisted}, spoken=spoken)
 
-    async def handoff(reason: str, phone: str | None = None, line: str | None = None,
+    async def handoff(reason: str, phone: str | None = None, line: str | None = None, urgent: bool = False,
                       proof: ConfirmationProof | None = None,
                       excerpt: str = "", conversation_id: str = "") -> ToolResult:
-        code = _seal("handoff", {"reason": reason, "phone": phone}, proof, excerpt,
-                     conversation_id, False)
-        return ToolResult("handoff", ok=True, data={"reason": reason, "receipt_code": code},
+        args: dict[str, Any] = {"reason": reason, "phone": phone}
+        if urgent:
+            args["urgent"] = True            # out of hours: a callback the owner makes first
+        code = _seal("handoff", args, proof, excerpt, conversation_id, False)
+        return ToolResult("handoff", ok=True, data={"reason": reason, "urgent": urgent, "receipt_code": code},
                           spoken=line or pack.guardrails.escalation_line)
 
     async def refuse(reason: str, line: str | None = None,

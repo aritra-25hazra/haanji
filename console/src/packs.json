@@ -149,6 +149,8 @@
    ],
    "refusal_line": "Idhu doctor paathu dhaan solla mudiyum — naan unga-ku slot podren.",
    "escalation_line": "Idhu urgent-aa irukku. Naan ippove clinic staff-oda connect panren, line-la irunga.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Nandri, paathukalaam. Nalla irunga.",
    "scenarios": 5,
    "issues": [],
@@ -542,6 +544,8 @@
    ],
    "refusal_line": "Eta doctor dekhe bolte parben — ami apnar jonno slot kore dichhi.",
    "escalation_line": "Eta urgent mone hochhe. Ami ekhoni clinic er sathe jog kore dichhi.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Achha, dekha hobe. Bhalo thakben.",
    "scenarios": 3,
    "issues": [],
@@ -872,6 +876,8 @@
    ],
    "refusal_line": "He doctor baghun sangtil; mi tumchi appointment lavun deto.",
    "escalation_line": "He urgent vatatay — mi tumhala clinic chya staff shi jodto.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Dhanyavad, tumcha divas chhan jao.",
    "scenarios": 3,
    "issues": [],
@@ -1239,6 +1245,8 @@
    ],
    "refusal_line": "E counsellor j confirm kari shake — hu tamara mate demo class no slot lagavi dau.",
    "escalation_line": "Hu tamne hamna j senior counsellor sathe jodu chhu, line par raho.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Barabar, counsellor tamne call karse. Aabhar.",
    "scenarios": 5,
    "issues": [],
@@ -1574,7 +1582,9 @@
      "aliases": [
       "demo",
       "trial class",
-      "free class"
+      "free class",
+      "ek class dekhni",
+      "class dekhni hai"
      ]
     },
     {
@@ -1588,7 +1598,9 @@
      "aliases": [
       "counselling",
       "counseling",
-      "guidance"
+      "guidance",
+      "salah",
+      "career guidance"
      ]
     },
     {
@@ -1679,6 +1691,8 @@
    ],
    "refusal_line": "Ye counsellor hi confirm kar payenge, main unki demo class ka slot laga deta hoon.",
    "escalation_line": "Main abhi aapko senior counsellor se joddta hoon.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Theek hai, counsellor aapse baat karenge.",
    "scenarios": 3,
    "issues": [],
@@ -1689,9 +1703,13 @@
      "variants": [
       "demo",
       "trial class",
-      "free class"
+      "free class",
+      "ek class dekhni",
+      "class dekhni hai"
      ],
      "keys": [
+      "AKKRSTKN",
+      "KRSTKNA",
       "TN",
       "TNKRS",
       "TRRKRS",
@@ -1705,12 +1723,16 @@
      "variants": [
       "counselling",
       "counseling",
-      "guidance"
+      "guidance",
+      "salah",
+      "career guidance"
      ],
      "keys": [
       "GTNC",
       "KNSRNG",
-      "KNSRNGSSN"
+      "KNSRNGSSN",
+      "KRRGTNC",
+      "SR"
      ],
      "weight": 1.25
     },
@@ -1941,9 +1963,13 @@
      "variants": [
       "demo",
       "trial class",
-      "free class"
+      "free class",
+      "ek class dekhni",
+      "class dekhni hai"
      ],
      "keys": [
+      "AKKRSTKN",
+      "KRSTKNA",
       "TN",
       "TNKRS",
       "TRRKRS",
@@ -2002,19 +2028,34 @@
      "aliases": [
       "cleaning",
       "scaling",
-      "safai"
+      "safai",
+      "daant ki safai",
+      "daant saaf",
+      "daant saaf karwane"
      ]
     },
     {
-     "name": "full body checkup",
+     "name": "dental checkup",
      "price_inr": 800,
      "duration_min": 30,
      "staff": [
       "Dr Malhotra"
      ],
      "aliases": [
-      "dental checkup",
-      "checkup"
+      "checkup",
+      "daant ka checkup",
+      "daant dikhana",
+      "keeda",
+      "keede",
+      "cavity",
+      "filling",
+      "daant mein keeda",
+      "masoodon se khoon",
+      "masudon se khoon",
+      "masoode",
+      "daant hil raha",
+      "daant hilna",
+      "daant mein dard"
      ]
     },
     {
@@ -2041,7 +2082,15 @@
      "aliases": [
       "extraction",
       "tooth removal",
-      "dant nikalna"
+      "dant nikalna",
+      "daant nikalna",
+      "daant nikalwana",
+      "daant nikalwani",
+      "daant ukhadwana",
+      "akal daad",
+      "akal daadh",
+      "akal dadh",
+      "wisdom tooth"
      ]
     },
     {
@@ -2097,6 +2146,18 @@
    },
    "knowledge": [
     {
+     "q": "Akal daad nikalwana",
+     "a": "Akal daad nikalna tooth extraction mein aata hai, 2,500 rupaye se shuru. Doctor dekh ke exact batayenge. Slot dekhun?"
+    },
+    {
+     "q": "Daant mein keeda ya cavity",
+     "a": "Pehle dental checkup kara lijiye, 800 rupaye. Filling ya aur kuch chahiye to doctor wahin batayenge. Slot dekhun?"
+    },
+    {
+     "q": "Masoodon se khoon",
+     "a": "Iske liye dental checkup aur safai dono kaam aate hain. Doctor dekh ke batayenge. Checkup ka slot dekhun?"
+    },
+    {
      "q": "Clinic ke timings kya hain?",
      "a": "Hum Monday se Saturday, subah 9:30 se raat 8 baje tak khule hain. Do se saade teen lunch break hota hai. Sunday band rehta hai."
     },
@@ -2127,6 +2188,8 @@
    ],
    "refusal_line": "Ye doctor hi dekh kar bata payenge — main aapko unka slot de deta hoon.",
    "escalation_line": "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Theek hai, milte hain. Apna khayal rakhiye.",
    "scenarios": 8,
    "issues": [],
@@ -2151,27 +2214,55 @@
      "variants": [
       "cleaning",
       "scaling",
-      "safai"
+      "safai",
+      "daant ki safai",
+      "daant saaf",
+      "daant saaf karwane"
      ],
      "keys": [
       "KRNNG",
       "SKRNG",
       "Sf",
+      "TNTKSf",
+      "TNTSf",
+      "TNTSfKRVN",
       "TTKRNNG"
      ],
      "weight": 1.25
     },
     {
-     "surface": "full body checkup",
+     "surface": "dental checkup",
      "entry_type": "SERVICE",
      "variants": [
-      "dental checkup",
-      "checkup"
+      "checkup",
+      "daant ka checkup",
+      "daant dikhana",
+      "keeda",
+      "keede",
+      "cavity",
+      "filling",
+      "daant mein keeda",
+      "masoodon se khoon",
+      "masudon se khoon",
+      "masoode",
+      "daant hil raha",
+      "daant hilna",
+      "daant mein dard"
      ],
      "keys": [
       "CKP",
+      "KT",
+      "KVT",
+      "NST",
+      "NSTNSKN",
+      "TNTARN",
+      "TNTARR",
+      "TNTKCKP",
+      "TNTNNKT",
+      "TNTNNTRT",
       "TNTRCKP",
-      "fRPTCKP"
+      "TNTTKN",
+      "fRNG"
      ],
      "weight": 1.25
     },
@@ -2197,13 +2288,25 @@
      "variants": [
       "extraction",
       "tooth removal",
-      "dant nikalna"
+      "dant nikalna",
+      "daant nikalna",
+      "daant nikalwana",
+      "daant nikalwani",
+      "daant ukhadwana",
+      "akal daad",
+      "akal daadh",
+      "akal dadh",
+      "wisdom tooth"
      ],
      "keys": [
+      "AKRTT",
       "AKTRKTN",
+      "TNTAKTVN",
       "TNTNKRN",
+      "TNTNKRVN",
       "TTAKTRKT",
-      "TTRNVR"
+      "TTRNVR",
+      "VSTNTT"
      ],
      "weight": 1.25
     },
@@ -2483,7 +2586,9 @@
      "aliases": [
       "cbc",
       "blood count",
-      "blood test"
+      "blood test",
+      "khoon ki jaanch",
+      "khoon ka test"
      ]
     },
     {
@@ -2550,7 +2655,9 @@
      ],
      "aliases": [
       "home collection",
-      "ghar se sample"
+      "ghar se sample",
+      "ghar aake sample",
+      "ghar par sample"
      ]
     }
    ],
@@ -2616,6 +2723,8 @@
    ],
    "refusal_line": "Report ka matlab doctor hi batayenge — main aapko report time par bhej deta hoon.",
    "escalation_line": "Main abhi aapko humare lab in-charge se joddta hoon.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Ho gaya. Report time par mil jayegi.",
    "scenarios": 3,
    "issues": [],
@@ -2626,9 +2735,13 @@
      "variants": [
       "cbc",
       "blood count",
-      "blood test"
+      "blood test",
+      "khoon ki jaanch",
+      "khoon ka test"
      ],
      "keys": [
+      "KNKJNC",
+      "KNKTST",
       "KNPRTPRTKNT",
       "KPK",
       "PRTKNT",
@@ -2701,11 +2814,15 @@
      "entry_type": "SERVICE",
      "variants": [
       "home collection",
-      "ghar se sample"
+      "ghar se sample",
+      "ghar aake sample",
+      "ghar par sample"
      ],
      "keys": [
       "ANKRKTN",
       "ANSNPRKRKTN",
+      "GRAKSNPR",
+      "GRPRSNPR",
       "GRSSNPR"
      ],
      "weight": 1.25
@@ -3053,6 +3170,8 @@
    ],
    "refusal_line": "Report meaning doctor cheptaru — nenu report time ki pampistanu.",
    "escalation_line": "Nenu ippude mimmalni maa lab in-charge ki connect chestunna.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Ayipoyindi. Report time ki vastundi. Dhanyavadalu.",
    "scenarios": 5,
    "issues": [],
@@ -3483,6 +3602,8 @@
    ],
    "refusal_line": "Eh stylist tuhanu vekh ke hi dass sakde ji, main tuhada slot laga dinda.",
    "escalation_line": "Eh main manager ji nu de raha, oh hune tuhade naal gall karnge.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Perfect ji, tuhada slot lag gaya. Milde haan!",
    "scenarios": 5,
    "issues": [],
@@ -3871,7 +3992,10 @@
      ],
      "aliases": [
       "hair cut",
-      "trim"
+      "trim",
+      "baal katwane",
+      "baal kataane",
+      "baal chhote"
      ]
     },
     {
@@ -3897,7 +4021,10 @@
      ],
      "aliases": [
       "beard",
-      "dadhi"
+      "dadhi",
+      "daadhi",
+      "daadhi trim",
+      "shave"
      ]
     },
     {
@@ -3959,6 +4086,8 @@
    ],
    "refusal_line": "Ye stylist aapko dekh kar hi bata payenge, main aapka slot laga deta hoon.",
    "escalation_line": "Ye main manager ko de raha hoon, wo abhi baat karengi.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
    "closing": "Perfect, aapka slot lag gaya. Milte hain!",
    "scenarios": 4,
    "issues": [],
@@ -4000,10 +4129,16 @@
      "entry_type": "SERVICE",
      "variants": [
       "hair cut",
-      "trim"
+      "trim",
+      "baal katwane",
+      "baal kataane",
+      "baal chhote"
      ],
      "keys": [
       "ARKT",
+      "PRCT",
+      "PRKTN",
+      "PRKTVN",
       "TRN"
      ],
      "weight": 1.25
@@ -4029,12 +4164,17 @@
      "entry_type": "SERVICE",
      "variants": [
       "beard",
-      "dadhi"
+      "dadhi",
+      "daadhi",
+      "daadhi trim",
+      "shave"
      ],
      "keys": [
       "PRT",
       "PRTTRN",
-      "TT"
+      "SV",
+      "TT",
+      "TTTRN"
      ],
      "weight": 1.25
     },

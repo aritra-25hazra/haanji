@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "r
 import { Link } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { engine, subscribeLive, enablePush } from "../engine";
+import { callbackWhy } from "../callbacks";
 import { NEEDS_CALLBACK, sample } from "../sample";
 import { useApp } from "../state";
 import AnimatedList from "../components/AnimatedList";
 import { Chip, Empty, Icon, Loading, NotLive, OutcomeChip, Page, Panel, Repair, Tile, fmtInr, fmtTime, useData } from "../components/Common";
-import { OUTCOMES, type CallRow, type LiveEvent, type LiveSession, type Turn } from "../types";
+import { OUTCOMES, type LiveEvent, type LiveSession } from "../types";
 
 const SWATCH: Record<string, string> = {
   BOOKED: "var(--leaf-ink)", RESCHEDULED: "var(--leaf)", FAQ_ANSWERED: "var(--cobalt)", LEAD_CAPTURED: "var(--marigold)",
@@ -150,22 +151,25 @@ const PAGE = 10;
  *  same calls the insights count (the engine's last 500), every one listed. */
 function Callbacks({ pack, live }: { pack: string; live: boolean }) {
   const { data } = useData(live ? () => engine.calls(pack, 500).then((r) => r.conversations) : () => Promise.resolve(sample.calls(pack)), [pack, live]);
-  const all = useMemo(() => (data ?? []).filter(NEEDS_CALLBACK), [data]);
+  // urgent first (an emergency hand-off), then the newest
+  const all = useMemo(() => (data ?? []).filter(NEEDS_CALLBACK).map((c) => ({ c, why: callbackWhy(c) }))
+    .sort((a, b) => Number(b.why.urgent) - Number(a.why.urgent) || b.c.started_at.localeCompare(a.c.started_at)), [data]);
   const [shown, setShown] = useState(PAGE);
   const rows = all.slice(0, shown);
-  const handoffs = all.filter((c) => c.outcome === "HANDED_OFF").length;
+  const handoffs = all.filter(({ c }) => c.outcome === "HANDED_OFF").length;
+  const urgent = all.filter(({ why }) => why.urgent).length;
   return (
-    <Panel title="Inhe wapas call karo" hint={all.length ? `${all.length} log${handoffs ? ` (${handoffs} insaan ko diye)` : ""} · naye pehle` : "sab ko jawab mil gaya"}>
+    <Panel title="Inhe wapas call karo" hint={all.length ? `${all.length} log${handoffs ? ` (${handoffs} insaan ko diye)` : ""}${urgent ? ` · ${urgent} urgent upar` : ""} · naye pehle` : "sab ko jawab mil gaya"}>
       {all.length === 0
         ? <Empty><p>Jinka kaam call pe nahi ho paaya, wo yahan aate hain. Abhi koi nahi.</p></Empty>
         : <ul className="body callbacks">
-            {rows.map((c) => (
-              <li key={c.call_id}>
+            {rows.map(({ c, why }) => (
+              <li key={c.call_id} className={why.urgent ? "urgent" : undefined}>
                 <span className="mono muted">{fmtTime(c.started_at)}</span>
                 {c.phone && !/[…X]/.test(c.phone)
                   ? <a className="mono" href={`tel:${c.phone}`}>{c.phone}</a>
                   : <span className="mono">{c.phone ?? "number nahi"}</span>}
-                <span className="ask">“{firstAsk(c)}”</span>
+                <span className="ask"><Chip kind={why.urgent ? "bad" : "muted"}>{why.urgent ? `URGENT · ${why.tag}` : why.tag}</Chip> “{why.ask}”</span>
                 <OutcomeChip outcome={c.outcome} />
                 <Link to={`/calls/${encodeURIComponent(c.call_id)}`}>Poori baat</Link>
               </li>
@@ -178,12 +182,6 @@ function Callbacks({ pack, live }: { pack: string; live: boolean }) {
   );
 }
 
-function firstAsk(c: CallRow): string {
-  try {
-    const turns = JSON.parse(c.turns_json) as Turn[];
-    return turns[0]?.corrected || turns[0]?.heard || "—";
-  } catch { return "—"; }
-}
 
 /** Calls as they happen: the engine's event stream, newest at the top. The
  *  parent keys this by pack, so a pack switch starts a clean feed. */
