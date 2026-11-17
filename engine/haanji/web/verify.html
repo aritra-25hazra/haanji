@@ -47,33 +47,33 @@
 </style>
 </head>
 <body>
-<a class="skip" href="#main">Seedha verifier pe jao</a>
+<a class="skip" href="#main" data-hi="Seedha verifier pe jao">Skip to the verifier</a>
 <header class="wrap">
   <nav class="nav" aria-label="Main">
     <a class="wordmark" href="./">HaanJi <span class="dev">हाँजी</span></a>
-    <ul><li><a href="talk">Demo</a></li><li><a href="whatsapp">WhatsApp</a></li><li><a href="https://github.com/aritra-25hazra/haanji" rel="noopener"><i data-icon="github" class="ic-sm"></i>GitHub</a></li></ul>
+    <ul><li><a href="talk">Demo</a></li><li><a href="whatsapp">WhatsApp</a></li><li><a href="https://github.com/aritra-25hazra/haanji" rel="noopener"><i data-icon="github" class="ic-sm"></i>GitHub</a></li><li><div data-lang-switch></div></li></ul>
   </nav>
 </header>
 <main id="main" class="wrap">
-  <h1 id="title">Public <span class="dev">सबूत</span> verifier</h1>
-  <p class="sub" id="lede">Har hash aur har Ed25519 signature <b>aapke browser mein</b> dobara compute hota hai, server pe bharosa kiye bina. Export load kijiye, verify kijiye, phir kisi field se chhedchhad karke dekhiye ki chain kaise tootti hai.</p>
+  <h1 id="title" data-hi-html="Public &lt;span class=&quot;dev&quot;&gt;सबूत&lt;/span&gt; verifier">Public receipt verifier</h1>
+  <p class="sub" id="lede" data-hi-html="Har hash aur har Ed25519 signature &lt;b&gt;aapke browser mein&lt;/b&gt; dobara compute hota hai, server pe bharosa kiye bina. Export load kijiye, verify kijiye, phir kisi field se chhedchhad karke dekhiye ki chain kaise tootti hai.">Every hash and every Ed25519 signature is computed again <b>in your browser</b>, without trusting the server. Load an export, verify it, then change a field and watch the chain break.</p>
 
   <details id="tech" open>
-  <summary>Poora ledger khud verify karo</summary>
+  <summary data-hi="Poora ledger khud verify karo">Verify the whole ledger yourself</summary>
   <div class="controls">
     <label class="field"><span>Pack</span><select id="pack" class="input"></select></label>
-    <button type="button" class="btn btn-primary" id="load">Is server ka export load karo</button>
-    <button type="button" class="btn btn-ghost" id="paste">Pasted JSON verify karo</button>
-    <button type="button" class="btn btn-danger" id="tamper" disabled><i data-icon="x"></i>Ek field chhedo aur dobara check karo</button>
-    <span class="tamper-note">sirf aapke browser mein, server pe kuch nahi badalta</span>
+    <button type="button" class="btn btn-primary" id="load" data-hi="Is server ka export load karo">Load this server's export</button>
+    <button type="button" class="btn btn-ghost" id="paste" data-hi="Pasted JSON verify karo">Verify pasted JSON</button>
+    <button type="button" class="btn btn-danger" id="tamper" disabled><i data-icon="x"></i><span data-hi="Ek field chhedo aur dobara check karo">Change one field and check again</span></button>
+    <span class="tamper-note" data-hi="sirf aapke browser mein, server pe kuch nahi badalta">only in your browser; nothing changes on the server</span>
   </div>
-  <textarea id="json" class="input" aria-label="Export JSON" placeholder='…ya kisi bhi HaanJi export ka JSON yahan paste kijiye ({"tenant_id": …, "public_key": …, "receipts": […]})'></textarea>
+  <textarea id="json" class="input" aria-label="Export JSON" placeholder='…or paste the JSON of any HaanJi export here ({"tenant_id": …, "public_key": …, "receipts": […]})' data-hi-placeholder='…ya kisi bhi HaanJi export ka JSON yahan paste kijiye ({"tenant_id": …, "public_key": …, "receipts": […]})'></textarea>
 
   <div id="verdict" class="stamp verdict" role="status" aria-live="polite"></div>
-  <section id="mine" class="frame mine" hidden aria-label="Aapki receipt">
-    <header><h2>Aapki receipt</h2><span class="mono" id="mine-code"></span></header>
+  <section id="mine" class="frame mine" hidden aria-label="Your receipt" data-hi-aria-label="Aapki receipt">
+    <header><h2 data-hi="Aapki receipt">Your receipt</h2><span class="mono" id="mine-code"></span></header>
     <dl id="mine-body"></dl>
-    <p class="muted">Yeh page aapke browser mein hash aur signature dobara banata hai. Agar upar <b>VALID</b> hai, to yeh booking waise hi hai jaise aapne confirm ki thi. Isme koi badlaav nahi hua.</p>
+    <p class="muted" data-hi-html="Yeh page aapke browser mein hash aur signature dobara banata hai. Agar upar &lt;b&gt;VALID&lt;/b&gt; hai, to yeh booking waise hi hai jaise aapne confirm ki thi. Isme koi badlaav nahi hua.">This page rebuilds the hash and the signature in your browser. If it says <b>VALID</b> above, the booking is exactly as you confirmed it. Nothing in it has changed.</p>
   </section>
   <div class="keyline" id="key"></div>
   <div class="chain chainstrip" id="chainstrip" aria-hidden="true"></div>
@@ -87,18 +87,20 @@
 
   </details>
 
-  <div class="how">
-    <b>Ye page kya karta hai:</b> har receipt ka payload hash uske stored fields se dobara banata hai (canonical JSON: sorted keys, no whitespace), chain link (<i>prev_hash‖payload_hash</i>) recompute karta hai, aur signature ko tenant ki public key se check karta hai (Ed25519, TweetNaCl). Ek bhi character badla → us receipt ka hash badla → aage ki poori chain toot gayi. Kuch bhi is server pe wapas nahi jaata.
+  <div class="how" data-hi-html="&lt;b&gt;Ye page kya karta hai:&lt;/b&gt; har receipt ka payload hash uske stored fields se dobara banata hai (canonical JSON: sorted keys, no whitespace), chain link (&lt;i&gt;prev_hash‖payload_hash&lt;/i&gt;) recompute karta hai, aur signature ko tenant ki public key se check karta hai (Ed25519, TweetNaCl). Ek bhi character badla → us receipt ka hash badla → aage ki poori chain toot gayi. Kuch bhi is server pe wapas nahi jaata.">
+    <b>What this page does:</b> it rebuilds each receipt's payload hash from its stored fields (canonical JSON: sorted keys, no whitespace), recomputes the chain link (<i>prev_hash‖payload_hash</i>), and checks the signature against the tenant's public key (Ed25519, TweetNaCl). Change a single character → that receipt's hash changes → the whole chain after it breaks. Nothing is sent back to this server.
   </div>
 </main>
 
 <script src="static/nacl-fast.min.js"></script>
 <script src="static/verifier.js"></script>
 <script src="static/signboard.js"></script>
+<script src="static/lang.js"></script>
 <script>
 (function () {
   "use strict";
   const S = window.Signboard;
+  const L = window.HaanJiLang.t;
   const $ = function (id) { return document.getElementById(id); };
   let current = null;
 
@@ -107,27 +109,35 @@
   const askedCode = new URLSearchParams(location.search).get("code");
   if (askedCode) {
     document.body.classList.add("for-customer");
-    $("title").innerHTML = 'Aapki booking ka <span class="dev">सबूत</span>';
-    $("lede").textContent = "Ye receipt aapke confirmation code se khuli hai. Upar VALID ka matlab: booking bilkul waisi hai jaisi aapne haan boli thi, aur kisi ne use baad mein badla nahi.";
+    const forCustomer = function () {
+      $("title").innerHTML = L('Proof of your booking', 'Aapki booking ka <span class="dev">सबूत</span>');
+      $("lede").textContent = L("This receipt opened with your confirmation code. VALID above means the booking is exactly what you said yes to, and nobody changed it later.",
+                                "Ye receipt aapke confirmation code se khuli hai. Upar VALID ka matlab: booking bilkul waisi hai jaisi aapne haan boli thi, aur kisi ne use baad mein badla nahi.");
+    };
+    $("lede").removeAttribute("data-hi-html"); $("title").removeAttribute("data-hi-html");
+    forCustomer();
+    window.HaanJiLang.onChange(forCustomer);
     $("tech").open = false;
     $("tech").parentNode.insertBefore($("mine"), $("tech"));
     $("tech").parentNode.insertBefore($("verdict"), $("mine"));
   }
 
-  const DAYS = ["Ravivaar", "Somvaar", "Mangalvaar", "Budhvaar", "Guruvaar", "Shukravaar", "Shanivaar"];
+  const DAYS_HI = ["Ravivaar", "Somvaar", "Mangalvaar", "Budhvaar", "Guruvaar", "Shukravaar", "Shanivaar"];
+  const DAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const ACTIONS = { book_appointment: "Appointment book hua", reschedule_appointment: "Appointment ka time badla",
-                    cancel_appointment: "Appointment cancel hua", capture_lead: "Callback ke liye number liya" };
+  const ACTIONS = { book_appointment: ["Appointment booked", "Appointment book hua"], reschedule_appointment: ["Appointment time changed", "Appointment ka time badla"],
+                    cancel_appointment: ["Appointment cancelled", "Appointment cancel hua"], capture_lead: ["Number taken for a callback", "Callback ke liye number liya"] };
   function niceDate(iso) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
     if (!m) return iso;
     const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
-    return DAYS[d.getUTCDay()] + ", " + (+m[3]) + " " + MONTHS[+m[2] - 1] + " " + m[1];
+    return (window.HaanJiLang.get() === "hi" ? DAYS_HI : DAYS_EN)[d.getUTCDay()] + ", " + (+m[3]) + " " + MONTHS[+m[2] - 1] + " " + m[1];
   }
   function niceTime(hhmm) {
     const m = /^(\d{1,2}):(\d{2})/.exec(hhmm || "");
     if (!m) return hhmm;
     const h = +m[1];
+    if (window.HaanJiLang.get() !== "hi") return ((h + 11) % 12 + 1) + ":" + m[2] + (h < 12 ? " am" : " pm");
     const part = h < 12 ? "subah" : h < 16 ? "dopahar" : h < 20 ? "shaam" : "raat";
     return ((h + 11) % 12 + 1) + ":" + m[2] + " " + part;
   }
@@ -174,10 +184,11 @@
         : '<span class="st-skip">skipped</span>';
       return "<tr><td class=\"mono\">" + r.seq + "</td><td>" + S.esc(r.action) + "</td>" +
         '<td class="mono">' + S.esc(r.code.slice(0, 4)) + "-" + S.esc(r.code.slice(4, 8)) + "</td>" +
-        "<td>" + verdict + "</td><td>" + S.esc(r.reason || "hash + link + signature, teeno dobara bane") + "</td></tr>";
+        "<td>" + verdict + "</td><td>" + S.esc(r.reason || L("hash + link + signature, all three rebuilt", "hash + link + signature, teeno dobara bane")) + "</td></tr>";
     }).join("");
     if (!rep.rows.length) {
-      $("rows").innerHTML = '<tr><td colspan="5" class="muted">Export mein koi receipt nahi. Pehle <a href="talk">Talk</a> ya <a href="whatsapp">WhatsApp</a> pe ek booking kijiye.</td></tr>';
+      $("rows").innerHTML = '<tr><td colspan="5" class="muted">' + L('The export has no receipts. Make a booking on <a href="talk">Talk</a> or <a href="whatsapp">WhatsApp</a> first.',
+        'Export mein koi receipt nahi. Pehle <a href="talk">Talk</a> ya <a href="whatsapp">WhatsApp</a> pe ek booking kijiye.') + '</td></tr>';
     }
   }
 
@@ -185,14 +196,15 @@
     const want = code.replace("-", "").toUpperCase();
     const r = (exp.receipts || []).find(function (x) { return (x.chain_hash || "").slice(0, 8).toUpperCase() === want; });
     const box = $("mine");
-    if (!r) { box.hidden = false; $("mine-code").textContent = code; $("mine-body").innerHTML = "<dt>Status</dt><dd>Is server pe is code ki receipt nahi mili. Pack sahi chuna hai?</dd>"; return; }
+    if (!r) { box.hidden = false; $("mine-code").textContent = code; $("mine-body").innerHTML = "<dt>Status</dt><dd>" + S.esc(L("No receipt with this code on this server. Is the right pack chosen?", "Is server pe is code ki receipt nahi mili. Pack sahi chuna hai?")) + "</dd>"; return; }
     let args = {}, conf = {};
     try { args = JSON.parse(r.action_args); } catch (e) {}
     try { conf = JSON.parse(r.confirmation); } catch (e) {}
     function paint(fields, erased) {
-      const rows = [["Kaam", ACTIONS[r.action] || r.action.replace(/_/g, " ")], ["Service", fields.service], ["Din", niceDate(fields.date)],
-                    ["Time", niceTime(fields.time)], ["Kiske saath", fields.staff], ["Naam", erased ? "(mita diya gaya)" : fields.customer_name],
-                    ["Agent ne poocha", conf.prompt_text], ["Aapne kaha", conf.reply_text], ["Kab confirm hua", niceWhen(r.occurred_at)]];
+      const act = ACTIONS[r.action];
+      const rows = [[L("What", "Kaam"), act ? L(act[0], act[1]) : r.action.replace(/_/g, " ")], ["Service", fields.service], [L("Day", "Din"), niceDate(fields.date)],
+                    ["Time", niceTime(fields.time)], [L("With", "Kiske saath"), fields.staff], [L("Name", "Naam"), erased ? L("(erased)", "(mita diya gaya)") : fields.customer_name],
+                    [L("The agent asked", "Agent ne poocha"), conf.prompt_text], [L("You said", "Aapne kaha"), conf.reply_text], [L("Confirmed at", "Kab confirm hua"), niceWhen(r.occurred_at)]];
       $("mine-code").textContent = code + " · seq " + r.seq;
       $("mine-body").innerHTML = rows.filter(function (x) { return x[1]; }).map(function (x) { return "<dt>" + S.esc(x[0]) + "</dt><dd>" + S.esc(String(x[1])) + "</dd>"; }).join("");
       box.hidden = false;
@@ -213,13 +225,13 @@
     const r = await fetch("api/receipts/export?pack=" + encodeURIComponent($("pack").value));
     const exp = await r.json();
     $("json").value = JSON.stringify(exp, null, 1).slice(0, 4000);
-    await run(exp, "is server se abhi load hua");
+    await run(exp, L("just loaded from this server", "is server se abhi load hua"));
     if (code) showMine(exp, code);
   }
   $("load").onclick = function () { loadLive(null); };
   $("paste").onclick = function () {
     try { run(JSON.parse($("json").value), "pasted export"); }
-    catch (e) { $("json").setCustomValidity("JSON parse nahi hua: " + e.message); $("json").reportValidity(); setTimeout(function () { $("json").setCustomValidity(""); }, 2500); }
+    catch (e) { $("json").setCustomValidity(L("Could not parse the JSON: ", "JSON parse nahi hua: ") + e.message); $("json").reportValidity(); setTimeout(function () { $("json").setCustomValidity(""); }, 2500); }
   };
   $("tamper").onclick = function () {
     if (!current || !current.receipts.length) return;

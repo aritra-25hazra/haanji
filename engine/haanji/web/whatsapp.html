@@ -58,46 +58,49 @@
 </style>
 </head>
 <body>
-<a class="skip" href="#msgs">Seedha chat pe jao</a>
+<a class="skip" href="#msgs" data-hi="Seedha chat pe jao">Skip to the chat</a>
 <aside aria-label="Threads">
   <div class="head">
     <a class="wordmark" href="./">HaanJi <span class="dev">हाँजी</span></a>
     <a class="back" href="./">WhatsApp simulator</a>
+    <div data-lang-switch></div>
   </div>
   <div class="newthread">
-    <input id="phone" class="input" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number, e.g. 9812345678" aria-label="Phone number">
-    <button type="button" id="open" class="btn btn-primary">Kholo</button>
+    <input id="phone" class="input" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number, e.g. 9812345678" data-hi-placeholder="10 digit ka number, jaise 9812345678" aria-label="Phone number">
+    <button type="button" id="open" class="btn btn-primary" data-hi="Kholo">Open</button>
   </div>
   <div class="missed">
-    <button type="button" id="missed" class="btn btn-primary"><i data-icon="phoneMissed"></i>Simulate a missed call</button>
-    <p>Telephony webhook fire hota hai → HaanJi khud WhatsApp pe pehla message bhejta hai → reply se booking hui to missed call "recovered" ginti hai.</p>
+    <button type="button" id="missed" class="btn btn-primary"><i data-icon="phoneMissed"></i><span data-hi="Missed call simulate karo">Simulate a missed call</span></button>
+    <p data-hi="Telephony webhook fire hota hai → HaanJi khud WhatsApp pe pehla message bhejta hai → reply se booking hui to missed call &quot;recovered&quot; ginti hai.">The telephony webhook fires → HaanJi sends the first WhatsApp message itself → if the reply ends in a booking, the missed call counts as "recovered".</p>
   </div>
-  <p id="threads-note" hidden>Public demo: doosron ki chats yahan nahi dikhti. Apna number daal ke apna thread kholo.</p>
+  <p id="threads-note" hidden data-hi="Public demo: doosron ki chats yahan nahi dikhti. Apna number daal ke apna thread kholo.">Public demo: other people's chats are not shown here. Enter your number to open your own thread.</p>
   <div id="threads" role="list"></div>
 </aside>
 <main>
   <div class="chathead">
     <div class="avatar" id="av" aria-hidden="true">H</div>
-    <div><b id="who">Koi thread chuniye</b><small id="biz"></small></div>
+    <div><b id="who"><span data-hi="Koi thread chuniye">Pick a thread</span></b><small id="biz"></small></div>
     <label class="field"><span>Pack</span><select id="pack" class="input"></select></label>
   </div>
   <div id="msgs" tabindex="-1">
     <div class="empty">
       <h2>WhatsApp channel demo</h2>
-      <p>Left mein number daal ke thread kholo, ya "Simulate a missed call" dabao aur dekho HaanJi khud pehla message bhejta hai. Engine, policy aur ledger wahi hain jo phone call ke; sirf channel alag hai.</p>
+      <p data-hi="Left mein number daal ke thread kholo, ya &quot;Simulate a missed call&quot; dabao aur dekho HaanJi khud pehla message bhejta hai. Engine, policy aur ledger wahi hain jo phone call ke; sirf channel alag hai.">Enter a number on the left to open a thread, or press "Simulate a missed call" and watch HaanJi send the first message itself. The engine, policy and ledger are the same as on a phone call; only the channel is different.</p>
     </div>
   </div>
   <div class="compose">
     <input id="text" class="input input-pill" placeholder="Message" disabled aria-label="Message">
-    <button type="button" id="send" class="btn btn-icon" disabled aria-label="Bhejo"><i data-icon="send"></i></button>
+    <button type="button" id="send" class="btn btn-icon" disabled aria-label="Send" data-hi-aria-label="Bhejo"><i data-icon="send"></i></button>
   </div>
 </main>
 
 <script src="static/signboard.js"></script>
+<script src="static/lang.js"></script>
 <script>
 (function () {
   "use strict";
   const S = window.Signboard;
+  const L = window.HaanJiLang.t;
   const $ = function (id) { return document.getElementById(id); };
   let phone = null;
 
@@ -113,9 +116,9 @@
       // A real number is connected: say so, and which one, above the simulator.
       const live = document.createElement("div");
       live.className = "wa-live";
-      live.innerHTML = '<span class="chip chip-spec">' + S.icon("phone") + "Asli number juda hai" +
+      live.innerHTML = '<span class="chip chip-spec">' + S.icon("phone") + S.esc(L("A real number is connected", "Asli number juda hai")) +
         (s.whatsapp.number ? " · " + S.esc(s.whatsapp.number) : "") + "</span>" +
-        '<p class="muted">Is number pe asli WhatsApp karo; engine aur ledger wahi hain. Neeche wala simulator alag chalta hai.</p>';
+        '<p class="muted">' + S.esc(L("Send a real WhatsApp to this number; the engine and ledger are the same. The simulator below runs separately.", "Is number pe asli WhatsApp karo; engine aur ledger wahi hain. Neeche wala simulator alag chalta hai.")) + '</p>';
       document.querySelector("aside .head").insertAdjacentElement("afterend", live);
     }
     loadThreads();
@@ -142,7 +145,7 @@
     const wrap = document.createElement("div");
     if (meta.missed_call_recovery) {
       const sysEl = document.createElement("div"); sysEl.className = "sysline";
-      sysEl.innerHTML = '<span class="chip">' + S.icon("phoneMissed") + "missed call → HaanJi ne khud message bheja</span>";
+      sysEl.innerHTML = '<span class="chip">' + S.icon("phoneMissed") + S.esc(L("missed call → HaanJi sent a message itself", "missed call → HaanJi ne khud message bheja")) + "</span>";
       wrap.appendChild(sysEl);
     }
     // The caller's own messages (direction "in" to the business) sit on the right, as a phone would show them.
@@ -186,7 +189,7 @@
   $("open").onclick = function () {
     const p = $("phone").value.trim();
     if (/^\d{10}$/.test(p)) openThread(p);
-    else { $("phone").setCustomValidity("10 digit ka number chahiye"); $("phone").reportValidity(); setTimeout(function () { $("phone").setCustomValidity(""); }, 1500); }
+    else { $("phone").setCustomValidity(L("A 10-digit number is needed", "10 digit ka number chahiye")); $("phone").reportValidity(); setTimeout(function () { $("phone").setCustomValidity(""); }, 1500); }
   };
   $("missed").onclick = async function () {
     const p = $("phone").value.trim() || String(9700000000 + Math.floor(Math.random() * 9999999));

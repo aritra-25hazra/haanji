@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy aur data · HaanJi</title>
+<title data-hi="Privacy aur data · HaanJi">Privacy and data · HaanJi</title>
 <meta name="description" content="HaanJi kaunsa data rakhta hai, kitne din, aur customer use kaise dekh ya mita sakta hai.">
 <meta name="theme-color" content="#1B3B8C">
 <link rel="icon" href="static/icon-192.png" type="image/png">
@@ -29,70 +29,81 @@
 </style>
 </head>
 <body>
-<a class="skip" href="#main">Seedha content pe jao</a>
+<a class="skip" href="#main" data-hi="Seedha content pe jao">Skip to content</a>
 <header class="wrap">
   <nav class="nav" aria-label="Main">
     <a class="wordmark" href="./">HaanJi <span class="dev">हाँजी</span></a>
-    <ul><li><a href="./">Home</a></li><li><a href="talk">Demo</a></li><li><a href="verify">Receipt verifier</a></li></ul>
+    <ul><li><a href="./">Home</a></li><li><a href="talk">Demo</a></li><li><a href="verify">Receipt verifier</a></li><li><div data-lang-switch></div></li></ul>
   </nav>
 </header>
 <main id="main" class="wrap">
   <article class="doc">
-    <h1>Privacy aur data</h1>
-    <p class="lead">Ye page batata hai ki HaanJi ka software kya rakhta hai, kitne din, aur customer apna data kaise dekh ya mita sakta hai. Jo dukaan HaanJi chalati hai, uski apni privacy policy bhi ho sakti hai.</p>
+    <h1 data-hi="Privacy aur data">Privacy and data</h1>
+    <p class="lead" data-hi="Ye page batata hai ki HaanJi ka software kya rakhta hai, kitne din, aur customer apna data kaise dekh ya mita sakta hai. Jo dukaan HaanJi chalati hai, uski apni privacy policy bhi ho sakti hai.">This page says what HaanJi's software keeps, for how long, and how a customer can see or erase their data. The shop that runs HaanJi may also have its own privacy policy.</p>
 
-    <h2>Kya rakha jaata hai</h2>
+    <h2 data-hi="Kya rakha jaata hai">What is kept</h2>
     <ul>
-      <li><b>Calls aur WhatsApp messages:</b> caller ne kya kaha, agent ne kya jawab diya, aur caller ka number.</li>
-      <li><b>Bookings:</b> service, din, time, kiske saath, aur customer ka naam aur number.</li>
-      <li><b>Receipts:</b> har booking ka signed record. Isme naam aur number har customer ki alag chaabi se encrypted rehte hain.</li>
+      <li data-hi-html="&lt;b&gt;Calls aur WhatsApp messages:&lt;/b&gt; caller ne kya kaha, agent ne kya jawab diya, aur caller ka number."><b>Calls and WhatsApp messages:</b> what the caller said, what the agent replied, and the caller's number.</li>
+      <li data-hi-html="&lt;b&gt;Bookings:&lt;/b&gt; service, din, time, kiske saath, aur customer ka naam aur number."><b>Bookings:</b> the service, day, time, with whom, and the customer's name and number.</li>
+      <li data-hi-html="&lt;b&gt;Receipts:&lt;/b&gt; har booking ka signed record. Isme naam aur number har customer ki alag chaabi se encrypted rehte hain."><b>Receipts:</b> a signed record of every booking. The name and number in it are encrypted with a separate key for each customer.</li>
     </ul>
-    <p>Browser demo par awaaz ko browser ka speech recognition text banata hai (Chrome mein ye Google ki service hai). HaanJi ke server tak sirf text pahunchta hai.</p>
+    <p data-hi="Browser demo par awaaz ko browser ka speech recognition text banata hai (Chrome mein ye Google ki service hai). HaanJi ke server tak sirf text pahunchta hai.">In the browser demo, the browser's own speech recognition turns your voice into text (in Chrome this is a Google service). Only the text reaches HaanJi's server.</p>
 
-    <h2>Kitne din</h2>
-    <p>Calls, WhatsApp messages aur missed calls <span class="fact" id="days">180 din</span> baad apne aap mit jaate hain. Bookings aur receipts dukaan ka record hain, isliye woh rehte hain.</p>
+    <h2 data-hi="Kitne din">For how long</h2>
+    <p><span data-hi="Calls, WhatsApp messages aur missed calls">Calls, WhatsApp messages and missed calls are deleted on their own after</span> <span class="fact" id="days">180 days</span><span data-hi=" baad apne aap mit jaate hain. Bookings aur receipts dukaan ka record hain, isliye woh rehte hain.">. Bookings and receipts are the shop's records, so they stay.</span></p>
 
-    <h2>Call ki shuruaat mein bataana</h2>
-    <p id="consent">Har call ek line se shuru ho sakti hai ki baat record ho rahi hai. Line dukaan khud likhti hai.</p>
+    <h2 data-hi="Call ki shuruaat mein bataana">Saying so at the start of a call</h2>
+    <p id="consent">Every call can open with a line saying it is being recorded. The shop writes that line itself.</p>
 
-    <h2>Customer ke haq</h2>
+    <h2 data-hi="Customer ke haq">The customer's rights</h2>
     <ul>
-      <li><b>Dekhna:</b> customer ke kehne par dukaan uske number par rakha sab kuch dekh sakti hai: bookings, calls aur receipts.</li>
-      <li><b>Mitana:</b> customer ke kehne par uska record mita diya jaata hai. Receipts ki chaabi nasht hoti hai, isliye unme naam aur number phir kabhi padhe nahi ja sakte; receipt ki chain phir bhi verify hoti rehti hai.</li>
-      <li><b>Apni booking check karna:</b> confirmation code se customer <a href="verify">apni receipt</a> browser mein khud verify kar sakta hai.</li>
+      <li data-hi-html="&lt;b&gt;Dekhna:&lt;/b&gt; customer ke kehne par dukaan uske number par rakha sab kuch dekh sakti hai: bookings, calls aur receipts."><b>To see:</b> when a customer asks, the shop can see everything kept under their number: bookings, calls and receipts.</li>
+      <li data-hi-html="&lt;b&gt;Mitana:&lt;/b&gt; customer ke kehne par uska record mita diya jaata hai. Receipts ki chaabi nasht hoti hai, isliye unme naam aur number phir kabhi padhe nahi ja sakte; receipt ki chain phir bhi verify hoti rehti hai."><b>To erase:</b> when a customer asks, their record is erased. The key to their receipts is destroyed, so the name and number in them can never be read again; the receipt chain still verifies.</li>
+      <li data-hi-html="&lt;b&gt;Apni booking check karna:&lt;/b&gt; confirmation code se customer &lt;a href=&quot;verify&quot;&gt;apni receipt&lt;/a&gt; browser mein khud verify kar sakta hai."><b>To check their booking:</b> with the confirmation code, a customer can verify <a href="verify">their receipt</a> in the browser themselves.</li>
     </ul>
 
     <section id="demo-note" hidden>
-    <h2>Public demo par</h2>
-    <p>Is demo par login band hai, isliye koi bhi console dekh sakta hai. Wahan numbers ke sirf aakhri chaar ank dikhte hain, aur calendar ka secret link aur kisi number ka poora record band rehta hai. Demo par asli number dalne se pehle ye yaad rakhein.</p>
+    <h2 data-hi="Public demo par">On the public demo</h2>
+    <p data-hi="Is demo par login band hai, isliye koi bhi console dekh sakta hai. Wahan numbers ke sirf aakhri chaar ank dikhte hain, aur calendar ka secret link aur kisi number ka poora record band rehta hai. Demo par asli number dalne se pehle ye yaad rakhein.">Sign-in is off on this demo, so anyone can open the console. It shows only the last four digits of numbers, and the calendar's secret link and any number's full record stay locked. Keep this in mind before typing a real number into the demo.</p>
     </section>
 
-    <h2>Data kahan rehta hai</h2>
-    <p>Jo server HaanJi chalata hai, usi par. Code <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub par khula hai</a>, to koi bhi dekh sakta hai ki upar likhi har baat code mein kahan hoti hai.</p>
+    <h2 data-hi="Data kahan rehta hai">Where the data lives</h2>
+    <p data-hi-html="Jo server HaanJi chalata hai, usi par. Code &lt;a href=&quot;https://github.com/aritra-25hazra/haanji&quot; rel=&quot;noopener&quot;&gt;GitHub par khula hai&lt;/a&gt;, to koi bhi dekh sakta hai ki upar likhi har baat code mein kahan hoti hai.">On the server that runs HaanJi. The code is <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">open on GitHub</a>, so anyone can see where in the code each thing above happens.</p>
 
-    <p class="note">Upar ke din aur consent line is server ki asli settings se aate hain (<code>/api/privacy/policy</code>), isliye ye page har deployment par wahi batata hai jo wahan set hai.</p>
+    <p class="note" data-hi-html="Upar ke din aur consent line is server ki asli settings se aate hain (&lt;code&gt;/api/privacy/policy&lt;/code&gt;), isliye ye page har deployment par wahi batata hai jo wahan set hai.">The days and the consent line above come from this server's real settings (<code>/api/privacy/policy</code>), so on every deployment this page says what is set there.</p>
   </article>
 </main>
 <footer class="wrap foot">
   <span><a href="./">HaanJi</a> · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a></span>
-  <span>Privacy aur data</span>
+  <span data-hi="Privacy aur data">Privacy and data</span>
 </footer>
 <script src="static/signboard.js"></script>
+<script src="static/lang.js"></script>
 <script>
   window.Signboard.mountIcons();
   window.Signboard.status().then(function (s) { if (s && s.demo_readonly) document.getElementById("demo-note").hidden = false; });
-  fetch("api/privacy/policy").then(function (r) { return r.ok ? r.json() : null; }).then(function (p) {
-    if (!p) return;
+  const L = HaanJiLang.t;
+  let policy = null;
+  function show() {
     const days = document.getElementById("days");
-    if (p.retention_days > 0) days.textContent = p.retention_days + " din";
-    else days.textContent = "kabhi nahi (is server par retention band hai)";
     const c = document.getElementById("consent");
-    if (p.consent_line) {
-      c.textContent = "Is server par har call is line se shuru hoti hai: ";
-      const q = document.createElement("q"); q.textContent = p.consent_line; c.appendChild(q);
+    const n = policy ? policy.retention_days : 180;
+    days.textContent = n > 0 ? n + L(" days", " din") : L("never (retention is off on this server)", "kabhi nahi (is server par retention band hai)");
+    if (!policy) {
+      c.textContent = L("Every call can open with a line saying it is being recorded. The shop writes that line itself.",
+                        "Har call ek line se shuru ho sakti hai ki baat record ho rahi hai. Line dukaan khud likhti hai.");
+    } else if (policy.consent_line) {
+      c.textContent = L("On this server every call opens with this line: ", "Is server par har call is line se shuru hoti hai: ");
+      const q = document.createElement("q"); q.textContent = policy.consent_line; c.appendChild(q);
     } else {
-      c.textContent = "Is server par abhi koi shuruaati line set nahi hai. Dukaan HAANJI_CONSENT_LINE mein apni line likh sakti hai.";
+      c.textContent = L("No opening line is set on this server yet. The shop can write its own line in HAANJI_CONSENT_LINE.",
+                        "Is server par abhi koi shuruaati line set nahi hai. Dukaan HAANJI_CONSENT_LINE mein apni line likh sakti hai.");
     }
+  }
+  show();
+  HaanJiLang.onChange(show);
+  fetch("api/privacy/policy").then(function (r) { return r.ok ? r.json() : null; }).then(function (p) {
+    if (p) { policy = p; show(); }
   }).catch(function () {});
 </script>
 </body>

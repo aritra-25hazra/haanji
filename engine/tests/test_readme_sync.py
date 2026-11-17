@@ -75,13 +75,13 @@ def test_the_report_table_headers_and_inventory_follow_the_facts():
     assert rs.missing_inventory_rows(out, FAKE) == ["test_new.py"]
 
 
-LANDING_SNIPPET = """<p class="num"><b>31.6% → 1.1%</b><span>galat sune shabd, 30% noise pe · 0 harmful corrections</span></p>
-<p class="num"><b>239 → 137 ms</b><span>read turns pe median · 45.5% hit rate</span></p>
+LANDING_SNIPPET = """<p class="num"><b>31.6% → 1.1%</b><span data-hi="galat sune shabd, 30% noise pe · 0 harmful corrections">words misheard, at 30% noise · 0 harmful corrections</span></p>
+<p class="num"><b>239 → 137 ms</b><span data-hi="read turns pe median · 45.5% hit rate">median on read turns · 45.5% hit rate</span></p>
 <div class="widget bars" id="w-spec">
-  <div><span>pehle</span><i style="--w:100%"></i><em>239</em></div>
-  <div><span>ab</span><i style="--w:57%"></i><em>137</em></div>
+  <div><span data-hi="pehle">before</span><i style="--w:100%"></i><em>239</em></div>
+  <div><span data-hi="ab">now</span><i style="--w:57%"></i><em>137</em></div>
 </div>
-<p class="num"><b>80 / 80</b><span>chhedchhad pakdi · 0 bina-confirm writes</span></p>
+<p class="num"><b>80 / 80</b><span data-hi="chhedchhad pakdi · 0 bina-confirm writes">tampering caught · 0 writes without a yes</span></p>
 <span class="mono muted">HaanJi v0.4.0</span>
 """
 
@@ -94,10 +94,12 @@ def test_the_landing_page_quotes_the_benchmark_and_the_version():
         ledger={"mutations_detected": 79, "mutations_attempted": 80, "unconfirmed_writes_accepted": 0})
     rules = lambda: [rs.Rule(r.name, r.pattern, r.replacement) for r in rs.LANDING_RULES]    # noqa: E731
     out = rs.rewrite(LANDING_SNIPPET, rules(), f)
-    assert "<b>30.8% → 0.96%</b><span>galat sune shabd, 30% noise pe · 0 harmful" in out
-    assert "<b>270 → 172 ms</b><span>read turns pe median · 46.3% hit rate" in out
+    # the English text and the Hindi beside it (data-hi) carry the same numbers
+    assert '<b>30.8% → 0.96%</b><span data-hi="galat sune shabd, 30% noise pe · 0 harmful corrections">words misheard, at 30% noise · 0 harmful' in out
+    assert '<b>270 → 172 ms</b><span data-hi="read turns pe median · 46.3% hit rate">median on read turns · 46.3% hit rate' in out
     assert '--w:100%"></i><em>270</em>' in out and '--w:64%"></i><em>172</em>' in out
     assert "<b>79 / 80</b>" in out and "HaanJi v9.9.9" in out
+    assert '0 bina-confirm writes">tampering caught · 0 writes without a yes' in out
     assert rs.rewrite(out, rules(), f) == out
 
 

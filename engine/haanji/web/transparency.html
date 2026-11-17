@@ -23,25 +23,26 @@
 </style>
 </head>
 <body>
-<a class="skip" href="#main">Seedha content pe jao</a>
+<a class="skip" href="#main" data-hi="Seedha content pe jao">Skip to content</a>
 <header class="wrap nav">
   <a class="wordmark paint" href="./">HaanJi <span class="dev">हाँजी</span></a>
   <nav><ul>
     <li><a href="verify">Verify</a></li>
     <li><a href="talk">Demo</a></li>
     <li><a href="https://github.com/aritra-25hazra/haanji/tree/transparency" rel="noopener"><i data-icon="github" class="ic-sm"></i>Log on GitHub <i data-icon="arrow" class="ic-sm"></i></a></li>
+    <li><div data-lang-switch></div></li>
   </ul></nav>
 </header>
 <main id="main">
   <div>
     <span class="eyebrow">Pramaan ledger</span>
-    <h1>Transparency <span class="dev">लॉग</span></h1>
-    <p class="lede">Har shaam har pack ke us din ki receipts ka ek <b>Merkle root</b> banta hai aur tenant ki Ed25519 key se sign hota hai. Woh root yahan dikhta hai aur roz GitHub ke <code>transparency</code> branch pe bhi commit hota hai — jise hum khud baad mein nahi badal sakte. Certificate Transparency jaisa, par bookings ke liye: agar kal koi receipt badli ya hataayi gayi, to aaj ka root use pakad lega.</p>
+    <h1 data-hi-html="Transparency &lt;span class=&quot;dev&quot;&gt;लॉग&lt;/span&gt;">Transparency log</h1>
+    <p class="lede" data-hi-html="Har shaam har pack ke us din ki receipts ka ek &lt;b&gt;Merkle root&lt;/b&gt; banta hai aur tenant ki Ed25519 key se sign hota hai. Woh root yahan dikhta hai aur roz GitHub ke &lt;code&gt;transparency&lt;/code&gt; branch pe bhi commit hota hai — jise hum khud baad mein nahi badal sakte. Certificate Transparency jaisa, par bookings ke liye: agar kal koi receipt badli ya hataayi gayi, to aaj ka root use pakad lega.">Every evening, each pack's receipts for that day are combined into one <b>Merkle root</b>, signed with the tenant's Ed25519 key. The root is shown here and is also committed every day to the <code>transparency</code> branch on GitHub, which we cannot change later ourselves. Like Certificate Transparency, but for bookings: if a receipt from yesterday is changed or removed, today's root will catch it.</p>
   </div>
   <div class="packs" id="packs"></div>
   <section class="how">
-    <h2>Khud check karo</h2>
-    <p>Export lo (<code>api/receipts/export?pack=…</code>), us din ki receipts ke <code>chain_hash</code> le kar pairwise sha256 karo (akela bacha hua apne aap se pair hota hai), root milna chahiye; phir signature <code>root || day</code> pe public key se verify karo:</p>
+    <h2 data-hi="Khud check karo">Check it yourself</h2>
+    <p data-hi-html="Export lo (&lt;code&gt;api/receipts/export?pack=…&lt;/code&gt;), us din ki receipts ke &lt;code&gt;chain_hash&lt;/code&gt; le kar pairwise sha256 karo (akela bacha hua apne aap se pair hota hai), root milna chahiye; phir signature &lt;code&gt;root || day&lt;/code&gt; pe public key se verify karo:">Take the export (<code>api/receipts/export?pack=…</code>), take the <code>chain_hash</code> of that day's receipts and hash them pairwise with sha256 (an odd one out pairs with itself); you should reach the root. Then verify the signature over <code>root || day</code> with the public key:</p>
 <pre tabindex="0">import hashlib, json, urllib.request
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 base, pack, day = "https://haanji-engine.onrender.com", "dental_clinic", "2026-10-15"
@@ -58,18 +59,20 @@ print("anchor valid")</pre>
 </main>
 <footer class="wrap foot"><span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a></span></footer>
 <script src="static/signboard.js"></script>
+<script src="static/lang.js"></script>
 <script>
 (function () {
   const S = window.Signboard, $ = function (id) { return document.getElementById(id); };
+  const L = window.HaanJiLang.t;
   S.mountIcons();
   async function card(pack) {
     const a = await (await fetch("api/anchors?pack=" + encodeURIComponent(pack))).json();
     const rows = a.anchors.slice().reverse().map(function (x) {
       return "<tr><td>" + S.esc(x.day) + "</td><td>" + x.first_seq + "–" + x.last_seq + "</td><td class=\"mono\">" + S.esc(x.merkle_root) + "</td></tr>";
     }).join("");
-    const pending = a.pending_days.length ? '<p class="pending">' + a.pending_days.length + " din abhi seal hone baaki (aaj shaam " + S.esc(String(window.__digestHour || 20)) + ":00 IST pe)</p>" : "";
+    const pending = a.pending_days.length ? '<p class="pending">' + a.pending_days.length + L(" day(s) still to be sealed (this evening at ", " din abhi seal hone baaki (aaj shaam ") + S.esc(String(window.__digestHour || 20)) + L(":00 IST)", ":00 IST pe)") + "</p>" : "";
     return '<section class="frame pk"><h2>' + S.esc(pack) + '</h2><p class="key">public key · ' + S.esc(a.public_key) + "</p>" +
-      (rows ? '<table><thead><tr><th>Din</th><th>Receipts</th><th>Merkle root</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">Abhi koi din seal nahi hua — pehli booking ke baad shaam ko hoga.</p>') + pending + "</section>";
+      (rows ? '<table><thead><tr><th>' + L("Day", "Din") + '</th><th>Receipts</th><th>Merkle root</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">' + L("No day sealed yet; the first one is sealed on the evening after the first booking.", "Abhi koi din seal nahi hua — pehli booking ke baad shaam ko hoga.") + '</p>') + pending + "</section>";
   }
   S.status().then(async function (s) {
     if (!s) return;

@@ -178,8 +178,9 @@ def pct(rate: float) -> str:
 
 def _bhasha(m: re.Match, f: Facts) -> str:
     h = f.headline
+    noise, harmful = f"{h['noise_rate'] * 100:.0f}", h["harmful_corrections_transcript"]
     return (f"{m.group(1)}{pct(h['entity_error_rate_without_bhasha'])}% → {pct(h['entity_error_rate_with_bhasha'])}%"
-            f"{m.group(2)}{h['noise_rate'] * 100:.0f}% noise pe · {h['harmful_corrections_transcript']} harmful")
+            f"{m.group(2)}{noise}% noise pe · {harmful} harmful{m.group(3)}{noise}% noise · {harmful} harmful")
 
 
 def _spec_bars(m: re.Match, f: Facts) -> str:
@@ -188,16 +189,23 @@ def _spec_bars(m: re.Match, f: Facts) -> str:
 
 
 LANDING_RULES: list[Rule] = [
-    Rule("Bhasha pillar", _rx(r"(<b>)[\d.]+% → [\d.]+%(</b><span>galat sune shabd, )\d+% noise pe · \d+ harmful"), _bhasha),
-    Rule("speculation pillar", _rx(r"(<b>)\d+ → \d+( ms</b><span>read turns pe median · )[\d.]+(% hit rate)"),
+    # Each pillar's words are written twice, English in the text and Hindi in
+    # data-hi (engine/haanji/web/lang.js swaps them); both carry the numbers.
+    Rule("Bhasha pillar", _rx(r'(<b>)[\d.]+% → [\d.]+%(</b><span data-hi="galat sune shabd, )\d+% noise pe · \d+ harmful'
+                              r'( corrections">words misheard, at )\d+% noise · \d+ harmful'), _bhasha),
+    Rule("speculation pillar", _rx(r'(<b>)\d+ → \d+( ms</b><span data-hi="read turns pe median · )[\d.]+'
+                                   r'(% hit rate">median on read turns · )[\d.]+(% hit rate)'),
          lambda m, f: f"{m.group(1)}{f.headline['read_turn_p50_without_speculation']:.0f} → "
                       f"{f.headline['read_turn_p50_with_speculation']:.0f}{m.group(2)}"
-                      f"{pct(f.headline['speculation_hit_rate'])}{m.group(3)}"),
-    Rule("speculation bars", _rx(r'(<span>pehle</span><i style="--w:100%"></i><em>)\d+(</em></div>\s*<div><span>ab</span><i style="--w:)'
-                                 r'\d+(%"></i><em>)\d+(</em>)'), _spec_bars),
-    Rule("ledger pillar", _rx(r"(<b>)\d+ / \d+(</b><span>chhedchhad pakdi · )\d+( bina-confirm writes)"),
+                      f"{pct(f.headline['speculation_hit_rate'])}{m.group(3)}"
+                      f"{pct(f.headline['speculation_hit_rate'])}{m.group(4)}"),
+    Rule("speculation bars", _rx(r'(<span data-hi="pehle">before</span><i style="--w:100%"></i><em>)\d+(</em></div>\s*'
+                                 r'<div><span data-hi="ab">now</span><i style="--w:)\d+(%"></i><em>)\d+(</em>)'), _spec_bars),
+    Rule("ledger pillar", _rx(r'(<b>)\d+ / \d+(</b><span data-hi="chhedchhad pakdi · )\d+( bina-confirm writes">tampering caught · )'
+                              r'\d+( writes without a yes)'),
          lambda m, f: f"{m.group(1)}{f.ledger['mutations_detected']} / {f.ledger['mutations_attempted']}"
-                      f"{m.group(2)}{f.ledger['unconfirmed_writes_accepted']}{m.group(3)}"),
+                      f"{m.group(2)}{f.ledger['unconfirmed_writes_accepted']}{m.group(3)}"
+                      f"{f.ledger['unconfirmed_writes_accepted']}{m.group(4)}"),
     Rule("footer version", _rx(r"(HaanJi v)\d+\.\d+\.\d+"), lambda m, f: f"{m.group(1)}{f.version}"),
 ]
 

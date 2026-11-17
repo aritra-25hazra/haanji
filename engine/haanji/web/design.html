@@ -40,31 +40,32 @@
 </style>
 </head>
 <body>
-<a class="skip" href="#main">Seedha content pe jao</a>
+<a class="skip" href="#main" data-hi="Seedha content pe jao">Skip to content</a>
 <header class="wrap nav">
   <a class="wordmark paint" href="./">HaanJi <span class="dev">हाँजी</span></a>
   <nav><ul>
     <li><a href="talk">Demo</a></li>
     <li><a href="https://github.com/aritra-25hazra/haanji/tree/main/docs/superpowers/specs" rel="noopener">Design spec <i data-icon="arrow" class="ic-sm"></i></a></li>
     <li><a href="https://github.com/aritra-25hazra/haanji" rel="noopener"><i data-icon="github" class="ic-sm"></i>GitHub</a></li>
+    <li><div data-lang-switch></div></li>
   </ul></nav>
 </header>
 <main id="main">
   <div>
     <span class="eyebrow">Design system</span>
     <h1>Signboard <span class="dev">साइनबोर्ड</span></h1>
-    <p class="lede">Har Indian dukaan ka ek hand-painted sign hota hai: cobalt pe marigold, moti bilingual lettering, ek laal mohar. HaanJi ki poori UI — demo pages, owner console, receipts — isi ek bhasha mein hai. Yeh page <code>static/signboard.css</code> ke tokens aur components ko jaise-ke-waise dikhata hai; jo yahan dikhta hai wahi code hai.</p>
+    <p class="lede" data-hi-html="Har Indian dukaan ka ek hand-painted sign hota hai: cobalt pe marigold, moti bilingual lettering, ek laal mohar. HaanJi ki poori UI — demo pages, owner console, receipts — isi ek bhasha mein hai. Yeh page &lt;code&gt;static/signboard.css&lt;/code&gt; ke tokens aur components ko jaise-ke-waise dikhata hai; jo yahan dikhta hai wahi code hai.">Every Indian shop has a hand-painted sign: marigold on cobalt, thick bilingual lettering, a red stamp. All of HaanJi's UI (demo pages, owner console, receipts) speaks this one language. This page shows the tokens and components of <code>static/signboard.css</code> as they are; what you see here is the code.</p>
   </div>
 
   <section class="ds" aria-labelledby="colour">
-    <h2 id="colour">Rang</h2>
-    <p>Do primary (cobalt, marigold), ek paper (chalk), ek ink, aur do signal rang — sindoor galat/khatre ke liye, leaf sahi/verified ke liye. Console pe wahi rang light paper pe ulte chalte hain. Har pair WCAG 2 AA contrast paas karta hai (Playwright + axe pass test mein hai).</p>
+    <h2 id="colour" data-hi="Rang">Colour</h2>
+    <p data-hi="Do primary (cobalt, marigold), ek paper (chalk), ek ink, aur do signal rang — sindoor galat/khatre ke liye, leaf sahi/verified ke liye. Console pe wahi rang light paper pe ulte chalte hain. Har pair WCAG 2 AA contrast paas karta hai (Playwright + axe pass test mein hai).">Two primaries (cobalt, marigold), a paper (chalk), an ink, and two signal colours: sindoor for wrong or danger, leaf for right or verified. The console uses the same colours the other way round, on light paper. Every pair passes WCAG 2 AA contrast (a Playwright + axe test checks it).</p>
     <div class="swatches" id="swatches"></div>
   </section>
 
   <section class="ds" aria-labelledby="type">
     <h2 id="type">Type</h2>
-    <p>Display heading ke liye Bricolage Grotesque (bold, condensed, signboard jaisa); Devanagari ke liye Yatra One (brush); body Instrument Sans; numbers aur codes JetBrains Mono — receipt codes, latency, phone numbers hamesha mono mein.</p>
+    <p data-hi="Display heading ke liye Bricolage Grotesque (bold, condensed, signboard jaisa); Devanagari ke liye Yatra One (brush); body Instrument Sans; numbers aur codes JetBrains Mono — receipt codes, latency, phone numbers hamesha mono mein.">Bricolage Grotesque for display headings (bold, condensed, like a signboard); Yatra One for Devanagari (brush); Instrument Sans for body text; JetBrains Mono for numbers and codes: receipt codes, latency and phone numbers are always mono.</p>
     <div class="type-sample">
       <div><code>--font-display</code><span class="t-display">Haanji, Smile Care Dental.</span></div>
       <div><code>--font-dev</code><span class="t-dev">हाँजी · सबूत · पक्का</span></div>
@@ -94,49 +95,50 @@
       <label class="field"><span>Phone (optional)</span><input class="input" placeholder="9876543210"></label>
       <div class="row"><input class="input input-pill" placeholder="…ya yahan type karke Enter"><button type="button" class="btn btn-primary btn-icon" aria-label="Bhejo"><i data-icon="send"></i></button></div>
     </div>
-    <p>Frames (<code>.frame</code>) teen-line painted border hain — cobalt ke andar marigold — har card ko sign jaisa banate hain. Receipt ki mohar (<code>.stamp</code>) hamesha 3° tilt pe, sindoor ink, mono text: yeh "seal" ka ek hi roop hai, demo se console tak.</p>
+    <p data-hi-html="Frames (&lt;code&gt;.frame&lt;/code&gt;) teen-line painted border hain — cobalt ke andar marigold — har card ko sign jaisa banate hain. Receipt ki mohar (&lt;code&gt;.stamp&lt;/code&gt;) hamesha 3° tilt pe, sindoor ink, mono text: yeh &quot;seal&quot; ka ek hi roop hai, demo se console tak.">Frames (<code>.frame</code>) are a three-line painted border, marigold inside cobalt, that makes every card look like a sign. The receipt stamp (<code>.stamp</code>) is always tilted 3°, in sindoor ink, with mono text: the one look of a "seal", from the demo to the console.</p>
   </section>
 
   <section class="ds" aria-labelledby="icons">
     <h2 id="icons">Icons</h2>
-    <p>Sab SVG, 24px grid, 2px stroke, <code>Signboard.icon(name)</code> se. UI mein emoji kabhi nahi — test <code>test_no_emoji_is_used_as_an_icon</code> har page ko check karta hai.</p>
+    <p data-hi-html="Sab SVG, 24px grid, 2px stroke, &lt;code&gt;Signboard.icon(name)&lt;/code&gt; se. UI mein emoji kabhi nahi — test &lt;code&gt;test_no_emoji_is_used_as_an_icon&lt;/code&gt; har page ko check karta hai.">All SVG, on a 24px grid with a 2px stroke, from <code>Signboard.icon(name)</code>. Never an emoji in the UI: the test <code>test_no_emoji_is_used_as_an_icon</code> checks every page.</p>
     <div class="icons" id="icons"></div>
   </section>
 
   <section class="ds" aria-labelledby="motion">
     <h2 id="motion">Motion</h2>
-    <p>Teen durations: micro 160 ms (hover, press), base 240 ms (reveal, panel), paint 400 ms (repair ka "paint over", stamp ka girna). Sab <code>prefers-reduced-motion</code> ka sammaan karte hain — tab animation turant apni aakhri state pe. Motion sirf un cheezon pe jo sach mein hui hain: ek sudhaar, ek seal, ek tool jo pehle se taiyaar tha.</p>
+    <p data-hi-html="Teen durations: micro 160 ms (hover, press), base 240 ms (reveal, panel), paint 400 ms (repair ka &quot;paint over&quot;, stamp ka girna). Sab &lt;code&gt;prefers-reduced-motion&lt;/code&gt; ka sammaan karte hain — tab animation turant apni aakhri state pe. Motion sirf un cheezon pe jo sach mein hui hain: ek sudhaar, ek seal, ek tool jo pehle se taiyaar tha.">Three durations: micro 160 ms (hover, press), base 240 ms (reveal, panel), paint 400 ms (a repair's "paint over", a stamp landing). All of them respect <code>prefers-reduced-motion</code>: the animation then jumps to its end state. Motion only marks things that really happened: a fix, a seal, a tool that was ready early.</p>
     <div class="motion">
-      <span class="stamp" id="stamp2" title="click: stamp girti hai"><i data-icon="lock" class="ic-sm"></i>RECEIPT 9F2A-11C0</span>
-      <button type="button" class="btn btn-ghost" id="replay">Stamp dobara</button>
+      <span class="stamp" id="stamp2" title="click: the stamp lands" data-hi-title="click: stamp girti hai"><i data-icon="lock" class="ic-sm"></i>RECEIPT 9F2A-11C0</span>
+      <button type="button" class="btn btn-ghost" id="replay" data-hi="Stamp dobara">Stamp again</button>
       <span class="mono muted" style="font-size:12px">--t-micro 160ms · --t-base 240ms · --t-paint 400ms · ease-out cubic-bezier(.2,.8,.2,1)</span>
     </div>
   </section>
 
   <section class="ds" aria-labelledby="rules">
-    <h2 id="rules">Niyam</h2>
+    <h2 id="rules" data-hi="Niyam">Rules</h2>
     <div class="rules">
-      <div class="frame"><h3>Bilingual, bina mazaak ke</h3><p>Devanagari sirf wahan jahan shabd ka weight ho — wordmark, section ka naam, mohar. Body text Hinglish, jaise log bolte hain.</p></div>
-      <div class="frame"><h3>Numbers mono</h3><p>Har code, latency, number, time — mono. Aankh turant pakad leti hai ki yeh "data" hai, "baat" nahi.</p></div>
-      <div class="frame"><h3>Relative URLs</h3><p>Har link relative hai, taaki page kisi bhi prefix ke peeche chale (Vercel rewrite, nginx). Test isko pakadta hai.</p></div>
-      <div class="frame"><h3>Dark on demo, paper on console</h3><p>Demo cobalt pe (sign), console chalk paper pe (register). Tokens same, roles ulte.</p></div>
-      <div class="frame"><h3>44px touch targets</h3><p>Har button aur input kam se kam 44px — phone pe angoothe ke liye. 390px pe horizontal scroll kabhi nahi.</p></div>
-      <div class="frame"><h3>Honest states</h3><p>Loading, empty, offline — har page ke paas teeno hain, aur offline pe sample data saaf label ke saath.</p></div>
+      <div class="frame"><h3 data-hi="Bilingual, bina mazaak ke">Bilingual, without making a joke of it</h3><p data-hi="Devanagari sirf wahan jahan shabd ka weight ho — wordmark, section ka naam, mohar. Body text Hinglish, jaise log bolte hain.">Devanagari only where a word carries weight: the wordmark, a section name, a stamp. Body text in the language people speak.</p></div>
+      <div class="frame"><h3 data-hi="Numbers mono">Numbers in mono</h3><p data-hi="Har code, latency, number, time — mono. Aankh turant pakad leti hai ki yeh &quot;data&quot; hai, &quot;baat&quot; nahi.">Every code, latency, number and time is mono. The eye sees at once that this is "data", not "talk".</p></div>
+      <div class="frame"><h3>Relative URLs</h3><p data-hi="Har link relative hai, taaki page kisi bhi prefix ke peeche chale (Vercel rewrite, nginx). Test isko pakadta hai.">Every link is relative, so a page works behind any prefix (a Vercel rewrite, nginx). A test catches it.</p></div>
+      <div class="frame"><h3>Dark on demo, paper on console</h3><p data-hi="Demo cobalt pe (sign), console chalk paper pe (register). Tokens same, roles ulte.">The demo on cobalt (a sign), the console on chalk paper (a register). The same tokens, in reverse roles.</p></div>
+      <div class="frame"><h3>44px touch targets</h3><p data-hi="Har button aur input kam se kam 44px — phone pe angoothe ke liye. 390px pe horizontal scroll kabhi nahi.">Every button and input is at least 44px, for a thumb on a phone. Never a sideways scroll at 390px.</p></div>
+      <div class="frame"><h3>Honest states</h3><p data-hi="Loading, empty, offline — har page ke paas teeno hain, aur offline pe sample data saaf label ke saath.">Loading, empty, offline: every page has all three, and sample data shown offline is clearly labelled.</p></div>
     </div>
   </section>
 
   <section class="ds" aria-labelledby="use">
-    <h2 id="use">Use karna</h2>
+    <h2 id="use" data-hi="Use karna">Using it</h2>
 <pre tabindex="0">&lt;link rel="stylesheet" href="static/signboard.css"&gt;
 &lt;script src="static/signboard.js"&gt;&lt;/script&gt;
 &lt;i data-icon="phone"&gt;&lt;/i&gt;            &lt;!-- Signboard.mountIcons() inhe SVG bana deta hai --&gt;
 &lt;span class="stamp"&gt;RECEIPT 2504-7863&lt;/span&gt;   Signboard.stamp(el)   // mohar girti hai
 Signboard.repairNode("rut kanal", "root canal")   // paint-over repair</pre>
-    <p>Console (React) same tokens <code>console/src/signboard.css</code> mein rakhta hai; components <code>Common.tsx</code> mein — Chip, Stamp, Repair, Register, Tile, Waterfall.</p>
+    <p data-hi-html="Console (React) same tokens &lt;code&gt;console/src/signboard.css&lt;/code&gt; mein rakhta hai; components &lt;code&gt;Common.tsx&lt;/code&gt; mein — Chip, Stamp, Repair, Register, Tile, Waterfall.">The console (React) keeps the same tokens in <code>console/src/signboard.css</code>, and the components in <code>Common.tsx</code>: Chip, Stamp, Repair, Register, Tile, Waterfall.</p>
   </section>
 </main>
 <footer class="wrap foot"><span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a></span></footer>
 <script src="static/signboard.js"></script>
+<script src="static/lang.js"></script>
 <script>
 (function () {
   const S = window.Signboard, $ = function (id) { return document.getElementById(id); };

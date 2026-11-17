@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HaanJi · AI receptionist jo Hinglish mein phone uthata hai</title>
-<meta name="description" content="Clinic, salon, lab aur coaching ke liye AI receptionist. Customer call ya WhatsApp kare, HaanJi Hinglish mein baat karke booking karta hai, aur har booking ka signed saboot rakhta hai.">
+<title data-hi="HaanJi · AI receptionist jo Hinglish mein phone uthata hai">HaanJi · the AI receptionist that answers the phone in Hinglish</title>
+<meta name="description" content="An AI receptionist for clinics, salons, labs and coaching centres. A customer calls or messages on WhatsApp, HaanJi talks in Hinglish and makes the booking, and keeps a signed proof of every booking.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="HaanJi · AI receptionist jo Hinglish mein phone uthata hai">
-<meta property="og:description" content="Customer call ya WhatsApp kare, HaanJi slot book karta hai. Owner ko calendar, callback list aur har booking ka saboot milta hai. 2 minute ka demo browser mein.">
+<meta property="og:title" content="HaanJi · the AI receptionist that answers the phone in Hinglish">
+<meta property="og:description" content="A customer calls or messages on WhatsApp and HaanJi books the slot. The owner gets a calendar, a call-back list and a proof of every booking. A 2-minute demo in the browser.">
 <!-- Link previews need an absolute image URL; this is the public demo's copy. -->
 <meta property="og:image" content="https://haanji-engine.onrender.com/static/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="HaanJi: Phone uthata hai. Hinglish mein. Saboot ke saath. Bagal mein WhatsApp par ek booking.">
+<meta property="og:image:alt" content="HaanJi: answers the phone, in Hinglish, with proof. Beside it, a booking on WhatsApp.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1B3B8C">
 <link rel="preload" href="static/font-bricolage-grotesque-latin-89aaf4.woff2" as="font" type="font/woff2" crossorigin>
@@ -30,6 +30,7 @@
   .nav .nav-cta:hover { background: #FFC83D; }
   /* On a phone the bar keeps the demo and the ask; the rest is on the page. */
   @media (max-width: 720px) { .nav ul { flex-wrap: nowrap; gap: 0; } .nav li.wide { display: none; } .nav .nav-cta { padding: 0 12px; } }
+  .nav [data-lang-switch] { margin: 0 6px; }
 
   .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding: 40px 24px 96px; }
   .hero-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
@@ -146,18 +147,19 @@
 </style>
 </head>
 <body>
-<a class="skip" href="#main">Seedha content pe jao</a>
+<a class="skip" href="#main" data-hi="Seedha content pe jao">Skip to content</a>
 
 <header class="wrap">
   <nav class="nav" aria-label="Main">
     <a class="wordmark paint" href="./">HaanJi <span class="dev">हाँजी</span></a>
     <ul>
-      <li class="wide"><a href="#kaise">Kaise kaam karta hai</a></li>
+      <li class="wide"><a href="#kaise" data-hi="Kaise kaam karta hai">How it works</a></li>
       <li><a href="talk">Demo</a></li>
-      <li class="wide"><a href="#sawaal">Sawaal</a></li>
+      <li class="wide"><a href="#sawaal" data-hi="Sawaal">FAQ</a></li>
       <li class="wide"><a href="https://github.com/aritra-25hazra/haanji" rel="noopener"><i data-icon="github" class="ic-sm"></i>GitHub</a></li>
       <li id="console-li" class="wide" hidden><a id="console-link" href="#" rel="noopener">Console <i data-icon="arrow" class="ic-sm"></i></a></li>
-      <li data-pilot-only hidden><a class="btn btn-primary nav-cta" data-pilot href="#shuru">Free pilot maango</a></li>
+      <li><div data-lang-switch></div></li>
+      <li data-pilot-only hidden><a class="btn btn-primary nav-cta" data-pilot href="#shuru" data-hi="Free pilot maango">Ask for a free pilot</a></li>
     </ul>
   </nav>
 </header>
@@ -165,16 +167,16 @@
 <main id="main">
   <section class="hero wrap">
     <div class="hero-copy">
-      <h1 data-reveal style="--i:1">Phone uthata hai.<br>Hinglish mein.<br><span class="dev">सबूत</span> ke saath.</h1>
-      <p class="lead" data-reveal style="--i:2">Clinic, salon, lab aur coaching ke liye AI receptionist. Customer call ya WhatsApp kare, HaanJi uski bhasha mein baat karke slot book karta hai, aur har booking ka signed saboot aapke paas rehta hai.</p>
+      <h1 data-reveal style="--i:1" data-hi-html="Phone uthata hai.&lt;br&gt;Hinglish mein.&lt;br&gt;&lt;span class=&quot;dev&quot;&gt;सबूत&lt;/span&gt; ke saath.">Answers the phone.<br>In Hinglish.<br>With proof.</h1>
+      <p class="lead" data-reveal style="--i:2" data-hi="Clinic, salon, lab aur coaching ke liye AI receptionist. Customer call ya WhatsApp kare, HaanJi uski bhasha mein baat karke slot book karta hai, aur har booking ka signed saboot aapke paas rehta hai.">An AI receptionist for clinics, salons, labs and coaching centres. A customer calls or sends a WhatsApp message, HaanJi talks in their language and books the slot, and you keep a signed proof of every booking.</p>
       <div class="row" data-reveal style="--i:3">
-        <a class="btn btn-primary" href="talk">Abhi baat karke dekho <i data-icon="arrow"></i></a>
-        <a class="btn btn-ghost" data-pilot-alt href="#kaise">Kaise kaam karta hai</a>
-        <a class="btn btn-ghost" data-pilot-only data-pilot href="#shuru" hidden>Free pilot maango</a>
+        <a class="btn btn-primary" href="talk" data-hi-html="Abhi baat karke dekho &lt;i data-icon=&quot;arrow&quot;&gt;&lt;/i&gt;">Talk to it now <i data-icon="arrow"></i></a>
+        <a class="btn btn-ghost" data-pilot-alt href="#kaise" data-hi="Kaise kaam karta hai">How it works</a>
+        <a class="btn btn-ghost" data-pilot-only data-pilot href="#shuru" hidden data-hi="Free pilot maango">Ask for a free pilot</a>
       </div>
-      <p class="hero-note" data-reveal style="--i:4">Demo ke liye na login chahiye na app: browser mein mic se bolo ya type karo. Ya pehle <a href="static/haanji-walkthrough.mp4">45 second ka video dekho</a>.</p>
+      <p class="hero-note" data-reveal style="--i:4" data-hi-html="Demo ke liye na login chahiye na app: browser mein mic se bolo ya type karo. Ya pehle &lt;a href=&quot;static/haanji-walkthrough.mp4&quot;&gt;45 second ka video dekho&lt;/a&gt;.">The demo needs no login and no app: speak into the browser's mic or type. Or first <a href="static/haanji-walkthrough.mp4">watch the 45-second video</a>.</p>
     </div>
-    <div class="frame phone" id="hero-call" tabindex="0" aria-label="Ek sample call ka replay; hover ya focus karne pe rukta hai">
+    <div class="frame phone" id="hero-call" tabindex="0" aria-label="Replay of a sample call; pauses on hover or focus" data-hi-aria-label="Ek sample call ka replay; hover ya focus karne pe rukta hai">
       <div class="phone-head"><span class="live"><i></i>LIVE CALL · SMILE CARE DENTAL</span><span class="mono timer">00:00</span></div>
       <div class="transcript" aria-live="polite"></div>
     </div>
@@ -182,42 +184,45 @@
 
   <section class="wall section" id="kaise">
     <div class="wrap">
-      <h2>Customer ki call se aapke calendar tak</h2>
+      <h2 data-hi="Customer ki call se aapke calendar tak">From the customer's call to your calendar</h2>
       <ol class="flow">
         <li>
           <div class="flow-text">
             <span class="step" aria-hidden="true">1</span>
-            <h3>Customer call ya WhatsApp karta hai</h3>
-            <p>Hinglish, Hindi ya English, jaise woh roz bolta hai. Recogniser "rut kanal" sune, tab bhi HaanJi aapki services ki list se "root canal" padhta hai.</p>
+            <h3 data-hi="Customer call ya WhatsApp karta hai">A customer calls or messages on WhatsApp</h3>
+            <p data-hi="Hinglish, Hindi ya English, jaise woh roz bolta hai. Recogniser &quot;rut kanal&quot; sune, tab bhi HaanJi aapki services ki list se &quot;root canal&quot; padhta hai.">In Hinglish, Hindi or English, the way they speak every day. Even when the speech recogniser hears "rut kanal", HaanJi reads "root canal" from your own list of services.</p>
           </div>
           <figure class="shot shot-chat">
             <img src="static/shot-chat.webp" width="840" height="2442" loading="lazy" decoding="async"
-                 alt="WhatsApp chat: customer ne 'rut kanal' likha, HaanJi ne root canal padha, slot aur naam dohra ke poocha, aur 'haan confirm kar do' ke baad confirmation code 69ED-F4E3 aur receipt ka link bheja.">
-            <figcaption>Asli engine, sample customer: WhatsApp par booking.</figcaption>
+                 alt="WhatsApp chat: the customer wrote 'rut kanal', HaanJi read root canal, repeated the slot and the name, and after 'haan confirm kar do' sent confirmation code 69ED-F4E3 and a receipt link."
+                 data-hi-alt="WhatsApp chat: customer ne 'rut kanal' likha, HaanJi ne root canal padha, slot aur naam dohra ke poocha, aur 'haan confirm kar do' ke baad confirmation code 69ED-F4E3 aur receipt ka link bheja.">
+            <figcaption data-hi="Asli engine, sample customer: WhatsApp par booking.">The real engine, a sample customer: a booking on WhatsApp.</figcaption>
           </figure>
         </li>
         <li>
           <div class="flow-text">
             <span class="step" aria-hidden="true">2</span>
-            <h3>Haan bolne par hi booking pakki</h3>
-            <p>HaanJi slot, doctor aur naam dohra ke poochta hai. Customer haan bole tabhi booking banti hai, aur use ek code milta hai jisse woh apni receipt khud khol sakta hai.</p>
+            <h3 data-hi="Haan bolne par hi booking pakki">The booking is made only after a yes</h3>
+            <p data-hi="HaanJi slot, doctor aur naam dohra ke poochta hai. Customer haan bole tabhi booking banti hai, aur use ek code milta hai jisse woh apni receipt khud khol sakta hai.">HaanJi reads back the slot, the doctor and the name. The booking is made only when the customer says yes, and they get a code to open their own receipt.</p>
           </div>
           <figure class="shot">
             <img src="static/shot-receipt.webp" width="1094" height="789" loading="lazy" decoding="async"
-                 alt="Customer ki receipt 69ED-F4E3: VALID, root canal, Somvaar 16 Nov, 10:30 subah, Dr Sheikh, agent ka sawaal aur customer ka jawab 'haan confirm kar do'.">
-            <figcaption>Customer ka link: receipt jo browser mein khud verify hoti hai.</figcaption>
+                 alt="The customer's receipt 69ED-F4E3: VALID, root canal, Monday 16 Nov, 10:30 am, Dr Sheikh, the agent's question and the customer's answer 'haan confirm kar do'."
+                 data-hi-alt="Customer ki receipt 69ED-F4E3: VALID, root canal, Somvaar 16 Nov, 10:30 subah, Dr Sheikh, agent ka sawaal aur customer ka jawab 'haan confirm kar do'.">
+            <figcaption data-hi="Customer ka link: receipt jo browser mein khud verify hoti hai.">The customer's link: a receipt that verifies itself in the browser.</figcaption>
           </figure>
         </li>
         <li>
           <div class="flow-text">
             <span class="step" aria-hidden="true">3</span>
-            <h3>Aapko sab ek jagah dikhta hai</h3>
-            <p>Aaj ki calls, bookings aur unki kamaai, aur kise wapas call karna hai. Console phone ke browser mein bhi chalta hai, aur chahein to roz shaam din ka hisaab WhatsApp par aata hai.</p>
+            <h3 data-hi="Aapko sab ek jagah dikhta hai">You see everything in one place</h3>
+            <p data-hi="Aaj ki calls, bookings aur unki kamaai, aur kise wapas call karna hai. Console phone ke browser mein bhi chalta hai, aur chahein to roz shaam din ka hisaab WhatsApp par aata hai.">Today's calls, the bookings and what they earn, and who to call back. The console works in a phone's browser too, and if you like, a summary of the day arrives on WhatsApp every evening.</p>
           </div>
           <figure class="shot">
             <img src="static/shot-dashboard.webp" width="1448" height="924" loading="lazy" decoding="async"
-                 alt="Owner console ka Aaj page: 7 calls, 4 bookings 15,200 rupaye ki, 2 callback chahiye, aur 'Inhe wapas call karo' list mein do customers ke number aur unki maang.">
-            <figcaption>Owner console: aaj ka din aur callback list.</figcaption>
+                 alt="The owner console's Today page: 7 calls, 4 bookings worth 15,200 rupees, 2 need a callback, and a call-back list with two customers' numbers and what they asked for."
+                 data-hi-alt="Owner console ka Aaj page: 7 calls, 4 bookings 15,200 rupaye ki, 2 callback chahiye, aur 'Inhe wapas call karo' list mein do customers ke number aur unki maang.">
+            <figcaption data-hi="Owner console: aaj ka din aur callback list.">The owner console: today, and the call-back list.</figcaption>
           </figure>
         </li>
       </ol>
@@ -227,12 +232,12 @@
   <section class="section" id="kiske">
     <div class="wrap two">
       <div>
-        <h2>Aapke business ke shabd pehle se jaanta hai</h2>
-        <p class="lead">Har business ek pack hai: services, daam, timing, staff, aur woh shabd jo log galat bolte hain. Naya business console ke "Nayi dukaan" mein paanch sawaalon se judta hai.</p>
+        <h2 data-hi="Aapke business ke shabd pehle se jaanta hai">Already knows your business's words</h2>
+        <p class="lead" data-hi="Har business ek pack hai: services, daam, timing, staff, aur woh shabd jo log galat bolte hain. Naya business console ke &quot;Nayi dukaan&quot; mein paanch sawaalon se judta hai.">Each business is a pack: services, prices, hours, staff, and the words people get wrong. A new business is added in five questions, under "New shop" in the console.</p>
       </div>
       <ul class="kinds">
         <li><b>Dental clinic</b><span>Hinglish · Tanglish (Chennai) · Benglish (Kolkata) · Marathinglish (Pune)</span></li>
-        <li><b>Salon aur spa</b><span>Hinglish · Punglish (Ludhiana)</span></li>
+        <li><b data-hi="Salon aur spa">Salon and spa</b><span>Hinglish · Punglish (Ludhiana)</span></li>
         <li><b>Diagnostic lab</b><span>Hinglish · Tenglish (Hyderabad)</span></li>
         <li><b>Coaching institute</b><span>Hinglish · Gujlish (Ahmedabad)</span></li>
       </ul>
@@ -241,28 +246,28 @@
 
   <section class="wall section" id="pillars">
     <div class="wrap">
-      <h2>Galat suna shabd, late jawab, aur baad ka jhagda.</h2>
-      <p class="pillars-note">Teeno ka hal engine mein hai. Neeche ke number benchmark ke hain: recogniser ki galtiyan simulate karke naape gaye, asli calls par nahi.</p>
+      <h2 data-hi="Galat suna shabd, late jawab, aur baad ka jhagda.">A misheard word, a slow reply, and an argument later.</h2>
+      <p class="pillars-note" data-hi="Teeno ka hal engine mein hai. Neeche ke number benchmark ke hain: recogniser ki galtiyan simulate karke naape gaye, asli calls par nahi.">The engine answers all three. The numbers below are from the benchmark: measured with simulated recogniser errors, not on real calls.</p>
       <div class="grid-3 pillars">
         <article class="pillar" data-reveal>
           <span class="badge">Bhasha Bridge</span>
-          <p>Aapke apne catalogue se bana sound-index. Recogniser ko bhi batata hai, aur uski galti bhi sudhaarta hai, par sirf tab jab wo khud sure na ho aur awaaz bilkul match kare.</p>
-          <p class="num"><b>30.7% → 0.96%</b><span>galat sune shabd, 30% noise pe · 0 harmful corrections</span></p>
+          <p data-hi="Aapke apne catalogue se bana sound-index. Recogniser ko bhi batata hai, aur uski galti bhi sudhaarta hai, par sirf tab jab wo khud sure na ho aur awaaz bilkul match kare.">A sound index built from your own catalogue. It tells the recogniser what to expect and fixes its mistakes, but only when the recogniser was unsure and the sound matches closely.</p>
+          <p class="num"><b>30.7% → 0.96%</b><span data-hi="galat sune shabd, 30% noise pe · 0 harmful corrections">words misheard, at 30% noise · 0 harmful corrections</span></p>
           <div class="widget" id="w-bhasha"></div>
         </article>
         <article class="pillar" data-reveal style="--i:1">
           <span class="badge">Speculative turns</span>
-          <p>Jab caller bol hi raha hota hai, read-only kaam pehle se shuru ho jaata hai. Jawab tab use hota hai jab asli sawaal byte-by-byte wahi nikle.</p>
-          <p class="num"><b>226 → 151 ms</b><span>read turns pe median · 46.3% hit rate</span></p>
+          <p data-hi="Jab caller bol hi raha hota hai, read-only kaam pehle se shuru ho jaata hai. Jawab tab use hota hai jab asli sawaal byte-by-byte wahi nikle.">While the caller is still speaking, read-only work starts early. The answer is used only when the real question turns out to be byte-for-byte the same.</p>
+          <p class="num"><b>226 → 151 ms</b><span data-hi="read turns pe median · 46.3% hit rate">median on read turns · 46.3% hit rate</span></p>
           <div class="widget bars" id="w-spec">
-            <div><span>pehle</span><i style="--w:100%"></i><em>226</em></div>
-            <div><span>ab</span><i style="--w:67%"></i><em>151</em></div>
+            <div><span data-hi="pehle">before</span><i style="--w:100%"></i><em>226</em></div>
+            <div><span data-hi="ab">now</span><i style="--w:67%"></i><em>151</em></div>
           </div>
         </article>
         <article class="pillar" data-reveal style="--i:2">
           <span class="badge">Pramaan ledger</span>
-          <p>Har booking caller ki "haan" ke saath ek signed, chained receipt mein seal hoti hai. Koi bhi use bina humpe bharosa kiye verify kar sakta hai.</p>
-          <p class="num"><b>80 / 80</b><span>chhedchhad pakdi · 0 bina-confirm writes</span></p>
+          <p data-hi="Har booking caller ki &quot;haan&quot; ke saath ek signed, chained receipt mein seal hoti hai. Koi bhi use bina humpe bharosa kiye verify kar sakta hai.">Every booking is sealed, with the caller's "yes", in a signed and chained receipt. Anyone can verify it without having to trust us.</p>
+          <p class="num"><b>80 / 80</b><span data-hi="chhedchhad pakdi · 0 bina-confirm writes">tampering caught · 0 writes without a yes</span></p>
           <div class="widget chain" id="w-chain" aria-hidden="true"><i></i><i></i><i></i><i class="bad"></i><i class="bad"></i></div>
         </article>
       </div>
@@ -271,34 +276,34 @@
 
   <section class="wall section" id="bharosa">
     <div class="wrap two">
-      <h2>Customer ka data, customer ki marzi</h2>
+      <h2 data-hi="Customer ka data, customer ki marzi">The customer's data, the customer's choice</h2>
       <dl class="trust">
-        <div><dt>Call ki shuruaat mein bataata hai</dt><dd>Har call ek line se shuru ho sakti hai ki baat record ho rahi hai. Line aap khud likhte ho.</dd></div>
-        <div><dt>180 din baad apne aap mit jaata hai</dt><dd>Purani calls, WhatsApp messages aur missed calls hat jaate hain. Bookings aur receipts aapka record hain, woh rehti hain.</dd></div>
-        <div><dt>Maange to poora record, ya kuch nahi</dt><dd>Customer ke kehne par uska sab data dikhao ya mita do. Mitane ke baad uski receipts mein naam aur number padhe hi nahi ja sakte.</dd></div>
-        <div><dt>Har booking ka signed saboot</dt><dd>Ed25519 signature aur chain: customer apne code se khud check kar sakta hai ki booking baad mein badli nahi.</dd></div>
+        <div><dt data-hi="Call ki shuruaat mein bataata hai">Says so at the start of the call</dt><dd data-hi="Har call ek line se shuru ho sakti hai ki baat record ho rahi hai. Line aap khud likhte ho.">Every call can open with a line saying it is being recorded. You write that line yourself.</dd></div>
+        <div><dt data-hi="180 din baad apne aap mit jaata hai">Deleted on its own after 180 days</dt><dd data-hi="Purani calls, WhatsApp messages aur missed calls hat jaate hain. Bookings aur receipts aapka record hain, woh rehti hain.">Old calls, WhatsApp messages and missed calls are removed. Bookings and receipts are your records, so they stay.</dd></div>
+        <div><dt data-hi="Maange to poora record, ya kuch nahi">The full record on request, or nothing</dt><dd data-hi="Customer ke kehne par uska sab data dikhao ya mita do. Mitane ke baad uski receipts mein naam aur number padhe hi nahi ja sakte.">When a customer asks, show them all their data or erase it. After erasing, their name and number cannot be read from their receipts at all.</dd></div>
+        <div><dt data-hi="Har booking ka signed saboot">A signed proof of every booking</dt><dd data-hi="Ed25519 signature aur chain: customer apne code se khud check kar sakta hai ki booking baad mein badli nahi.">An Ed25519 signature and a chain: with their code, a customer can check for themselves that the booking was not changed later.</dd></div>
       </dl>
-      <p class="trust-more"><a href="privacy">Poori privacy aur data policy padho <i data-icon="arrow" class="ic-sm"></i></a></p>
+      <p class="trust-more"><a href="privacy" data-hi-html="Poori privacy aur data policy padho &lt;i data-icon=&quot;arrow&quot; class=&quot;ic-sm&quot;&gt;&lt;/i&gt;">Read the full privacy and data policy <i data-icon="arrow" class="ic-sm"></i></a></p>
     </div>
   </section>
 
   <section class="section" id="try">
     <div class="wrap">
-      <h2>Teeno pages bina login ke khulte hain</h2>
+      <h2 data-hi="Teeno pages bina login ke khulte hain">All three pages open without a login</h2>
       <div class="grid-3 try-grid">
         <a class="frame try" href="talk" data-reveal>
           <h3>Talk to HaanJi</h3>
-          <p>Mic se bolo ya type karo. Bagal ke panel mein Bhasha repair, speculation aur receipt live dikhte hain.</p>
+          <p data-hi="Mic se bolo ya type karo. Bagal ke panel mein Bhasha repair, speculation aur receipt live dikhte hain.">Speak into the mic or type. The side panel shows the Bhasha repairs, speculation and the receipt live.</p>
           <span class="go"><i data-icon="arrow"></i></span>
         </a>
         <a class="frame try" href="whatsapp" data-reveal style="--i:1">
           <h3>WhatsApp simulator</h3>
-          <p>Wahi agent, text pe. Missed call button dabao to HaanJi khud WhatsApp pe pehla message bhejta hai.</p>
+          <p data-hi="Wahi agent, text pe. Missed call button dabao to HaanJi khud WhatsApp pe pehla message bhejta hai.">The same agent, over text. Press the missed-call button and HaanJi sends the first WhatsApp message itself.</p>
           <span class="go"><i data-icon="arrow"></i></span>
         </a>
         <a class="frame try" href="verify" data-reveal style="--i:2">
           <h3>Receipt verifier</h3>
-          <p>Har hash aur signature aapke browser mein dobara check hota hai. Ek field chhedo aur dekho chain kaise tootti hai.</p>
+          <p data-hi="Har hash aur signature aapke browser mein dobara check hota hai. Ek field chhedo aur dekho chain kaise tootti hai.">Every hash and signature is checked again in your browser. Change one field and watch the chain break.</p>
           <span class="go"><i data-icon="arrow"></i></span>
         </a>
       </div>
@@ -308,50 +313,50 @@
   <section class="section" id="shuru">
     <div class="wrap two">
       <div>
-        <h2>Shuru kaise karein</h2>
+        <h2 data-hi="Shuru kaise karein">How to start</h2>
         <ol class="start">
-          <li><span><b>Demo dekho.</b> Do minute: <a href="talk">browser mein baat karo</a> ya <a href="whatsapp">WhatsApp simulator</a> chalao.</span></li>
-          <li><span><b>Apni dukaan jodo.</b> Services, timing aur staff ke paanch sawaal, phir apni hi dukaan ke saath test call.</span></li>
-          <li><span><b>WhatsApp number jodo.</b> Aapka WhatsApp Business number engine se judta hai, aur bookings pehle din se console mein aati hain.</span></li>
+          <li><span data-hi-html="&lt;b&gt;Demo dekho.&lt;/b&gt; Do minute: &lt;a href=&quot;talk&quot;&gt;browser mein baat karo&lt;/a&gt; ya &lt;a href=&quot;whatsapp&quot;&gt;WhatsApp simulator&lt;/a&gt; chalao."><b>Try the demo.</b> Two minutes: <a href="talk">talk in the browser</a> or run the <a href="whatsapp">WhatsApp simulator</a>.</span></li>
+          <li><span data-hi-html="&lt;b&gt;Apni dukaan jodo.&lt;/b&gt; Services, timing aur staff ke paanch sawaal, phir apni hi dukaan ke saath test call."><b>Add your shop.</b> Five questions about services, hours and staff, then a test call with your own shop.</span></li>
+          <li><span data-hi-html="&lt;b&gt;WhatsApp number jodo.&lt;/b&gt; Aapka WhatsApp Business number engine se judta hai, aur bookings pehle din se console mein aati hain."><b>Connect your WhatsApp number.</b> Your WhatsApp Business number connects to the engine, and bookings show up in the console from day one.</span></li>
         </ol>
       </div>
       <div class="ask">
-        <h3>Apni dukaan par try karna hai?</h3>
-        <p data-pilot-only hidden>WhatsApp par apna business aur shehar likh do. Free pilot ki baat wahin se shuru hoti hai.</p>
-        <a class="btn btn-primary" data-pilot-only data-pilot href="#shuru" hidden><i data-icon="phone"></i>WhatsApp par pilot maango</a>
-        <p data-pilot-alt>Pehle demo chala ke dekho; code GitHub par khula hai.</p>
-        <a class="btn btn-primary" data-pilot-alt href="talk">Demo kholo <i data-icon="arrow"></i></a>
+        <h3 data-hi="Apni dukaan par try karna hai?">Want to try it in your shop?</h3>
+        <p data-pilot-only hidden data-hi="WhatsApp par apna business aur shehar likh do. Free pilot ki baat wahin se shuru hoti hai.">Send your business and city on WhatsApp. The free pilot starts from there.</p>
+        <a class="btn btn-primary" data-pilot-only data-pilot href="#shuru" hidden data-hi-html="&lt;i data-icon=&quot;phone&quot;&gt;&lt;/i&gt;WhatsApp par pilot maango"><i data-icon="phone"></i>Ask for a pilot on WhatsApp</a>
+        <p data-pilot-alt data-hi="Pehle demo chala ke dekho; code GitHub par khula hai.">Try the demo first; the code is open on GitHub.</p>
+        <a class="btn btn-primary" data-pilot-alt href="talk" data-hi-html="Demo kholo &lt;i data-icon=&quot;arrow&quot;&gt;&lt;/i&gt;">Open the demo <i data-icon="arrow"></i></a>
       </div>
     </div>
   </section>
 
   <section class="wall section" id="sawaal">
     <div class="wrap">
-      <h2>Aksar pooche jaane wale sawaal</h2>
+      <h2 data-hi="Aksar pooche jaane wale sawaal">Frequently asked questions</h2>
       <div class="faq">
         <details>
-          <summary>Kya ye asli phone call uthata hai?</summary>
-          <p>WhatsApp par haan: Meta ke WhatsApp Cloud API number se seedha judta hai. Phone line ka code bhi taiyaar hai (Twilio number, Deepgram aur ElevenLabs ki awaaz), lekin uska kharcha alag hai aur keys aapki lagti hain. Browser demo mic se chalta hai.</p>
+          <summary data-hi="Kya ye asli phone call uthata hai?">Does it answer real phone calls?</summary>
+          <p data-hi="WhatsApp par haan: Meta ke WhatsApp Cloud API number se seedha judta hai. Phone line ka code bhi taiyaar hai (Twilio number, Deepgram aur ElevenLabs ki awaaz), lekin uska kharcha alag hai aur keys aapki lagti hain. Browser demo mic se chalta hai.">On WhatsApp, yes: it connects straight to a number on Meta's WhatsApp Cloud API. The code for a phone line is ready too (a Twilio number, Deepgram and ElevenLabs voices), but it costs extra and needs your own keys. The browser demo runs on the mic.</p>
         </details>
         <details>
-          <summary>Kaunsi bhashayein bolta hai?</summary>
-          <p>Hinglish ke saath Tanglish, Benglish, Marathinglish, Punglish, Tenglish aur Gujlish: abhi 10 packs aur 7 bhashayein. Jawab Roman script mein aate hain, jaise log WhatsApp par likhte hain.</p>
+          <summary data-hi="Kaunsi bhashayein bolta hai?">Which languages does it speak?</summary>
+          <p data-hi="Hinglish ke saath Tanglish, Benglish, Marathinglish, Punglish, Tenglish aur Gujlish: abhi 10 packs aur 7 bhashayein. Jawab Roman script mein aate hain, jaise log WhatsApp par likhte hain.">Hinglish, plus Tanglish, Benglish, Marathinglish, Punglish, Tenglish and Gujlish: 10 packs and 7 languages today. Replies come in Roman script, the way people write on WhatsApp.</p>
         </details>
         <details>
-          <summary>Agent ko samajh na aaye, ya caller insaan se baat karna chahe?</summary>
-          <p>Jo pack mein nahi hai woh nahi bolta, daam bhi nahi. Caller insaan maange ya kaam call par na ho, to woh number le leta hai aur call console ki "Inhe wapas call karo" list mein aa jaati hai. Chalti WhatsApp chat aap "Khud jawab do" se khud bhi le sakte ho.</p>
+          <summary data-hi="Agent ko samajh na aaye, ya caller insaan se baat karna chahe?">What if the agent does not understand, or the caller wants a person?</summary>
+          <p data-hi="Jo pack mein nahi hai woh nahi bolta, daam bhi nahi. Caller insaan maange ya kaam call par na ho, to woh number le leta hai aur call console ki &quot;Inhe wapas call karo&quot; list mein aa jaati hai. Chalti WhatsApp chat aap &quot;Khud jawab do&quot; se khud bhi le sakte ho.">It never says what is not in the pack, prices included. If the caller asks for a person, or the job cannot be done on the call, it takes the number and the call goes onto the console's call-back list. You can also take over a live WhatsApp chat yourself.</p>
         </details>
         <details>
-          <summary>Galat booking ho gayi to?</summary>
-          <p>Booking tabhi banti hai jab caller slot sunke haan bolta hai, aur agent ka sawaal aur caller ka jawab dono receipt mein sign hote hain. Console ke calendar se booking cancel ho sakti hai, aur customer ko WhatsApp par khabar chali jaati hai.</p>
+          <summary data-hi="Galat booking ho gayi to?">What if a booking is wrong?</summary>
+          <p data-hi="Booking tabhi banti hai jab caller slot sunke haan bolta hai, aur agent ka sawaal aur caller ka jawab dono receipt mein sign hote hain. Console ke calendar se booking cancel ho sakti hai, aur customer ko WhatsApp par khabar chali jaati hai.">A booking is made only when the caller hears the slot and says yes, and both the agent's question and the caller's answer are signed into the receipt. A booking can be cancelled from the console's calendar, and the customer is told on WhatsApp.</p>
         </details>
         <details>
-          <summary>Mera aur customers ka data kahan rehta hai?</summary>
-          <p>Aapke apne server par; code <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub par khula hai</a>. Calls 180 din baad mit jaati hain, aur customer ke kehne par uska record turant mit sakta hai.</p>
+          <summary data-hi="Mera aur customers ka data kahan rehta hai?">Where do my data and my customers' data live?</summary>
+          <p data-hi-html="Aapke apne server par; code &lt;a href=&quot;https://github.com/aritra-25hazra/haanji&quot; rel=&quot;noopener&quot;&gt;GitHub par khula hai&lt;/a&gt;. Calls 180 din baad mit jaati hain, aur customer ke kehne par uska record turant mit sakta hai.">On your own server; the code is <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">open on GitHub</a>. Calls are deleted after 180 days, and a customer's record can be erased at once when they ask.</p>
         </details>
         <details>
-          <summary>Owner ko kya chahiye?</summary>
-          <p>Bas phone ya laptop ka browser. Console mein aaj ki calls, calendar, customers aur settings hain; har nayi booking aapke Google, Apple ya Outlook calendar mein bhi aa sakti hai.</p>
+          <summary data-hi="Owner ko kya chahiye?">What does the owner need?</summary>
+          <p data-hi="Bas phone ya laptop ka browser. Console mein aaj ki calls, calendar, customers aur settings hain; har nayi booking aapke Google, Apple ya Outlook calendar mein bhi aa sakti hai.">Just a browser on a phone or laptop. The console has today's calls, the calendar, customers and settings; every new booking can also appear in your Google, Apple or Outlook calendar.</p>
         </details>
       </div>
     </div>
@@ -359,12 +364,14 @@
 </main>
 
 <footer class="wrap foot">
-  <span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a> · <a href="#sawaal">Sawaal</a> · <a href="verify">Receipt verifier</a> · <a href="privacy">Privacy</a></span>
+  <span>Open source · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a> · <a href="#sawaal" data-hi="Sawaal">FAQ</a> · <a href="verify">Receipt verifier</a> · <a href="privacy">Privacy</a></span>
   <span class="mono muted">HaanJi v1.1.0</span>
 </footer>
 
 <script src="static/signboard.js"></script>
+<script src="static/lang.js"></script>
 <script src="static/hero-call.js"></script>
+<script src="static/help.js" defer></script>
 <script>
   Signboard.status().then(function (s) {
     // A localhost console is only reachable when this page is on localhost too.
@@ -374,15 +381,21 @@
       document.getElementById("console-li").hidden = false;
       Signboard.mountIcons(document.getElementById("console-li"));
     }
-    // "Free pilot maango" opens a WhatsApp chat with the shop that runs this
-    // server, when it has said which number (HAANJI_SALES_WHATSAPP).
+    // "Ask for a free pilot" opens a WhatsApp chat with the shop that runs this
+    // server, when it has said which number (HAANJI_SALES_WHATSAPP). The first
+    // message is in the page's language.
     const digits = s && s.sales_whatsapp ? String(s.sales_whatsapp).replace(/\D/g, "") : "";
     if (digits.length >= 10) {
-      const text = encodeURIComponent("Namaste, mujhe HaanJi ka free pilot chahiye. Business: , Shehar: ");
-      document.querySelectorAll("[data-pilot]").forEach(function (a) {
-        a.href = "https://wa.me/" + digits + "?text=" + text;
-        a.target = "_blank"; a.rel = "noopener";
-      });
+      const link = function () {
+        const text = encodeURIComponent(HaanJiLang.t("Hello, I would like a free HaanJi pilot. Business: , City: ",
+                                                     "Namaste, mujhe HaanJi ka free pilot chahiye. Business: , Shehar: "));
+        document.querySelectorAll("[data-pilot]").forEach(function (a) {
+          a.href = "https://wa.me/" + digits + "?text=" + text;
+          a.target = "_blank"; a.rel = "noopener";
+        });
+      };
+      link();
+      HaanJiLang.onChange(link);
       document.querySelectorAll("[data-pilot-only]").forEach(function (el) { el.hidden = false; });
       document.querySelectorAll("[data-pilot-alt]").forEach(function (el) { el.hidden = true; });
     }
