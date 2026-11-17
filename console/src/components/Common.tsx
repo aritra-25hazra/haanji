@@ -300,13 +300,16 @@ export function useData<T>(load: (() => Promise<T>) | null, deps: unknown[]) {
   return { data: result?.data, error: current ? result?.error : undefined, loading: !current, reload };
 }
 
+// The shop is in India: every time is shown in India's time, wherever the
+// browser is. The engine stores UTC with its offset.
+const IST = "Asia/Kolkata";
 export function fmtTime(iso: string): string {
   const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso.slice(11, 16) : d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return isNaN(d.getTime()) ? iso.slice(11, 16) : d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: IST });
 }
 export function fmtDate(iso: string): string {
   const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso.slice(0, 10) : d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  return isNaN(d.getTime()) ? iso.slice(0, 10) : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: IST });
 }
 export function fmtInr(n: number): string { return "₹" + Math.round(n).toLocaleString("en-IN"); }
 

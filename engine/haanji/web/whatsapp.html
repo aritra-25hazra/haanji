@@ -121,12 +121,18 @@
     loadThreads();
   });
 
+  // The engine stores UTC; the shop reads India's time.
+  function hm(stamp) {
+    const d = new Date(stamp);
+    return isNaN(d) ? String(stamp).slice(11, 16) : d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Kolkata" });
+  }
+
   async function loadThreads() {
     const t = await api("api/wa/threads?pack=" + encodeURIComponent($("pack").value));
     $("threads-note").hidden = !t.hidden;
     $("threads").innerHTML = t.threads.map(function (x) {
       return '<button type="button" class="thread' + (x.phone === phone ? " active" : "") + '" data-p="' + S.esc(x.phone) + '" role="listitem">' +
-        "<b>+91 " + S.esc(x.phone) + "</b><span>" + x.messages + " messages · " + S.esc(x.last_at.slice(11, 16)) + "</span></button>";
+        "<b>+91 " + S.esc(x.phone) + "</b><span>" + x.messages + " messages · " + S.esc(hm(x.last_at)) + "</span></button>";
     }).join("");
     document.querySelectorAll(".thread").forEach(function (el) { el.onclick = function () { openThread(el.dataset.p); }; });
   }
@@ -147,7 +153,7 @@
     (meta.tools || []).forEach(function (t) { const c = document.createElement("span"); c.className = "chip chip-tool"; c.textContent = t; metaEl.appendChild(c); });
     (meta.receipts || []).forEach(function (r) { const st = document.createElement("span"); st.className = "stamp"; st.innerHTML = S.icon("lock") + "RECEIPT " + S.esc(r); metaEl.appendChild(st); });
     if (metaEl.children.length) b.appendChild(metaEl);
-    const time = document.createElement("div"); time.className = "time"; time.textContent = m.at.slice(11, 16);
+    const time = document.createElement("div"); time.className = "time"; time.textContent = hm(m.at);
     b.appendChild(time); row.appendChild(b); wrap.appendChild(row);
     return wrap;
   }

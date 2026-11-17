@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { enginePath, errorMessage, fmtMs, parseReceipts, parseTurns, tamper } from "./engine";
+import { fmtDate, fmtTime } from "./components/Common";
 import type { Export } from "./types";
 
 describe("enginePath", () => {
@@ -24,6 +25,13 @@ describe("errorMessage", () => {
     expect(errorMessage(403, "application/json", JSON.stringify({ detail: "the public demo is read-only: set HAANJI_AUTH=on" }))).toMatch(/read-only/);
     expect(errorMessage(403, "application/json", JSON.stringify({ detail: "owner role needed" }))).toBe("Ye kaam sirf owner kar sakta hai.");
     expect(errorMessage(429, "application/json", JSON.stringify({ detail: "too many requests" }))).toMatch(/ruk ke/);
+  });
+});
+
+describe("times", () => {
+  it("shows a call stored at 15:45 UTC at 21:15, India's time, wherever the browser is", () => {
+    expect(fmtTime("2026-11-17T15:45:00.000+00:00")).toBe("21:15");
+    expect(fmtDate("2026-11-17T19:00:00+00:00")).toBe("18 Nov");
   });
 });
 

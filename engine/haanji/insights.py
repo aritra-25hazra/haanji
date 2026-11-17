@@ -9,7 +9,7 @@ import datetime as dt
 from typing import Any
 
 from .backend.local import LocalBackend
-from .store import DemoStore
+from .store import IST, DemoStore, to_ist
 
 # Cost model, stated in the open. Rupees.
 COST_TELEPHONY_PER_MIN = 0.50      # Indian PSTN termination, typical retail
@@ -43,8 +43,9 @@ def cost_per_call() -> dict[str, float]:
 
 def compute(tenant_id: str, store: DemoStore, backend: LocalBackend) -> dict[str, Any]:
     calls = store.calls(tenant_id, limit=500)
-    today = dt.date.today().isoformat()
-    calls_today = [c for c in calls if c["started_at"][:10] == today]
+    # "Today" and the hour of a call are India's, whatever clock the host keeps.
+    today = dt.datetime.now(IST).date()
+    calls_today = [c for c in calls if to_ist(c["started_at"]).date() == today]
 
     outcomes: dict[str, int] = {}
     by_hour: dict[str, dict[str, int]] = {}
@@ -54,7 +55,7 @@ def compute(tenant_id: str, store: DemoStore, backend: LocalBackend) -> dict[str
         corrections += c["corrections"]
         spec_started += c["spec_started"]
         spec_hits += c["spec_hits"]
-        hour = c["started_at"][11:13]
+        hour = f"{to_ist(c['started_at']).hour:02d}"
         slot = by_hour.setdefault(hour, {"calls": 0, "booked": 0})
         slot["calls"] += 1
         slot["booked"] += 1 if c["outcome"] == "BOOKED" else 0
@@ -92,7 +93,7 @@ def compute(tenant_id: str, store: DemoStore, backend: LocalBackend) -> dict[str
 
     return {
         "tenant_id": tenant_id,
-        "generated_at": dt.datetime.now().isoformat(timespec="seconds"),
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "calls_total": len(calls),
         "calls_today": len(calls_today),
         "outcomes": outcomes,

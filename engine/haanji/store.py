@@ -55,7 +55,19 @@ CREATE INDEX IF NOT EXISTS wa_thread_ix ON wa_messages (tenant_id, phone, at);
 def _now() -> str:
     # Millisecond precision: two messages in the same second (a reminder and
     # its reply, an offer right after a cancellation) must keep their order.
-    return dt.datetime.now().isoformat(timespec="milliseconds")
+    # UTC with its offset, so whoever reads it can show it in India's time;
+    # a bare local time read as UTC by the host put calls 5.5 hours early.
+    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds")
+
+
+IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
+
+
+def to_ist(stamp: str) -> dt.datetime:
+    """A stored timestamp in India's time. Rows written before timestamps
+    carried an offset are in the host's local time."""
+    t = dt.datetime.fromisoformat(stamp)
+    return (t if t.tzinfo else t.astimezone()).astimezone(IST)
 
 
 class DemoStore:
@@ -143,7 +155,7 @@ class DemoStore:
         """The most recent outbound message to ``phone`` whose meta carries
         ``meta_key`` (a reminder, a waitlist offer), if it is recent enough
         for a reply to be about it."""
-        since = (dt.datetime.now() - dt.timedelta(hours=within_hours)).isoformat(timespec="seconds")
+        since = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=within_hours)).isoformat(timespec="seconds")
         rows = self.conn.execute(
             "SELECT * FROM wa_messages WHERE tenant_id=? AND phone=? AND direction='out' AND at >= ?"
             " ORDER BY at DESC, msg_id LIMIT 20", (tenant_id, phone, since))

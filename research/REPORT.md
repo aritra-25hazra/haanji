@@ -540,7 +540,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 596 tests, about 6 s
+pytest -q                                   # 599 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -588,7 +588,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (596 tests)
+## Appendix C. Test inventory (599 tests)
 
 | file | tests | what it guards |
 |---|---|---|
@@ -618,6 +618,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_calendar.py | 5 | iCalendar feed, per-booking .ics, Google Calendar through a fake |
 | test_console_packs.py | 2 | the console's sample-mode pack file matches packs/*.yaml; every service names only its pack's staff |
 | test_telephony.py | 4 | the Twilio media-stream bridge with fake recogniser and synthesiser |
+| test_timezone.py | 3 | timestamps stored in UTC with an offset; the hourly chart and "today" counted in India's time |
 | test_reschedule.py | 4 | a booking moved through the ordinary confirmation flow and sealed with its previous receipt |
 | test_privacy.py | 4 | the per-customer vault, access and erasure, crypto-shredding |
 | test_live.py | 4 | the event bus and the server-sent feed |
