@@ -3,6 +3,8 @@
  * never through toISOString(), which would move an IST midnight to the day
  * before. Pure, so the calendar's ranges are unit-tested.
  */
+import { en, t } from "./i18n";
+
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function parseDay(iso: string): Date {
@@ -39,11 +41,13 @@ export function eachDay(from: string, to: string): string[] {
 
 export function dayOfWeek(iso: string): number { return parseDay(iso).getDay(); }
 
-export const DAY_NAMES = ["Ravi", "Som", "Mangal", "Budh", "Guru", "Shukra", "Shani"];
+export const DAY_NAMES = [en("Sun"), en("Mon"), en("Tue"), en("Wed"), en("Thu"), en("Fri"), en("Sat")];
+/** A short weekday name (Sunday 0) in the console's language. */
+export const dayName = (i: number) => { const d = DAY_NAMES[i]; return d ? t(d) : ""; };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-/** "Guru 29 Oct" */
+/** "Thu 29 Oct" (Hindi: "Guru 29 Oct") */
 export function fmtDay(iso: string): string {
   const d = parseDay(iso);
-  return `${DAY_NAMES[d.getDay()] ?? ""} ${d.getDate()} ${MONTHS[d.getMonth()] ?? ""}`;
+  return `${dayName(d.getDay())} ${d.getDate()} ${MONTHS[d.getMonth()] ?? ""}`;
 }

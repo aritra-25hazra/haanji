@@ -1,3 +1,5 @@
+import { t } from "./i18n";
+export type HelpProvider = "claude" | "gemini" | "faq";
 /**
  * The only way the console talks to the engine. Every path goes through
  * /engine/, which Vite proxies in development, Vercel rewrites in production
@@ -51,7 +53,7 @@ const HTML_BODY = /^\s*<(!doctype|html|head|body)\b/i;
  *  (a 502 from nginx is not something to paint on screen), else the body. */
 export function errorMessage(status: number, contentType: string | null, body: string): string {
   const text = body.trim();
-  if ((contentType ?? "").includes("text/html") || HTML_BODY.test(text)) return `Engine jawab nahi de raha (${status})`;
+  if ((contentType ?? "").includes("text/html") || HTML_BODY.test(text)) return t("The engine is not answering ({status})", { status });
   if (text.startsWith("{")) {
     try {
       const j = JSON.parse(text) as { detail?: unknown };
@@ -59,18 +61,18 @@ export function errorMessage(status: number, contentType: string | null, body: s
       if (Array.isArray(j.detail)) return j.detail.map((d) => (typeof d === "object" && d && "msg" in d ? String((d as { msg: unknown }).msg) : String(d))).join("; ");
     } catch { /* not JSON after all */ }
   }
-  return text || `Engine mein dikkat aayi (${status}). Thodi der mein dobara try karo.`;
+  return text || t("The engine had a problem ({status}). Try again in a little while.", { status });
 }
 
 /** The engine's English detail, said the way the console speaks. A 422 keeps
  *  its detail: it names the field that is wrong. */
 function plain(status: number, detail: string): string {
-  if (status === 403 && /read-only/.test(detail)) return "Public demo mein ye badlaav band hai (read-only). Asli dukaan ke liye login on karo.";
-  if (status === 403 && /owner/.test(detail)) return "Ye kaam sirf owner kar sakta hai.";
-  if (status === 403) return "Is kaam ki ijazat nahi hai.";
-  if (status === 401) return "Session khatam ho gaya. Dobara sign in karo.";
-  if (status === 429) return "Bahut jaldi-jaldi koshish hui. Ek minute ruk ke dobara try karo.";
-  if (status === 413) return "Ye bahut bada hai; chhota karke bhejo.";
+  if (status === 403 && /read-only/.test(detail)) return t("Changes are off in the public demo (read-only). Turn on sign-in for a real shop.");
+  if (status === 403 && /owner/.test(detail)) return t("Only the owner can do this.");
+  if (status === 403) return t("You are not allowed to do this.");
+  if (status === 401) return t("Your session ended. Please sign in again.");
+  if (status === 429) return t("Too many tries too fast. Wait a minute and try again.");
+  if (status === 413) return t("This is too big; send something smaller.");
   return detail;
 }
 
@@ -83,7 +85,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) },
     });
   } catch {
-    throw new EngineError(0, "Engine se connect nahi ho pa raha. Internet check karo, ya thodi der mein dobara try karo.");
+    throw new EngineError(0, t("Cannot connect to the engine. Check the internet, or try again in a little while."));
   }
   if (r.status === 401) {
     setToken(null);
@@ -164,6 +166,10 @@ export const engine = {
   save: (id: string, yaml: string) =>
     request<{ ok: boolean; problems: string[]; backup: string }>(`api/packs/${encodeURIComponent(id)}`,
       { method: "PUT", body: JSON.stringify({ yaml }) }),
+  // ── the help assistant (engine/haanji/helpbot.py) ─────────────────────────
+  helpStatus: () => request<{ providers: HelpProvider[]; models: Record<string, string>; daily_limit: number; used_today: number }>("api/help/status"),
+  helpChat: (body: { messages: { role: "user" | "assistant"; content: string }[]; provider?: HelpProvider; lang: "en" | "hi"; page: string }) =>
+    request<{ reply: string; provider: HelpProvider; model: string | null }>("api/help/chat", { method: "POST", body: JSON.stringify(body) }),
   selftest: (id: string) =>
     request<{ ok: boolean; results: { passed: boolean; line: string }[]; summary: string }>(
       `api/packs/${encodeURIComponent(id)}/selftest`, { method: "POST" }),

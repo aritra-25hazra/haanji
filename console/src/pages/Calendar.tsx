@@ -2,16 +2,17 @@ import { useState, type CSSProperties } from "react";
 import { engine, enginePath } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
+import { en, t, useT } from "../i18n";
 import { Chip, Confirm, Empty, Icon, Loading, NotLive, Page, Panel, Register, fmtDate, fmtInr, fmtTime, useData, type ChipKind } from "../components/Common";
-import { DAY_NAMES, addDays, dayOfWeek, fmtDay, today, weekOf } from "../dates";
+import { addDays, dayName, dayOfWeek, fmtDay, today, weekOf } from "../dates";
 import type { Booking, BookingFilter, BookingStatus, Payment, WaitlistEntry } from "../types";
 
 type View = "day" | "week";
 type Action = "cancel" | Exclude<BookingStatus, "CANCELLED">;
 
-const STATUS_LABEL: Record<BookingStatus, string> = { CONFIRMED: "confirmed", CANCELLED: "cancelled", NO_SHOW: "no-show", COMPLETED: "completed" };
+const STATUS_LABEL: Record<BookingStatus, string> = { CONFIRMED: en("confirmed"), CANCELLED: en("cancelled"), NO_SHOW: en("no-show"), COMPLETED: en("completed") };
 const STATUS_KIND: Record<BookingStatus, ChipKind | undefined> = { CONFIRMED: undefined, CANCELLED: "bad", NO_SHOW: "warn", COMPLETED: "ok" };
-const FILTERS: [BookingFilter, string][] = [["ALL", "Sab"], ["CONFIRMED", "Confirmed"], ["COMPLETED", "Completed"], ["NO_SHOW", "No-show"], ["CANCELLED", "Cancelled"]];
+const FILTERS: [BookingFilter, string][] = [["ALL", en("All")], ["CONFIRMED", en("Confirmed")], ["COMPLETED", en("Completed")], ["NO_SHOW", en("No-show")], ["CANCELLED", en("Cancelled")]];
 const WAIT_KIND: Record<string, ChipKind | undefined> = { WAITING: "warn", OFFERED: "ink", BOOKED: "ok", EXPIRED: "muted" };
 const PAY_KIND: Record<string, ChipKind | undefined> = { CREATED: "warn", PAID: "ok", FAILED: "bad", EXPIRED: "muted" };
 
@@ -22,6 +23,7 @@ const byTime = (a: Booking, b: Booking) => a.time.localeCompare(b.time);
 /** The receptionist's book: a day by staff, or a week by day. */
 export default function Calendar() {
   const { pack, mode, readOnly } = useApp();
+  useT();
   const [view, setView] = useState<View>("day");
   const [anchor, setAnchor] = useState<string>(today);
   const [now] = useState<string>(today);
@@ -39,18 +41,18 @@ export default function Calendar() {
       : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode, from, to, filter]);
 
-  if (!live && mode !== "demo") return <NotLive title="Calendar" sub="Din ya hafte ki har booking, staff ke hisaab se." />;
+  if (!live && mode !== "demo") return <NotLive title={t("Calendar")} sub={t("Every booking for the day or week, by staff.")} />;
 
   const act = async (b: Booking, what: Action) => {
-    if (!live) { setNote("Sample calendar hai, yahan badlaav nahi hota."); return; }
+    if (!live) { setNote(t("This is a sample calendar; nothing changes here.")); return; }
     setBusy(b.booking_id); setNote(null);
     try {
       if (what === "cancel") {
         await engine.cancelBooking(pack, b.booking_id);
-        setNote(`Cancel ho gaya · ${b.customer_name}, ${b.time}. Waitlist mein koi ho to usse slot offer hoga.`);
+        setNote(t("Cancelled · {name}, {time}. If someone is on the waitlist, they will be offered the slot.", { name: b.customer_name, time: b.time }));
       } else {
         await engine.setBookingStatus(pack, b.booking_id, what);
-        setNote(`${b.customer_name} · ${STATUS_LABEL[what]}`);
+        setNote(`${b.customer_name} · ${t(STATUS_LABEL[what])}`);
       }
       reload();
     } catch (e) { setNote(e instanceof Error ? e.message : String(e)); }
@@ -61,27 +63,27 @@ export default function Calendar() {
 
   const nav = (
     <div className="cal-nav">
-      <div className="seg" role="group" aria-label="View">
-        <button type="button" aria-pressed={view === "day"} onClick={() => setView("day")}>Din</button>
-        <button type="button" aria-pressed={view === "week"} onClick={() => setView("week")}>Hafta</button>
+      <div className="seg" role="group" aria-label={t("View")}>
+        <button type="button" aria-pressed={view === "day"} onClick={() => setView("day")}>{t("Day")}</button>
+        <button type="button" aria-pressed={view === "week"} onClick={() => setView("week")}>{t("Week")}</button>
       </div>
-      <button className="btn btn-ghost btn-sm" onClick={() => step(-1)} aria-label={view === "day" ? "Pichhla din" : "Pichhla hafta"}><Icon name="back" small /></button>
-      <button className="btn btn-ghost btn-sm" onClick={() => setAnchor(today())}>Aaj</button>
-      <button className="btn btn-ghost btn-sm" onClick={() => step(1)} aria-label={view === "day" ? "Agla din" : "Agla hafta"}><Icon name="arrow" small /></button>
-      <input className="input" type="date" value={anchor} onChange={(e) => { if (e.target.value) setAnchor(e.target.value); }} aria-label="Date chuno" />
-      <select className="input" value={filter} onChange={(e) => setFilter(e.target.value as BookingFilter)} aria-label="Status filter">
-        {FILTERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      <button className="btn btn-ghost btn-sm" onClick={() => step(-1)} aria-label={view === "day" ? t("Previous day") : t("Previous week")}><Icon name="back" small /></button>
+      <button className="btn btn-ghost btn-sm" onClick={() => setAnchor(today())}>{t("Today")}</button>
+      <button className="btn btn-ghost btn-sm" onClick={() => step(1)} aria-label={view === "day" ? t("Next day") : t("Next week")}><Icon name="arrow" small /></button>
+      <input className="input" type="date" value={anchor} onChange={(e) => { if (e.target.value) setAnchor(e.target.value); }} aria-label={t("Pick a date")} />
+      <select className="input" value={filter} onChange={(e) => setFilter(e.target.value as BookingFilter)} aria-label={t("Status filter")}>
+        {FILTERS.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}
       </select>
     </div>
   );
 
   return (
-    <Page title="Calendar" sub={sub} actions={nav}>
+    <Page title={t("Calendar")} sub={sub} actions={nav}>
       {note && <div className="banner" role="status"><Icon name="check" small />{note}</div>}
-      <Panel title={view === "day" ? "Din, staff ke hisaab se" : "Hafta"} hint={data ? `${data.length} bookings` : ""}
-             actions={<button className="btn btn-ghost btn-sm" onClick={reload} disabled={loading}><Icon name="refresh" small />Refresh</button>}>
+      <Panel title={view === "day" ? t("Day, by staff") : t("Week")} hint={data ? t("{n} bookings", { n: data.length }) : ""}
+             actions={<button className="btn btn-ghost btn-sm" onClick={reload} disabled={loading}><Icon name="refresh" small />{t("Refresh")}</button>}>
         {loading && !data ? <Loading />
-          : !data ? <Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></Empty>
+          : !data ? <Empty>{t("Could not load: {error}", { error: error ?? "" })}<button className="btn btn-ghost btn-sm" onClick={reload}>{t("Try again")}</button></Empty>
           : view === "day"
             ? <DayGrid bookings={data} busy={busy} onAct={act} readOnly={readOnly} />
             : <>
@@ -99,7 +101,7 @@ function DayGrid({ bookings, busy, onAct, readOnly = false }: { bookings: Bookin
   const byStaff = new Map<string, Booking[]>();
   for (const b of bookings) byStaff.set(b.staff, [...(byStaff.get(b.staff) ?? []), b]);
   const staffs = [...byStaff.keys()].sort();
-  if (staffs.length === 0) return <Empty><p>Is din koi booking nahi.</p></Empty>;
+  if (staffs.length === 0) return <Empty><p>{t("No bookings on this day.")}</p></Empty>;
   return (
     <div className="cal-grid" style={{ "--cols": staffs.length } as CSSProperties}>
       {staffs.map((s) => {
@@ -123,7 +125,7 @@ function WeekGrid({ days, today: now, bookings, busy, onAct, readOnly = false }:
         const list = bookings.filter((b) => b.date === d).sort(byTime);
         return (
           <section key={d} className={"cal-col" + (d === now ? " today" : "")} aria-label={fmtDay(d)}>
-            <h3><span>{DAY_NAMES[dayOfWeek(d)]} {d.slice(8)}</span><span className="count">{list.length || ""}</span></h3>
+            <h3><span>{dayName(dayOfWeek(d))} {d.slice(8)}</span><span className="count">{list.length || ""}</span></h3>
             {list.length === 0
               ? <p className="none">—</p>
               : list.map((b) => <BookingCard key={b.booking_id} b={b} showStaff busy={busy === b.booking_id} onAct={(a) => onAct(b, a)} readOnly={readOnly} />)}
@@ -151,7 +153,7 @@ function TimeGrid({ days, today: now, bookings, onPick }:
   const rows = (to - from) / 30;
   const colour = (s: string) => STAFF_COLOURS[staff.indexOf(s) % STAFF_COLOURS.length];
   return (
-    <div className="time-grid" aria-label="Hafte ka time grid">
+    <div className="time-grid" aria-label={t("The week as a time grid")}>
       {staff.length > 0 && <p className="tg-legend">{staff.map((s) => <span key={s}><i style={{ background: colour(s) }} />{s}</span>)}</p>}
       <div className="tg" style={{ "--days": days.length } as CSSProperties}>
         <div className="tg-hours" style={{ height: rows * ROW + 34 }}>
@@ -160,7 +162,7 @@ function TimeGrid({ days, today: now, bookings, onPick }:
         </div>
         {days.map((d) => (
           <div key={d} className={"tg-day" + (d === now ? " today" : "")}>
-            <button type="button" className="tg-head" onClick={() => onPick(d)}>{DAY_NAMES[dayOfWeek(d)]} {d.slice(8)}</button>
+            <button type="button" className="tg-head" onClick={() => onPick(d)}>{dayName(dayOfWeek(d))} {d.slice(8)}</button>
             <div className="tg-body" style={{ height: rows * ROW }}>
               {shown.filter((b) => b.date === d).map((b) => {
                 const lane = Math.max(0, staff.indexOf(b.staff));
@@ -186,42 +188,43 @@ function TimeGrid({ days, today: now, bookings, onPick }:
  *  the desk can do about it. Cancel asks once, inline. */
 function BookingCard({ b, showStaff = false, busy, onAct, readOnly = false }: { b: Booking; showStaff?: boolean; busy: boolean; onAct: (a: Action) => void; readOnly?: boolean }) {
   const [confirm, setConfirm] = useState(false);
+  useT();
   return (
     <article className={"bk " + b.status} aria-label={`${b.time} ${b.service}, ${b.customer_name}`} data-testid={`booking-${b.booking_id}`}>
       <div className="top">
         <span className="time">{b.time} · {b.duration_min} min</span>
-        {b.status !== "CONFIRMED" && <Chip kind={STATUS_KIND[b.status]}>{STATUS_LABEL[b.status]}</Chip>}
+        {b.status !== "CONFIRMED" && <Chip kind={STATUS_KIND[b.status]}>{t(STATUS_LABEL[b.status])}</Chip>}
       </div>
       <div className="svc">{b.service}{showStaff && <span className="muted"> · {b.staff}</span>}</div>
       <div className="who"><span>{b.customer_name}</span><span className="mono">{b.phone}</span></div>
       <div className="chips">
-        <Chip mono title="receipt code"><Icon name="lock" small />{b.receipt_code}</Chip>
+        <Chip mono title={t("receipt code")}><Icon name="lock" small />{b.receipt_code}</Chip>
         {b.paid
-          ? <Chip kind="ok" title="paid"><Icon name="check" small />paid{b.deposit_inr ? ` ${fmtInr(b.deposit_inr)}` : ""}</Chip>
+          ? <Chip kind="ok" title={t("paid")}><Icon name="check" small />{t("paid")}{b.deposit_inr ? ` ${fmtInr(b.deposit_inr)}` : ""}</Chip>
           : b.deposit_inr > 0
-            ? <Chip kind="warn" title="deposit baaki"><Icon name="rupee" small />{fmtInr(b.deposit_inr)} baaki</Chip>
-            : <Chip kind="muted">no deposit</Chip>}
-        {b.payment_link && !b.paid && <a className="chip" href={linkHref(b.payment_link)} target="_blank" rel="noopener noreferrer">pay link<Icon name="external" small /></a>}
+            ? <Chip kind="warn" title={t("deposit due")}><Icon name="rupee" small />{t("{amount} due", { amount: fmtInr(b.deposit_inr) })}</Chip>
+            : <Chip kind="muted">{t("no deposit")}</Chip>}
+        {b.payment_link && !b.paid && <a className="chip" href={linkHref(b.payment_link)} target="_blank" rel="noopener noreferrer">{t("pay link")}<Icon name="external" small /></a>}
         {b.reminder_sent_at
-          ? <Chip kind="ok" title={b.reminder_sent_at}><Icon name="bell" small />reminder {fmtTime(b.reminder_sent_at)}</Chip>
-          : b.status === "CONFIRMED" ? <Chip kind="muted"><Icon name="bell" small />reminder pending</Chip> : null}
+          ? <Chip kind="ok" title={b.reminder_sent_at}><Icon name="bell" small />{t("reminder {time}", { time: fmtTime(b.reminder_sent_at) })}</Chip>
+          : b.status === "CONFIRMED" ? <Chip kind="muted"><Icon name="bell" small />{t("reminder pending")}</Chip> : null}
       </div>
       {readOnly ? (
-        <div className="acts"><Chip kind="muted" title="Public demo: badlav band hain. Asli dukaan ke liye HAANJI_AUTH=on.">demo · read-only</Chip></div>
+        <div className="acts"><Chip kind="muted" title={t("Public demo: changes are off. For a real shop, set HAANJI_AUTH=on.")}>{t("demo · read-only")}</Chip></div>
       ) : confirm ? (
-        <Confirm text="Pakka cancel karein? Caller ko WhatsApp par suchna jayegi (agar number juda hai) aur khaali slot waitlist wale ko offer hoga." yes="Haan, cancel karo" no="Nahi" busy={busy}
+        <Confirm text={t("Cancel for sure? The caller gets a WhatsApp message (if the number is connected) and the free slot is offered to the waitlist.")} yes={t("Yes, cancel")} no={t("No")} busy={busy}
                  onYes={() => { setConfirm(false); onAct("cancel"); }} onNo={() => setConfirm(false)} />
       ) : (
         <div className="acts">
           {b.status === "CONFIRMED" && (
             <>
-              <button className="btn btn-ghost" onClick={() => onAct("COMPLETED")} disabled={busy}><Icon name="check" small />Completed</button>
-              <button className="btn btn-ghost" onClick={() => onAct("NO_SHOW")} disabled={busy}>No-show</button>
-              <button className="btn btn-ghost" style={{ color: "var(--sindoor-ink)" }} onClick={() => setConfirm(true)} disabled={busy}>Cancel</button>
+              <button className="btn btn-ghost" onClick={() => onAct("COMPLETED")} disabled={busy}><Icon name="check" small />{t("Completed")}</button>
+              <button className="btn btn-ghost" onClick={() => onAct("NO_SHOW")} disabled={busy}>{t("No-show")}</button>
+              <button className="btn btn-ghost" style={{ color: "var(--sindoor-ink)" }} onClick={() => setConfirm(true)} disabled={busy}>{t("Cancel")}</button>
             </>
           )}
           {(b.status === "NO_SHOW" || b.status === "COMPLETED") && (
-            <button className="btn btn-ghost" onClick={() => onAct("CONFIRMED")} disabled={busy}>Wapas confirmed</button>
+            <button className="btn btn-ghost" onClick={() => onAct("CONFIRMED")} disabled={busy}>{t("Back to confirmed")}</button>
           )}
         </div>
       )}
@@ -236,21 +239,22 @@ function WaitlistPanel({ pack, live }: { pack: string; live: boolean }) {
   const [removing, setRemoving] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  useT();
   const remove = async (id: string) => {
-    if (!live) { setNote("Sample waitlist hai, yahan badlaav nahi hota."); setRemoving(null); return; }
+    if (!live) { setNote(t("This is a sample waitlist; nothing changes here.")); setRemoving(null); return; }
     setBusy(true); setNote(null);
-    try { await engine.removeWaitlist(pack, id); setNote("Waitlist se hata diya."); reload(); }
+    try { await engine.removeWaitlist(pack, id); setNote(t("Removed from the waitlist.")); reload(); }
     catch (e) { setNote(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); setRemoving(null); }
   };
   const rows = data ?? [];
   const waiting = rows.filter((w) => w.status === "WAITING" || w.status === "OFFERED").length;
   return (
-    <Panel title="Waitlist" hint={data ? `${waiting} intezaar mein` : error ? `load nahi hua: ${error}` : ""}>
+    <Panel title={t("Waitlist")} hint={data ? t("{n} waiting", { n: waiting }) : error ? t("could not load: {error}", { error }) : ""}>
       {rows.length === 0 ? (
-        <Empty><p>Koi intezaar mein nahi. Din full ho aur caller number chhode, to woh yahan aata hai, aur cancel hone pe usse slot milta hai.</p></Empty>
+        <Empty><p>{t("Nobody is waiting. When a day is full and a caller leaves a number, they show up here, and get the slot when someone cancels.")}</p></Empty>
       ) : (
-        <Register head={<><th>Naam</th><th>Phone</th><th>Service</th><th>Din</th><th>Period</th><th>Status</th><th></th></>}>
+        <Register head={<><th>{t("Name")}</th><th>{t("Phone")}</th><th>{t("Service")}</th><th>{t("Day")}</th><th>{t("Period")}</th><th>{t("Status")}</th><th></th></>}>
           {rows.map((w) => (
             <tr key={w.entry_id}>
               <td><strong>{w.name || "—"}</strong></td>
@@ -261,8 +265,8 @@ function WaitlistPanel({ pack, live }: { pack: string; live: boolean }) {
               <td><Chip kind={WAIT_KIND[w.status]}>{w.status.toLowerCase()}{w.offered_at ? ` · ${fmtTime(w.offered_at)}` : ""}</Chip></td>
               <td className="right">
                 {removing === w.entry_id
-                  ? <Confirm text="Waitlist se hatao?" yes="Haan, hatao" busy={busy} onYes={() => void remove(w.entry_id)} onNo={() => setRemoving(null)} />
-                  : <button className="btn btn-ghost btn-sm" onClick={() => setRemoving(w.entry_id)} disabled={busy}>Hatao</button>}
+                  ? <Confirm text={t("Remove from the waitlist?")} yes={t("Yes, remove")} busy={busy} onYes={() => void remove(w.entry_id)} onNo={() => setRemoving(null)} />
+                  : <button className="btn btn-ghost btn-sm" onClick={() => setRemoving(w.entry_id)} disabled={busy}>{t("Remove")}</button>}
               </td>
             </tr>
           ))}
@@ -278,19 +282,20 @@ function PaymentsPanel({ pack, live }: { pack: string; live: boolean }) {
   const { data, error } = useData<Payment[]>(live ? () => engine.payments(pack) : () => Promise.resolve(sample.payments(pack)), [pack, live]);
   const rows = data ?? [];
   const paid = rows.filter((p) => p.status === "PAID").reduce((a, p) => a + p.amount_inr, 0);
+  useT();
   return (
-    <Panel title="Payments" hint={data ? `${rows.length} links · ${fmtInr(paid)} aaya` : error ? `load nahi hua: ${error}` : ""}>
+    <Panel title={t("Payments")} hint={data ? t("{n} links · {amount} received", { n: rows.length, amount: fmtInr(paid) }) : error ? t("could not load: {error}", { error }) : ""}>
       {rows.length === 0 ? (
-        <Empty><p>Abhi koi payment link nahi. Settings mein deposit set karo, phir har nayi booking pe link jayega.</p></Empty>
+        <Empty><p>{t("No payment links yet. Set a deposit in Settings, and every new booking gets a link.")}</p></Empty>
       ) : (
-        <Register head={<><th>Kab</th><th>Booking</th><th className="right">₹</th><th>Status</th><th>Link</th></>}>
+        <Register head={<><th>{t("When")}</th><th>{t("Booking")}</th><th className="right">₹</th><th>{t("Status")}</th><th>{t("Link")}</th></>}>
           {rows.map((p) => (
             <tr key={p.payment_id}>
               <td className="mono">{fmtDate(p.created_at)} {fmtTime(p.created_at)}</td>
               <td className="mono">{p.booking_id}</td>
               <td className="num right">{fmtInr(p.amount_inr)}</td>
               <td><Chip kind={PAY_KIND[p.status]}>{p.status.toLowerCase()}{p.paid_at ? ` · ${fmtTime(p.paid_at)}` : ""}</Chip></td>
-              <td>{p.link ? <a href={linkHref(p.link)} target="_blank" rel="noopener noreferrer">kholo <Icon name="external" small /></a> : "—"}</td>
+              <td>{p.link ? <a href={linkHref(p.link)} target="_blank" rel="noopener noreferrer">{t("open")} <Icon name="external" small /></a> : "—"}</td>
             </tr>
           ))}
         </Register>

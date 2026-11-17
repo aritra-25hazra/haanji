@@ -16,6 +16,8 @@ export interface Status {
   phone?: { configured: boolean; number: string | null };
   privacy?: { retention_days: number; consent: boolean };
   backup?: { s3: boolean; restore_from: boolean };
+  /** The WhatsApp number a buyer can message for a demo (HAANJI_SALES_WHATSAPP). */
+  sales_whatsapp?: string | null;
 }
 
 export type Role = "owner" | "staff";

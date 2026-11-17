@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import { useApp } from "../state";
 import { engine, devanagariWanted, setDevanagariWanted } from "../engine";
 import { OUTCOME_HINT, outcomeLabel } from "../labels";
+import { t, useT } from "../i18n";
 
 const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -37,6 +38,7 @@ export function Icon({ name, small = false }: { name: string; small?: boolean })
 export function Page({ title, sub, actions, children }:
   { title: string; sub?: string; actions?: ReactNode; children: ReactNode }) {
   const { mode, refresh, sampleView, setSampleView } = useApp();
+  useT();
   return (
     <>
       <div className="page-head">
@@ -48,16 +50,16 @@ export function Page({ title, sub, actions, children }:
       </div>
       {mode === "demo" && sampleView && (
         <div className="banner" role="status" data-testid="sample-banner">
-          <span><b>Sample data:</b> 100 nakli customers ki ek dukaan, sirf dikhane ke liye. Inme se kuch bhi asli nahi.</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setSampleView(false)}>Asli data dikhao</button>
+          <span><b>{t("Sample data:")}</b> {t("a made-up shop with 100 customers, only to show how it works. None of it is real.")}</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setSampleView(false)}>{t("Show real data")}</button>
         </div>
       )}
       {mode === "offline" && (
         <div className="banner bad" role="alert" data-testid="offline-banner">
           <Icon name="refresh" small />
-          <span>Engine jaag raha hai ya nahi mil raha. Free server pehli baar 30–60 second leta hai; asli numbers engine aate hi dikhenge.</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => void refresh()}>Dobara try karo</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setSampleView(true)}>Tab tak sample dekho</button>
+          <span>{t("The engine is waking up or cannot be reached. The free server takes 30–60 seconds the first time; real numbers appear as soon as it answers.")}</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => void refresh()}>{t("Try again")}</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setSampleView(true)}>{t("See the sample meanwhile")}</button>
         </div>
       )}
       {children}
@@ -69,19 +71,21 @@ export function Page({ title, sub, actions, children }:
  *  first, then either the demo note or the offline note. */
 export function NotLive({ title, sub, demo }: { title: string; sub?: string; demo?: ReactNode }) {
   const { mode } = useApp();
+  useT();
   return (
     <Page title={title} sub={sub}>
       {mode === "checking"
         ? <Checking />
         : mode === "demo"
-          ? <Empty>{demo ?? <p>Yeh page live engine ke bina kaam nahi karta.</p>}</Empty>
-          : <Empty><p>Engine wapas aate hi yeh page bhar jayega.</p></Empty>}
+          ? <Empty>{demo ?? <p>{t("This page needs the live engine.")}</p>}</Empty>
+          : <Empty><p>{t("This page fills in as soon as the engine is back.")}</p></Empty>}
     </Page>
   );
 }
 
 export function Checking() {
-  return <div className="loading" role="status" aria-live="polite">Engine check ho raha hai… (free server jaagne mein 30–60 second le sakta hai)</div>;
+  useT();
+  return <div className="loading" role="status" aria-live="polite">{t("Checking the engine… (the free server can take 30–60 seconds to wake up)")}</div>;
 }
 
 export function Panel({ title, hint, actions, children }:
@@ -151,7 +155,8 @@ const OUTCOME_KIND: Record<string, ChipKind | undefined> = {
 };
 export function OutcomeChip({ outcome }: { outcome: string | null }) {
   const o = outcome || "IN_PROGRESS";
-  return <Chip kind={OUTCOME_KIND[o]} title={OUTCOME_HINT[o]}>{outcomeLabel(o)}</Chip>;
+  useT();
+  return <Chip kind={OUTCOME_KIND[o]} title={OUTCOME_HINT[o] && t(OUTCOME_HINT[o])}>{outcomeLabel(o)}</Chip>;
 }
 
 export function Stamp({ tone = "red", big = false, children }:
@@ -184,11 +189,11 @@ export function Repair({ c }: { c: { from_token: string; to_surface: string; asr
   }, [c.from_token]);
   return (
     <span className="repair">
-      <s ref={ref} aria-label={`suna: ${c.from_token}`}>
+      <s ref={ref} aria-label={t("heard: {w}", { w: c.from_token })}>
         {c.from_token}
         <svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><path d="M1 6 Q 25 3, 50 6 T 99 5" /></svg>
       </s>
-      <b aria-label={`padha: ${c.to_surface}`}>{c.to_surface}</b>
+      <b aria-label={t("read as: {w}", { w: c.to_surface })}>{c.to_surface}</b>
       {c.asr_confidence != null && <small>{c.asr_confidence.toFixed(2)}</small>}
     </span>
   );
@@ -205,7 +210,7 @@ export function Register({ head, children, cards = false }: { head: ReactNode; c
     t.querySelectorAll("tbody tr").forEach((tr) => [...tr.children].forEach((td, i) => { (td as HTMLElement).dataset.label = labels[i] ?? ""; }));
   });
   return (
-    <div className="register-wrap" tabIndex={0} role="region" aria-label="Register, chhoti screen pe side mein scroll hota hai">
+    <div className="register-wrap" tabIndex={0} role="region" aria-label={t("Table; scrolls sideways on a small screen")}>
       <table className={"register" + (cards ? " cards" : "")} ref={ref}>
         <thead><tr>{head}</tr></thead>
         <tbody>{children}</tbody>
@@ -230,7 +235,7 @@ export function rowButton(activate: () => void, label?: string) {
 }
 
 /** An inline "are you sure?" that stays where the action was asked. */
-export function Confirm({ text, yes = "Haan", no = "Nahi", busy = false, onYes, onNo }:
+export function Confirm({ text, yes = t("Yes"), no = t("No"), busy = false, onYes, onNo }:
   { text: string; yes?: string; no?: string; busy?: boolean; onYes: () => void; onNo: () => void }) {
   return (
     <div className="confirm" role="alertdialog" aria-label={text}>
@@ -250,7 +255,7 @@ export function Loading({ kind = "panel" }: { kind?: "panel" | "table" | "dashbo
   const lines = (n: number) => Array.from({ length: n }, (_, i) => <span key={i} className="sk sk-line" style={{ width: `${88 - ((i * 17) % 40)}%` }} />);
   return (
     <div className={`skeleton skeleton-${kind}`} role="status" aria-live="polite">
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("Loading…")}</span>
       <div aria-hidden="true">
         <span className="sk sk-title" /><span className="sk sk-sub" />
         {kind === "dashboard" && <div className="sk-tiles">{Array.from({ length: 6 }, (_, i) => <span key={i} className="sk sk-tile" />)}</div>}
@@ -363,7 +368,7 @@ export function useDevanagari(lines: string[]): { on: boolean; toggle: () => voi
 export function DevToggle({ on, toggle }: { on: boolean; toggle: () => void }) {
   return (
     <button className={"btn btn-ghost btn-sm dev-toggle" + (on ? " on" : "")} onClick={toggle} aria-pressed={on}
-            title="Transcript Devanagari mein dikhao (approximate)">
+            title={t("Show the transcript in Devanagari (approximate)")}>
       <span className="dev">हिंदी</span>{on ? " on" : ""}
     </button>
   );

@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { t } from "../i18n";
 
 interface Props { children: ReactNode; resetKey?: string }
 interface State { error: Error | null }
@@ -25,12 +26,12 @@ export class ErrorBoundary extends Component<Props, State> {
     if (!error) return this.props.children;
     return (
       <div className="empty crash" role="alert">
-        <h2>Kuch toot gaya</h2>
-        <p>Yeh page render nahi ho paya. Baaki console theek hai. Doosra page kholo ya dobara try karo.</p>
+        <h2>{t("Something broke")}</h2>
+        <p>{t("This page could not be drawn. The rest of the console is fine. Open another page or try again.")}</p>
         <p className="muted mono small">{error.message}</p>
         <div className="row">
-          <button className="btn btn-primary" onClick={() => this.setState({ error: null })}>Dobara try karo</button>
-          <a className="btn btn-ghost" href="/dashboard">Aaj pe wapas</a>
+          <button className="btn btn-primary" onClick={() => this.setState({ error: null })}>{t("Try again")}</button>
+          <a className="btn btn-ghost" href="/dashboard">{t("Back to today")}</a>
         </div>
       </div>
     );

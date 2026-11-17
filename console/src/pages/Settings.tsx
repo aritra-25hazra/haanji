@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { SettingsPreview } from "../components/Preview";
 import { engine } from "../engine";
+import { t, useT } from "../i18n";
 import { useApp } from "../state";
 import { Chip, Confirm, Empty, Icon, Loading, NotLive, Page, Panel, Register, fmtTime, useData } from "../components/Common";
 import type { Role, Settings as SettingsShape } from "../types";
@@ -11,28 +12,29 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  *  door out. Staff are told so; the server enforces regardless. */
 export default function Settings() {
   const { pack, mode, isOwner, status } = useApp();
+  useT();
   if (mode === "demo") return <SettingsPreview pack={pack} />;
-  if (mode !== "live") return <NotLive title="Settings" sub="Reminders, deposit, waitlist, digest, users." demo={<p>Settings sirf live engine pe badalti hain, demo mein nahi.</p>} />;
+  if (mode !== "live") return <NotLive title="Settings" sub="Reminders, deposit, waitlist, digest, users." demo={<p>{t("Settings change only on the live engine, not in the demo.")}</p>} />;
   if (!isOwner) {
     return (
       <Page title="Settings">
         <Empty>
-          <p>Yeh page sirf owner ke liye hai.</p>
-          <p className="muted small">Reminders, deposit aur users owner set karta hai. Kuch badalna ho to owner se kaho.</p>
+          <p>{t("This page is for the owner only.")}</p>
+          <p className="muted small">{t("The owner sets reminders, deposit and users. Ask the owner to change anything.")}</p>
         </Empty>
       </Page>
     );
   }
   const authOn = !!status?.auth?.enabled;
   return (
-    <Page title="Settings" sub={`${pack.replace(/_/g, " ")}: reminders, deposit, waitlist, digest, aur kaun console mein aa sakta hai.`}>
+    <Page title="Settings" sub={t("{pack}: reminders, deposit, waitlist, digest, and who can enter the console.", { pack: pack.replace(/_/g, " ") })}>
       <Connections pack={pack} />
       <SettingsForm key={pack} pack={pack} />
       <GooglePanel pack={pack} />
       <DigestPanel pack={pack} />
       {authOn
         ? <UsersPanel />
-        : <Panel title="Users" hint="HAANJI_AUTH off"><Empty><p>Engine auth ke bina chal raha hai, isliye har koi owner hai. Users tab kaam karega jab HAANJI_AUTH=on ho.</p></Empty></Panel>}
+        : <Panel title="Users" hint="HAANJI_AUTH off"><Empty><p>{t("The engine runs without sign-in, so everyone is the owner. Users work once HAANJI_AUTH=on.")}</p></Empty></Panel>}
       {authOn && <SessionPanel />}
     </Page>
   );
@@ -42,16 +44,17 @@ function Connections({ pack }: { pack: string }) {
   const { status } = useApp();
   const g = useData(() => engine.googleStatus(pack), [pack]);
   const wa = status?.whatsapp, ph = status?.phone;
+  useT();
   return (
-    <Panel title="Connections" hint="jo channel is engine se jude hain">
+    <Panel title="Connections" hint={t("the channels connected to this engine")}>
       <div className="status-row">
-        <Chip kind={wa?.configured ? "ok" : "muted"}><Icon name="phone" small />WhatsApp · {wa?.configured ? `juda${wa.number ? ` · ${wa.number}` : ""}` : "set nahi"}</Chip>
-        <Chip kind={ph?.configured ? "ok" : "muted"}><Icon name="mic" small />Phone line · {ph?.configured ? `judi${ph.number ? ` · ${ph.number}` : ""}` : "set nahi"}</Chip>
-        <Chip kind={status?.backup?.s3 ? "ok" : "warn"} title={status?.backup?.s3 ? "Roz raat S3 par backup" : "HAANJI_BACKUP_S3_BUCKET set nahi: redeploy par bookings aur ledger chale jaate hain (docs/operations.md)"}>
-          <Icon name="lock" small />Backup · {status?.backup?.s3 ? "S3 nightly" : "set nahi, redeploy par data jaata hai"}
+        <Chip kind={wa?.configured ? "ok" : "muted"}><Icon name="phone" small />WhatsApp · {wa?.configured ? `${t("connected")}${wa.number ? ` · ${wa.number}` : ""}` : t("not set")}</Chip>
+        <Chip kind={ph?.configured ? "ok" : "muted"}><Icon name="mic" small />Phone line · {ph?.configured ? `${t("connected ")}${ph.number ? ` · ${ph.number}` : ""}` : t("not set")}</Chip>
+        <Chip kind={status?.backup?.s3 ? "ok" : "warn"} title={status?.backup?.s3 ? t("Backed up to S3 every night") : t("HAANJI_BACKUP_S3_BUCKET is not set: a redeploy loses bookings and the ledger (docs/operations.md)")}>
+          <Icon name="lock" small />Backup · {status?.backup?.s3 ? "S3 nightly" : t("not set; a redeploy loses data")}
         </Chip>
         <Chip kind={g.data?.connected ? "ok" : g.data?.configured ? "warn" : "muted"}>
-          <Icon name="calendar" small />Google Calendar · {g.data ? (g.data.connected ? "juda" : g.data.configured ? "keys hain, connect nahi" : "keys set nahi") : g.error ? "pata nahi" : "…"}
+          <Icon name="calendar" small />Google Calendar · {g.data ? (g.data.connected ? t("connected") : g.data.configured ? t("keys set, not connected") : t("keys not set")) : g.error ? t("unknown") : "…"}
         </Chip>
       </div>
     </Panel>
@@ -65,10 +68,11 @@ function SettingsForm({ pack }: { pack: string }) {
   const [draft, setDraft] = useState<Partial<SettingsShape>>({});
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  useT();
   if (!data) {
     return (
       <Panel title="Booking settings">
-        {error ? <Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></Empty> : <Loading />}
+        {error ? <Empty>{t("Could not load: {error}", { error })}<button className="btn btn-ghost btn-sm" onClick={reload}>{t("Try again")}</button></Empty> : <Loading />}
       </Panel>
     );
   }
@@ -82,40 +86,40 @@ function SettingsForm({ pack }: { pack: string }) {
     e.preventDefault();
     if (!dirty) return;
     setBusy(true); setNote(null);
-    try { await engine.saveSettings(pack, patch); setDraft({}); setNote("Save ho gaya."); reload(); }
+    try { await engine.saveSettings(pack, patch); setDraft({}); setNote(t("Saved.")); reload(); }
     catch (err) { setNote(msg(err)); }
     finally { setBusy(false); }
   };
   const clampHour = (v: string) => Math.min(23, Math.max(0, Number(v) || 0));
   return (
-    <Panel title="Booking settings" hint={dirty ? "unsaved changes" : "engine ke saath sync"}>
+    <Panel title="Booking settings" hint={dirty ? t("unsaved changes") : t("in sync with the engine")}>
       <form className="body form" onSubmit={(e) => void save(e)}>
         <div className="settings-grid">
-          <label className="check"><input type="checkbox" checked={cur.reminders_on} onChange={(e) => set("reminders_on", e.target.checked)} /> Reminders WhatsApp pe</label>
-          <label className="field"><span>Reminder ka time (IST, 0–23)</span>
+          <label className="check"><input type="checkbox" checked={cur.reminders_on} onChange={(e) => set("reminders_on", e.target.checked)} /> {t("Reminders on WhatsApp")}</label>
+          <label className="field"><span>{t("Reminder time (IST, 0–23)")}</span>
             <input className="input" type="number" min={0} max={23} value={cur.reminder_hour_ist} onChange={(e) => set("reminder_hour_ist", clampHour(e.target.value))} /></label>
-          <label className="check"><input type="checkbox" checked={cur.reminder_day_before} onChange={(e) => set("reminder_day_before", e.target.checked)} /> Ek din pehle bhi</label>
-          <label className="field"><span>Deposit ₹ (0 = nahi)</span>
+          <label className="check"><input type="checkbox" checked={cur.reminder_day_before} onChange={(e) => set("reminder_day_before", e.target.checked)} /> {t("A day before as well")}</label>
+          <label className="field"><span>{t("Deposit ₹ (0 = none)")}</span>
             <input className="input" type="number" min={0} step={50} value={cur.deposit_inr} onChange={(e) => set("deposit_inr", Math.max(0, Number(e.target.value) || 0))} /></label>
-          <label className="check"><input type="checkbox" checked={cur.waitlist_on} onChange={(e) => set("waitlist_on", e.target.checked)} /> Waitlist (din full ho to number lo)</label>
-          <label className="field"><span>Shaam ka digest (IST, 0–23)</span>
+          <label className="check"><input type="checkbox" checked={cur.waitlist_on} onChange={(e) => set("waitlist_on", e.target.checked)} /> {t("Waitlist (take a number when the day is full)")}</label>
+          <label className="field"><span>{t("Evening digest (IST, 0–23)")}</span>
             <input className="input" type="number" min={0} max={23} value={cur.digest_hour_ist} onChange={(e) => set("digest_hour_ist", clampHour(e.target.value))} /></label>
           <label className="field"><span>WhatsApp script</span>
             <select className="input" value={cur.language_script} onChange={(e) => set("language_script", e.target.value)}>
               <option value="latin">Roman (Hinglish)</option><option value="devanagari">Devanagari</option>
             </select></label>
-          <label className="field"><span>Receptionist ki tankhwah ₹/mahina</span>
+          <label className="field"><span>{t("Receptionist salary ₹/month")}</span>
             <input className="input" type="number" min={0} step={500} value={cur.receptionist_monthly_inr ?? 12000}
                    onChange={(e) => set("receptionist_monthly_inr", Math.max(0, Number(e.target.value) || 0))} /></label>
-          <label className="field"><span>Receptionist mahine mein kitni calls leta hai</span>
+          <label className="field"><span>{t("Calls a receptionist takes in a month")}</span>
             <input className="input" type="number" min={1} step={1} value={cur.receptionist_calls_per_month ?? 1300}
                    onChange={(e) => set("receptionist_calls_per_month", Math.max(1, Number(e.target.value) || 1))} /></label>
         </div>
-        <p className="muted small">"₹ per call" ki tulna inhi do se hoti hai: tankhwah ÷ calls. Agent ka kharcha phone, awaaz aur server ke vendor rates se banta hai.</p>
-        <p className="muted small">Deposit 0 se zyada ho to har nayi booking pe payment link jaata hai: Razorpay ka, ya keys na hon to is server ka mock link.</p>
+        <p className="muted small">{t("The \"₹ per call\" comparison comes from these two: salary ÷ calls. The agent's cost comes from the phone, voice and server vendors' rates.")}</p>
+        <p className="muted small">{t("With a deposit above 0, every new booking gets a payment link: Razorpay's, or this server's mock link when there are no keys.")}</p>
         <div className="row">
-          <button className="btn btn-primary" type="submit" disabled={!dirty || busy || readOnly} title={readOnly ? "Public demo: settings read-only hain" : undefined}>{busy ? "Save…" : readOnly ? "Read-only (demo)" : "Save karo"}</button>
-          {dirty && <button className="btn btn-ghost" type="button" onClick={() => setDraft({})} disabled={busy}>Wapas</button>}
+          <button className="btn btn-primary" type="submit" disabled={!dirty || busy || readOnly} title={readOnly ? t("Public demo: settings are read-only") : undefined}>{busy ? t("Saving…") : readOnly ? "Read-only (demo)" : t("Save")}</button>
+          {dirty && <button className="btn btn-ghost" type="button" onClick={() => setDraft({})} disabled={busy}>{t("Undo")}</button>}
           {note && <span className="muted" role="status">{note}</span>}
         </div>
       </form>
@@ -131,37 +135,38 @@ function GooglePanel({ pack }: { pack: string }) {
   const feed = useData(readOnly ? null : () => engine.feedUrl(pack), [pack, readOnly]);
   const g = useData(() => engine.googleStatus(pack), [pack]);
   const [note, setNote] = useState<string | null>(null);
+  useT();
   const copy = async (text: string) => {
-    try { await navigator.clipboard.writeText(text); setNote("Copy ho gaya. Apne calendar app mein 'subscribe by URL' mein paste karo."); }
+    try { await navigator.clipboard.writeText(text); setNote(t("Copied. Paste it into your calendar app under 'subscribe by URL'.")); }
     catch { setNote(text); }
   };
   const connect = async () => {
-    try { const r = await engine.googleConnect(pack); window.open(r.url, "_blank", "noopener"); setNote("Google ki tab khul gayi. Permission do, phir yahan refresh karo."); }
+    try { const r = await engine.googleConnect(pack); window.open(r.url, "_blank", "noopener"); setNote(t("Google opened in a new tab. Give permission, then refresh here.")); }
     catch (e) { setNote(msg(e)); }
   };
   const disconnect = async () => {
-    try { await engine.googleDisconnect(pack); g.reload(); setNote("Google Calendar hata diya."); }
+    try { await engine.googleDisconnect(pack); g.reload(); setNote(t("Google Calendar removed.")); }
     catch (e) { setNote(msg(e)); }
   };
   const url = feed.data?.url ?? "";
   return (
-    <Panel title="Calendar feed & Google" hint="har booking owner ke apne calendar pe"
+    <Panel title="Calendar feed & Google" hint={t("every booking on the owner's own calendar")}
            actions={g.data?.configured
              ? (g.data.connected
-               ? <button className="btn btn-ghost btn-sm" onClick={() => void disconnect()}>Google hatao</button>
-               : <button className="btn btn-primary btn-sm" onClick={() => void connect()}>Google Calendar jodo</button>)
-             : <Chip kind="muted">Google: keys set nahi</Chip>}>
+               ? <button className="btn btn-ghost btn-sm" onClick={() => void disconnect()}>{t("Remove Google")}</button>
+               : <button className="btn btn-primary btn-sm" onClick={() => void connect()}>{t("Connect Google Calendar")}</button>)
+             : <Chip kind="muted">{t("Google: keys not set")}</Chip>}>
       <div className="body form">
         {feed.data ? (
           <div className="row">
-            <label className="field grow"><span>Subscribe URL (Google / Apple / Outlook mein "add by URL")</span>
+            <label className="field grow"><span>{t("Subscribe URL (\"add by URL\" in Google / Apple / Outlook)")}</span>
               <input className="input mono" readOnly value={url} onFocus={(e) => e.currentTarget.select()} /></label>
             <button className="btn btn-ghost" onClick={() => void copy(url)}>Copy</button>
             <a className="btn btn-ghost" href={feed.data.webcal}>Apple Calendar</a>
           </div>
-        ) : <p className="muted">{readOnly ? "Public demo mein feed URL nahi dikhaya jaata, kyunki usme customers ke naam aur number hote hain."
-          : feed.error ? `Feed URL nahi mila: ${feed.error}` : "Feed URL aa raha hai…"}</p>}
-        {g.data?.connected && <p className="muted">Google Calendar juda hai{g.data.connected_at ? ` · ${fmtTime(g.data.connected_at)} se` : ""}. Nayi bookings apne aap event banti hain.</p>}
+        ) : <p className="muted">{readOnly ? t("The public demo does not show the feed URL, because it holds customers' names and numbers.")
+          : feed.error ? t("Feed URL not found: {error}", { error: feed.error }) : t("Feed URL is coming…")}</p>}
+        {g.data?.connected && <p className="muted">{t("Google Calendar is connected")}{g.data.connected_at ? t(" · since {time}", { time: fmtTime(g.data.connected_at) }) : ""}{t(". New bookings become events on their own.")}</p>}
         {note && <p className="muted" role="status">{note}</p>}
       </div>
     </Panel>
@@ -174,18 +179,19 @@ function DigestPanel({ pack }: { pack: string }) {
   const { data, error, reload } = useData(() => engine.digest(pack), [pack]);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  if (!data) return <Panel title="Aaj ka digest">{error ? <Empty>Digest nahi mila: {error}</Empty> : <Loading />}</Panel>;
+  useT();
+  if (!data) return <Panel title={t("Today's digest")}>{error ? <Empty>{t("Digest not found: {error}", { error })}</Empty> : <Loading />}</Panel>;
   const canSend = data.whatsapp_configured && !!data.to;
   const send = async () => {
     setBusy(true); setNote(null);
-    try { const r = await engine.sendDigest(pack); setNote(`Bhej diya · ${r.to}`); }
+    try { const r = await engine.sendDigest(pack); setNote(t("Sent · {to}", { to: r.to })); }
     catch (e) { setNote(msg(e)); }
     finally { setBusy(false); reload(); }
   };
   return (
-    <Panel title="Aaj ka digest" hint={`roz ${data.hour_ist}:00 IST pe owner ko WhatsApp${data.to ? ` · ${data.to}` : " · number set nahi"}`}
-           actions={<button className="btn btn-primary btn-sm" onClick={() => void send()} disabled={!canSend || busy} title={canSend ? "Abhi bhejo" : "WhatsApp aur HAANJI_OWNER_PHONE chahiye"}>
-             <Icon name="phone" small />{busy ? "Bhej raha…" : "Abhi WhatsApp pe bhejo"}</button>}>
+    <Panel title={t("Today's digest")} hint={`${t("WhatsApp to the owner every day at {hour}:00 IST", { hour: data.hour_ist })}${data.to ? ` · ${data.to}` : t(" · number not set")}`}
+           actions={<button className="btn btn-primary btn-sm" onClick={() => void send()} disabled={!canSend || busy} title={canSend ? t("Send now") : t("Needs WhatsApp and HAANJI_OWNER_PHONE")}>
+             <Icon name="phone" small />{busy ? t("Sending…") : t("Send on WhatsApp now")}</button>}>
       <div className="body">
         <pre className="digest">{data.text}</pre>
         {note && <p className="muted" role="status">{note}</p>}
@@ -206,54 +212,55 @@ function UsersPanel() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  useT();
   const digits = phone.replace(/\D/g, "");
   const add = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true); setNote(null);
     try {
       await engine.addUser({ phone: digits, role, packs: sel.length ? sel : ["*"], name: name.trim() });
-      setPhone(""); setName(""); setSel([]); setNote(`Jod diya · ${digits}`); reload();
+      setPhone(""); setName(""); setSel([]); setNote(t("Added · {phone}", { phone: digits })); reload();
     } catch (err) { setNote(msg(err)); }
     finally { setBusy(false); }
   };
   const remove = async (p: string) => {
     setBusy(true); setNote(null);
-    try { await engine.removeUser(p); setNote(`Hata diya · ${p}`); reload(); }
+    try { await engine.removeUser(p); setNote(t("Removed · {phone}", { phone: p })); reload(); }
     catch (err) { setNote(msg(err)); }
     finally { setBusy(false); setRemoving(null); }
   };
   const users = data ?? [];
   return (
-    <Panel title="Users" hint="owner sab kuch; staff calendar, customers, calls">
-      {error && <p className="muted" style={{ padding: "12px 18px 0" }}>Users load nahi hue: {error}</p>}
-      <Register head={<><th>Naam</th><th>Phone</th><th>Role</th><th>Packs</th><th></th></>}>
+    <Panel title="Users" hint={t("owner: everything; staff: calendar, customers, calls")}>
+      {error && <p className="muted" style={{ padding: "12px 18px 0" }}>{t("Users did not load: {error}", { error })}</p>}
+      <Register head={<><th>{t("Name")}</th><th>Phone</th><th>Role</th><th>Packs</th><th></th></>}>
         {users.map((u) => (
           <tr key={u.phone}>
             <td><strong>{u.name || "—"}</strong></td>
             <td className="mono">{u.phone}</td>
             <td><Chip kind={u.role === "owner" ? "warn" : undefined}>{u.role}</Chip></td>
-            <td className="muted">{u.packs.includes("*") ? "sab" : u.packs.join(", ")}</td>
+            <td className="muted">{u.packs.includes("*") ? t("all") : u.packs.join(", ")}</td>
             <td className="right">
               {me?.phone === u.phone
-                ? <Chip kind="muted">aap</Chip>
+                ? <Chip kind="muted">{t("you")}</Chip>
                 : removing === u.phone
-                  ? <Confirm text={`${u.phone} ko hatao?`} yes="Haan, hatao" busy={busy} onYes={() => void remove(u.phone)} onNo={() => setRemoving(null)} />
-                  : <button className="btn btn-ghost btn-sm" onClick={() => setRemoving(u.phone)} disabled={busy}>Hatao</button>}
+                  ? <Confirm text={t("Remove {phone}?", { phone: u.phone })} yes={t("Yes, remove")} busy={busy} onYes={() => void remove(u.phone)} onNo={() => setRemoving(null)} />
+                  : <button className="btn btn-ghost btn-sm" onClick={() => setRemoving(u.phone)} disabled={busy}>{t("Remove")}</button>}
             </td>
           </tr>
         ))}
-        {data && users.length === 0 && <tr><td colSpan={5} className="muted">Abhi koi user nahi. Pehla owner HAANJI_OWNER_PHONE se banta hai.</td></tr>}
+        {data && users.length === 0 && <tr><td colSpan={5} className="muted">{t("No users yet. The first owner comes from HAANJI_OWNER_PHONE.")}</td></tr>}
       </Register>
       <form className="body form" onSubmit={(e) => void add(e)}>
         <div className="row">
-          <label className="field"><span>Naya number (WhatsApp)</span>
+          <label className="field"><span>{t("New number (WhatsApp)")}</span>
             <input className="input" inputMode="numeric" autoComplete="off" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" /></label>
-          <label className="field grow"><span>Naam</span>
+          <label className="field grow"><span>{t("Name")}</span>
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ravi (reception)" /></label>
           <label className="field"><span>Role</span>
             <select className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}><option value="staff">staff</option><option value="owner">owner</option></select></label>
         </div>
-        <div className="field"><span>Packs (koi tick nahi = sab)</span>
+        <div className="field"><span>{t("Packs (no tick = all)")}</span>
           <div className="chips">
             {packs.map((p) => {
               const on = sel.includes(p);
@@ -262,7 +269,7 @@ function UsersPanel() {
           </div>
         </div>
         <div className="row">
-          <button className="btn btn-primary" type="submit" disabled={busy || digits.length < 10 || readOnly}><Icon name="user" small />User jodo</button>
+          <button className="btn btn-primary" type="submit" disabled={busy || digits.length < 10 || readOnly}><Icon name="user" small />{t("Add the user")}</button>
           {note && <span className="muted" role="status">{note}</span>}
         </div>
       </form>
@@ -273,10 +280,11 @@ function UsersPanel() {
 function SessionPanel() {
   const { user, signOutEverywhere } = useApp();
   const [busy, setBusy] = useState(false);
+  useT();
   return (
     <Panel title="Session" hint={user ? `${user.name || user.phone} · ${user.role}` : ""}>
       <div className="body form">
-        <p className="muted">Har device aur browser se sign out. Is number ke saare tokens engine pe revoke ho jaate hain. Dobara OTP se andar aana hoga.</p>
+        <p className="muted">{t("Sign out of every device and browser. All of this number's tokens are revoked on the engine. You will need an OTP to come back in.")}</p>
         <div>
           <button className="btn btn-danger" onClick={() => { setBusy(true); void signOutEverywhere(); }} disabled={busy}>
             <Icon name="lock" small />{busy ? "Sign out…" : "Sign out everywhere"}

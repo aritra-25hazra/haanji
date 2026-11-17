@@ -1,54 +1,56 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { engine } from "../engine";
 import { sample } from "../sample";
+import { en, t, useT } from "../i18n";
 import { useApp } from "../state";
 import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register, useData, type ChipKind } from "../components/Common";
 
 const KIND: Record<string, ChipKind | undefined> = {
   SERVICE: "ok", STAFF: undefined, PLACE: "warn", BRAND: "muted", PHRASE: "muted",
 };
-const SUB = "Is business ke apne shabd, awaaz ke hisaab se indexed. Ye list catalogue se khud banti hai, koi type nahi karta.";
+const SUB = en("This business's own words, indexed by how they sound. The list builds itself from the catalogue; nobody types it.");
 
 export default function Lexicon() {
   const { pack, mode } = useApp();
+  useT();
   const [probe, setProbe] = useState("");
   const [debounced, setDebounced] = useState("");
-  useEffect(() => { const t = setTimeout(() => setDebounced(probe.trim()), 300); return () => clearTimeout(t); }, [probe]);
+  useEffect(() => { const h = setTimeout(() => setDebounced(probe.trim()), 300); return () => clearTimeout(h); }, [probe]);
 
   const live = mode === "live";
   const loader = live ? () => engine.lexicon(pack, debounced || undefined) : mode === "demo" ? () => Promise.resolve(sample.lexicon(pack)) : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode, debounced]);
 
-  if (!live && mode !== "demo") return <NotLive title="Bhasha lexicon" sub={SUB} />;
+  if (!live && mode !== "demo") return <NotLive title="Bhasha lexicon" sub={t(SUB)} />;
   if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (
       <Page title="Bhasha lexicon">
-        <Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></Empty>
+        <Empty>{t("Could not load: {error}", { error: error ?? "" })}<button className="btn btn-ghost btn-sm" onClick={reload}>{t("Try again")}</button></Empty>
       </Page>
     );
   }
 
   return (
-    <Page title="Bhasha lexicon" sub={SUB}>
-      <Panel title="Jo suna gaya, wo likho" hint={live ? "engine batayega ye awaaz kahan land karti hai" : "live engine chahiye"}>
+    <Page title="Bhasha lexicon" sub={t(SUB)}>
+      <Panel title={t("Type what was heard")} hint={live ? t("the engine shows where this sound lands") : t("needs the live engine")}>
         <div className="body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input className="input" value={probe} onChange={(e) => setProbe(e.target.value)} disabled={!live}
-                 placeholder='jaise "rut kanal" ya "sheikh"' aria-label="Suna hua phrase" style={{ maxWidth: 420 }} />
+                 placeholder={t("e.g. \"rut kanal\" or \"sheikh\"")} aria-label={t("Phrase as heard")} style={{ maxWidth: 420 }} />
           {data.probe && (
             <div className="row" style={{ fontSize: 15 }}>
               <span>"{data.probe.text}"</span><Icon name="arrow" small />
               <Chip mono>{data.probe.key || "—"}</Chip><Icon name="arrow" small />
               {data.probe.matches.length
                 ? data.probe.matches.map((m) => <Chip key={m} kind="ok"><Icon name="check" small />{m}</Chip>)
-                : <Chip kind="muted">koi entry is awaaz pe nahi</Chip>}
+                : <Chip kind="muted">{t("no entry for this sound")}</Chip>}
             </div>
           )}
         </div>
       </Panel>
 
       <Panel title="Vocabulary" hint={`${data.entries.length} entries · v${data.version}`}>
-        <Register head={<><th>Shabd</th><th>Kind</th><th>Aise bhi suna</th><th>Sound key</th><th className="right">Weight</th></>}>
+        <Register head={<><th>{t("Word")}</th><th>Kind</th><th>{t("Also heard as")}</th><th>Sound key</th><th className="right">Weight</th></>}>
           {data.entries.map((e, i) => (
             <tr key={e.surface + i} data-reveal style={{ "--i": Math.min(i, 20) } as CSSProperties}>
               <td><strong>{e.surface}</strong></td>
@@ -61,10 +63,10 @@ export default function Lexicon() {
         </Register>
       </Panel>
 
-      <Panel title="Ek repair kab hota hai">
+      <Panel title={t("When a repair happens")}>
         <div className="body" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <p>Ek shabd tabhi badla jaata hai jab do alag-alag cheezein ek saath sach hon: recogniser us shabd pe <strong>sure nahi</strong> tha (confidence 0.85 se kam), <em>aur</em> uski sound key is list ki kisi entry se <strong>bilkul match</strong> karti hai, chhoti si spelling doori ke andar. Dono mein se koi ek akela galat corrections deta hai, aur jo layer achhe transcript ko bigaade, wo na hone se buri hai.</p>
-          <p className="muted">Caller ne abhi-abhi jo naam bataya, usse kabhi nahi chheda jaata, chahe wo kaisa bhi sune.</p>
+          <p>{t("A word is changed only when two separate things are true together: the recogniser was not sure of it (confidence below 0.85), and its sound key matches an entry in this list exactly, within a small spelling distance. Either one alone gives wrong corrections, and a layer that spoils a good transcript is worse than none.")}</p>
+          <p className="muted">{t("A name the caller has just given is never touched, however it sounds.")}</p>
         </div>
       </Panel>
     </Page>

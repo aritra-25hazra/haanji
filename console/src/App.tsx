@@ -2,7 +2,9 @@ import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Empty, Icon, Loading } from "./components/Common";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { HelpChat } from "./components/HelpChat";
 import { packLabel } from "./labels";
+import { LANGS, en, setLang, t, useLang } from "./i18n";
 import { useApp, type Mode } from "./state";
 import Calendar from "./pages/Calendar";
 import Customers from "./pages/Customers";
@@ -20,37 +22,41 @@ const Ops = lazy(() => import("./pages/Ops"));
 const Ledger = lazy(() => import("./pages/Ledger"));
 const Onboard = lazy(() => import("./pages/Onboard"));
 const Login = lazy(() => import("./pages/Login"));
+const Home = lazy(() => import("./pages/Home"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 
 interface NavItem { to: string; label: string; owner?: boolean; hint?: string }
 // The shop's daily work stays in the bar; the engine's own pages (receipts,
 // vocabulary, packs, latency) sit one click away so an owner is not asked
 // to read eleven tabs to find today's bookings.
 const LINKS: NavItem[] = [
-  { to: "/dashboard", label: "Aaj" },
-  { to: "/calendar", label: "Calendar" },
-  { to: "/customers", label: "Customers" },
-  { to: "/calls", label: "Calls" },
-  { to: "/settings", label: "Settings", owner: true },
+  { to: "/dashboard", label: en("Today") },
+  { to: "/calendar", label: en("Calendar") },
+  { to: "/customers", label: en("Customers") },
+  { to: "/calls", label: en("Calls") },
+  { to: "/settings", label: en("Settings"), owner: true },
 ];
 const ENGINE: NavItem[] = [
-  { to: "/ledger", label: "Pramaan", hint: "har booking ki signed receipt" },
-  { to: "/lexicon", label: "Bhasha", hint: "shabd jo agent pehchanta hai" },
-  { to: "/packs", label: "Packs", hint: "kis business ke liye kya jaanta hai" },
-  { to: "/studio", label: "Studio", hint: "pack badlo aur test karo" },
-  { to: "/onboard", label: "Nayi dukaan", hint: "naya business 5 sawaal mein" },
-  { to: "/ops", label: "Ops", hint: "speed, errors, counters" },
+  { to: "/how", label: en("How it works"), hint: en("one call step by step, and what was measured") },
+  { to: "/ledger", label: "Pramaan", hint: en("a signed receipt for every booking") },
+  { to: "/lexicon", label: "Bhasha", hint: en("the words the agent knows") },
+  { to: "/packs", label: en("Packs"), hint: en("what it knows for each kind of business") },
+  { to: "/studio", label: en("Studio"), hint: en("change a pack and test it") },
+  { to: "/onboard", label: en("New shop"), hint: en("a new business in 5 questions") },
+  { to: "/ops", label: "Ops", hint: en("speed, errors, counters") },
 ];
 
 const PILL: Record<Mode, { text: string; title: string }> = {
-  checking: { text: "…", title: "engine check ho raha hai" },
-  live: { text: "LIVE", title: "engine se live" },
-  demo: { text: "SAMPLE", title: "engine nahi mila, sample data" },
-  offline: { text: "OFFLINE", title: "engine nahi mil raha; aap signed in ho, isliye sample nahi" },
+  checking: { text: "…", title: en("checking the engine") },
+  live: { text: "LIVE", title: en("live from the engine") },
+  demo: { text: "SAMPLE", title: en("sample data") },
+  offline: { text: "OFFLINE", title: en("the engine cannot be reached") },
 };
 
 export default function App() {
   const { mode, pack, packs, setPack, authRequired, user, isOwner, signOut, sampleView, setSampleView } = useApp();
   const location = useLocation();
+  const lang = useLang();
   // On a phone the tabs scroll sideways; keep the current one in view.
   useEffect(() => {
     document.querySelector(".nav a.active")?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
@@ -60,27 +66,28 @@ export default function App() {
   return (
     <>
       <header className="topbar">
-        <Link className="wordmark" to="/dashboard">HaanJi <span className="dev">हाँजी</span></Link>
+        <Link className="wordmark" to={user ? "/dashboard" : "/"}>HaanJi <span className="dev">हाँजी</span></Link>
         <div className="navrow">
           <nav className="nav" aria-label="Main">
             {LINKS.filter((l) => !l.owner || isOwner).map((l) => (
-              <NavLink key={l.to} to={l.to} className={({ isActive }) => (isActive ? "active" : undefined)}>{l.label}</NavLink>
+              <NavLink key={l.to} to={l.to} className={({ isActive }) => (isActive ? "active" : undefined)}>{t(l.label)}</NavLink>
             ))}
           </nav>
-          <EngineMenu key={location.pathname} />
+          <EngineMenu key={location.pathname + lang} />
         </div>
         <div className="tools">
           <select aria-label="Pack" value={pack} onChange={(e) => setPack(e.target.value)}>
             {packs.map((p) => <option key={p} value={p}>{packLabel(p)}</option>)}
           </select>
           <button type="button" className="sample-switch" aria-pressed={sampleView} onClick={() => setSampleView(!sampleView)}
-                  title={sampleView ? "Asli data par wapas" : "100 nakli customers ki ek dukaan dikhao (demo ke liye)"}>
+                  title={sampleView ? t("Back to real data") : t("Show a made-up shop with 100 customers (for a demo)")}>
             <i aria-hidden="true" />Sample
           </button>
-          {!sampleView && <span className={"live" + (mode === "live" ? "" : " off")} title={pill.title}><i />{pill.text}</span>}
-          <a href="/engine/talk" target="_blank" rel="noopener noreferrer" aria-label="Talk to HaanJi (nayi tab mein)"><span>Talk</span><Icon name="external" small /></a>
+          {!sampleView && <span className={"live" + (mode === "live" ? "" : " off")} title={t(pill.title)}><i />{pill.text}</span>}
+          <LangSwitch />
+          <a href="/engine/talk" target="_blank" rel="noopener noreferrer" aria-label={t("Talk to HaanJi (opens a new tab)")}><span>Talk</span><Icon name="external" small /></a>
           {user && (
-            <button className="who" onClick={signOut} title={`${user.phone} · ${user.role} · is device se sign out`}>
+            <button className="who" onClick={signOut} title={t("{phone} · {role} · sign out on this device", { phone: user.phone, role: user.role })}>
               <span>{user.name || user.phone}</span><small>{user.role}</small>
             </button>
           )}
@@ -90,7 +97,8 @@ export default function App() {
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={<Loading />}>
             <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Home />} />
+              <Route path="/how" element={<HowItWorks />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/customers" element={<Customers />} />
@@ -108,6 +116,7 @@ export default function App() {
           </Suspense>
         </ErrorBoundary>
       </main>
+      <HelpChat />
     </>
   );
 }
@@ -131,14 +140,14 @@ function EngineMenu() {
     <div className="engine-menu" ref={box}>
       <button type="button" className={current ? "active" : undefined} aria-expanded={open} aria-controls="engine-pages"
               onClick={() => setOpen((o) => !o)}>
-        {current ? `Engine · ${current.label}` : "Engine"}<Icon name="chevron" small />
+        {current ? `Engine · ${t(current.label)}` : "Engine"}<Icon name="chevron" small />
       </button>
       {open && (
-        <ul id="engine-pages" aria-label="Engine ke pages">
+        <ul id="engine-pages" aria-label={t("Engine pages")}>
           {ENGINE.map((l) => (
             <li key={l.to}>
               <NavLink to={l.to} className={({ isActive }) => (isActive ? "active" : undefined)}>
-                <b>{l.label}</b><span>{l.hint}</span>
+                <b>{t(l.label)}</b><span>{l.hint && t(l.hint)}</span>
               </NavLink>
             </li>
           ))}
@@ -150,11 +159,25 @@ function EngineMenu() {
 
 function NotFound() {
   const { pathname } = useLocation();
+  useLang();
   return (
     <Empty>
-      <h2>Yeh page nahi hai</h2>
+      <h2>{t("This page does not exist")}</h2>
       <p className="muted mono">{pathname}</p>
-      <Link className="btn btn-primary" to="/dashboard">Aaj pe wapas <Icon name="arrow" small /></Link>
+      <Link className="btn btn-primary" to="/dashboard">{t("Back to today")} <Icon name="arrow" small /></Link>
     </Empty>
+  );
+}
+
+/** English or Hindi for every screen; remembered per browser, `?lang=hi` in a link. */
+export function LangSwitch() {
+  const lang = useLang();
+  return (
+    <div className="lang-switch" role="group" aria-label="Language / भाषा">
+      {LANGS.map((l) => (
+        <button key={l.id} type="button" aria-pressed={lang === l.id} title={l.label} lang={l.id === "hi" ? "hi" : "en"}
+                onClick={() => setLang(l.id)}>{l.short}</button>
+      ))}
+    </div>
   );
 }

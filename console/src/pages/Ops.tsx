@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { OpsPreview } from "../components/Preview";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { engine } from "../engine";
+import { t, useT } from "../i18n";
 import { useApp } from "../state";
 import { Chip, Empty, Loading, NotLive, Page, Panel, Register, Tile, Waterfall, fmtTime, useData } from "../components/Common";
 
@@ -9,42 +10,43 @@ const SUB = "Latency objective, traces, counters.";
 
 export default function Ops() {
   const { pack, mode } = useApp();
+  useT();
   const live = mode === "live";
   const { data, loading, error, reload } = useData(live ? () => engine.ops(pack) : null, [pack, mode]);
   useEffect(() => {
     if (!live) return;
-    const t = setInterval(reload, 10000);
-    return () => clearInterval(t);
+    const h = setInterval(reload, 10000);
+    return () => clearInterval(h);
   }, [live, reload]);
 
   if (mode === "demo") return <OpsPreview pack={pack} />;
-  if (!live) return <NotLive title="Ops" sub={SUB} demo={<p>Ops view live engine se aata hai.</p>} />;
+  if (!live) return <NotLive title="Ops" sub={SUB} demo={<p>{t("The Ops view comes from the live engine.")}</p>} />;
   if (loading && !data) return <Loading kind="dashboard" />;
-  if (!data) return <Page title="Ops"><Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara</button></Empty></Page>;
+  if (!data) return <Page title="Ops"><Empty>{t("Could not load: {error}", { error: error ?? "" })}<button className="btn btn-ghost btn-sm" onClick={reload}>{t("Retry")}</button></Empty></Page>;
 
   const slo = data.slo;
   const within = Math.round(slo.within * 100);
   const hit = data.speculation.started ? Math.round((100 * data.speculation.hits) / data.speculation.started) : 0;
   const latest = data.latest_call;
   return (
-    <Page title="Ops" sub={`SLO: har turn ${slo.target_ms} ms ke andar · pichhli ${data.calls} calls, ${data.turns} turns · engine-side time`}
+    <Page title="Ops" sub={t("SLO: every turn within {ms} ms · last {calls} calls, {turns} turns · engine-side time", { ms: slo.target_ms, calls: data.calls, turns: data.turns })}
           actions={<>
             {data.turns
-              ? <Chip kind={within >= 99 ? "ok" : within >= 95 ? "warn" : "bad"}>{within}% turns SLO ke andar</Chip>
-              : <Chip kind="muted">abhi koi turn nahi</Chip>}
+              ? <Chip kind={within >= 99 ? "ok" : within >= 95 ? "warn" : "bad"}>{t("{pct}% of turns within the SLO", { pct: within })}</Chip>
+              : <Chip kind="muted">{t("no turns yet")}</Chip>}
             <a className="btn btn-ghost btn-sm" href="/engine/metrics" target="_blank" rel="noopener noreferrer">/metrics (Prometheus)</a>
           </>}>
       <div className="tiles">
         <Tile index={0} label="p50" value={slo.p50} suffix=" ms" mono />
-        <Tile index={1} label="p90" value={slo.p90} suffix=" ms" mono foot={slo.p90 <= slo.target_ms ? "SLO ke andar" : "SLO ke bahar"} />
+        <Tile index={1} label="p90" value={slo.p90} suffix=" ms" mono foot={slo.p90 <= slo.target_ms ? t("within the SLO") : t("outside the SLO")} />
         <Tile index={2} label="p95" value={slo.p95} suffix=" ms" mono foot={`max ${Math.round(slo.max)} ms`} />
-        <Tile index={3} label="Tool turns p90" value={slo.tool_turn_p90} suffix=" ms" mono foot="jin turns mein kaam tha" />
+        <Tile index={3} label="Tool turns p90" value={slo.tool_turn_p90} suffix=" ms" mono foot={t("turns that did some work")} />
         <Tile index={4} label="Speculation hit" value={hit} suffix="%" foot={`${data.speculation.hits}/${data.speculation.started} · ${data.speculation.wasted} wasted`} />
         <Tile index={5} label="Live sessions" value={data.live_sessions} foot={`up ${Math.round(data.uptime_s / 60)} min · ${data.providers.llm} llm`} />
       </div>
 
-      <Panel title="Turn latency ka batwara" hint={data.turns ? "kitne turns kis bucket mein (ms)" : undefined}>
-        {data.turns === 0 ? <Empty><p>Abhi koi turn nahi hua. Pehli call ke baad yahan latency dikhegi.</p></Empty> : <div className="body" style={{ height: 220 }}>
+      <Panel title={t("How turn latency is spread")} hint={data.turns ? t("how many turns in each bucket (ms)") : undefined}>
+        {data.turns === 0 ? <Empty><p>{t("No turns yet. Latency shows here after the first call.")}</p></Empty> : <div className="body" style={{ height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.histogram} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
               <CartesianGrid stroke="rgba(27,59,140,.14)" vertical={false} />
@@ -57,17 +59,17 @@ export default function Ops() {
         </div>}
       </Panel>
 
-      <Panel title="Time kahan jaata hai" hint="har span ka p50 / p90, saari turns pe">
+      <Panel title={t("Where the time goes")} hint={t("p50 / p90 of each span, over all turns")}>
         <Register head={<><th>Span</th><th className="right">n</th><th className="right">p50</th><th className="right">p90</th></>}>
           {data.spans.map((s) => (
             <tr key={s.name}><td className="mono">{s.name}</td><td className="num right">{s.n}</td><td className="num right">{s.p50} ms</td><td className="num right">{s.p90} ms</td></tr>
           ))}
-          {data.spans.length === 0 && <tr><td colSpan={4} className="muted">Abhi koi turn nahi.</td></tr>}
+          {data.spans.length === 0 && <tr><td colSpan={4} className="muted">{t("No turns yet.")}</td></tr>}
         </Register>
       </Panel>
 
       {latest && (
-        <Panel title="Sabse nayi call ka trace" hint={`${fmtTime(latest.started_at)} · ${(latest.outcome ?? "in progress").toLowerCase().replace(/_/g, " ")}`}>
+        <Panel title={t("Trace of the latest call")} hint={`${fmtTime(latest.started_at)} · ${(latest.outcome ?? "in progress").toLowerCase().replace(/_/g, " ")}`}>
           <div className="body traces">
             {latest.turns.map((t, i) => (
               <div key={i} className="trace">
@@ -79,7 +81,7 @@ export default function Ops() {
         </Panel>
       )}
 
-      <Panel title="Counters" hint="jo pager dekhta hai (ops/alerts.yml)">
+      <Panel title="Counters" hint={t("what the pager watches (ops/alerts.yml)")}>
         <div className="body row counters">
           <Chip kind={data.counters.unconfirmed_refused ? "bad" : "ok"}>unconfirmed writes refused · {data.counters.unconfirmed_refused}</Chip>
           <Chip kind={data.counters.rate_limited ? "warn" : undefined}>429 · {data.counters.rate_limited}</Chip>

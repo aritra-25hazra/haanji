@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { StudioPreview } from "../components/Preview";
 import { engine } from "../engine";
+import { en, t, useT } from "../i18n";
 import { useApp } from "../state";
 import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register } from "../components/Common";
 import type { PackSummary } from "../types";
 
-const SUB = "Upar chuna hua pack yahan khulta hai. Edit karo, validate karo, uske scenarios chalao, phir save karo.";
+const SUB = en("The pack chosen at the top opens here. Edit it, validate it, run its scenarios, then save.");
 
 export default function PackStudio() {
   const { pack, mode, isOwner: owner, readOnly } = useApp();
   const isOwner = owner && !readOnly;
+  useT();
   const live = mode === "live";
   const [packs, setPacks] = useState<PackSummary[] | null>(null);
   const [packsError, setPacksError] = useState<string | null>(null);
@@ -40,51 +42,51 @@ export default function PackStudio() {
   const report = (kind: "ok" | "bad", text: string) => setMessages((m) => [...m, { kind, text }]);
 
   async function doValidate(): Promise<boolean> {
-    setBusy("validating"); setMessages([]);
+    setBusy(en("validating")); setMessages([]);
     try {
       const r = await engine.validate(yamlText);
-      if (r.ok) report("ok", "Pack valid hai, koi problem nahi mili."); else r.problems.forEach((p) => report("bad", p));
+      if (r.ok) report("ok", t("The pack is valid; no problems found.")); else r.problems.forEach((p) => report("bad", p));
       return r.ok;
     } catch (e) { report("bad", String((e as Error).message)); return false; }
     finally { setBusy(null); }
   }
   async function doSave() {
     if (!(await doValidate())) return;
-    setBusy("saving");
+    setBusy(en("saving"));
     try {
       const r = await engine.save(current, yamlText);
-      report("ok", `Saved. Pichhla version ${r.backup} mein rakha hai.`);
+      report("ok", t("Saved. The previous version is kept in {backup}.", { backup: r.backup }));
       setDirty(false);
       setPacks((await engine.packs()).packs);
     } catch (e) { report("bad", String((e as Error).message)); }
     finally { setBusy(null); }
   }
   async function doSelftest() {
-    setBusy("running scenarios"); setResults([]);
+    setBusy(en("running scenarios")); setResults([]);
     try {
       const r = await engine.selftest(current);
       setResults(r.results);
-      report(r.ok ? "ok" : "bad", r.summary || (r.ok ? "Saare scenarios paas." : "Upar failures dekho."));
+      report(r.ok ? "ok" : "bad", r.summary || (r.ok ? t("All scenarios passed.") : t("See the failures above.")));
     } catch (e) { report("bad", String((e as Error).message)); }
     finally { setBusy(null); }
   }
 
   if (mode === "demo") return <StudioPreview pack={pack} />;
-  if (!live) return <NotLive title="Pack Studio" sub={SUB} demo={<p>Pack Studio live engine ke bina kaam nahi karta, kyunki ye files ko sach mein badalta hai.</p>} />;
+  if (!live) return <NotLive title="Pack Studio" sub={t(SUB)} demo={<p>{t("Pack Studio needs the live engine, because it really changes files.")}</p>} />;
   if (packs === null) {
     return (
-      <Page title="Pack Studio" sub={SUB}>
-        {packsError ? <Empty>Packs load nahi hue: {packsError}</Empty> : <Loading />}
+      <Page title="Pack Studio" sub={t(SUB)}>
+        {packsError ? <Empty>{t("The packs did not load: {error}", { error: packsError })}</Empty> : <Loading />}
       </Page>
     );
   }
 
   const summary = packs.find((p) => p.pack_id === current);
   return (
-    <Page title="Pack Studio" sub={SUB}>
+    <Page title="Pack Studio" sub={t(SUB)}>
       {!current && (messages.length ? null : <Loading />)}
       {current && (
-        <Panel title={`${current}.yaml`} hint={`${summary ? `${summary.display_name} v${summary.version} · ` : ""}${dirty ? "unsaved changes" : "disk ke saath sync"}`}
+        <Panel title={`${current}.yaml`} hint={`${summary ? `${summary.display_name} v${summary.version} · ` : ""}${dirty ? t("unsaved changes") : t("in sync with disk")}`}
                actions={summary && (summary.issues.length === 0 ? <Chip kind="ok">valid</Chip> : <Chip kind="bad">{summary.issues.length} issues</Chip>)}>
           <div className="body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <textarea className="input" value={yamlText} onChange={(e) => { setYamlText(e.target.value); setDirty(true); }}
@@ -93,10 +95,10 @@ export default function PackStudio() {
               <button className="btn btn-ghost" onClick={() => void doValidate()} disabled={busy !== null}>Validate</button>
               {isOwner
                 ? <button className="btn btn-primary" onClick={() => void doSave()} disabled={busy !== null}>Validate &amp; save</button>
-                : <Chip kind="muted" title="Pack files sirf owner badal sakta hai">save sirf owner</Chip>}
-              <button className="btn btn-ghost" onClick={() => void doSelftest()} disabled={busy !== null}><Icon name="bolt" small />Is pack ke scenarios chalao</button>
+                : <Chip kind="muted" title={t("Only the owner can change pack files")}>{t("only the owner saves")}</Chip>}
+              <button className="btn btn-ghost" onClick={() => void doSelftest()} disabled={busy !== null}><Icon name="bolt" small />{t("Run this pack's scenarios")}</button>
               <a className="btn btn-ghost" href="/engine/talk" target="_blank" rel="noopener noreferrer">Try it live <Icon name="external" small /></a>
-              {busy && <span className="muted">{busy}…</span>}
+              {busy && <span className="muted">{t(busy)}…</span>}
             </div>
             {messages.length > 0 && (
               <div className="row">
