@@ -1044,7 +1044,7 @@ async def missed_call(body: MissedIn, request: Request):
 @app.get("/api/insights")
 async def insights(pack: str = DEFAULT_PACK):
     rt = runtime(pack)
-    return compute_insights(pack, store, rt.backend)
+    return compute_insights(pack, store, rt.backend, settings.get(pack))
 
 
 @app.get("/api/conversations")
@@ -1426,7 +1426,7 @@ async def anchors_seal(pack: str = DEFAULT_PACK):
 def digest_text(pack_id: str) -> str:
     """The owner's evening message: what the desk did today, in six lines."""
     rt = runtime(pack_id)
-    ins = compute_insights(pack_id, store, rt.backend)
+    ins = compute_insights(pack_id, store, rt.backend, settings.get(pack_id))
     name = rt.pack.persona.business_name
     today = dt.datetime.now(IST).strftime("%d %b")
     booked = ins["outcomes"].get("BOOKED", 0)

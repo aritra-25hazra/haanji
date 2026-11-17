@@ -53,6 +53,7 @@ export interface Insights {
   generated_at: string;
   calls_total: number;
   calls_today: number;
+  calls_yesterday?: number;
   outcomes: Record<string, number>;
   by_hour: { hour: string; calls: number; booked: number }[];
   bookings_confirmed: number;
@@ -300,6 +301,8 @@ export interface Settings {
   waitlist_on: boolean;
   digest_hour_ist: number;
   language_script: "latin" | "devanagari" | string;
+  receptionist_monthly_inr?: number;
+  receptionist_calls_per_month?: number;
 }
 
 export type WaitlistStatus = "WAITING" | "OFFERED" | "BOOKED" | "EXPIRED";

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { businessName, isTestNumber, outcomeLabel } from "../labels";
 import { engine, subscribeLive, enablePush } from "../engine";
 import { callbackWhy } from "../callbacks";
 import { NEEDS_CALLBACK, sample } from "../sample";
@@ -43,24 +44,31 @@ export default function Dashboard() {
   const present = OUTCOMES.filter((o) => data.outcomes[o]);
 
   return (
-    <Page title="Aaj" sub={`${pack.replace(/_/g, " ")}: har call jo agent ne uthayi, aur usse kya nikla.`}
+    <Page title="Aaj" sub={`${businessName(pack)}: har call jo agent ne uthayi, aur usse kya nikla.`}
           actions={<>
-            {status?.whatsapp?.configured && <Chip kind="ok"><Icon name="phone" small />Asli WhatsApp juda hai{status.whatsapp.number ? ` · ${status.whatsapp.number}` : ""}</Chip>}
+            {status?.whatsapp?.configured && (isTestNumber(status.whatsapp.number)
+              ? <Chip kind="warn" title="Meta ka sandbox number: sirf jode gaye 5 numbers isse baat kar sakte hain."><Icon name="phone" small />Test WhatsApp (Meta sandbox){status.whatsapp.number ? ` · ${status.whatsapp.number}` : ""}</Chip>
+              : <Chip kind="ok"><Icon name="phone" small />WhatsApp juda hai{status.whatsapp.number ? ` · ${status.whatsapp.number}` : ""}</Chip>)}
             <Link className="btn btn-ghost btn-sm" to="/calendar"><Icon name="calendar" small />Calendar</Link>
           </>}>
       <div className="tiles">
-        <Tile index={0} label="Calls aaj" value={data.calls_today} foot={`${data.calls_total} kul`} />
+        <Tile index={0} label="Calls aaj" value={data.calls_today}
+              foot={data.calls_yesterday == null ? undefined : data.calls_yesterday === 0 ? "kal koi call nahi"
+                    : `kal ${data.calls_yesterday} · ${data.calls_today >= data.calls_yesterday ? "+" : ""}${data.calls_today - data.calls_yesterday}`} />
         <Tile index={1} label="Bookings" value={data.bookings_confirmed} foot={`${fmtInr(data.revenue_booked_inr)} ki`} />
         <Tile index={2} label="Callback chahiye" value={callbacks} foot={callbacks ? "neeche list hai" : "koi baaki nahi"} />
         <Tile index={3} label="Missed calls wapas" value={`${data.missed_calls.recovered}/${data.missed_calls.total}`} foot="WhatsApp se" />
-        <Tile index={4} label="₹ per call" value={data.cost.ai_per_call_inr} decimals={2} prefix="₹" mono foot={`receptionist ₹${data.cost.receptionist_per_call_inr.toFixed(2)}`} />
-        <Tile index={5} label="Shabd sudhaare" value={data.corrections_total} foot="galat sune naam aur services" />
+        <Tile index={4} label="₹ per call" value={data.calls_total ? data.cost.ai_per_call_inr : "—"} decimals={2} prefix="₹" mono
+              foot={`receptionist ₹${data.cost.receptionist_per_call_inr.toFixed(2)} · Settings mein badlo`}
+              hint="Agent ka kharcha vendors ke rate se; receptionist ka aapki tankhwah aur mahine ki calls se (Settings)." />
+        <Tile index={5} label="Galat suna, theek kiya" value={data.corrections_total} foot="naam, services, ilaake"
+              hint="Recogniser ne jo shabd galat suna aur agent ne aapki dukaan ki list se sahi padha, uski ginti (Bhasha Bridge)." />
       </div>
 
       {live && data.calls_total === 0 && <FirstSteps whatsapp={!!status?.whatsapp?.configured} onPreview={() => setSampleView(true)} />}
       {data.calls_total > 0 && <Callbacks pack={pack} live={live} />}
 
-      <Panel title="Din bhar ki calls" hint={peak.calls ? `peak ${peak.hour}:00 · ${peak.calls} calls · booked marigold mein` : undefined}>
+      <Panel title="Din bhar ki calls" hint={peak.calls ? `sabse busy ${peak.hour}:00 · ${peak.calls} calls` : undefined}>
         {peak.calls === 0 ? quiet : <div className="body" style={{ height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={hours} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
@@ -70,8 +78,9 @@ export default function Dashboard() {
               <Tooltip cursor={{ fill: "rgba(27,59,140,.06)" }} contentStyle={{ borderRadius: 8, border: "1px solid rgba(27,59,140,.14)", fontSize: 13 }} />
               {/* recharts reads attributes, not CSS variables: these are the system's cobalt and marigold. */}
               {/* No grow-in: the panel refreshes every 5 s and would replay it each time. */}
-              <Bar dataKey="calls" name="calls" fill="#1B3B8C" radius={[3, 3, 0, 0]} isAnimationActive={false} />
-              <Bar dataKey="booked" name="booked" fill="#F5B91E" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+              <Legend verticalAlign="top" align="right" height={28} iconType="square" wrapperStyle={{ fontSize: 13 }} />
+              <Bar dataKey="calls" name="Calls" fill="#1B3B8C" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="booked" name="Bookings" fill="#F5B91E" radius={[3, 3, 0, 0]} isAnimationActive={false} />
             </BarChart>
           </ResponsiveContainer>
         </div>}
@@ -84,7 +93,7 @@ export default function Dashboard() {
           </div>
           <div className="legend">
             {present.map((o) => (
-              <span key={o}><i style={{ background: SWATCH[o] }} />{o.replace(/_/g, " ").toLowerCase()} · {data.outcomes[o]}</span>
+              <span key={o}><i style={{ background: SWATCH[o] }} />{outcomeLabel(o)} · {data.outcomes[o]}</span>
             ))}
           </div>
         </div>}

@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { Link, useParams } from "react-router-dom";
 import { engine, fmtMs, parseReceipts, parseTurns } from "../engine";
 import { sample } from "../sample";
@@ -7,6 +7,7 @@ import { Chip, DevToggle, Empty, Icon, Loading, NotLive, OutcomeChip, Page, Pane
 import type { CallRow } from "../types";
 
 export default function CallDetail() {
+  const [showEngine, setShowEngine] = useState(false);
   const { id = "" } = useParams();
   const { pack, mode } = useApp();
   const live = mode === "live";
@@ -31,10 +32,12 @@ export default function CallDetail() {
 
   return (
     <Page title="Call" sub={`${data.channel.toLowerCase()} · ${data.phone ?? "number nahi"} · ${fmtDate(data.started_at)} ${fmtTime(data.started_at)}`}
-          actions={<><DevToggle on={dev.on} toggle={dev.toggle} /><Link className="btn btn-ghost btn-sm" to="/calls">Saari calls</Link></>}>
+          actions={<><button className="btn btn-ghost btn-sm" aria-pressed={showEngine} onClick={() => setShowEngine((v) => !v)}>
+                       {showEngine ? "Engine details chhupao" : "Engine details"}</button>
+                     <DevToggle on={dev.on} toggle={dev.toggle} /><Link className="btn btn-ghost btn-sm" to="/calls">Saari calls</Link></>}>
       <div className="tiles">
         <Tile index={0} label="Outcome" value={<OutcomeChip outcome={data.outcome} />} />
-        <Tile index={1} label="Shabd sudhaare" value={repairs} foot="tenant ki apni vocabulary se" />
+        <Tile index={1} label="Galat suna, theek kiya" value={repairs} foot="aapki dukaan ki list se" />
         <Tile index={2} label="Receipt"
               value={receipts.length ? <Stamp><Icon name="lock" small />{receipts[receipts.length - 1]}</Stamp> : "—"}
               foot={receipts.length ? "signed aur chained" : "kuch likha nahi gaya"} />
@@ -51,7 +54,8 @@ export default function CallDetail() {
               </div>
               <div className="bubble agent" data-reveal style={{ "--i": i * 2 + 1 } as CSSProperties}>
                 {dev.map(t.said)}
-                <div className="meta">
+                {/* the machinery of each reply is for the Engine details switch, not the owner's first read */}
+                {showEngine && <div className="meta">
                   {t.tools.map((tool) => {
                     const hit = t.speculation_hits.includes(tool);
                     return <Chip key={tool} kind={hit ? "ok" : undefined}>{hit && <Icon name="bolt" small />}{tool}{hit ? " · speculated" : ""}</Chip>;
@@ -59,8 +63,8 @@ export default function CallDetail() {
                   {t.guard && <Chip kind="bad"><Icon name="shield" small />guardrail: {t.guard}</Chip>}
                   {t.interrupted && <Chip kind="muted">caller ne beech mein toka</Chip>}
                   <span className="mono muted" style={{ fontSize: 13 }}>{fmtMs(t.latency_ms)}</span>
-                </div>
-                {t.spans && t.spans.length > 0 && <Waterfall spans={t.spans} total={t.latency_ms} />}
+                </div>}
+                {showEngine && t.spans && t.spans.length > 0 && <Waterfall spans={t.spans} total={t.latency_ms} />}
               </div>
             </div>
           ))}

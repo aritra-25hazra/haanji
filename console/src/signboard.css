@@ -293,7 +293,7 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 
 /* sample numbers are stamped so a screenshot cannot pass them off as real */
 .tile { position: relative; overflow: hidden; }
-.tile .watermark { position: absolute; right: -4px; top: 10px; transform: rotate(10deg); font: 700 11px/1 var(--font-mono); letter-spacing: .14em; color: var(--sindoor-ink); border: 1.5px solid currentColor; padding: 3px 9px; border-radius: 4px; opacity: .6; pointer-events: none; background: var(--chalk); }
+.tile .watermark { position: absolute; right: 10px; bottom: 10px; transform: rotate(-4deg); font: 700 11px/1 var(--font-mono); letter-spacing: .14em; color: var(--sindoor-ink); border: 1.5px solid currentColor; padding: 3px 9px; border-radius: 4px; opacity: .6; pointer-events: none; background: var(--chalk); }
 
 /* the repair's "read as" word fades in once the strike is drawn */
 .repair b { opacity: 1; transform: none; transition: none; animation: reveal var(--t-base) var(--ease-out) 80ms both; }
@@ -406,3 +406,6 @@ input, textarea { caret-color: var(--cobalt); }
 .sample-switch[aria-pressed="true"] i { background: var(--marigold); }
 .sample-switch[aria-pressed="true"] i::after { transform: translateX(10px); background: var(--cobalt); }
 @media (max-width: 720px) { .sample-switch { padding: 0 8px; } }
+
+.tile.sample { padding-bottom: 36px; }
+.tile .label .hint-mark { display: inline-grid; place-items: center; width: 15px; height: 15px; margin-left: 4px; border-radius: 50%; border: 1px solid var(--rule); font-size: 10px; cursor: help; }

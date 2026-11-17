@@ -102,7 +102,14 @@ function SettingsForm({ pack }: { pack: string }) {
             <select className="input" value={cur.language_script} onChange={(e) => set("language_script", e.target.value)}>
               <option value="latin">Roman (Hinglish)</option><option value="devanagari">Devanagari</option>
             </select></label>
+          <label className="field"><span>Receptionist ki tankhwah ₹/mahina</span>
+            <input className="input" type="number" min={0} step={500} value={cur.receptionist_monthly_inr ?? 12000}
+                   onChange={(e) => set("receptionist_monthly_inr", Math.max(0, Number(e.target.value) || 0))} /></label>
+          <label className="field"><span>Receptionist mahine mein kitni calls leta hai</span>
+            <input className="input" type="number" min={1} step={1} value={cur.receptionist_calls_per_month ?? 1300}
+                   onChange={(e) => set("receptionist_calls_per_month", Math.max(1, Number(e.target.value) || 1))} /></label>
         </div>
+        <p className="muted small">"₹ per call" ki tulna inhi do se hoti hai: tankhwah ÷ calls. Agent ka kharcha phone, awaaz aur server ke vendor rates se banta hai.</p>
         <p className="muted small">Deposit 0 se zyada ho to har nayi booking pe payment link jaata hai: Razorpay ka, ya keys na hon to is server ka mock link.</p>
         <div className="row">
           <button className="btn btn-primary" type="submit" disabled={!dirty || busy || readOnly} title={readOnly ? "Public demo: settings read-only hain" : undefined}>{busy ? "Save…" : readOnly ? "Read-only (demo)" : "Save karo"}</button>

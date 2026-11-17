@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Empty, Icon, Loading } from "./components/Common";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { packLabel } from "./labels";
 import { useApp, type Mode } from "./state";
 import Calendar from "./pages/Calendar";
 import Customers from "./pages/Customers";
@@ -70,13 +71,13 @@ export default function App() {
         </div>
         <div className="tools">
           <select aria-label="Pack" value={pack} onChange={(e) => setPack(e.target.value)}>
-            {packs.map((p) => <option key={p} value={p}>{p}</option>)}
+            {packs.map((p) => <option key={p} value={p}>{packLabel(p)}</option>)}
           </select>
           <button type="button" className="sample-switch" aria-pressed={sampleView} onClick={() => setSampleView(!sampleView)}
                   title={sampleView ? "Asli data par wapas" : "100 nakli customers ki ek dukaan dikhao (demo ke liye)"}>
             <i aria-hidden="true" />Sample
           </button>
-          <span className={"live" + (mode === "live" ? "" : " off")} title={pill.title}><i />{pill.text}</span>
+          {!sampleView && <span className={"live" + (mode === "live" ? "" : " off")} title={pill.title}><i />{pill.text}</span>}
           <a href="/engine/talk" target="_blank" rel="noopener noreferrer" aria-label="Talk to HaanJi (nayi tab mein)"><span>Talk</span><Icon name="external" small /></a>
           {user && (
             <button className="who" onClick={signOut} title={`${user.phone} · ${user.role} · is device se sign out`}>

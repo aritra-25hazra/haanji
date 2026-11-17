@@ -101,6 +101,7 @@ export interface Shop {
   customers: Customer[];        // counted from `bookings`
   calls: CallRow[];             // today, newest first
   receipts: Export["receipts"]; // one per booking
+  yesterdayCalls: number;       // counted the way today's are
   missed: { total: number; recovered: number };
 }
 
@@ -288,7 +289,10 @@ function build(p: PackInfo, now: Date): Shop {
   // 6. missed calls that WhatsApp brought back: some of today's WhatsApp bookings
   const waBooked = calls.filter((c) => c.outcome === "BOOKED" && c.channel === "WHATSAPP").length;
   const recovered = Math.min(waBooked, Math.round(waBooked * .4));
-  return { pack: p, people, bookings, customers, calls, receipts, missed: { total: recovered + Math.round(recovered * .5) + 1, recovered } };
+  // yesterday's calls by the same rule as today's: one per booking made then, and the rest
+  const madeYesterday = bookings.filter((b) => b.created_at.startsWith(addDays(day, -1))).length;
+  const yesterdayCalls = madeYesterday + Math.round(madeYesterday * 1.1) + 4;
+  return { pack: p, people, bookings, customers, calls, receipts, yesterdayCalls, missed: { total: recovered + Math.round(recovered * .5) + 1, recovered } };
 }
 
 /** What a call that needs the owner looks like: a lead or a hand-off. */
@@ -319,7 +323,7 @@ export function insightsOf(s: Shop): Insights {
     const n = s.calls.length;
     return {
       tenant_id: s.pack.pack_id, generated_at: new Date().toISOString(),
-      calls_total: n, calls_today: n, outcomes, by_hour: hours,
+      calls_total: n, calls_today: n, calls_yesterday: s.yesterdayCalls, outcomes, by_hour: hours,
       bookings_confirmed: booked, revenue_booked_inr: revenue, leads_open: s.calls.filter(NEEDS_CALLBACK).length,
       missed_calls: s.missed, corrections_total: corrections,
       speculation: { started: specStarted, hits: specHits, hit_rate: specStarted ? specHits / specStarted : 0 },

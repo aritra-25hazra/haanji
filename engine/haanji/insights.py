@@ -25,10 +25,13 @@ def _calls(n: int) -> str:
     return f"{n} call" if n == 1 else f"{n} calls"
 
 
-def cost_per_call() -> dict[str, float]:
+def cost_per_call(receptionist_monthly: int = RECEPTIONIST_MONTHLY,
+                  receptionist_calls: int = RECEPTIONIST_CALLS_PER_MONTH) -> dict[str, float]:
+    """The agent's cost per call from the vendors' rates, against the shop's
+    own front desk (Settings: receptionist_monthly_inr, ..._calls_per_month)."""
     ai = round(AVG_CALL_MINUTES * (COST_TELEPHONY_PER_MIN + COST_STT_PER_MIN
                                    + COST_TTS_PER_MIN) + COST_INFRA_PER_CALL, 2)
-    human = round(RECEPTIONIST_MONTHLY / RECEPTIONIST_CALLS_PER_MONTH, 2)
+    human = round(receptionist_monthly / max(receptionist_calls, 1), 2)
     return {"ai_per_call_inr": ai, "receptionist_per_call_inr": human,
             "assumptions": {
                 "avg_call_minutes": AVG_CALL_MINUTES,
@@ -36,16 +39,19 @@ def cost_per_call() -> dict[str, float]:
                 "stt_per_min": COST_STT_PER_MIN,
                 "tts_per_min": COST_TTS_PER_MIN,
                 "infra_per_call": COST_INFRA_PER_CALL,
-                "receptionist_monthly": RECEPTIONIST_MONTHLY,
-                "receptionist_calls_per_month": RECEPTIONIST_CALLS_PER_MONTH,
+                "receptionist_monthly": receptionist_monthly,
+                "receptionist_calls_per_month": receptionist_calls,
             }}
 
 
-def compute(tenant_id: str, store: DemoStore, backend: LocalBackend) -> dict[str, Any]:
+def compute(tenant_id: str, store: DemoStore, backend: LocalBackend,
+            settings: dict[str, Any] | None = None) -> dict[str, Any]:
     calls = store.calls(tenant_id, limit=500)
     # "Today" and the hour of a call are India's, whatever clock the host keeps.
     today = dt.datetime.now(IST).date()
     calls_today = [c for c in calls if to_ist(c["started_at"]).date() == today]
+    yesterday = today - dt.timedelta(days=1)
+    calls_yesterday = sum(1 for c in calls if to_ist(c["started_at"]).date() == yesterday)
 
     outcomes: dict[str, int] = {}
     by_hour: dict[str, dict[str, int]] = {}
@@ -68,7 +74,9 @@ def compute(tenant_id: str, store: DemoStore, backend: LocalBackend) -> dict[str
     leads_open = backend.conn.execute(
         "SELECT COUNT(*) FROM leads WHERE tenant_id=?", (tenant_id,)).fetchone()[0]
     missed = store.missed_summary(tenant_id)
-    costs = cost_per_call()
+    s = settings or {}
+    costs = cost_per_call(int(s.get("receptionist_monthly_inr", RECEPTIONIST_MONTHLY)),
+                          int(s.get("receptionist_calls_per_month", RECEPTIONIST_CALLS_PER_MONTH)))
 
     lines: list[str] = []
     if calls:
@@ -88,14 +96,16 @@ def compute(tenant_id: str, store: DemoStore, backend: LocalBackend) -> dict[str
     if spec_started:
         lines.append(f"Speculation ne {spec_started} mein se {spec_hits} tool calls poochhe jaane se "
                      f"pehle hi taiyaar rakhe.")
-    lines.append(f"Ek jawab di gayi call ka kharcha ≈ ₹{costs['ai_per_call_inr']:.2f}; part-time "
-                 f"receptionist pe ≈ ₹{costs['receptionist_per_call_inr']:.2f} per call.")
+    if calls:
+        lines.append(f"Ek jawab di gayi call ka kharcha ≈ ₹{costs['ai_per_call_inr']:.2f}; part-time "
+                     f"receptionist pe ≈ ₹{costs['receptionist_per_call_inr']:.2f} per call.")
 
     return {
         "tenant_id": tenant_id,
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "calls_total": len(calls),
         "calls_today": len(calls_today),
+        "calls_yesterday": calls_yesterday,
         "outcomes": outcomes,
         "by_hour": [{"hour": h, **v} for h, v in sorted(by_hour.items())],
         "bookings_confirmed": len(bookings),

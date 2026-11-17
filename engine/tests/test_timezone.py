@@ -30,3 +30,17 @@ def test_the_hourly_chart_and_today_count_in_india_s_time(tmp_path, backend):
     assert f"{to_ist(now_utc.isoformat()).hour:02d}" in hours
     assert out["calls_today"] == 1, "only the call made today in India counts as today's"
     assert dt.datetime.fromisoformat(out["generated_at"]).utcoffset() is not None
+
+
+def test_the_cost_comparison_and_yesterday_s_calls_follow_the_shop(tmp_path, backend):
+    store = DemoStore(str(tmp_path / "calls.sqlite"))
+    yesterday = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1)).isoformat()
+    store.conn.execute("INSERT INTO calls (call_id, tenant_id, channel, started_at, outcome) VALUES (?,?,?,?,?)",
+                       ("y1", "t_test", "WEB", yesterday, "BOOKED"))
+    store.conn.commit()
+    out = insights.compute("t_test", store, backend, {"receptionist_monthly_inr": 15000, "receptionist_calls_per_month": 1000})
+    assert out["cost"]["receptionist_per_call_inr"] == 15.0
+    assert out["cost"]["assumptions"]["receptionist_monthly"] == 15000
+    assert out["calls_yesterday"] == 1 and out["calls_today"] == 0
+    empty = insights.compute("t_test", DemoStore(str(tmp_path / "none.sqlite")), backend)
+    assert not any("kharcha" in line for line in empty["insights"]), "no cost line without a call"

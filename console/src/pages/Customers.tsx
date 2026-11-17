@@ -21,7 +21,7 @@ export default function Customers() {
   if (!live && mode !== "demo") return <NotLive title="Customers" sub="Har number ek customer." />;
 
   const search = (
-    <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Naam ya number ke aakhri digits"
+    <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Naam ya number khojo"
            aria-label="Customer khojo" inputMode="search" style={{ maxWidth: 320 }} />
   );
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { useApp } from "../state";
 import { engine, devanagariWanted, setDevanagariWanted } from "../engine";
+import { OUTCOME_HINT, outcomeLabel } from "../labels";
 
 const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -125,14 +126,14 @@ function CountUp({ value, decimals }: { value: number; decimals: number }) {
 
 /** A number on the wall. In the demo it carries a SAMPLE watermark, so a
  *  screenshot can never pass a sample figure off as a real one. */
-export function Tile({ label, value, foot, mono = false, decimals = 0, prefix = "", suffix = "", index = 0, sample: preview = false }:
-  { label: string; value: ReactNode | number; foot?: string; mono?: boolean; decimals?: number; prefix?: string; suffix?: string; index?: number; sample?: boolean }) {
+export function Tile({ label, value, foot, mono = false, decimals = 0, prefix = "", suffix = "", index = 0, sample: preview = false, hint }:
+  { label: string; value: ReactNode | number; foot?: string; mono?: boolean; decimals?: number; prefix?: string; suffix?: string; index?: number; sample?: boolean; hint?: string }) {
   const { mode } = useApp();
   const sample = mode === "demo" || preview;
   return (
     <div className={"tile" + (sample ? " sample" : "")} data-reveal style={{ "--i": index } as CSSProperties}>
       {sample && <span className="watermark" aria-label="sample data">SAMPLE</span>}
-      <p className="label">{label}</p>
+      <p className="label" title={hint}>{label}{hint && <span className="hint-mark" aria-label={hint}> ?</span>}</p>
       <div className={"value" + (mono ? " mono" : "")}>
         {typeof value === "number" ? <>{prefix}<CountUp value={value} decimals={decimals} />{suffix}</> : value}
       </div>
@@ -152,15 +153,9 @@ const OUTCOME_KIND: Record<string, ChipKind | undefined> = {
   BOOKED: "ok", RESCHEDULED: "ok", FAQ_ANSWERED: undefined, LEAD_CAPTURED: "warn", HANDED_OFF: "bad",
   REFUSED: "ink", ABANDONED: "muted", IN_PROGRESS: "muted",
 };
-// What an owner calls each ending; the engine's names stay in the data.
-const OUTCOME_LABEL: Record<string, string> = {
-  BOOKED: "booking hui", RESCHEDULED: "time badla", FAQ_ANSWERED: "jawab diya", LEAD_CAPTURED: "callback chahiye",
-  HANDED_OFF: "insaan ko diya", REFUSED: "mana kiya", ABANDONED: "beech mein kati", IN_PROGRESS: "chal rahi hai",
-};
-
 export function OutcomeChip({ outcome }: { outcome: string | null }) {
   const o = outcome || "IN_PROGRESS";
-  return <Chip kind={OUTCOME_KIND[o]}>{OUTCOME_LABEL[o] ?? o.replace(/_/g, " ").toLowerCase()}</Chip>;
+  return <Chip kind={OUTCOME_KIND[o]} title={OUTCOME_HINT[o]}>{outcomeLabel(o)}</Chip>;
 }
 
 export function Stamp({ tone = "red", big = false, children }:
