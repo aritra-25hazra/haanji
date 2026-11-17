@@ -394,3 +394,12 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 html { scrollbar-color: rgba(27, 59, 140, .35) transparent; }
 input, textarea { caret-color: var(--cobalt); }
 .num, .tile .value, .mono { font-variant-numeric: tabular-nums; }
+
+/* ── the Sample switch in the top bar ────────────────────────────────── */
+.sample-switch { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1.5px solid rgba(255, 247, 230, .35); background: transparent; color: var(--chalk); font-size: 13px; font-weight: 600; }
+.sample-switch i { width: 22px; height: 12px; border-radius: 6px; background: rgba(255, 247, 230, .3); position: relative; transition: background var(--t-micro); }
+.sample-switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--chalk); transition: transform var(--t-micro) var(--ease-out); }
+.sample-switch[aria-pressed="true"] { border-color: var(--marigold); color: var(--marigold); }
+.sample-switch[aria-pressed="true"] i { background: var(--marigold); }
+.sample-switch[aria-pressed="true"] i::after { transform: translateX(10px); background: var(--cobalt); }
+@media (max-width: 720px) { .sample-switch { padding: 0 8px; } }
