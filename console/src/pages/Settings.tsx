@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { SettingsPreview } from "../components/Preview";
 import { engine } from "../engine";
 import { useApp } from "../state";
 import { Chip, Confirm, Empty, Icon, Loading, NotLive, Page, Panel, Register, fmtTime, useData } from "../components/Common";
@@ -10,6 +11,7 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  *  door out. Staff are told so; the server enforces regardless. */
 export default function Settings() {
   const { pack, mode, isOwner, status } = useApp();
+  if (mode === "demo") return <SettingsPreview pack={pack} />;
   if (mode !== "live") return <NotLive title="Settings" sub="Reminders, deposit, waitlist, digest, users." demo={<p>Settings sirf live engine pe badalti hain, demo mein nahi.</p>} />;
   if (!isOwner) {
     return (

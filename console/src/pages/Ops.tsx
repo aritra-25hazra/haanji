@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { OpsPreview } from "../components/Preview";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { engine } from "../engine";
 import { useApp } from "../state";
@@ -16,6 +17,7 @@ export default function Ops() {
     return () => clearInterval(t);
   }, [live, reload]);
 
+  if (mode === "demo") return <OpsPreview pack={pack} />;
   if (!live) return <NotLive title="Ops" sub={SUB} demo={<p>Ops view live engine se aata hai.</p>} />;
   if (loading && !data) return <Loading kind="dashboard" />;
   if (!data) return <Page title="Ops"><Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara</button></Empty></Page>;

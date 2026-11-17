@@ -46,22 +46,18 @@ export function Page({ title, sub, actions, children }:
         </div>
         {actions && <div className="row">{actions}</div>}
       </div>
-      {mode === "demo" && (sampleView ? (
+      {mode === "demo" && sampleView && (
         <div className="banner" role="status" data-testid="sample-banner">
           <span><b>Sample data:</b> 100 nakli customers ki ek dukaan, sirf dikhane ke liye. Inme se kuch bhi asli nahi.</span>
           <button className="btn btn-ghost btn-sm" onClick={() => setSampleView(false)}>Asli data dikhao</button>
         </div>
-      ) : (
-        <div className="banner" role="status" data-testid="sample-banner">
-          <Icon name="refresh" small />
-          Engine se connect nahi ho pa raha, isliye sample data dikha raha hoon. Thodi der mein dobara try karo.
-        </div>
-      ))}
+      )}
       {mode === "offline" && (
         <div className="banner bad" role="alert" data-testid="offline-banner">
-          <Icon name="x" small />
-          <span>Engine se connect nahi ho pa raha. Aap signed-in hain, isliye sample data nahi dikhaunga. Asli numbers engine wapas aate hi dikhenge.</span>
+          <Icon name="refresh" small />
+          <span>Engine jaag raha hai ya nahi mil raha. Free server pehli baar 30–60 second leta hai; asli numbers engine aate hi dikhenge.</span>
           <button className="btn btn-ghost btn-sm" onClick={() => void refresh()}>Dobara try karo</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setSampleView(true)}>Tab tak sample dekho</button>
         </div>
       )}
       {children}
@@ -85,7 +81,7 @@ export function NotLive({ title, sub, demo }: { title: string; sub?: string; dem
 }
 
 export function Checking() {
-  return <div className="loading" role="status" aria-live="polite">Engine check ho raha hai…</div>;
+  return <div className="loading" role="status" aria-live="polite">Engine check ho raha hai… (free server jaagne mein 30–60 second le sakta hai)</div>;
 }
 
 export function Panel({ title, hint, actions, children }:

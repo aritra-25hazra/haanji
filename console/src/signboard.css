@@ -437,3 +437,8 @@ input, textarea { caret-color: var(--cobalt); }
 .tg-bk.NO_SHOW { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--c) 10%, white) 0 6px, white 6px 12px); }
 .cal-grid.week-list { display: none; }
 @media (max-width: 720px) { .time-grid { display: none; } .cal-grid.week-list { display: grid; } }
+
+dl.kv { margin: 0; display: grid; gap: 8px; }
+dl.kv > div { display: grid; grid-template-columns: 200px 1fr; gap: 12px; }
+dl.kv dt { color: var(--ink-2); }
+dl.kv dd { margin: 0; }

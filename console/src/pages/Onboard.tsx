@@ -14,6 +14,27 @@ interface ServiceRow { name: string; duration: string; price: string; staff: str
 
 const splitList = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
 
+/** Sample mode: the pack the engine would draft, made in the browser so the
+ *  five steps can be walked end to end. Nothing is saved anywhere. */
+function previewDraft(r: DraftRequest): Draft {
+  const problems: string[] = [];
+  if (!r.business_name) problems.push("Business name is missing (step 1).");
+  if (!r.staff.length) problems.push("Add at least one person (step 2).");
+  if (!r.services.length) problems.push("Add at least one service (step 4).");
+  const id = r.business_name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "new_shop";
+  const yaml = [
+    `pack: ${id}`, `display_name: ${r.business_name || "New shop"}`, `language: ${r.language}`,
+    "persona:", `  agent_name: ${r.agent_name}`, `  business_name: ${r.business_name}`,
+    `  greeting: "${r.greeting ?? `Haanji, ${r.business_name}. Main aapki kya madad karun?`}"`,
+    `staff: [${r.staff.join(", ")}]`, "hours:",
+    ...Object.entries(r.hours).map(([d, h]) => `  ${d}: ${h ? `["${h[0]}", "${h[1]}"]` : "null"}`),
+    "services:",
+    ...r.services.flatMap((s) => [`  - name: ${s.name}`, `    duration_min: ${s.duration_min}`, `    price_inr: ${s.price_inr ?? "null"}`,
+                                  `    staff: [${s.staff.join(", ")}]`, `    aliases: [${s.aliases.join(", ")}]`]),
+  ].join("\n");
+  return { pack_id: id, yaml, problems, exists: false } as Draft;
+}
+
 export default function Onboard() {
   const { mode, isOwner, status, setPack, refresh } = useApp();
   const [step, setStep] = useState(0);
@@ -49,7 +70,7 @@ export default function Onboard() {
 
   async function build() {
     setBusy("draft"); setNotes([]); setResults([]); setSaved(false);
-    try { const d = await engine.draft(request()); setDraft(d); if (d.problems.length) d.problems.forEach((p) => note("bad", p)); else note("ok", `Pack "${d.pack_id}" taiyaar hai, par abhi save nahi hua.`); }
+    try { const d = mode === "live" ? await engine.draft(request()) : previewDraft(request()); setDraft(d); if (d.problems.length) d.problems.forEach((p) => note("bad", p)); else note("ok", `Pack "${d.pack_id}" taiyaar hai, par abhi save nahi hua.`); }
     catch (e) { setDraft(null); note("bad", e instanceof Error ? e.message : String(e)); }
     finally { setBusy(null); }
   }
@@ -70,7 +91,7 @@ export default function Onboard() {
   const canNext = [name.trim().length > 1, staff.length > 0, Object.values(hours).some((h) => h.open), services.some((s) => s.name.trim()), true][step];
   const talkBase = status?.public_url || "/engine";
 
-  if (mode !== "live") {
+  if (mode !== "live" && mode !== "demo") {
     return <NotLive title="Nayi dukaan" sub="Paanch sawaal, ek pack." demo={<p>Yeh page live engine ke bina kaam nahi karta, kyunki yeh sach mein ek pack banata hai.</p>} />;
   }
 
@@ -151,12 +172,15 @@ export default function Onboard() {
         <Panel title="5 · Taiyaar" hint={draft ? `pack ${draft.pack_id}${draft.exists ? " (pehle se hai, save karne se overwrite hoga)" : ""}` : "pehle pack banao"}
                actions={<>
                  <button className="btn btn-primary btn-sm" onClick={build} disabled={busy !== null}>{busy === "draft" ? "Bana raha…" : "Pack banao"}</button>
-                 {isOwner
+                 {mode !== "live"
+                   ? <Chip kind="muted" title="This is a preview: packs are saved on the live engine">preview · saves on the live engine</Chip>
+                   : isOwner
                    ? <button className="btn btn-ghost btn-sm" onClick={save} disabled={!draft || draft.problems.length > 0 || busy !== null}>{busy === "save" ? "Save…" : "Save karo"}</button>
                    : <Chip kind="muted" title="Pack save sirf owner kar sakta hai">save sirf owner</Chip>}
                  <button className="btn btn-ghost btn-sm" onClick={selftest} disabled={!draft || !saved || busy !== null}>{busy === "test" ? "Chal raha…" : "Scenarios chalao"}</button>
                </>}>
           <div className="body form">
+            {mode !== "live" && <p className="note">Sample mode: walk all five steps and see the pack HaanJi would build. Nothing is saved; on the live engine this pack goes straight onto the phone line.</p>}
             {notes.map((n, i) => <p key={i} className={n.kind === "ok" ? "note ok" : "note bad"}>{n.text}</p>)}
             {results.length > 0 && <ul className="results">{results.map((r, i) => <li key={i} className={r.passed ? "ok" : "bad"}>{r.passed ? "PASS" : "FAIL"} · {r.line}</li>)}</ul>}
             {draft && saved && (

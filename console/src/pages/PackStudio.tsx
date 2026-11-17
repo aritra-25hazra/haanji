@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { StudioPreview } from "../components/Preview";
 import { engine } from "../engine";
 import { useApp } from "../state";
 import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register } from "../components/Common";
@@ -68,6 +69,7 @@ export default function PackStudio() {
     finally { setBusy(null); }
   }
 
+  if (mode === "demo") return <StudioPreview pack={pack} />;
   if (!live) return <NotLive title="Pack Studio" sub={SUB} demo={<p>Pack Studio live engine ke bina kaam nahi karta, kyunki ye files ko sach mein badalta hai.</p>} />;
   if (packs === null) {
     return (

@@ -103,7 +103,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const allowed = useCallback((all: string[]) => (user && !user.packs.includes("*") ? all.filter((p) => user.packs.includes(p)) : all), [user]);
   const value = useMemo<AppState>(() => {
     const authOn = !!status?.auth?.enabled;
-    const mode: Mode = sampleView ? "demo" : !checked || (authOn && !authChecked) ? "checking" : status ? "live" : hasToken ? "offline" : "demo";
+    // Sample data only when asked for (the switch or ?sample=1): an engine that is
+    // still waking up (Render's free plan takes 30-60 s) is said so, with a way to
+    // wait or to look at the sample shop meanwhile, never swapped silently.
+    const mode: Mode = sampleView ? "demo" : !checked || (authOn && !authChecked) ? "checking" : status ? "live" : "offline";
     const isOwner = status && !sampleView ? (!authOn || user?.role === "owner") : mode === "demo";
     const readOnly = sampleView || (status ? !!status.demo_readonly : mode !== "live");
     return {
