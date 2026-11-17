@@ -232,6 +232,7 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 .callbacks li:last-child { border-bottom: 0; }
 .callbacks .ask { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .callbacks a { min-height: 24px; display: inline-flex; align-items: center; }
+.callbacks li.more { display: flex; justify-content: center; border-bottom: 0; }
 @media (max-width: 720px) { .callbacks li { grid-template-columns: auto 1fr; } .callbacks .ask { grid-column: 1 / -1; white-space: normal; } }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .feed .ev { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: start; font-size: 14px; padding: 8px 0; border-bottom: 1px solid var(--rule); }

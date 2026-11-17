@@ -1,0 +1,4232 @@
+{
+ "generated_from": "packs/*.yaml by research/harness/console_packs.py",
+ "packs": [
+  {
+   "pack_id": "clinic_chennai",
+   "display_name": "Dental clinic (Chennai, Tanglish)",
+   "version": 1,
+   "language": "tanglish",
+   "business_name": "Adyar Dental Care",
+   "agent_name": "Haanji",
+   "greeting": "Vanakkam, Adyar Dental Care. Naan epdi help pannalaam?",
+   "staff": [
+    "Dr Lakshmi",
+    "Dr Raghavan"
+   ],
+   "staff_role": "dentist",
+   "services": [
+    {
+     "name": "teeth cleaning",
+     "price_inr": 1200,
+     "duration_min": 30,
+     "staff": [
+      "Dr Lakshmi",
+      "Dr Raghavan"
+     ],
+     "aliases": [
+      "cleaning",
+      "scaling",
+      "polish",
+      "pal cleaning"
+     ]
+    },
+    {
+     "name": "root canal",
+     "price_inr": 6000,
+     "duration_min": 60,
+     "staff": [
+      "Dr Raghavan"
+     ],
+     "aliases": [
+      "rct",
+      "root canal treatment"
+     ]
+    },
+    {
+     "name": "dental checkup",
+     "price_inr": 500,
+     "duration_min": 20,
+     "staff": [
+      "Dr Lakshmi"
+     ],
+     "aliases": [
+      "checkup",
+      "check up",
+      "pal checkup"
+     ]
+    },
+    {
+     "name": "tooth extraction",
+     "price_inr": 2000,
+     "duration_min": 45,
+     "staff": [
+      "Dr Lakshmi",
+      "Dr Raghavan"
+     ],
+     "aliases": [
+      "extraction",
+      "pal eduthal",
+      "pallu eduppu"
+     ]
+    },
+    {
+     "name": "braces consultation",
+     "price_inr": 500,
+     "duration_min": 20,
+     "staff": [
+      "Dr Raghavan"
+     ],
+     "aliases": [
+      "braces",
+      "clips",
+      "kambi"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "10:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "1": [
+     "10:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "2": [
+     "10:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "3": [
+     "10:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "4": [
+     "10:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "5": [
+     "10:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Clinic eppo open irukkum?",
+     "a": "Monday-la irundhu Saturday varaikkum, kaalai 10 mani-la irundhu raathiri 8 mani varaikkum. Madhiyam 1:30-la irundhu 3 mani lunch break. Sunday leave."
+    },
+    {
+     "q": "Cleaning evlo aagum?",
+     "a": "Teeth cleaning 1,200 rupaai, polishing sertthu."
+    },
+    {
+     "q": "Clinic enge irukku?",
+     "a": "Naanga Adyar-la, Lattice Bridge Road-la, Adyar signal pakkathula, first floor."
+    },
+    {
+     "q": "Root canal-ku evlo aagum?",
+     "a": "Root canal 6,000 rupaai-la irundhu start aagum. Doctor paathu exact-aa solluvanga."
+    },
+    {
+     "q": "Insurance accept pannuvingala?",
+     "a": "Aama, Star Health-um HDFC Ergo-vum cashless. Card-um ID-um konduvaanga."
+    },
+    {
+     "q": "Parking irukka?",
+     "a": "Building basement-la free parking irukku, two-wheeler-um car-um."
+    }
+   ],
+   "refusal_line": "Idhu doctor paathu dhaan solla mudiyum — naan unga-ku slot podren.",
+   "escalation_line": "Idhu urgent-aa irukku. Naan ippove clinic staff-oda connect panren, line-la irunga.",
+   "closing": "Nandri, paathukalaam. Nalla irunga.",
+   "scenarios": 5,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "teeth cleaning",
+     "entry_type": "SERVICE",
+     "variants": [
+      "cleaning",
+      "scaling",
+      "polish",
+      "pal cleaning"
+     ],
+     "keys": [
+      "KRNNG",
+      "PRKRNNG",
+      "PRS",
+      "SKRNG",
+      "TTKRNNG"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "root canal",
+     "entry_type": "SERVICE",
+     "variants": [
+      "rct",
+      "root canal treatment"
+     ],
+     "keys": [
+      "RKT",
+      "RTKNR",
+      "RTKNRTRTNNT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "dental checkup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "checkup",
+      "check up",
+      "pal checkup"
+     ],
+     "keys": [
+      "CKAP",
+      "CKP",
+      "PRCKP",
+      "TNTRCKP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "tooth extraction",
+     "entry_type": "SERVICE",
+     "variants": [
+      "extraction",
+      "pal eduthal",
+      "pallu eduppu"
+     ],
+     "keys": [
+      "AKTRKTN",
+      "PRATP",
+      "PRATTR",
+      "TTAKTRKT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "braces consultation",
+     "entry_type": "SERVICE",
+     "variants": [
+      "braces",
+      "clips",
+      "kambi"
+     ],
+     "keys": [
+      "KNP",
+      "KRPS",
+      "PRCS",
+      "PRCSKNSRTT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Dr Lakshmi",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRRKSN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Lakshmi",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "RKSN"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Raghavan",
+     "entry_type": "STAFF",
+     "variants": [
+      "Doctor Raghavan",
+      "Raghavan sir"
+     ],
+     "keys": [
+      "RGVNSR",
+      "TKTRRGVN",
+      "TRRGVN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Raghavan",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "RGVN"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Adyar",
+     "entry_type": "PLACE",
+     "variants": [
+      "Adayar",
+      "Adyaar"
+     ],
+     "keys": [
+      "ATR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "T Nagar",
+     "entry_type": "PLACE",
+     "variants": [
+      "Thyagaraya Nagar",
+      "Tee Nagar"
+     ],
+     "keys": [
+      "TGRNGR",
+      "TNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Besant Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PSNTNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Besant",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PSNT"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Velachery",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VRCR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Mylapore",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NRPR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Adyar Dental Care",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "ATRTNTRKR"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Sensodyne",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "SNSTN"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Colgate",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "KRGT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "home visit",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ANVST"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "cashless insurance",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "KSRSANSRNC"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "pal vali",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "PRVR"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "x ray",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "KR"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "clinic_kolkata",
+   "display_name": "Dental clinic (Kolkata, Benglish)",
+   "version": 1,
+   "language": "benglish",
+   "business_name": "Sundar Smile Dental",
+   "agent_name": "Haanji",
+   "greeting": "Nomoshkar, Sundar Smile Dental. Ki bhabe help korbo?",
+   "staff": [
+    "Dr Sen",
+    "Dr Banerjee"
+   ],
+   "staff_role": "dentist",
+   "services": [
+    {
+     "name": "teeth cleaning",
+     "price_inr": 1100,
+     "duration_min": 30,
+     "staff": [
+      "Dr Sen",
+      "Dr Banerjee"
+     ],
+     "aliases": [
+      "cleaning",
+      "scaling",
+      "polish"
+     ]
+    },
+    {
+     "name": "root canal",
+     "price_inr": 6000,
+     "duration_min": 60,
+     "staff": [
+      "Dr Sen"
+     ],
+     "aliases": [
+      "rct",
+      "root canal treatment"
+     ]
+    },
+    {
+     "name": "dental checkup",
+     "price_inr": 500,
+     "duration_min": 20,
+     "staff": [
+      "Dr Banerjee"
+     ],
+     "aliases": [
+      "checkup",
+      "check up"
+     ]
+    },
+    {
+     "name": "tooth extraction",
+     "price_inr": 2200,
+     "duration_min": 45,
+     "staff": [
+      "Dr Sen",
+      "Dr Banerjee"
+     ],
+     "aliases": [
+      "extraction",
+      "dat tola"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "10:00",
+     "20:30",
+     "14:00",
+     "15:30"
+    ],
+    "1": [
+     "10:00",
+     "20:30",
+     "14:00",
+     "15:30"
+    ],
+    "2": [
+     "10:00",
+     "20:30",
+     "14:00",
+     "15:30"
+    ],
+    "3": [
+     "10:00",
+     "20:30",
+     "14:00",
+     "15:30"
+    ],
+    "4": [
+     "10:00",
+     "20:30",
+     "14:00",
+     "15:30"
+    ],
+    "5": [
+     "10:00",
+     "20:30",
+     "14:00",
+     "15:30"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Clinic kokhon khola thake?",
+     "a": "Amra Monday theke Saturday, shokal 10 ta theke raat 8:30 porjonto khola thaki. Sunday bondho."
+    },
+    {
+     "q": "Cleaning er koto daam?",
+     "a": "Teeth cleaning 1,100 taka, polishing shoho."
+    },
+    {
+     "q": "Clinic kothay?",
+     "a": "Amra Salt Lake, Sector 1 e — City Centre er kachhe, first floor."
+    },
+    {
+     "q": "Root canal er khoroch koto?",
+     "a": "Root canal 6,000 taka theke shuru. Doctor dekhe exact bolben."
+    }
+   ],
+   "refusal_line": "Eta doctor dekhe bolte parben — ami apnar jonno slot kore dichhi.",
+   "escalation_line": "Eta urgent mone hochhe. Ami ekhoni clinic er sathe jog kore dichhi.",
+   "closing": "Achha, dekha hobe. Bhalo thakben.",
+   "scenarios": 3,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "teeth cleaning",
+     "entry_type": "SERVICE",
+     "variants": [
+      "cleaning",
+      "scaling",
+      "polish"
+     ],
+     "keys": [
+      "KRNNG",
+      "PRS",
+      "SKRNG",
+      "TTKRNNG"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "root canal",
+     "entry_type": "SERVICE",
+     "variants": [
+      "rct",
+      "root canal treatment"
+     ],
+     "keys": [
+      "RKT",
+      "RTKNR",
+      "RTKNRTRTNNT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "dental checkup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "checkup",
+      "check up"
+     ],
+     "keys": [
+      "CKAP",
+      "CKP",
+      "TNTRCKP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "tooth extraction",
+     "entry_type": "SERVICE",
+     "variants": [
+      "extraction",
+      "dat tola"
+     ],
+     "keys": [
+      "AKTRKTN",
+      "TTAKTRKT",
+      "TTTR"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Dr Sen",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRSN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Dr Banerjee",
+     "entry_type": "STAFF",
+     "variants": [
+      "Dr Bandopadhyay",
+      "Doctor Banarji"
+     ],
+     "keys": [
+      "TKTRPNRJ",
+      "TRPNRJ",
+      "TRPNTPT"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Banerjee",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "PNRJ"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Salt Lake",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SRTRK"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Salt",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SRT"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Lake",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "RK"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Gariahat",
+     "entry_type": "PLACE",
+     "variants": [
+      "Goriahat"
+     ],
+     "keys": [
+      "GRT"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Dumdum",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "TNTN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Jadavpur",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "JTVPR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "New Town",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NVTVN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Town",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "TVN"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Sundar Smile Dental",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "SNTRSNRTNTR"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Sensodyne",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "SNSTN"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "home visit",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ANVST"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "cashless insurance",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "KSRSANSRNC"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "clinic_pune",
+   "display_name": "Dental clinic (Pune, Marathinglish)",
+   "version": 1,
+   "language": "marathinglish",
+   "business_name": "Smile Dental Pune",
+   "agent_name": "Haanji",
+   "greeting": "Namaskar, Smile Dental Pune. Mi kashi madat karu?",
+   "staff": [
+    "Dr Kulkarni",
+    "Dr Joshi"
+   ],
+   "staff_role": "dentist",
+   "services": [
+    {
+     "name": "root canal",
+     "price_inr": 6000,
+     "duration_min": 60,
+     "staff": [
+      "Dr Kulkarni"
+     ],
+     "aliases": [
+      "rct"
+     ]
+    },
+    {
+     "name": "teeth cleaning",
+     "price_inr": 1200,
+     "duration_min": 30,
+     "staff": [
+      "Dr Kulkarni",
+      "Dr Joshi"
+     ],
+     "aliases": [
+      "cleaning",
+      "scaling",
+      "daat saaf"
+     ]
+    },
+    {
+     "name": "tooth extraction",
+     "price_inr": 1500,
+     "duration_min": 30,
+     "staff": [
+      "Dr Joshi"
+     ],
+     "aliases": [
+      "extraction",
+      "daat kadhne",
+      "daat kadhane"
+     ]
+    },
+    {
+     "name": "braces consultation",
+     "price_inr": 500,
+     "duration_min": 20,
+     "staff": [
+      "Dr Joshi"
+     ],
+     "aliases": [
+      "braces",
+      "clips",
+      "tarr"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "09:30",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "1": [
+     "09:30",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "2": [
+     "09:30",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "3": [
+     "09:30",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "4": [
+     "09:30",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "5": [
+     "09:30",
+     "20:00",
+     "13:30",
+     "15:00"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Clinic kadhi ughade aste?",
+     "a": "Aamhi Monday te Saturday, sakali sade nau te ratri aath paryant ughade asto. Dupari dedh te teen lunch. Sunday band."
+    },
+    {
+     "q": "Cleaning la kiti charge aahe?",
+     "a": "Teeth cleaning 1,200 rupaye, polishing dharun."
+    },
+    {
+     "q": "Clinic kuthe aahe?",
+     "a": "Aamhi Kothrud madhe aahot, Karve Road var, first floor."
+    },
+    {
+     "q": "Root canal cha kharcha kiti?",
+     "a": "Root canal 6,000 rupaye pasun suru hoto. Doctor baghun nakki sangtil."
+    }
+   ],
+   "refusal_line": "He doctor baghun sangtil; mi tumchi appointment lavun deto.",
+   "escalation_line": "He urgent vatatay — mi tumhala clinic chya staff shi jodto.",
+   "closing": "Dhanyavad, tumcha divas chhan jao.",
+   "scenarios": 3,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "root canal",
+     "entry_type": "SERVICE",
+     "variants": [
+      "rct"
+     ],
+     "keys": [
+      "RKT",
+      "RTKNR"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "teeth cleaning",
+     "entry_type": "SERVICE",
+     "variants": [
+      "cleaning",
+      "scaling",
+      "daat saaf"
+     ],
+     "keys": [
+      "KRNNG",
+      "SKRNG",
+      "TTKRNNG",
+      "TTSf"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "tooth extraction",
+     "entry_type": "SERVICE",
+     "variants": [
+      "extraction",
+      "daat kadhne",
+      "daat kadhane"
+     ],
+     "keys": [
+      "AKTRKTN",
+      "TTAKTRKT",
+      "TTKTN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "braces consultation",
+     "entry_type": "SERVICE",
+     "variants": [
+      "braces",
+      "clips",
+      "tarr"
+     ],
+     "keys": [
+      "KRPS",
+      "PRCS",
+      "PRCSKNSRTT",
+      "TR"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Dr Kulkarni",
+     "entry_type": "STAFF",
+     "variants": [
+      "Doctor Kulkarni",
+      "Kulkarni madam"
+     ],
+     "keys": [
+      "KRKRNNTN",
+      "TKTRKRKRN",
+      "TRKRKRN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Kulkarni",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "KRKRN"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Joshi",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRJS"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Joshi",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "JS"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Kothrud",
+     "entry_type": "PLACE",
+     "variants": [
+      "Kothrood",
+      "Kotrud"
+     ],
+     "keys": [
+      "KTRT"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Deccan",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "TKN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Shivajinagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SVJNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Karve Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "KRVNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Karve",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "KRV"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Aundh",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "ANT"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Smile Dental Pune",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "SNRTNTRPN"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Colgate",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "KRGT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "cashless insurance",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "KSRSANSRNC"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "home visit",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ANVST"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "coaching_ahmedabad",
+   "display_name": "Coaching institute (Ahmedabad, Gujlish)",
+   "version": 1,
+   "language": "gujlish",
+   "business_name": "Saraswati Classes",
+   "agent_name": "Haanji",
+   "greeting": "Namaste, Saraswati Classes. Kaya batch vishe janvu che?",
+   "staff": [
+    "Mr Patel",
+    "Ms Shah",
+    "Mr Desai"
+   ],
+   "staff_role": "counsellor",
+   "services": [
+    {
+     "name": "demo class",
+     "price_inr": 0,
+     "duration_min": 60,
+     "staff": [
+      "Mr Patel",
+      "Ms Shah",
+      "Mr Desai"
+     ],
+     "aliases": [
+      "demo",
+      "trial class",
+      "free class",
+      "demo lecture"
+     ]
+    },
+    {
+     "name": "counselling session",
+     "price_inr": 0,
+     "duration_min": 30,
+     "staff": [
+      "Ms Shah",
+      "Mr Desai"
+     ],
+     "aliases": [
+      "counselling",
+      "counseling",
+      "guidance",
+      "margdarshan"
+     ]
+    },
+    {
+     "name": "scholarship test",
+     "price_inr": 0,
+     "duration_min": 90,
+     "staff": [
+      "Mr Patel"
+     ],
+     "aliases": [
+      "scholarship",
+      "entrance test",
+      "scholarship exam",
+      "parixa"
+     ]
+    },
+    {
+     "name": "campus visit",
+     "price_inr": 0,
+     "duration_min": 30,
+     "staff": [
+      "Mr Desai"
+     ],
+     "aliases": [
+      "visit",
+      "campus tour",
+      "campus jovu"
+     ]
+    },
+    {
+     "name": "admission",
+     "price_inr": 0,
+     "duration_min": 30,
+     "staff": [
+      "Ms Shah",
+      "Mr Patel"
+     ],
+     "aliases": [
+      "enrolment",
+      "enrollment",
+      "form bharvu",
+      "admission form"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "1": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "2": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "3": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "4": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "5": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Batch kyare start thay che?",
+     "a": "Navo batch dar mahine 1 ane 15 tarikhe start thay che."
+    },
+    {
+     "q": "Fees ketli che?",
+     "a": "Ek varsh no JEE batch 72,000 rupiya che, tran installment ma aapi shako."
+    },
+    {
+     "q": "Demo class free che?",
+     "a": "Haa, ek demo class bilkul free che. Bas slot pehla thi book karvo pade."
+    },
+    {
+     "q": "Hostel che?",
+     "a": "Hostel amaru nathi, pan Navrangpura ma be partner hostel sathe ame jodi aapiye chhiye."
+    },
+    {
+     "q": "Scholarship test ma shu aave?",
+     "a": "Scholarship test 90 minute no che — Maths, Physics ane Chemistry. Pachhli marksheet sathe lavvi."
+    },
+    {
+     "q": "Classes kyare khule che?",
+     "a": "Monday thi Saturday, savare 10 thi sanje 7 vage sudhi. Bapore 1:30 thi 2:30 lunch break. Sunday band."
+    },
+    {
+     "q": "Class kya che?",
+     "a": "Ame Navrangpura ma, CG Road par, Municipal Market ni same, second floor."
+    }
+   ],
+   "refusal_line": "E counsellor j confirm kari shake — hu tamara mate demo class no slot lagavi dau.",
+   "escalation_line": "Hu tamne hamna j senior counsellor sathe jodu chhu, line par raho.",
+   "closing": "Barabar, counsellor tamne call karse. Aabhar.",
+   "scenarios": 5,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "demo class",
+     "entry_type": "SERVICE",
+     "variants": [
+      "demo",
+      "trial class",
+      "free class",
+      "demo lecture"
+     ],
+     "keys": [
+      "TN",
+      "TNKRS",
+      "TNRKTR",
+      "TRRKRS",
+      "fRKRS"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "counselling session",
+     "entry_type": "SERVICE",
+     "variants": [
+      "counselling",
+      "counseling",
+      "guidance",
+      "margdarshan"
+     ],
+     "keys": [
+      "GTNC",
+      "KNSRNG",
+      "KNSRNGSSN",
+      "NRGTRSN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "scholarship test",
+     "entry_type": "SERVICE",
+     "variants": [
+      "scholarship",
+      "entrance test",
+      "scholarship exam",
+      "parixa"
+     ],
+     "keys": [
+      "ANTRNCTST",
+      "PRK",
+      "SCRRSP",
+      "SCRRSPAKN",
+      "SCRRSPTST"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "campus visit",
+     "entry_type": "SERVICE",
+     "variants": [
+      "visit",
+      "campus tour",
+      "campus jovu"
+     ],
+     "keys": [
+      "KNPSJV",
+      "KNPSTR",
+      "KNPSVST",
+      "VST"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "admission",
+     "entry_type": "SERVICE",
+     "variants": [
+      "enrolment",
+      "enrollment",
+      "form bharvu",
+      "admission form"
+     ],
+     "keys": [
+      "ANRRNNT",
+      "ATNSN",
+      "ATNSNfRN",
+      "fRNPRV"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Mr Patel",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NRPTR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Patel",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "PTR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Ms Shah",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NSS"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Shah",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "S"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Mr Desai",
+     "entry_type": "STAFF",
+     "variants": [
+      "Desai sir",
+      "Dessai"
+     ],
+     "keys": [
+      "NRTS",
+      "TS",
+      "TSSR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Desai",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TS"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Navrangpura",
+     "entry_type": "PLACE",
+     "variants": [
+      "Navarangpura",
+      "Naurangpura"
+     ],
+     "keys": [
+      "NRNGPR",
+      "NVRNGPR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Satellite",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "STRT"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Maninagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NNNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Paldi",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PRT"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Bopal",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PPR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Saraswati Classes",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "SRSVTKRSS"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "JEE",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "J"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "NEET",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "NT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "GUJCET",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "GGCT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "CUET",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "KT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "batch timing",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "PTCTNNG"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "fee structure",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "fSTRKTR"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "hostel",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ASTR"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "demo class",
+     "entry_type": "PHRASE",
+     "variants": [
+      "demo",
+      "trial class",
+      "free class",
+      "demo lecture"
+     ],
+     "keys": [
+      "TN",
+      "TNKRS",
+      "TNRKTR",
+      "TRRKRS",
+      "fRKRS"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "faculty",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "fKRT"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "scholarship",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "SCRRSP"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "coaching_institute",
+   "display_name": "Coaching institute",
+   "version": 2,
+   "language": "hinglish",
+   "business_name": "Pragati Classes",
+   "agent_name": "Haanji",
+   "greeting": "Haanji, Pragati Classes. Kis batch ke baare mein jaanna hai?",
+   "staff": [
+    "Mr Deshmukh",
+    "Ms Kulkarni",
+    "Mr Bansal"
+   ],
+   "staff_role": "counsellor",
+   "services": [
+    {
+     "name": "demo class",
+     "price_inr": 0,
+     "duration_min": 60,
+     "staff": [
+      "Mr Deshmukh",
+      "Ms Kulkarni",
+      "Mr Bansal"
+     ],
+     "aliases": [
+      "demo",
+      "trial class",
+      "free class"
+     ]
+    },
+    {
+     "name": "counselling session",
+     "price_inr": 0,
+     "duration_min": 30,
+     "staff": [
+      "Ms Kulkarni",
+      "Mr Bansal"
+     ],
+     "aliases": [
+      "counselling",
+      "counseling",
+      "guidance"
+     ]
+    },
+    {
+     "name": "scholarship test",
+     "price_inr": 0,
+     "duration_min": 90,
+     "staff": [
+      "Mr Deshmukh"
+     ],
+     "aliases": [
+      "scholarship",
+      "sat",
+      "entrance test"
+     ]
+    },
+    {
+     "name": "campus visit",
+     "price_inr": 0,
+     "duration_min": 30,
+     "staff": [
+      "Mr Bansal"
+     ],
+     "aliases": [
+      "visit",
+      "campus tour"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "1": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "2": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "3": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "4": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "5": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "6": [
+     "10:00",
+     "14:00"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Batch kab shuru hota hai?",
+     "a": "Naya batch har mahine ki 1 aur 15 tareekh ko shuru hota hai."
+    },
+    {
+     "q": "Fees kitni hai?",
+     "a": "Ek saal ka JEE batch 78,000 rupaye hai, aur teen kisto mein de sakte hain."
+    },
+    {
+     "q": "Demo class free hai?",
+     "a": "Haan, ek demo class bilkul free hai. Bas slot pehle se book karna hota hai."
+    },
+    {
+     "q": "Hostel hai kya?",
+     "a": "Hostel humara nahi hai, par paas ke do partner hostels se hum jodte hain."
+    }
+   ],
+   "refusal_line": "Ye counsellor hi confirm kar payenge, main unki demo class ka slot laga deta hoon.",
+   "escalation_line": "Main abhi aapko senior counsellor se joddta hoon.",
+   "closing": "Theek hai, counsellor aapse baat karenge.",
+   "scenarios": 3,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "demo class",
+     "entry_type": "SERVICE",
+     "variants": [
+      "demo",
+      "trial class",
+      "free class"
+     ],
+     "keys": [
+      "TN",
+      "TNKRS",
+      "TRRKRS",
+      "fRKRS"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "counselling session",
+     "entry_type": "SERVICE",
+     "variants": [
+      "counselling",
+      "counseling",
+      "guidance"
+     ],
+     "keys": [
+      "GTNC",
+      "KNSRNG",
+      "KNSRNGSSN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "scholarship test",
+     "entry_type": "SERVICE",
+     "variants": [
+      "scholarship",
+      "sat",
+      "entrance test"
+     ],
+     "keys": [
+      "ANTRNCTST",
+      "SCRRSP",
+      "SCRRSPTST",
+      "ST"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "campus visit",
+     "entry_type": "SERVICE",
+     "variants": [
+      "visit",
+      "campus tour"
+     ],
+     "keys": [
+      "KNPSTR",
+      "KNPSVST",
+      "VST"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Mr Deshmukh",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NRTSNK"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Deshmukh",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TSNK"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Ms Kulkarni",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NSKRKRN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Kulkarni",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "KRKRN"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Mr Bansal",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NRPNSR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Bansal",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "PNSR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Vijay Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Vijay",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJ"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Bhawarkuan",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PVRKN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Geeta Bhawan",
+     "entry_type": "PLACE",
+     "variants": [
+      "Gita bhavan"
+     ],
+     "keys": [
+      "GTPVN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Geeta",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "GT"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Bhawan",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PVN"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Rau",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "R"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Pragati Classes",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "PRGTKRSS"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "JEE",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "J"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "NEET",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "NT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "CUET",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "KT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "batch timing",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "PTCTNNG"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "fee structure",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "fSTRKTR"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "hostel",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ASTR"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "demo class",
+     "entry_type": "PHRASE",
+     "variants": [
+      "demo",
+      "trial class",
+      "free class"
+     ],
+     "keys": [
+      "TN",
+      "TNKRS",
+      "TRRKRS",
+      "fRKRS"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "faculty",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "fKRT"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "dental_clinic",
+   "display_name": "Dental clinic",
+   "version": 3,
+   "language": "hinglish",
+   "business_name": "Smile Care Dental",
+   "agent_name": "Haanji",
+   "greeting": "Haanji, Smile Care Dental. Main aapki kya madad karun?",
+   "staff": [
+    "Dr Sheikh",
+    "Dr Malhotra",
+    "Dr Iyer"
+   ],
+   "staff_role": "dentist",
+   "services": [
+    {
+     "name": "root canal",
+     "price_inr": 6500,
+     "duration_min": 60,
+     "staff": [
+      "Dr Sheikh",
+      "Dr Iyer"
+     ],
+     "aliases": [
+      "rct",
+      "root canal treatment"
+     ]
+    },
+    {
+     "name": "teeth cleaning",
+     "price_inr": 1200,
+     "duration_min": 30,
+     "staff": [
+      "Dr Sheikh",
+      "Dr Malhotra",
+      "Dr Iyer"
+     ],
+     "aliases": [
+      "cleaning",
+      "scaling",
+      "safai"
+     ]
+    },
+    {
+     "name": "full body checkup",
+     "price_inr": 800,
+     "duration_min": 30,
+     "staff": [
+      "Dr Malhotra"
+     ],
+     "aliases": [
+      "dental checkup",
+      "checkup"
+     ]
+    },
+    {
+     "name": "braces consultation",
+     "price_inr": 1000,
+     "duration_min": 45,
+     "staff": [
+      "Dr Iyer"
+     ],
+     "aliases": [
+      "braces",
+      "aligner consultation",
+      "teeth straightening"
+     ]
+    },
+    {
+     "name": "tooth extraction",
+     "price_inr": 2500,
+     "duration_min": 45,
+     "staff": [
+      "Dr Sheikh",
+      "Dr Malhotra"
+     ],
+     "aliases": [
+      "extraction",
+      "tooth removal",
+      "dant nikalna"
+     ]
+    },
+    {
+     "name": "dental implant",
+     "price_inr": 28000,
+     "duration_min": 90,
+     "staff": [
+      "Dr Sheikh"
+     ],
+     "aliases": [
+      "implant",
+      "implants"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "09:30",
+     "20:00",
+     "14:00",
+     "15:30"
+    ],
+    "1": [
+     "09:30",
+     "20:00",
+     "14:00",
+     "15:30"
+    ],
+    "2": [
+     "09:30",
+     "20:00",
+     "14:00",
+     "15:30"
+    ],
+    "3": [
+     "09:30",
+     "20:00",
+     "14:00",
+     "15:30"
+    ],
+    "4": [
+     "09:30",
+     "20:00",
+     "14:00",
+     "15:30"
+    ],
+    "5": [
+     "09:30",
+     "20:00",
+     "14:00",
+     "15:30"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Clinic ke timings kya hain?",
+     "a": "Hum Monday se Saturday, subah 9:30 se raat 8 baje tak khule hain. Do se saade teen lunch break hota hai. Sunday band rehta hai."
+    },
+    {
+     "q": "Root canal ka kitna charge hai?",
+     "a": "Root canal 6,500 rupaye se shuru hota hai. Exact amount doctor dekhne ke baad batayenge."
+    },
+    {
+     "q": "Cleaning ka kitna lagta hai?",
+     "a": "Teeth cleaning 1,200 rupaye hai, aur usme polishing shaamil hai."
+    },
+    {
+     "q": "Kya insurance chalta hai?",
+     "a": "Haan, hum Star Health aur HDFC Ergo ka cashless karte hain. Card aur ID saath laana hoga."
+    },
+    {
+     "q": "Parking hai kya?",
+     "a": "Building ke basement mein free parking hai, two-wheeler aur car dono ke liye."
+    },
+    {
+     "q": "Clinic kahan hai?",
+     "a": "Hum Vijay Nagar mein hain, Satya Sai square se sau meter aage, pehli manzil par."
+    },
+    {
+     "q": "Kya EMI ki suvidha hai?",
+     "a": "Implant aur braces par teen se barah mahine ki no-cost EMI mil jaati hai."
+    }
+   ],
+   "refusal_line": "Ye doctor hi dekh kar bata payenge — main aapko unka slot de deta hoon.",
+   "escalation_line": "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye.",
+   "closing": "Theek hai, milte hain. Apna khayal rakhiye.",
+   "scenarios": 8,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "root canal",
+     "entry_type": "SERVICE",
+     "variants": [
+      "rct",
+      "root canal treatment"
+     ],
+     "keys": [
+      "RKT",
+      "RTKNR",
+      "RTKNRTRTNNT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "teeth cleaning",
+     "entry_type": "SERVICE",
+     "variants": [
+      "cleaning",
+      "scaling",
+      "safai"
+     ],
+     "keys": [
+      "KRNNG",
+      "SKRNG",
+      "Sf",
+      "TTKRNNG"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "full body checkup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "dental checkup",
+      "checkup"
+     ],
+     "keys": [
+      "CKP",
+      "TNTRCKP",
+      "fRPTCKP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "braces consultation",
+     "entry_type": "SERVICE",
+     "variants": [
+      "braces",
+      "aligner consultation",
+      "teeth straightening"
+     ],
+     "keys": [
+      "ARGNRKNSRTT",
+      "PRCS",
+      "PRCSKNSRTT",
+      "TTSTRGTN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "tooth extraction",
+     "entry_type": "SERVICE",
+     "variants": [
+      "extraction",
+      "tooth removal",
+      "dant nikalna"
+     ],
+     "keys": [
+      "AKTRKTN",
+      "TNTNKRN",
+      "TTAKTRKT",
+      "TTRNVR"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "dental implant",
+     "entry_type": "SERVICE",
+     "variants": [
+      "implant",
+      "implants"
+     ],
+     "keys": [
+      "ANPRNT",
+      "ANPRNTS",
+      "TNTRANPRNT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Dr Sheikh",
+     "entry_type": "STAFF",
+     "variants": [
+      "Doctor Shaik"
+     ],
+     "keys": [
+      "TKTRSK",
+      "TRSK"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Sheikh",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "SK"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Malhotra",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRNRTR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Malhotra",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NRTR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Iyer",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRAR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Iyer",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "AR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Vijay Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Vijay",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJ"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Palasia",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PRS"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Bhawarkuan",
+     "entry_type": "PLACE",
+     "variants": [
+      "Bhavarkua",
+      "Bhanwarkuan"
+     ],
+     "keys": [
+      "PNVRKN",
+      "PVRK",
+      "PVRKN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Rau",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "R"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Scheme 78",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SCN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Scheme",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SCN"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Sudama Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "STNNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Sudama",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "STN"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Smile Care Dental",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "SNRKRTNTR"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Colgate",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "KRGT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Sensodyne",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "SNSTN"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Invisalign",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "ANVSRGN"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "insurance cashless",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ANSRNCKSRS"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "emi available",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ANAVRPR"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "x ray",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "KR"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "follow up",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "fRVAP"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "diagnostic_lab",
+   "display_name": "Diagnostic lab",
+   "version": 2,
+   "language": "hinglish",
+   "business_name": "Sanjeevani Diagnostics",
+   "agent_name": "Haanji",
+   "greeting": "Haanji, Sanjeevani Diagnostics. Kaun sa test karwana hai?",
+   "staff": [
+    "Meena",
+    "Arvind",
+    "Salma"
+   ],
+   "staff_role": "phlebotomist",
+   "services": [
+    {
+     "name": "complete blood count",
+     "price_inr": 350,
+     "duration_min": 15,
+     "staff": [
+      "Meena",
+      "Arvind",
+      "Salma"
+     ],
+     "aliases": [
+      "cbc",
+      "blood count",
+      "blood test"
+     ]
+    },
+    {
+     "name": "lipid profile",
+     "price_inr": 700,
+     "duration_min": 15,
+     "staff": [
+      "Meena",
+      "Arvind"
+     ],
+     "aliases": [
+      "cholesterol test",
+      "lipid"
+     ]
+    },
+    {
+     "name": "thyroid profile",
+     "price_inr": 550,
+     "duration_min": 15,
+     "staff": [
+      "Meena",
+      "Salma"
+     ],
+     "aliases": [
+      "tsh",
+      "thyroid test",
+      "t3 t4"
+     ]
+    },
+    {
+     "name": "vitamin d test",
+     "price_inr": 1200,
+     "duration_min": 15,
+     "staff": [
+      "Arvind",
+      "Salma"
+     ],
+     "aliases": [
+      "vitamin d",
+      "vit d"
+     ]
+    },
+    {
+     "name": "full body checkup",
+     "price_inr": 2400,
+     "duration_min": 45,
+     "staff": [
+      "Meena",
+      "Arvind"
+     ],
+     "aliases": [
+      "full body",
+      "health package",
+      "master checkup"
+     ]
+    },
+    {
+     "name": "home sample collection",
+     "price_inr": 200,
+     "duration_min": 30,
+     "staff": [
+      "Arvind",
+      "Salma"
+     ],
+     "aliases": [
+      "home collection",
+      "ghar se sample"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "1": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "2": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "3": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "4": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "5": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "6": [
+     "07:00",
+     "12:00"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Report kab milegi?",
+     "a": "Zyadatar reports usi shaam 6 baje tak WhatsApp par aa jaati hain. Vitamin D agle din aati hai."
+    },
+    {
+     "q": "Fasting zaroori hai kya?",
+     "a": "Lipid profile aur full body checkup ke liye bara ghante ka fasting chahiye. Baaki tests ke liye nahi."
+    },
+    {
+     "q": "Home collection hota hai?",
+     "a": "Haan, ghar se sample lene ka 200 rupaye charge hai, subah 7 se 11 ke beech."
+    },
+    {
+     "q": "Lab kab khulti hai?",
+     "a": "Monday se Saturday subah 7 se shaam 7 baje tak, Sunday subah 7 se dopahar 12 tak."
+    }
+   ],
+   "refusal_line": "Report ka matlab doctor hi batayenge — main aapko report time par bhej deta hoon.",
+   "escalation_line": "Main abhi aapko humare lab in-charge se joddta hoon.",
+   "closing": "Ho gaya. Report time par mil jayegi.",
+   "scenarios": 3,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "complete blood count",
+     "entry_type": "SERVICE",
+     "variants": [
+      "cbc",
+      "blood count",
+      "blood test"
+     ],
+     "keys": [
+      "KNPRTPRTKNT",
+      "KPK",
+      "PRTKNT",
+      "PRTTST"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "lipid profile",
+     "entry_type": "SERVICE",
+     "variants": [
+      "cholesterol test",
+      "lipid"
+     ],
+     "keys": [
+      "CRSTRRTST",
+      "RPT",
+      "RPTPRfR"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "thyroid profile",
+     "entry_type": "SERVICE",
+     "variants": [
+      "tsh",
+      "thyroid test",
+      "t3 t4"
+     ],
+     "keys": [
+      "TRTPRfR",
+      "TRTTST",
+      "TS",
+      "TT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "vitamin d test",
+     "entry_type": "SERVICE",
+     "variants": [
+      "vitamin d",
+      "vit d"
+     ],
+     "keys": [
+      "VTNNT",
+      "VTNNTTST",
+      "VTT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "full body checkup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "full body",
+      "health package",
+      "master checkup"
+     ],
+     "keys": [
+      "ARTPKG",
+      "NSTRCKP",
+      "fRPT",
+      "fRPTCKP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "home sample collection",
+     "entry_type": "SERVICE",
+     "variants": [
+      "home collection",
+      "ghar se sample"
+     ],
+     "keys": [
+      "ANKRKTN",
+      "ANSNPRKRKTN",
+      "GRSSNPR"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Meena",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Arvind",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "ARVNT"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Salma",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "SRN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Vijay Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Vijay",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJ"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Bhawarkuan",
+     "entry_type": "PLACE",
+     "variants": [
+      "Bhavarkua"
+     ],
+     "keys": [
+      "PVRK",
+      "PVRKN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Rau",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "R"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Annapurna",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "ANPRN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Scheme 54",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SCN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Scheme",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SCN"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Sanjeevani Diagnostics",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "SNJVNTGNSTK"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "NABL",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "NPR"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Ayushman",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "ASNN"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "fasting",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "fSTNG"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "khali pet",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "KRPT"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "report kab milegi",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "RPRTKPNRG"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "home collection",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ANKRKTN"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "hard copy",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ARTKP"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "lab_hyderabad",
+   "display_name": "Diagnostic lab (Hyderabad, Tenglish)",
+   "version": 1,
+   "language": "tenglish",
+   "business_name": "Nirmal Diagnostics",
+   "agent_name": "Haanji",
+   "greeting": "Namaskaram, Nirmal Diagnostics. Ye test cheyinchukovali?",
+   "staff": [
+    "Lakshmi",
+    "Srinivas",
+    "Fathima"
+   ],
+   "staff_role": "phlebotomist",
+   "services": [
+    {
+     "name": "complete blood count",
+     "price_inr": 350,
+     "duration_min": 15,
+     "staff": [
+      "Lakshmi",
+      "Srinivas",
+      "Fathima"
+     ],
+     "aliases": [
+      "cbc",
+      "blood count",
+      "blood test",
+      "raktha pariksha"
+     ]
+    },
+    {
+     "name": "lipid profile",
+     "price_inr": 700,
+     "duration_min": 15,
+     "staff": [
+      "Lakshmi",
+      "Srinivas"
+     ],
+     "aliases": [
+      "lipid",
+      "cholesterol test"
+     ]
+    },
+    {
+     "name": "thyroid profile",
+     "price_inr": 550,
+     "duration_min": 15,
+     "staff": [
+      "Lakshmi",
+      "Fathima"
+     ],
+     "aliases": [
+      "thyroid",
+      "tsh",
+      "thyroid test",
+      "t3 t4"
+     ]
+    },
+    {
+     "name": "vitamin d test",
+     "price_inr": 1200,
+     "duration_min": 15,
+     "staff": [
+      "Srinivas",
+      "Fathima"
+     ],
+     "aliases": [
+      "vitamin d",
+      "vit d"
+     ]
+    },
+    {
+     "name": "full body checkup",
+     "price_inr": 2400,
+     "duration_min": 45,
+     "staff": [
+      "Lakshmi",
+      "Srinivas"
+     ],
+     "aliases": [
+      "full body",
+      "health package",
+      "master checkup"
+     ]
+    },
+    {
+     "name": "home sample collection",
+     "price_inr": 200,
+     "duration_min": 30,
+     "staff": [
+      "Srinivas",
+      "Fathima"
+     ],
+     "aliases": [
+      "home collection",
+      "intiki vachi sample",
+      "home visit"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "1": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "2": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "3": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "4": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ],
+    "5": [
+     "07:00",
+     "19:00",
+     "13:00",
+     "14:00"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Report eppudu vastundi?",
+     "a": "Chaala reports aa roju sayantram 6 gantalaku WhatsApp lo vastayi. Vitamin D marusati roju."
+    },
+    {
+     "q": "Fasting kavala?",
+     "a": "Lipid profile, full body checkup ki 12 gantalu fasting kavali. Migatha tests ki avasaram ledu."
+    },
+    {
+     "q": "Home collection unda?",
+     "a": "Avunu, intiki vachi sample teesukuntamu, 200 rupayalu charge, udayam 7 nunchi 11 varaku."
+    },
+    {
+     "q": "Lab eppudu open untundi?",
+     "a": "Monday nunchi Saturday udayam 7 nunchi sayantram 7 varaku. Madhyahnam 1 nunchi 2 lunch break. Sunday closed."
+    },
+    {
+     "q": "CBC ki entha?",
+     "a": "Complete blood count 350 rupayalu."
+    },
+    {
+     "q": "Lab ekkada undi?",
+     "a": "Memu Kukatpally lo, KPHB Road number 1, Metro station pakkana, ground floor."
+    }
+   ],
+   "refusal_line": "Report meaning doctor cheptaru — nenu report time ki pampistanu.",
+   "escalation_line": "Nenu ippude mimmalni maa lab in-charge ki connect chestunna.",
+   "closing": "Ayipoyindi. Report time ki vastundi. Dhanyavadalu.",
+   "scenarios": 5,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "complete blood count",
+     "entry_type": "SERVICE",
+     "variants": [
+      "cbc",
+      "blood count",
+      "blood test",
+      "raktha pariksha"
+     ],
+     "keys": [
+      "KNPRTPRTKNT",
+      "KPK",
+      "PRTKNT",
+      "PRTTST",
+      "RKTPRKS"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "lipid profile",
+     "entry_type": "SERVICE",
+     "variants": [
+      "lipid",
+      "cholesterol test"
+     ],
+     "keys": [
+      "CRSTRRTST",
+      "RPT",
+      "RPTPRfR"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "thyroid profile",
+     "entry_type": "SERVICE",
+     "variants": [
+      "thyroid",
+      "tsh",
+      "thyroid test",
+      "t3 t4"
+     ],
+     "keys": [
+      "TRT",
+      "TRTPRfR",
+      "TRTTST",
+      "TS",
+      "TT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "vitamin d test",
+     "entry_type": "SERVICE",
+     "variants": [
+      "vitamin d",
+      "vit d"
+     ],
+     "keys": [
+      "VTNNT",
+      "VTNNTTST",
+      "VTT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "full body checkup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "full body",
+      "health package",
+      "master checkup"
+     ],
+     "keys": [
+      "ARTPKG",
+      "NSTRCKP",
+      "fRPT",
+      "fRPTCKP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "home sample collection",
+     "entry_type": "SERVICE",
+     "variants": [
+      "home collection",
+      "intiki vachi sample",
+      "home visit"
+     ],
+     "keys": [
+      "ANKRKTN",
+      "ANSNPRKRKTN",
+      "ANTKVCSNPR",
+      "ANVST"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Lakshmi",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "RKSN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Srinivas",
+     "entry_type": "STAFF",
+     "variants": [
+      "Sreenivas",
+      "Srinivaas"
+     ],
+     "keys": [
+      "SRNVS"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Fathima",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "fTN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Kukatpally",
+     "entry_type": "PLACE",
+     "variants": [
+      "Kukatpalli",
+      "Kukkatpally"
+     ],
+     "keys": [
+      "KKTPR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Banjara Hills",
+     "entry_type": "PLACE",
+     "variants": [
+      "Banjara Hils"
+     ],
+     "keys": [
+      "PNJRARS"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Banjara",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PNJR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Hills",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "ARS"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "KPHB",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "KfP"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Madhapur",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NTPR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Ameerpet",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "ANRPT"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Nirmal Diagnostics",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "NRNRTGNSTK"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "NABL",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "NPR"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Aarogyasri",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "ARGSR"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "fasting",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "fSTNG"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "khali kadupu",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "KRKTP"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "report eppudu",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "RPRTAPT"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "home collection",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ANKRKTN"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "hard copy",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ARTKP"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "salon_ludhiana",
+   "display_name": "Salon (Ludhiana, Punglish)",
+   "version": 1,
+   "language": "punglish",
+   "business_name": "Rang Salon",
+   "agent_name": "Haanji",
+   "greeting": "Sat Sri Akal ji, Rang Salon. Kehdi service chahidi?",
+   "staff": [
+    "Simran",
+    "Harpreet",
+    "Jas",
+    "Deepak"
+   ],
+   "staff_role": "stylist",
+   "services": [
+    {
+     "name": "haircut",
+     "price_inr": 400,
+     "duration_min": 30,
+     "staff": [
+      "Simran",
+      "Harpreet",
+      "Jas",
+      "Deepak"
+     ],
+     "aliases": [
+      "hair cut",
+      "trim",
+      "cutting",
+      "vaal katwaune"
+     ]
+    },
+    {
+     "name": "global colour",
+     "price_inr": 4500,
+     "duration_min": 120,
+     "staff": [
+      "Harpreet",
+      "Simran"
+     ],
+     "aliases": [
+      "colour",
+      "color",
+      "hair colour",
+      "global color",
+      "colouring",
+      "rang"
+     ]
+    },
+    {
+     "name": "hair spa",
+     "price_inr": 1500,
+     "duration_min": 60,
+     "staff": [
+      "Simran",
+      "Jas"
+     ],
+     "aliases": [
+      "spa",
+      "hair treatment"
+     ]
+    },
+    {
+     "name": "bridal makeup",
+     "price_inr": 15000,
+     "duration_min": 180,
+     "staff": [
+      "Simran"
+     ],
+     "aliases": [
+      "bridal",
+      "dulhan makeup",
+      "wedding makeup",
+      "viah makeup"
+     ]
+    },
+    {
+     "name": "beard trim",
+     "price_inr": 250,
+     "duration_min": 20,
+     "staff": [
+      "Harpreet",
+      "Deepak"
+     ],
+     "aliases": [
+      "beard",
+      "dadhi",
+      "daadhi"
+     ]
+    },
+    {
+     "name": "keratin treatment",
+     "price_inr": 6000,
+     "duration_min": 150,
+     "staff": [
+      "Harpreet"
+     ],
+     "aliases": [
+      "keratin",
+      "smoothening"
+     ]
+    }
+   ],
+   "hours": {
+    "1": [
+     "10:00",
+     "21:00"
+    ],
+    "2": [
+     "10:00",
+     "21:00"
+    ],
+    "3": [
+     "10:00",
+     "21:00"
+    ],
+    "4": [
+     "10:00",
+     "21:00"
+    ],
+    "5": [
+     "10:00",
+     "21:00"
+    ],
+    "6": [
+     "10:00",
+     "21:00"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Salon kadon khulda?",
+     "a": "Tuesday ton Sunday, savere 10 vaje ton raat 9 vaje tak. Monday weekly off hunda ji."
+    },
+    {
+     "q": "Haircut da kinna lagda?",
+     "a": "Haircut 400 rupaye ton shuru, stylist de hisaab naal badal sakda."
+    },
+    {
+     "q": "Bridal package hai?",
+     "a": "Bridal makeup 15,000 rupaye ton shuru, te usde vich ik trial session shaamil hai."
+    },
+    {
+     "q": "Membership hai?",
+     "a": "Haan ji, 5,000 rupaye di membership te saal bhar 20 percent chhoot."
+    },
+    {
+     "q": "Salon kithe hai?",
+     "a": "Assi Sarabha Nagar market vich, main gate de saamne, first floor te."
+    },
+    {
+     "q": "Parking hai?",
+     "a": "Market di parking saamne hi hai, car te scooter dona layi."
+    }
+   ],
+   "refusal_line": "Eh stylist tuhanu vekh ke hi dass sakde ji, main tuhada slot laga dinda.",
+   "escalation_line": "Eh main manager ji nu de raha, oh hune tuhade naal gall karnge.",
+   "closing": "Perfect ji, tuhada slot lag gaya. Milde haan!",
+   "scenarios": 5,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "haircut",
+     "entry_type": "SERVICE",
+     "variants": [
+      "hair cut",
+      "trim",
+      "cutting",
+      "vaal katwaune"
+     ],
+     "keys": [
+      "ARKT",
+      "KTNG",
+      "TRN",
+      "VRKTVN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "global colour",
+     "entry_type": "SERVICE",
+     "variants": [
+      "colour",
+      "color",
+      "hair colour",
+      "global color",
+      "colouring",
+      "rang"
+     ],
+     "keys": [
+      "ARKRR",
+      "GRPRKRR",
+      "KRR",
+      "KRRNG",
+      "RNG"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "hair spa",
+     "entry_type": "SERVICE",
+     "variants": [
+      "spa",
+      "hair treatment"
+     ],
+     "keys": [
+      "ARSP",
+      "ARTRTNNT",
+      "SP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "bridal makeup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "bridal",
+      "dulhan makeup",
+      "wedding makeup",
+      "viah makeup"
+     ],
+     "keys": [
+      "PRTR",
+      "PRTRNKP",
+      "TRNNKP",
+      "VNKP",
+      "VTNGNKP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "beard trim",
+     "entry_type": "SERVICE",
+     "variants": [
+      "beard",
+      "dadhi",
+      "daadhi"
+     ],
+     "keys": [
+      "PRT",
+      "PRTTRN",
+      "TT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "keratin treatment",
+     "entry_type": "SERVICE",
+     "variants": [
+      "keratin",
+      "smoothening"
+     ],
+     "keys": [
+      "KRTN",
+      "KRTNTRTNNT",
+      "SNTNNG"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Simran",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "SNRN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Harpreet",
+     "entry_type": "STAFF",
+     "variants": [
+      "Harpreet kaur",
+      "Harprit"
+     ],
+     "keys": [
+      "ARPRT",
+      "ARPRTKR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Jas",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "JS"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Deepak",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TPK"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Model Town",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NTRTVN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Model",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NTR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Town",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "TVN"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Sarabha Nagar",
+     "entry_type": "PLACE",
+     "variants": [
+      "Sarabha Nagr",
+      "Sarabha"
+     ],
+     "keys": [
+      "SRP",
+      "SRPNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Sarabha",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SRP"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Dugri",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "TGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "BRS Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PRSNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Pakhowal Road",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PKVRRT"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Pakhowal",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PKVR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Road",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "RT"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Rang Salon",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "RNGSRN"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Loreal",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "RRR"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Schwarzkopf",
+     "entry_type": "BRAND",
+     "variants": [
+      "Shwarzkof"
+     ],
+     "keys": [
+      "SCVRSKPf",
+      "SVRSKf"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Olaplex",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "ARPRK"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "walk in",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "VRKAN"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "advance booking",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ATVNCPKNG"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "membership card",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "NNPRSPKRT"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "viah da season",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "VTSSN"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "salon_spa",
+   "display_name": "Salon and spa",
+   "version": 2,
+   "language": "hinglish",
+   "business_name": "Glow Studio",
+   "agent_name": "Haanji",
+   "greeting": "Haanji, Glow Studio. Kya service chahiye aapko?",
+   "staff": [
+    "Neha",
+    "Farhan",
+    "Ritu",
+    "Sanjay"
+   ],
+   "staff_role": "stylist",
+   "services": [
+    {
+     "name": "hair spa",
+     "price_inr": 1500,
+     "duration_min": 60,
+     "staff": [
+      "Neha",
+      "Ritu"
+     ],
+     "aliases": [
+      "spa",
+      "hair treatment"
+     ]
+    },
+    {
+     "name": "global colour",
+     "price_inr": 4500,
+     "duration_min": 120,
+     "staff": [
+      "Farhan",
+      "Neha"
+     ],
+     "aliases": [
+      "colour",
+      "color",
+      "hair colour",
+      "global color",
+      "colouring"
+     ]
+    },
+    {
+     "name": "haircut",
+     "price_inr": 500,
+     "duration_min": 30,
+     "staff": [
+      "Neha",
+      "Farhan",
+      "Ritu",
+      "Sanjay"
+     ],
+     "aliases": [
+      "hair cut",
+      "trim"
+     ]
+    },
+    {
+     "name": "bridal makeup",
+     "price_inr": 15000,
+     "duration_min": 180,
+     "staff": [
+      "Neha"
+     ],
+     "aliases": [
+      "bridal",
+      "dulhan makeup",
+      "wedding makeup"
+     ]
+    },
+    {
+     "name": "beard trim",
+     "price_inr": 250,
+     "duration_min": 20,
+     "staff": [
+      "Farhan",
+      "Sanjay"
+     ],
+     "aliases": [
+      "beard",
+      "dadhi"
+     ]
+    },
+    {
+     "name": "keratin treatment",
+     "price_inr": 6000,
+     "duration_min": 150,
+     "staff": [
+      "Farhan"
+     ],
+     "aliases": [
+      "keratin",
+      "smoothening"
+     ]
+    }
+   ],
+   "hours": {
+    "1": [
+     "10:00",
+     "21:00"
+    ],
+    "2": [
+     "10:00",
+     "21:00"
+    ],
+    "3": [
+     "10:00",
+     "21:00"
+    ],
+    "4": [
+     "10:00",
+     "21:00"
+    ],
+    "5": [
+     "10:00",
+     "21:00"
+    ],
+    "6": [
+     "10:00",
+     "21:00"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Salon kab khulta hai?",
+     "a": "Tuesday se Sunday, subah 10 baje se raat 9 baje tak. Monday weekly off hai."
+    },
+    {
+     "q": "Haircut ka kitna lagta hai?",
+     "a": "Haircut 500 rupaye se shuru hai, stylist ke hisaab se badal sakta hai."
+    },
+    {
+     "q": "Bridal package hai kya?",
+     "a": "Bridal makeup 15,000 rupaye se shuru hai aur usme ek trial session shaamil hai."
+    },
+    {
+     "q": "Membership hai?",
+     "a": "Haan, 5,000 rupaye ki membership par saal bhar 20 percent chhoot milti hai."
+    }
+   ],
+   "refusal_line": "Ye stylist aapko dekh kar hi bata payenge, main aapka slot laga deta hoon.",
+   "escalation_line": "Ye main manager ko de raha hoon, wo abhi baat karengi.",
+   "closing": "Perfect, aapka slot lag gaya. Milte hain!",
+   "scenarios": 4,
+   "issues": [],
+   "lexicon": [
+    {
+     "surface": "hair spa",
+     "entry_type": "SERVICE",
+     "variants": [
+      "spa",
+      "hair treatment"
+     ],
+     "keys": [
+      "ARSP",
+      "ARTRTNNT",
+      "SP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "global colour",
+     "entry_type": "SERVICE",
+     "variants": [
+      "colour",
+      "color",
+      "hair colour",
+      "global color",
+      "colouring"
+     ],
+     "keys": [
+      "ARKRR",
+      "GRPRKRR",
+      "KRR",
+      "KRRNG"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "haircut",
+     "entry_type": "SERVICE",
+     "variants": [
+      "hair cut",
+      "trim"
+     ],
+     "keys": [
+      "ARKT",
+      "TRN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "bridal makeup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "bridal",
+      "dulhan makeup",
+      "wedding makeup"
+     ],
+     "keys": [
+      "PRTR",
+      "PRTRNKP",
+      "TRNNKP",
+      "VTNGNKP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "beard trim",
+     "entry_type": "SERVICE",
+     "variants": [
+      "beard",
+      "dadhi"
+     ],
+     "keys": [
+      "PRT",
+      "PRTTRN",
+      "TT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "keratin treatment",
+     "entry_type": "SERVICE",
+     "variants": [
+      "keratin",
+      "smoothening"
+     ],
+     "keys": [
+      "KRTN",
+      "KRTNTRTNNT",
+      "SNTNNG"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Neha",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "N"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Farhan",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "fRN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Ritu",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "RT"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Sanjay",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "SNJ"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Vijay Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Vijay",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJ"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Palasia",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PRS"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Saket",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SKT"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Treasure Island",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "TRSRASRNT"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Treasure",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "TRSR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Island",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "ASRNT"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Glow Studio",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "GRVSTT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Loreal",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "RRR"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Schwarzkopf",
+     "entry_type": "BRAND",
+     "variants": [
+      "Shwarzkof"
+     ],
+     "keys": [
+      "SCVRSKPf",
+      "SVRSKf"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Olaplex",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "ARPRK"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "walk in",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "VRKAN"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "advance booking",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ATVNCPKNG"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "membership card",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "NNPRSPKRT"
+     ],
+     "weight": 0.85
+    }
+   ]
+  }
+ ]
+}

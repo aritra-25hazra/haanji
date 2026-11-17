@@ -26,7 +26,7 @@ export default function Ledger() {
   const live = mode === "live";
   const loader = live
     ? async () => { const exp = await engine.export(pack); await run(exp, "engine ke export pe, abhi"); return exp; }
-    : mode === "demo" ? () => Promise.resolve(sample.export()) : null;
+    : mode === "demo" ? () => Promise.resolve(sample.export(pack)) : null;
   const { data, loading, error, reload } = useData<Export>(loader, [pack, mode]);
   // The real counter: writes the ledger refused for lacking a confirmation proof.
   const ops = useData(live ? () => engine.ops(pack) : null, [pack, mode]);

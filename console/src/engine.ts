@@ -120,7 +120,7 @@ export const engine = {
     }
   },
   insights: (pack: string) => request<Insights>(`api/insights?${q(pack)}`),
-  calls: (pack: string) => request<{ conversations: CallRow[] }>(`api/conversations?${q(pack)}`),
+  calls: (pack: string, limit = 50) => request<{ conversations: CallRow[] }>(`api/conversations?${q(pack)}&limit=${limit}`),
   call: (pack: string, id: string) =>
     request<CallRow>(`api/conversations/${encodeURIComponent(id)}?${q(pack)}`),
   export: (pack: string) => request<Export>(`api/receipts/export?${q(pack)}`),

@@ -35,7 +35,7 @@ export default function Calendar() {
   const loader = live
     ? () => engine.bookings(pack, from, to, filter)
     : mode === "demo"
-      ? () => Promise.resolve(sample.bookings(from, to).filter((b) => filter === "ALL" || b.status === filter))
+      ? () => Promise.resolve(sample.bookings(pack, from, to).filter((b) => filter === "ALL" || b.status === filter))
       : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode, from, to, filter]);
 
@@ -181,7 +181,7 @@ function BookingCard({ b, showStaff = false, busy, onAct, readOnly = false }: { 
 /** People waiting for a day that was full. The engine fills and drains this
  *  itself; the desk only removes an entry that no longer applies. */
 function WaitlistPanel({ pack, live }: { pack: string; live: boolean }) {
-  const { data, error, reload } = useData<WaitlistEntry[]>(live ? () => engine.waitlist(pack) : () => Promise.resolve(sample.waitlist()), [pack, live]);
+  const { data, error, reload } = useData<WaitlistEntry[]>(live ? () => engine.waitlist(pack) : () => Promise.resolve(sample.waitlist(pack)), [pack, live]);
   const [removing, setRemoving] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -224,7 +224,7 @@ function WaitlistPanel({ pack, live }: { pack: string; live: boolean }) {
 
 /** Payment links the engine issued, and what became of them. */
 function PaymentsPanel({ pack, live }: { pack: string; live: boolean }) {
-  const { data, error } = useData<Payment[]>(live ? () => engine.payments(pack) : () => Promise.resolve(sample.payments()), [pack, live]);
+  const { data, error } = useData<Payment[]>(live ? () => engine.payments(pack) : () => Promise.resolve(sample.payments(pack)), [pack, live]);
   const rows = data ?? [];
   const paid = rows.filter((p) => p.status === "PAID").reduce((a, p) => a + p.amount_inr, 0);
   return (

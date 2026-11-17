@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "r
 import { Link } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { engine, subscribeLive, enablePush } from "../engine";
-import { sample } from "../sample";
+import { NEEDS_CALLBACK, sample } from "../sample";
 import { useApp } from "../state";
 import AnimatedList from "../components/AnimatedList";
 import { Chip, Empty, Icon, Loading, NotLive, OutcomeChip, Page, Panel, Repair, Tile, fmtInr, fmtTime, useData } from "../components/Common";
@@ -16,7 +16,7 @@ const SWATCH: Record<string, string> = {
 export default function Dashboard() {
   const { pack, mode, status, setSampleView } = useApp();
   const live = mode === "live";
-  const loader = live ? () => engine.insights(pack) : mode === "demo" ? () => Promise.resolve(sample.insights()) : null;
+  const loader = live ? () => engine.insights(pack) : mode === "demo" ? () => Promise.resolve(sample.insights(pack)) : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode]);
   useEffect(() => {
     if (!live) return;
@@ -143,13 +143,20 @@ function FirstSteps({ whatsapp, onPreview }: { whatsapp: boolean; onPreview: () 
   );
 }
 
-/** Callers who left a number or asked for a person: the shop's to-do list. */
+const PAGE = 10;
+
+/** Callers who left a number or asked for a person: the shop's to-do list.
+ *  The same rule as the "Callback chahiye" tile (NEEDS_CALLBACK), over the
+ *  same calls the insights count (the engine's last 500), every one listed. */
 function Callbacks({ pack, live }: { pack: string; live: boolean }) {
-  const { data } = useData(live ? () => engine.calls(pack).then((r) => r.conversations) : () => Promise.resolve(sample.calls()), [pack, live]);
-  const rows = useMemo(() => (data ?? []).filter((c) => c.outcome === "LEAD_CAPTURED" || c.outcome === "HANDED_OFF").slice(0, 8), [data]);
+  const { data } = useData(live ? () => engine.calls(pack, 500).then((r) => r.conversations) : () => Promise.resolve(sample.calls(pack)), [pack, live]);
+  const all = useMemo(() => (data ?? []).filter(NEEDS_CALLBACK), [data]);
+  const [shown, setShown] = useState(PAGE);
+  const rows = all.slice(0, shown);
+  const handoffs = all.filter((c) => c.outcome === "HANDED_OFF").length;
   return (
-    <Panel title="Inhe wapas call karo" hint={rows.length ? `${rows.length} log · naye pehle` : "sab ko jawab mil gaya"}>
-      {rows.length === 0
+    <Panel title="Inhe wapas call karo" hint={all.length ? `${all.length} log${handoffs ? ` (${handoffs} insaan ko diye)` : ""} · naye pehle` : "sab ko jawab mil gaya"}>
+      {all.length === 0
         ? <Empty><p>Jinka kaam call pe nahi ho paaya, wo yahan aate hain. Abhi koi nahi.</p></Empty>
         : <ul className="body callbacks">
             {rows.map((c) => (
@@ -163,6 +170,9 @@ function Callbacks({ pack, live }: { pack: string; live: boolean }) {
                 <Link to={`/calls/${encodeURIComponent(c.call_id)}`}>Poori baat</Link>
               </li>
             ))}
+            {all.length > shown && (
+              <li className="more"><button className="btn btn-ghost btn-sm" onClick={() => setShown((n) => n + PAGE)}>Aur dikhao ({all.length - shown} baaki)</button></li>
+            )}
           </ul>}
     </Panel>
   );

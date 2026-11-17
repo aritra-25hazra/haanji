@@ -14,7 +14,7 @@ export default function Customers() {
   const [debounced, setDebounced] = useState("");
   useEffect(() => { const t = setTimeout(() => setDebounced(q.trim()), 300); return () => clearTimeout(t); }, [q]);
   const live = mode === "live";
-  const loader = live ? () => engine.customers(pack, debounced) : mode === "demo" ? () => Promise.resolve(sample.customers(debounced)) : null;
+  const loader = live ? () => engine.customers(pack, debounced) : mode === "demo" ? () => Promise.resolve(sample.customers(pack, debounced)) : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode, debounced]);
   const [open, setOpen] = useState<Customer | null>(null);
 

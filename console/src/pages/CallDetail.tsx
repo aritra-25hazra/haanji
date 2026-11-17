@@ -10,7 +10,7 @@ export default function CallDetail() {
   const { id = "" } = useParams();
   const { pack, mode } = useApp();
   const live = mode === "live";
-  const loader = live ? () => engine.call(pack, id) : mode === "demo" ? () => Promise.resolve(sample.call(id)) : null;
+  const loader = live ? () => engine.call(pack, id) : mode === "demo" ? () => Promise.resolve(sample.call(pack, id)) : null;
   const { data, loading, error } = useData<CallRow | null>(loader, [pack, mode, id]);
   // Hooks before any early return: the transliteration table follows the data.
   const dev = useDevanagari(data ? parseTurns(data.turns_json).flatMap((t) => [t.heard, t.said]) : []);

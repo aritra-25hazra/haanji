@@ -16,7 +16,7 @@ export default function Lexicon() {
   useEffect(() => { const t = setTimeout(() => setDebounced(probe.trim()), 300); return () => clearTimeout(t); }, [probe]);
 
   const live = mode === "live";
-  const loader = live ? () => engine.lexicon(pack, debounced || undefined) : mode === "demo" ? () => Promise.resolve(sample.lexicon()) : null;
+  const loader = live ? () => engine.lexicon(pack, debounced || undefined) : mode === "demo" ? () => Promise.resolve(sample.lexicon(pack)) : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode, debounced]);
 
   if (!live && mode !== "demo") return <NotLive title="Bhasha lexicon" sub={SUB} />;

@@ -11,7 +11,7 @@ export default function Calls() {
   const { pack, mode } = useApp();
   const nav = useNavigate();
   const live = mode === "live";
-  const loader = live ? () => engine.calls(pack).then((r) => r.conversations) : mode === "demo" ? () => Promise.resolve(sample.calls()) : null;
+  const loader = live ? () => engine.calls(pack).then((r) => r.conversations) : mode === "demo" ? () => Promise.resolve(sample.calls(pack)) : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode]);
 
   if (!live && mode !== "demo") return <NotLive title="Calls" sub={SUB} />;
