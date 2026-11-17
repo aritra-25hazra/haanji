@@ -1,0 +1,82 @@
+{
+ "generated_from": "research/results.json by research/harness/console_results.py",
+ "how_to_reproduce": "cd engine && python -m haanji.bench --reps 5 --speed 60",
+ "measured_at": "2026-11-17T16:58:08+00:00",
+ "reps": 5,
+ "packs": 10,
+ "scenarios": 44,
+ "headline": {
+  "noise_rate": 0.3,
+  "sentences_scored": 6990,
+  "entities_scored": 9540,
+  "entity_error_rate_without_bhasha": 0.3074,
+  "entity_error_rate_with_bhasha": 0.0096,
+  "entity_error_reduction_pct": 96.9,
+  "correction_precision": 0.9896,
+  "harmful_corrections_transcript": 0,
+  "bhasha_median_ms": 0.113,
+  "task_success_without_bhasha": 0.7091,
+  "task_success_with_bhasha": 0.8773,
+  "read_turn_p50_without_speculation": 226.2,
+  "read_turn_p50_with_speculation": 150.6,
+  "read_turn_p50_reduction_pct": 33.4,
+  "read_turn_p90_without_speculation": 309.0,
+  "read_turn_p90_with_speculation": 258.8,
+  "write_turn_p90_without_speculation": 94.5,
+  "write_turn_p90_with_speculation": 108.1,
+  "speculation_hit_rate": 0.463,
+  "speculations_started": 270,
+  "saved_ms_per_hit": 204.3,
+  "outcome_accuracy_clean": 1.0
+ },
+ "ledger": {
+  "chain_length": 40,
+  "clean_chain_valid": true,
+  "mutations_attempted": 80,
+  "mutations_detected": 80,
+  "detection_rate": 1.0,
+  "unconfirmed_writes_accepted": 0
+ },
+ "configs": {
+  "full": {
+   "calls": 220,
+   "outcome_accuracy": 1.0,
+   "unconfirmed_writes": 0
+  },
+  "no_speculation": {
+   "calls": 220,
+   "outcome_accuracy": 1.0,
+   "unconfirmed_writes": 0
+  },
+  "no_bhasha": {
+   "calls": 220,
+   "outcome_accuracy": 0.6818,
+   "unconfirmed_writes": 0
+  },
+  "baseline": {
+   "calls": 220,
+   "outcome_accuracy": 0.6818,
+   "unconfirmed_writes": 0
+  }
+ },
+ "noise": [
+  {
+   "noise": 0.15,
+   "sentences": 6990,
+   "error_without": 0.1777,
+   "error_with": 0.0045
+  },
+  {
+   "noise": 0.3,
+   "sentences": 6990,
+   "error_without": 0.3074,
+   "error_with": 0.0096
+  },
+  {
+   "noise": 0.45,
+   "sentences": 6990,
+   "error_without": 0.4774,
+   "error_with": 0.0183
+  }
+ ]
+}

@@ -2165,6 +2165,61 @@ async def devanagari(body: TextsIn):
     return {"texts": [transliterate(t) for t in body.texts], "approximate": True}
 
 
+# ───────────────────────────────────────────────── the console's help assistant
+from . import helpbot as helpbot_mod    # noqa: E402
+
+HELP_PER_MIN = int(os.environ.get("HAANJI_HELP_PER_MIN", "6"))
+
+
+def _measured_summary() -> str:
+    """The benchmark's numbers, as the help assistant may quote them (from
+    web/results.json, which research/harness/console_results.py writes)."""
+    try:
+        with open(os.path.join(WEB_DIR, "results.json"), encoding="utf-8") as f:
+            r = json.load(f)
+    except (OSError, ValueError):
+        return ""
+    h, led = r["headline"], r["ledger"]
+    return (f"- Bhasha: misheard names, services and times {h['entity_error_rate_without_bhasha']*100:.1f}% -> "
+            f"{h['entity_error_rate_with_bhasha']*100:.2f}% at {h['noise_rate']*100:.0f}% recogniser errors; "
+            f"{h['harmful_corrections_transcript']} corrections made a word worse.\n"
+            f"- Speculative turns: median reply on read questions {h['read_turn_p50_without_speculation']:.0f} -> "
+            f"{h['read_turn_p50_with_speculation']:.0f} ms.\n"
+            f"- Pramaan: {led['mutations_detected']} of {led['mutations_attempted']} edited receipts caught; "
+            f"{led['unconfirmed_writes_accepted']} bookings written without the caller's yes.\n"
+            f"Measured {r['measured_at'][:10]}: {r['scenarios']} scripted calls, {r['packs']} shops, {r['reps']} runs each.")
+
+
+helpbot = helpbot_mod.HelpBot.from_env(_measured_summary())
+
+
+class HelpMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(max_length=4000)
+
+
+class HelpIn(BaseModel):
+    messages: list[HelpMessage] = Field(max_length=40)
+    provider: Literal["claude", "gemini", "faq"] | None = None
+    lang: Literal["en", "hi"] = "en"
+    page: str = Field("/", max_length=200)
+
+
+@app.get("/api/help/status")
+async def help_status():
+    """Which answerers are on (a key is set), never the keys themselves."""
+    return helpbot.status()
+
+
+@app.post("/api/help/chat")
+async def help_chat(body: HelpIn, request: Request):
+    if rate_limited("HELP " + _client_of(request), limit=HELP_PER_MIN):
+        TELEMETRY.inc("http_rate_limited_total")
+        raise HTTPException(429, "too many questions; wait a minute")
+    return await helpbot.answer([m.model_dump() for m in body.messages], provider=body.provider,
+                                lang=body.lang, page=body.page)
+
+
 @app.get("/api/status")
 async def status():
     return {"name": "HaanJi demo server", "version": app.version,
@@ -2246,7 +2301,7 @@ async def static_file(name: str):
         raise HTTPException(404)
     media = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml",
              ".html": "text/html", ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg",
-             ".woff2": "font/woff2", ".mp4": "video/mp4"}.get(os.path.splitext(name)[1], "text/plain")
+             ".woff2": "font/woff2", ".mp4": "video/mp4", ".json": "application/json"}.get(os.path.splitext(name)[1], "text/plain")
     # Vendored libraries and font files carry a version or a content hash in
     # the name, so they never change under a URL: a browser keeps them.
     headers = ({"Cache-Control": "public, max-age=31536000, immutable"}
