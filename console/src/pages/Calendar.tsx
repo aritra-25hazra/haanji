@@ -84,7 +84,10 @@ export default function Calendar() {
           : !data ? <Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></Empty>
           : view === "day"
             ? <DayGrid bookings={data} busy={busy} onAct={act} readOnly={readOnly} />
-            : <WeekGrid days={days} today={now} bookings={data} busy={busy} onAct={act} readOnly={readOnly} />}
+            : <>
+                <TimeGrid days={days} today={now} bookings={data} onPick={(d) => { setAnchor(d); setView("day"); }} />
+                <WeekGrid days={days} today={now} bookings={data} busy={busy} onAct={act} readOnly={readOnly} />
+              </>}
       </Panel>
       <WaitlistPanel pack={pack} live={live} />
       <PaymentsPanel pack={pack} live={live} />
@@ -115,7 +118,7 @@ function DayGrid({ bookings, busy, onAct, readOnly = false }: { bookings: Bookin
 function WeekGrid({ days, today: now, bookings, busy, onAct, readOnly = false }:
   { days: string[]; today: string; bookings: Booking[]; busy: string | null; onAct: (b: Booking, a: Action) => void; readOnly?: boolean }) {
   return (
-    <div className="cal-grid" style={{ "--cols": 7 } as CSSProperties}>
+    <div className="cal-grid week-list" style={{ "--cols": 7 } as CSSProperties}>
       {days.map((d) => {
         const list = bookings.filter((b) => b.date === d).sort(byTime);
         return (
@@ -127,6 +130,54 @@ function WeekGrid({ days, today: now, bookings, busy, onAct, readOnly = false }:
           </section>
         );
       })}
+    </div>
+  );
+}
+
+const STAFF_COLOURS = ["#1B3B8C", "#1F6B45", "#8A6100", "#B8371F", "#5B3FA0", "#0E7490"];
+const ROW = 22;                                    // px for 30 minutes
+const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+
+/** The week as a time grid: a column per day, a row per half hour, a lane
+ *  and a colour per person on the staff, so two bookings at one time sit
+ *  side by side. A booking opens its day, where the desk can act on it.
+ *  On a phone the list layout below takes its place. */
+function TimeGrid({ days, today: now, bookings, onPick }:
+  { days: string[]; today: string; bookings: Booking[]; onPick: (day: string) => void }) {
+  const shown = bookings.filter((b) => b.status !== "CANCELLED");
+  const staff = [...new Set(bookings.map((b) => b.staff))].sort();
+  const from = Math.floor(Math.min(9 * 60, ...shown.map((b) => minutes(b.time))) / 60) * 60;
+  const to = Math.ceil(Math.max(19 * 60, ...shown.map((b) => minutes(b.time) + b.duration_min)) / 60) * 60;
+  const rows = (to - from) / 30;
+  const colour = (s: string) => STAFF_COLOURS[staff.indexOf(s) % STAFF_COLOURS.length];
+  return (
+    <div className="time-grid" aria-label="Hafte ka time grid">
+      {staff.length > 0 && <p className="tg-legend">{staff.map((s) => <span key={s}><i style={{ background: colour(s) }} />{s}</span>)}</p>}
+      <div className="tg" style={{ "--days": days.length } as CSSProperties}>
+        <div className="tg-hours" style={{ height: rows * ROW + 34 }}>
+          {Array.from({ length: (to - from) / 60 + 1 }, (_, i) => (
+            <span key={i} style={{ top: 34 + i * 2 * ROW }}>{String((from / 60) + i).padStart(2, "0")}:00</span>))}
+        </div>
+        {days.map((d) => (
+          <div key={d} className={"tg-day" + (d === now ? " today" : "")}>
+            <button type="button" className="tg-head" onClick={() => onPick(d)}>{DAY_NAMES[dayOfWeek(d)]} {d.slice(8)}</button>
+            <div className="tg-body" style={{ height: rows * ROW }}>
+              {shown.filter((b) => b.date === d).map((b) => {
+                const lane = Math.max(0, staff.indexOf(b.staff));
+                return (
+                  <button type="button" key={b.booking_id} className={"tg-bk " + b.status}
+                          style={{ top: ((minutes(b.time) - from) / 30) * ROW, height: Math.max(ROW, (b.duration_min / 30) * ROW) - 2,
+                                   left: `calc(${(lane / staff.length) * 100}% + 1px)`, width: `calc(${100 / staff.length}% - 2px)`,
+                                   "--c": colour(b.staff) } as CSSProperties}
+                          title={`${b.time} · ${b.service} · ${b.customer_name} · ${b.staff}`} onClick={() => onPick(d)}>
+                    <b>{b.time}</b> {b.service}<span>{b.customer_name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
