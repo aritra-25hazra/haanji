@@ -306,6 +306,11 @@ export function fmtDate(iso: string): string {
   const d = new Date(iso);
   return isNaN(d.getTime()) ? iso.slice(0, 10) : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: IST });
 }
+/** The day (YYYY-MM-DD) a stored time falls on in India. */
+export function istDay(iso: string): string {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? iso.slice(0, 10) : d.toLocaleDateString("en-CA", { timeZone: IST });
+}
 export function fmtInr(n: number): string { return "₹" + Math.round(n).toLocaleString("en-IN"); }
 
 

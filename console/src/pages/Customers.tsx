@@ -1,9 +1,23 @@
 import { useEffect, useState, type CSSProperties } from "react";
+import { Link } from "react-router-dom";
+import { addDays, today } from "../dates";
 import { engine } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { Chip, Confirm, Empty, Icon, Loading, NotLive, Page, Panel, Register, fmtDate, rowButton, useData, type ChipKind } from "../components/Common";
-import type { Customer } from "../types";
+import { Chip, Confirm, Empty, Icon, Loading, NotLive, Page, Panel, Register, fmtDate, fmtTime, rowButton, useData, type ChipKind } from "../components/Common";
+import type { Booking, CallRow, Customer } from "../types";
+import { outcomeLabel } from "../labels";
+
+/** One customer's bookings and calls, from the same lists the Calendar and
+ *  Calls pages read (a public demo masks the number the same way in each). */
+async function history(pack: string, phone: string, live: boolean): Promise<{ bookings: Booking[]; calls: CallRow[] }> {
+  const from = addDays(today(), -120), to = addDays(today(), 60);
+  const [bookings, calls] = live
+    ? await Promise.all([engine.bookings(pack, from, to), engine.calls(pack, 500).then((r) => r.conversations)])
+    : [sample.bookings(pack, from, to), sample.calls(pack)];
+  return { bookings: bookings.filter((b) => b.phone === phone).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)),
+           calls: calls.filter((x) => x.phone === phone) };
+}
 
 const BK_KIND: Record<string, ChipKind | undefined> = { CONFIRMED: undefined, COMPLETED: "ok", NO_SHOW: "warn", CANCELLED: "bad" };
 
@@ -80,6 +94,12 @@ function CustomerDrawer({ customer: c, pack, live, isOwner, onClose, onErased }:
     finally { setBusy(false); setConfirm(false); }
   };
   const r = rec.data;
+  const hist = useData(() => history(pack, c.phone, live), [pack, c.phone, live]);
+  const digits = c.phone.replace(/\D/g, "");
+  const reachable = digits.length >= 10;
+  const day = today();
+  const upcoming = (hist.data?.bookings ?? []).filter((b) => b.date >= day && b.status === "CONFIRMED");
+  const past = (hist.data?.bookings ?? []).filter((b) => b.date < day || b.status !== "CONFIRMED").reverse();
   return (
     <>
       <div className="drawer-scrim" onClick={onClose} aria-hidden="true" />
@@ -96,6 +116,32 @@ function CustomerDrawer({ customer: c, pack, live, isOwner, onClose, onErased }:
             <dt>Last visit</dt><dd>{c.last_visit ? fmtDate(c.last_visit) : "—"}</dd>
             <dt>Last service</dt><dd>{c.last_service ?? "—"}</dd>
           </dl>
+          <div className="row">
+            <a className="btn btn-primary btn-sm" href={reachable ? `tel:+91${digits.slice(-10)}` : undefined} aria-disabled={!reachable}
+               title={reachable ? undefined : "Number chhupa hai (demo ya staff view)"} onClick={(e) => { if (!reachable) e.preventDefault(); }}>
+              <Icon name="phone" small />Call karo</a>
+            <a className="btn btn-ghost btn-sm" href={reachable ? `https://wa.me/91${digits.slice(-10)}` : undefined} target="_blank" rel="noopener noreferrer"
+               aria-disabled={!reachable} title={reachable ? undefined : "Number chhupa hai (demo ya staff view)"} onClick={(e) => { if (!reachable) e.preventDefault(); }}>
+              WhatsApp karo</a>
+          </div>
+          {hist.loading && !hist.data && <p className="muted small">Bookings aur calls aa rahe hain…</p>}
+          {hist.data && (
+            <section className="history">
+              <h3>Aane wali bookings</h3>
+              {upcoming.length ? <div className="list">{upcoming.map((b) => (
+                <div key={b.booking_id}><span>{fmtDate(b.date)} {b.time} · {b.service} · {b.staff}</span><Chip>{b.receipt_code}</Chip></div>))}</div>
+                : <p className="muted small">Koi nahi.</p>}
+              <h3>Purani bookings</h3>
+              {past.length ? <div className="list">{past.slice(0, 8).map((b) => (
+                <div key={b.booking_id}><span>{fmtDate(b.date)} {b.time} · {b.service}</span><Chip kind={BK_KIND[b.status]}>{b.status.toLowerCase().replace("_", "-")}</Chip></div>))}</div>
+                : <p className="muted small">Koi nahi.</p>}
+              <h3>Haal ki calls</h3>
+              {hist.data.calls.length ? <div className="list">{hist.data.calls.slice(0, 6).map((x) => (
+                <div key={x.call_id}><Link to={`/calls/${encodeURIComponent(x.call_id)}`} onClick={onClose}>{fmtDate(x.started_at)} {fmtTime(x.started_at)}</Link>
+                  <Chip>{outcomeLabel(x.outcome)}</Chip></div>))}</div>
+                : <p className="muted small">Is number se koi call record nahi.</p>}
+            </section>
+          )}
           {!isOwner && <p className="muted small">Poora privacy record (calls, WhatsApp, receipts) sirf owner dekh sakta hai.</p>}
           {isOwner && !live && <p className="muted small">Sample customer hai. Privacy record live engine se aata hai.</p>}
           {isOwner && live && !full && <p className="muted small">Masked number pe record nahi khulta, poore 10 digits chahiye.</p>}
@@ -103,7 +149,7 @@ function CustomerDrawer({ customer: c, pack, live, isOwner, onClose, onErased }:
           {rec.error && <p className="muted" role="status">{rec.error}</p>}
           {r && (
             <section>
-              <h3>Privacy record {r.erased && <Chip kind="bad">mitaya hua</Chip>}</h3>
+              <h3>Privacy record (DPDP) {r.erased && <Chip kind="bad">mitaya hua</Chip>}</h3>
               <dl>
                 <dt>Bookings</dt><dd>{r.bookings.length}</dd>
                 <dt>Calls</dt><dd>{r.calls.length}</dd>
