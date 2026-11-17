@@ -139,8 +139,9 @@ function EngineMenu() {
   return (
     <div className="engine-menu" ref={box}>
       <button type="button" className={current ? "active" : undefined} aria-expanded={open} aria-controls="engine-pages"
+              aria-label={current ? t("Engine pages: {page}", { page: t(current.label) }) : undefined}
               onClick={() => setOpen((o) => !o)}>
-        {current ? `Engine · ${t(current.label)}` : "Engine"}<Icon name="chevron" small />
+        {current ? t(current.label) : "Engine"}<Icon name="chevron" small />
       </button>
       {open && (
         <ul id="engine-pages" aria-label={t("Engine pages")}>

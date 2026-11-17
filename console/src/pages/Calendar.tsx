@@ -280,7 +280,7 @@ function WaitlistPanel({ pack, live }: { pack: string; live: boolean }) {
 /** Payment links the engine issued, and what became of them. */
 function PaymentsPanel({ pack, live }: { pack: string; live: boolean }) {
   const { data, error } = useData<Payment[]>(live ? () => engine.payments(pack) : () => Promise.resolve(sample.payments(pack)), [pack, live]);
-  const rows = data ?? [];
+  const rows = [...(data ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at));
   const paid = rows.filter((p) => p.status === "PAID").reduce((a, p) => a + p.amount_inr, 0);
   useT();
   return (
@@ -292,7 +292,7 @@ function PaymentsPanel({ pack, live }: { pack: string; live: boolean }) {
           {rows.map((p) => (
             <tr key={p.payment_id}>
               <td className="mono">{fmtDate(p.created_at)} {fmtTime(p.created_at)}</td>
-              <td className="mono">{p.booking_id}</td>
+              <td className="mono">{p.receipt_code ? <>{p.receipt_code}{p.phone && <span className="muted"> · {p.phone}</span>}</> : p.booking_id}</td>
               <td className="num right">{fmtInr(p.amount_inr)}</td>
               <td><Chip kind={PAY_KIND[p.status]}>{p.status.toLowerCase()}{p.paid_at ? ` · ${fmtTime(p.paid_at)}` : ""}</Chip></td>
               <td>{p.link ? <a href={linkHref(p.link)} target="_blank" rel="noopener noreferrer">{t("open")} <Icon name="external" small /></a> : "—"}</td>

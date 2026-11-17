@@ -160,9 +160,13 @@ function build(p: PackInfo, now: Date): Shop {
       const bookedToday = date >= day && r() < .15;
       const leadDays = bookedToday ? 0 : 1 + Math.floor(r() * 6);
       // booked earlier means before today, never "later than today"
-      const createdDay = bookedToday ? day : addDays(date, -leadDays) < day ? addDays(date, -leadDays) : addDays(day, -1 - Math.floor(r() * 3));
+      let createdDay = bookedToday ? day : addDays(date, -leadDays) < day ? addDays(date, -leadDays) : addDays(day, -1 - Math.floor(r() * 3));
       const latest = date === day ? Math.min(nowMin - 2, start - 30) : nowMin - 2;   // booked before it starts, and before now
-      const createdMin = createdDay === day ? Math.max(0, Math.min(latest, 8 * 60 + Math.floor(r() * 12 * 60))) : 9 * 60 + Math.floor(r() * 10 * 60);
+      let createdMin = createdDay === day ? 8 * 60 + Math.floor(r() * 12 * 60) : 9 * 60 + Math.floor(r() * 10 * 60);
+      // A booking "made today" at a time that has not come yet was made the
+      // evening before; clamping it to now piled the whole day's booking calls
+      // into the minutes before now (31 calls by 00:43).
+      if (createdDay === day && createdMin > latest) { createdDay = addDays(day, -1); createdMin = 19 * 60 + Math.floor(r() * 150); }
       const created = `${createdDay}T${hhmm(createdMin)}:${String(Math.floor(r() * 60)).padStart(2, "0")}`;
       const price = svc.price_inr ?? 0;
       const remindedAt = `${addDays(date, -1)}T18:00:00`;
@@ -388,10 +392,10 @@ export const sample = {
 
   /** Deposit links for the bookings that ask for one. */
   payments(pack: string): Payment[] {
-    return shop(pack).bookings.filter((b) => b.deposit_inr > 0 && b.status !== "CANCELLED").slice(-12).map((b) => ({
+    return shop(pack).bookings.filter((b) => b.deposit_inr > 0 && b.status !== "CANCELLED").slice(-12).map((b): Payment => ({
       payment_id: `pay-${b.booking_id}`, booking_id: b.booking_id, amount_inr: b.deposit_inr,
       status: b.paid ? "PAID" : b.date < today() ? "EXPIRED" : "CREATED", link: `/pay/${b.booking_id}`,
-      created_at: b.created_at, paid_at: b.paid ? b.created_at : null,
-    }));
+      created_at: b.created_at, paid_at: b.paid ? b.created_at : null, phone: b.phone, receipt_code: b.receipt_code,
+    })).sort((a, b) => b.created_at.localeCompare(a.created_at));
   },
 };

@@ -5,7 +5,8 @@ import { t, useT } from "../i18n";
 import { MEASURED, measuredOn, ms, pct } from "../results";
 import { useApp } from "../state";
 
-const KINDS = [...new Set((PACKS as { packs: { display_name: string }[] }).packs.map((p) => p.display_name))];
+// "Dental clinic (Pune, Marathinglish)" and "Dental clinic" are one kind of shop.
+const KINDS = [...new Set((PACKS as { packs: { display_name: string }[] }).packs.map((p) => p.display_name.replace(/\s*\(.*\)$/, "")))];
 
 /** The console's front door for someone who has never seen HaanJi: what it
  *  does, the three measured ideas behind it, and two ways to try it. */

@@ -331,4 +331,7 @@ export interface Payment {
   link: string;
   created_at: string;
   paid_at: string | null;
+  /** The caller's number (masked for staff) and the booking's receipt code, when the engine sends them. */
+  phone?: string | null;
+  receipt_code?: string | null;
 }

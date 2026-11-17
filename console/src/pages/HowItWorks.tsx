@@ -2,11 +2,14 @@ import { useState } from "react";
 import PACKS from "../packs.json";
 import { Chip, Empty, Page, Panel, Register } from "../components/Common";
 import { engine } from "../engine";
-import { t, useT } from "../i18n";
+import { en, t, useT } from "../i18n";
 import { businessName } from "../labels";
 import { MEASURED, measuredOn, ms, pct } from "../results";
 import { useApp } from "../state";
 
+const SETUP: Record<string, string> = {
+  full: en("Everything on"), no_speculation: en("Without early lookups"), no_bhasha: en("Without Bhasha"), baseline: en("Neither (plain baseline)"),
+};
 const SCENARIOS = new Map((PACKS as { packs: { pack_id: string; scenarios: number }[] }).packs.map((p) => [p.pack_id, p.scenarios]));
 
 /** What happens on a call, step by step, and what the benchmark measured —
@@ -59,10 +62,10 @@ export default function HowItWorks() {
         </Register>
       </Panel>
 
-      <Panel title={t("Each part switched off")} hint={t("clean scripted calls")}>
+      <Panel title={t("Each part switched off")} hint={t("scripted calls, no added noise")}>
         <Register head={<><th>{t("Setup")}</th><th className="right">{t("Calls")}</th><th className="right">{t("Right outcome")}</th><th className="right">{t("Writes without a yes")}</th></>}>
           {Object.entries(MEASURED.configs).map(([name, c]) => (
-            <tr key={name}><td className="mono">{name}</td><td className="num right">{c.calls}</td><td className="num right">{pct(c.outcome_accuracy)}</td><td className="num right">{c.unconfirmed_writes}</td></tr>
+            <tr key={name}><td>{SETUP[name] ? t(SETUP[name]) : name}</td><td className="num right">{c.calls}</td><td className="num right">{pct(c.outcome_accuracy)}</td><td className="num right">{c.unconfirmed_writes}</td></tr>
           ))}
         </Register>
       </Panel>

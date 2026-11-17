@@ -126,3 +126,14 @@ describe("the sample window", () => {
     expect(WINDOW.futureDays).toBeGreaterThanOrEqual(7);
   });
 });
+
+describe("the sample day follows the clock", () => {
+  it.each(SAMPLE_STATUS.packs)("%s: just after midnight there are only a few calls, and mid-afternoon they are spread over the day", (pack) => {
+    const late = shop(pack, new Date(2026, 10, 18, 0, 43));
+    expect(late.calls.filter((c) => c.outcome === "BOOKED")).toHaveLength(0);
+    expect(late.calls.length).toBeLessThanOrEqual(6);
+    const day = shop(pack, new Date(2026, 10, 17, 15, 30));
+    const hours = new Set(day.calls.map((c) => c.started_at.slice(11, 13)));
+    expect(hours.size).toBeGreaterThanOrEqual(4);
+  });
+});
