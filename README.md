@@ -28,7 +28,7 @@ implemented, measured and testable rather than described:
 | | What it is | What it is worth |
 |---|---|---|
 | **Bhasha Bridge** | A per-tenant phonetic index built from the business's own catalogue, used both to bias the recogniser and to repair its output — but only when the recogniser was unsure *and* the sound key matches exactly. | Entity error rate **30.8% → 0.96%** at 30% recognition noise, with **zero** harmful corrections over 6,990 sentences in seven languages. |
-| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **270 ms → 172 ms**, a 36.3% reduction, with a 46.3% prediction hit rate. |
+| **Speculative Turn Execution** | Branch prediction for dialogue. Read-only tools are predicted from partial transcripts and executed while the caller is still speaking; the result is used only if the real turn asks for byte-identical arguments. | Median latency on read turns **226 ms → 151 ms**, a 33.4% reduction, with a 46.3% prediction hit rate. |
 | **Pramaan Ledger** | Every write is sealed into an Ed25519-signed, hash-chained receipt that binds the action to the caller's recorded confirmation. Daily Merkle anchors; an independent verifier. | **80/80** single-field tampering attempts detected; deletion and forgery detected; **0** unconfirmed writes accepted. |
 
 Every number above was produced by `python -m haanji.bench` on this repository and
@@ -285,10 +285,10 @@ with_speculation_on_and_off` asserts the strong form of this — the transcript 
 the call must be identical whether speculation is on or off, because it is a
 latency optimisation and nothing else.
 
-Measured: **270 ms → 172 ms** median on read turns (36.3% lower), 46.3% hit rate
-over 270 speculations, 226 ms saved per hit. Write turns are never speculated, so
-the booking turn itself is not faster: its p90 is 157 ms without
-speculation and 163 ms with it — reported rather than averaged away. (1.0
+Measured: **226 ms → 151 ms** median on read turns (33.4% lower), 46.3% hit rate
+over 270 speculations, 204 ms saved per hit. Write turns are never speculated, so
+the booking turn itself is not faster: its p90 is 95 ms without
+speculation and 108 ms with it — reported rather than averaged away. (1.0
 reported 47.2% on read turns; 1.1 asks availability with more specific
 arguments — a part of the day, an exact time, a staff member — and no longer
 guesses a day the caller has not named, so fewer speculations fire; §7.1 of
