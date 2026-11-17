@@ -31,6 +31,8 @@ interface AppState {
   signOut: () => void;
   /** POST /api/auth/logout (every device), then forget the token here. */
   signOutEverywhere: () => Promise<void>;
+  sampleView: boolean;            // the Sample switch: show the made-up shop instead of the engine
+  setSampleView: (on: boolean) => void;
 }
 
 const KEY = "haanji.pack";
@@ -47,6 +49,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [hasToken, setHasToken] = useState<boolean>(() => !!getToken());
+  // On with ?sample=1 (a link for a teacher or a client) or from the switch; remembered per browser.
+  const [sampleView, setSampleState] = useState<boolean>(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("sample") === "1") { localStorage.setItem("haanji.sample", "1"); return true; }
+      return localStorage.getItem("haanji.sample") === "1";
+    } catch { return false; }
+  });
+  const setSampleView = useCallback((on: boolean) => {
+    try { if (on) localStorage.setItem("haanji.sample", "1"); else localStorage.removeItem("haanji.sample"); } catch { /* not remembered */ }
+    setSampleState(on);
+  }, []);
 
   // One status round-trip, then (with auth on and a token) "who am I". All
   // state lands in the continuation, never synchronously in an effect.
@@ -90,16 +103,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const allowed = useCallback((all: string[]) => (user && !user.packs.includes("*") ? all.filter((p) => user.packs.includes(p)) : all), [user]);
   const value = useMemo<AppState>(() => {
     const authOn = !!status?.auth?.enabled;
-    const mode: Mode = !checked || (authOn && !authChecked) ? "checking" : status ? "live" : hasToken ? "offline" : "demo";
-    const isOwner = status ? (!authOn || user?.role === "owner") : mode === "demo";
-    const readOnly = status ? !!status.demo_readonly : mode !== "live";
+    const mode: Mode = sampleView ? "demo" : !checked || (authOn && !authChecked) ? "checking" : status ? "live" : hasToken ? "offline" : "demo";
+    const isOwner = status && !sampleView ? (!authOn || user?.role === "owner") : mode === "demo";
+    const readOnly = sampleView || (status ? !!status.demo_readonly : mode !== "live");
     return {
       status, online: !!status, checked, mode, pack,
       packs: allowed(status ? status.packs : SAMPLE_STATUS.packs), setPack, refresh,
       authRequired: authOn && authChecked && !user,
-      user, isOwner, readOnly, signIn, signOut, signOutEverywhere,
+      user, isOwner, readOnly, signIn, signOut, signOutEverywhere, sampleView, setSampleView,
     };
-  }, [status, checked, pack, setPack, refresh, allowed, authChecked, hasToken, user, signIn, signOut, signOutEverywhere]);
+  }, [status, checked, pack, setPack, refresh, allowed, authChecked, hasToken, user, signIn, signOut, signOutEverywhere, sampleView, setSampleView]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

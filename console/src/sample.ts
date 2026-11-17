@@ -4,7 +4,7 @@
  * engine's own shapes. Every page labels it as sample data, and the console
  * never substitutes it for a signed-in owner (see state.tsx `mode`).
  */
-import { dayOfWeek, eachDay } from "./dates";
+import { addDays, dayOfWeek, eachDay, today } from "./dates";
 import type { Booking, CallRow, Customer, Export, Insights, Lexicon, PackSummary, Payment, Status, Turn, WaitlistEntry } from "./types";
 
 export const SAMPLE_STATUS: Status = {
@@ -33,83 +33,183 @@ const DEMO_TURNS: Turn[] = [
     interrupted: false, corrections: [] },
 ];
 
-const CALLS: CallRow[] = [
-  { call_id: "sample-001", channel: "PHONE", phone: "98XXXXXX10", started_at: "2026-09-07T11:04:12",
-    ended_at: "2026-09-07T11:04:53", outcome: "BOOKED", corrections: 1, spec_started: 1, spec_hits: 1,
+const HAND_CALLS: CallRow[] = [
+  { call_id: "sample-001", channel: "PHONE", phone: "98XXXXXX10", started_at: `${today()}T11:04:12`,
+    ended_at: `${today()}T11:04:53`, outcome: "BOOKED", corrections: 1, spec_started: 1, spec_hits: 1,
     latency_p50: 31, turns_json: JSON.stringify(DEMO_TURNS), receipts_json: JSON.stringify(["2504-7863"]) },
-  { call_id: "sample-002", channel: "WHATSAPP", phone: "98XXXXXX78", started_at: "2026-09-07T10:51:02",
+  { call_id: "sample-002", channel: "WHATSAPP", phone: "98XXXXXX78", started_at: `${today()}T10:51:02`,
     ended_at: null, outcome: "FAQ_ANSWERED", corrections: 0, spec_started: 0, spec_hits: 0,
     latency_p50: 0.6, turns_json: "[]", receipts_json: "[]" },
-  { call_id: "sample-003", channel: "PHONE", phone: "99XXXXXX33", started_at: "2026-09-07T10:33:47",
+  { call_id: "sample-003", channel: "PHONE", phone: "99XXXXXX33", started_at: `${today()}T10:33:47`,
     ended_at: null, outcome: "LEAD_CAPTURED", corrections: 2, spec_started: 1, spec_hits: 0,
     latency_p50: 180, turns_json: "[]", receipts_json: "[]" },
-  { call_id: "sample-006", channel: "PHONE", phone: "97XXXXXX41", started_at: "2026-09-07T10:20:31",
-    ended_at: "2026-09-07T10:21:02", outcome: "REFUSED", corrections: 0, spec_started: 0, spec_hits: 0,
+  { call_id: "sample-006", channel: "PHONE", phone: "97XXXXXX41", started_at: `${today()}T10:20:31`,
+    ended_at: `${today()}T10:21:02`, outcome: "REFUSED", corrections: 0, spec_started: 0, spec_hits: 0,
     latency_p50: 0.7,
     turns_json: JSON.stringify([{ heard: "daant mein dard hai koi dawai bata do", corrected: "daant mein dard hai koi dawai bata do",
       said: "Dawai main nahi bata sakti — doctor dekh ke batayenge. Aaj shaam ka time dekhun?", tools: [], speculation_hits: [],
       guard: "no_medical_advice", latency_ms: 0.7, interrupted: false, corrections: [] }]),
     receipts_json: "[]" },
-  { call_id: "sample-004", channel: "PHONE", phone: null, started_at: "2026-09-07T10:12:09",
+  { call_id: "sample-004", channel: "PHONE", phone: null, started_at: `${today()}T10:12:09`,
     ended_at: null, outcome: "HANDED_OFF", corrections: 0, spec_started: 0, spec_hits: 0,
     latency_p50: 0.5, turns_json: "[]", receipts_json: "[]" },
-  { call_id: "sample-005", channel: "WEB", phone: "98XXXXXX02", started_at: "2026-09-07T09:58:40",
+  { call_id: "sample-005", channel: "WEB", phone: "98XXXXXX02", started_at: `${today()}T09:58:40`,
     ended_at: null, outcome: "BOOKED", corrections: 1, spec_started: 2, spec_hits: 1,
     latency_p50: 137, turns_json: "[]", receipts_json: JSON.stringify(["1F3A-90C2"]) },
 ];
 
-/** A week of demo bookings laid over whatever dates are on screen, so the
- *  calendar always has something to show. Deterministic per weekday. */
-const DAY_PLAN: Record<number, Omit<Booking, "booking_id" | "date" | "created_at" | "receipt_code">[]> = {
-  1: [
-    { service: "root canal", staff: "Dr Sheikh", time: "09:30", duration_min: 60, customer_name: "Vijay Sharma", phone: "9876543210", status: "CONFIRMED", paid: false, deposit_inr: 500, payment_link: "/pay/sample-1", reminder_sent_at: null },
-    { service: "cleaning", staff: "Dr Mehta", time: "11:00", duration_min: 30, customer_name: "Pooja Verma", phone: "9898989878", status: "CONFIRMED", paid: true, deposit_inr: 300, payment_link: null, reminder_sent_at: "2026-10-27T18:00:00" },
-  ],
-  2: [
-    { service: "braces consult", staff: "Dr Mehta", time: "16:00", duration_min: 30, customer_name: "Arjun Nair", phone: "9812345602", status: "CONFIRMED", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: null },
-  ],
-  3: [
-    { service: "cleaning", staff: "Dr Sheikh", time: "10:30", duration_min: 30, customer_name: "Rekha Jain", phone: "9933221133", status: "NO_SHOW", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: "2026-10-28T18:00:00" },
-    { service: "root canal", staff: "Dr Sheikh", time: "12:00", duration_min: 60, customer_name: "Imran Khan", phone: "9700011141", status: "CONFIRMED", paid: true, deposit_inr: 500, payment_link: null, reminder_sent_at: null },
-    { service: "filling", staff: "Dr Mehta", time: "17:30", duration_min: 30, customer_name: "Sana Sheikh", phone: "9811112222", status: "CANCELLED", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: null },
-  ],
-  4: [
-    { service: "filling", staff: "Dr Mehta", time: "11:30", duration_min: 30, customer_name: "Meera Iyer", phone: "9822334455", status: "COMPLETED", paid: true, deposit_inr: 300, payment_link: null, reminder_sent_at: "2026-10-28T18:00:00" },
-  ],
-  5: [
-    { service: "cleaning", staff: "Dr Sheikh", time: "09:00", duration_min: 30, customer_name: "Vijay Sharma", phone: "9876543210", status: "CONFIRMED", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: null },
-    { service: "braces consult", staff: "Dr Mehta", time: "15:00", duration_min: 30, customer_name: "Kabir Das", phone: "9845612378", status: "CONFIRMED", paid: false, deposit_inr: 500, payment_link: "/pay/sample-2", reminder_sent_at: null },
-  ],
-  6: [
-    { service: "root canal", staff: "Dr Sheikh", time: "10:00", duration_min: 60, customer_name: "Pooja Verma", phone: "9898989878", status: "CONFIRMED", paid: false, deposit_inr: 0, payment_link: null, reminder_sent_at: null },
-  ],
-};
+
+// ── a full sample shop: 100 customers and the day they make ────────────────
+// Made up, deterministic (the same every time the page opens on a given
+// day), shaped like the dental pack: its services, prices and doctors. Every
+// page that shows it says SAMPLE; none of it ever reaches the engine.
+
+function rng(seed: number): () => number {
+  let a = seed | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const pick = <T,>(r: () => number, xs: readonly T[]): T => xs[Math.floor(r() * xs.length)]!;
+function weighted<T>(r: () => number, xs: readonly (readonly [T, number])[]): T {
+  const total = xs.reduce((a, [, w]) => a + w, 0);
+  let x = r() * total;
+  for (const [v, w] of xs) { if ((x -= w) < 0) return v; }
+  return xs[xs.length - 1]![0];
+}
+const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+
+const FIRST = ["Aarav", "Aditi", "Akash", "Ananya", "Anil", "Anjali", "Arjun", "Ayesha", "Deepak", "Divya", "Farhan", "Gaurav",
+  "Harsh", "Isha", "Kabir", "Kavya", "Kiran", "Lakshmi", "Manish", "Meera", "Mohit", "Naina", "Neha", "Nikhil", "Pooja",
+  "Pradeep", "Priya", "Rahul", "Rajesh", "Ritu", "Rohan", "Sakshi", "Sana", "Sanjay", "Shreya", "Simran", "Sneha", "Suresh",
+  "Tanvi", "Tarun", "Uma", "Varun", "Vikram", "Yash", "Zoya", "Imran", "Gurpreet", "Fatima", "Joseph", "Lalit"] as const;
+const LAST = ["Sharma", "Verma", "Gupta", "Iyer", "Nair", "Khan", "Singh", "Jain", "Mehta", "Patel", "Reddy", "Das",
+  "Bose", "Kulkarni", "Joshi", "Malhotra", "Chopra", "Pillai", "Sheikh", "Agarwal", "Rao", "Mishra", "Kapoor", "Desai"] as const;
+const SERVICES = [
+  { name: "teeth cleaning", price: 1200, min: 30, staff: ["Dr Sheikh", "Dr Malhotra", "Dr Iyer"], w: 30, ask: "mujhe teeth cleaning karwani hai" },
+  { name: "full body checkup", price: 800, min: 30, staff: ["Dr Malhotra"], w: 22, ask: "daant ka checkup karwana hai" },
+  { name: "root canal", price: 6500, min: 60, staff: ["Dr Sheikh", "Dr Iyer"], w: 16, ask: "haan ji mujhe root canal karwana tha" },
+  { name: "braces consultation", price: 1000, min: 45, staff: ["Dr Iyer"], w: 13, ask: "braces ke baare mein doctor se milna hai" },
+  { name: "tooth extraction", price: 2500, min: 45, staff: ["Dr Sheikh", "Dr Malhotra"], w: 11, ask: "akal daad nikalwani hai" },
+  { name: "dental implant", price: 28000, min: 90, staff: ["Dr Sheikh"], w: 4, ask: "implant ke liye appointment chahiye" },
+] as const;
+const LEAD_ASKS = ["Sunday ko slot milega kya", "shaam 8 baje ke baad ka time hai kya", "doctor se seedha baat karni hai",
+  "insurance claim ke baare mein poochna tha", "bachche ke daant mein dard hai, aaj hi dikhana hai"];
+
+export const SAMPLE_CUSTOMERS: Customer[] = (() => {
+  const r = rng(7);
+  const out: Customer[] = [];
+  const used = new Set<string>();
+  while (out.length < 100) {
+    const name = `${pick(r, FIRST)} ${pick(r, LAST)}`;
+    if (used.has(name)) continue;
+    used.add(name);
+    const visits = weighted(r, [[0, 12], [1, 30], [2, 22], [3, 14], [4, 9], [6, 6], [9, 3]] as const);
+    const noShows = weighted(r, [[0, 82], [1, 13], [2, 5]] as const);
+    const svc = weighted(r, SERVICES.map((x) => [x, x.w] as const));
+    const phone = `9${1 + Math.floor(r() * 8)}XXXXX${String(100 + out.length * 7).slice(-3)}`;
+    out.push({ phone, name, last_service: visits ? svc.name : null, last_visit: visits ? addDays(today(), -Math.floor(r() * 150) - 1) : null,
+               visits, bookings: visits + noShows + (r() < .25 ? 1 : 0), no_shows: noShows });
+  }
+  return out.sort((a, b) => (b.last_visit ?? "").localeCompare(a.last_visit ?? ""));
+})();
+
+function makeTurns(ask: string, said: string, tools: string[]): string {
+  const t: Turn = { heard: ask, corrected: ask, said, tools, speculation_hits: [], guard: null, latency_ms: 140, interrupted: false, corrections: [] };
+  return JSON.stringify([t]);
+}
+
+/** Today's calls: the six written by hand above, then a day's worth more. */
+const CALLS: CallRow[] = (() => {
+  const r = rng(Number(today().replace(/-/g, "")));
+  const out: CallRow[] = [...HAND_CALLS];
+  const hours = [[9, 6], [10, 11], [11, 14], [12, 10], [13, 5], [14, 4], [15, 8], [16, 10], [17, 12], [18, 9], [19, 6], [20, 3]] as const;
+  for (let i = 0; i < 112; i++) {
+    const h = weighted(r, hours);
+    const at = `${today()}T${hhmm(h * 60 + Math.floor(r() * 60))}:${String(Math.floor(r() * 60)).padStart(2, "0")}`;
+    const outcome = weighted(r, [["BOOKED", 45], ["FAQ_ANSWERED", 24], ["LEAD_CAPTURED", 13], ["HANDED_OFF", 5], ["REFUSED", 4], ["ABANDONED", 9]] as const);
+    const svc = weighted(r, SERVICES.map((x) => [x, x.w] as const));
+    const c = r() < .7 ? pick(r, SAMPLE_CUSTOMERS) : null;
+    const ask = outcome === "LEAD_CAPTURED" || outcome === "HANDED_OFF" ? pick(r, LEAD_ASKS) : svc.ask;
+    const spec = outcome === "BOOKED" ? 1 + Math.floor(r() * 2) : r() < .3 ? 1 : 0;
+    out.push({
+      call_id: `sample-g${String(i).padStart(3, "0")}`, channel: weighted(r, [["PHONE", 55], ["WHATSAPP", 40], ["WEB", 5]] as const),
+      phone: c ? c.phone : `9${1 + Math.floor(r() * 8)}XXXXX${String(Math.floor(r() * 900) + 100)}`, started_at: at, ended_at: at,
+      outcome, corrections: weighted(r, [[0, 70], [1, 22], [2, 8]] as const), spec_started: spec, spec_hits: spec ? Math.floor(r() * (spec + 1)) : 0,
+      latency_p50: Math.round(110 + r() * 220), receipts_json: "[]",
+      turns_json: makeTurns(ask, outcome === "BOOKED" ? `${svc.name} ke liye slot dekhta hoon.` : "Theek hai, number note kar liya.", outcome === "BOOKED" ? ["check_availability"] : []),
+      // a booked call carries its service's price for the day's revenue below
+      ...(outcome === "BOOKED" ? { _price: svc.price } : {}),
+    } as CallRow);
+  }
+  return out.sort((a, b) => b.started_at.localeCompare(a.started_at));
+})();
+
+/** A working day's bookings for any date: 6 to 12, over the three doctors,
+ *  never on Sunday (the clinic is closed), past days completed or no-show. */
+function bookingsOn(date: string): Booking[] {
+  if (dayOfWeek(date) === 0) return [];
+  const r = rng(Number(date.replace(/-/g, "")) * 31);
+  const n = 6 + Math.floor(r() * 7);
+  const free: Record<string, number> = { "Dr Sheikh": 9 * 60 + 30, "Dr Malhotra": 9 * 60 + 30, "Dr Iyer": 9 * 60 + 30 };
+  const past = date < today();
+  const out: Booking[] = [];
+  for (let i = 0; i < n; i++) {
+    const svc = weighted(r, SERVICES.map((x) => [x, x.w] as const));
+    const staff = pick(r, svc.staff);
+    let start = free[staff]! + Math.floor(r() * 3) * 30;
+    if (start < 15 * 60 + 30 && start + svc.min > 14 * 60) start = 15 * 60 + 30;   // the lunch break
+    if (start + svc.min > 20 * 60) continue;
+    free[staff] = start + svc.min;
+    const c = pick(r, SAMPLE_CUSTOMERS);
+    const status = past ? weighted(r, [["COMPLETED", 86], ["NO_SHOW", 9], ["CANCELLED", 5]] as const)
+                        : weighted(r, [["CONFIRMED", 94], ["CANCELLED", 6]] as const);
+    const code = (Number(date.replace(/-/g, "")) * 7 + i * 131) % 9000 + 1000;
+    out.push({ booking_id: `sample-${date}-${i}`, service: svc.name, staff, date, time: hhmm(start), duration_min: svc.min,
+               customer_name: c.name, phone: c.phone, status, receipt_code: `${code}-${(code * 3) % 9000 + 1000}`,
+               created_at: `${addDays(date, -1)}T18:00:00`, paid: svc.price >= 2500 && r() < .6, deposit_inr: svc.price >= 2500 ? 500 : 0,
+               payment_link: null, reminder_sent_at: null });
+  }
+  return out;
+}
 
 export const sample = {
   status: SAMPLE_STATUS,
 
   insights(): Insights {
+    const outcomes: Record<string, number> = {};
+    const byHour = new Map<string, { hour: string; calls: number; booked: number }>();
+    let revenue = 0, corrections = 0, specStarted = 0, specHits = 0;
+    for (const c of CALLS) {
+      const o = c.outcome ?? "IN_PROGRESS";
+      outcomes[o] = (outcomes[o] ?? 0) + 1;
+      const h = c.started_at.slice(11, 13);
+      const slot = byHour.get(h) ?? { hour: h, calls: 0, booked: 0 };
+      slot.calls++; if (o === "BOOKED") slot.booked++;
+      byHour.set(h, slot);
+      revenue += (c as CallRow & { _price?: number })._price ?? (o === "BOOKED" ? 1200 : 0);
+      corrections += c.corrections; specStarted += c.spec_started ?? 0; specHits += c.spec_hits;
+    }
+    const booked = outcomes.BOOKED ?? 0;
+    const hours = [...byHour.values()].sort((a, b) => a.hour.localeCompare(b.hour));
+    const busiest = hours.reduce((m, x) => (x.calls > m.calls ? x : m), hours[0]!);
     return {
-      tenant_id: "dental_clinic", generated_at: "2026-09-07T19:00:00",
-      calls_total: 63, calls_today: 63,
-      outcomes: { BOOKED: 28, FAQ_ANSWERED: 19, LEAD_CAPTURED: 7, HANDED_OFF: 4, REFUSED: 2, ABANDONED: 3 },
-      by_hour: [
-        { hour: "09", calls: 4, booked: 2 }, { hour: "10", calls: 9, booked: 5 },
-        { hour: "11", calls: 11, booked: 6 }, { hour: "12", calls: 8, booked: 3 },
-        { hour: "13", calls: 3, booked: 1 }, { hour: "14", calls: 2, booked: 0 },
-        { hour: "15", calls: 6, booked: 2 }, { hour: "16", calls: 7, booked: 3 },
-        { hour: "17", calls: 5, booked: 3 }, { hour: "18", calls: 5, booked: 2 },
-        { hour: "19", calls: 3, booked: 1 },
-      ],
-      bookings_confirmed: 28, revenue_booked_inr: 41200, leads_open: 7,
-      missed_calls: { total: 9, recovered: 6 }, corrections_total: 41,
-      speculation: { started: 110, hits: 50, hit_rate: 0.455 },
-      cost: { ai_per_call_inr: 3.2, receptionist_per_call_inr: 9.2 },
+      tenant_id: "dental_clinic", generated_at: `${today()}T19:00:00`,
+      calls_total: CALLS.length, calls_today: CALLS.length, outcomes, by_hour: hours,
+      bookings_confirmed: booked, revenue_booked_inr: revenue, leads_open: outcomes.LEAD_CAPTURED ?? 0,
+      missed_calls: { total: 14, recovered: 10 }, corrections_total: corrections,
+      speculation: { started: specStarted, hits: specHits, hit_rate: specStarted ? specHits / specStarted : 0 },
+      cost: { ai_per_call_inr: 3.16, receptionist_per_call_inr: 9.23 },
       insights: [
-        "Peak hour is 11:00 — 11 calls, 6 of them booked.",
-        "6 of 9 missed calls were recovered on WhatsApp — ₹8,400 that would have been lost.",
-        "Bhasha Bridge repaired 41 words today; the most common was 'rut kanal' → 'root canal'.",
-        "2 callers asked for medicine advice; the agent declined and offered a slot instead.",
+        `${CALLS.length} calls aayi; ${booked} booking bani (${Math.round((booked * 100) / CALLS.length)}%).`,
+        `Calendar par bookings catalogue ke daam se lagbhag ₹${revenue.toLocaleString("en-IN")} ki hain.`,
+        "14 missed calls mein se 10 WhatsApp se wapas aaye.",
+        `Sabse busy ghanta: ${busiest.hour}:00, ${busiest.calls} calls.`,
+        `Bhasha Bridge ne ${corrections} galat sune shabd theek kiye.`,
+        "Sample data: 100 nakli customers ka ek din. Asli numbers ke liye Sample switch band karo.",
       ],
     };
   },
@@ -156,28 +256,12 @@ export const sample = {
   },
 
   bookings(from: string, to: string): Booking[] {
-    const out: Booking[] = [];
-    for (const date of eachDay(from, to)) {
-      const dow = dayOfWeek(date);
-      (DAY_PLAN[dow] ?? []).forEach((b, i) => {
-        const n = (Number(date.replace(/-/g, "")) * 7 + i * 131) % 9000 + 1000;
-        out.push({ ...b, booking_id: `sample-${date}-${i}`, date, created_at: `${date}T08:00:00`, receipt_code: `${n}-${(n * 3) % 9000 + 1000}` });
-      });
-    }
-    return out;
+    return eachDay(from, to).flatMap(bookingsOn);
   },
 
   customers(query = ""): Customer[] {
-    const all: Customer[] = [
-      { phone: "9876543210", name: "Vijay Sharma", last_service: "root canal", last_visit: "2026-10-27", visits: 4, bookings: 5, no_shows: 0 },
-      { phone: "9898989878", name: "Pooja Verma", last_service: "cleaning", last_visit: "2026-10-20", visits: 6, bookings: 6, no_shows: 0 },
-      { phone: "9933221133", name: "Rekha Jain", last_service: "cleaning", last_visit: "2026-08-02", visits: 1, bookings: 3, no_shows: 2 },
-      { phone: "9812345602", name: "Arjun Nair", last_service: "braces consult", last_visit: null, visits: 0, bookings: 1, no_shows: 0 },
-      { phone: "9700011141", name: "Imran Khan", last_service: "root canal", last_visit: "2026-09-14", visits: 2, bookings: 2, no_shows: 0 },
-      { phone: "9822334455", name: "Meera Iyer", last_service: "filling", last_visit: "2026-10-29", visits: 3, bookings: 3, no_shows: 0 },
-    ];
     const needle = query.trim().toLowerCase();
-    return needle ? all.filter((c) => c.name.toLowerCase().includes(needle) || c.phone.endsWith(needle)) : all;
+    return needle ? SAMPLE_CUSTOMERS.filter((c) => c.name.toLowerCase().includes(needle) || c.phone.endsWith(needle)) : SAMPLE_CUSTOMERS;
   },
 
   waitlist(): WaitlistEntry[] {

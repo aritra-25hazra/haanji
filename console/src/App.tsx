@@ -48,7 +48,7 @@ const PILL: Record<Mode, { text: string; title: string }> = {
 };
 
 export default function App() {
-  const { mode, pack, packs, setPack, authRequired, user, isOwner, signOut } = useApp();
+  const { mode, pack, packs, setPack, authRequired, user, isOwner, signOut, sampleView, setSampleView } = useApp();
   const location = useLocation();
   // On a phone the tabs scroll sideways; keep the current one in view.
   useEffect(() => {
@@ -72,6 +72,10 @@ export default function App() {
           <select aria-label="Pack" value={pack} onChange={(e) => setPack(e.target.value)}>
             {packs.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
+          <button type="button" className="sample-switch" aria-pressed={sampleView} onClick={() => setSampleView(!sampleView)}
+                  title={sampleView ? "Asli data par wapas" : "100 nakli customers ki ek dukaan dikhao (demo ke liye)"}>
+            <i aria-hidden="true" />Sample
+          </button>
           <span className={"live" + (mode === "live" ? "" : " off")} title={pill.title}><i />{pill.text}</span>
           <a href="/engine/talk" target="_blank" rel="noopener noreferrer" aria-label="Talk to HaanJi (nayi tab mein)"><span>Talk</span><Icon name="external" small /></a>
           {user && (

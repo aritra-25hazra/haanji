@@ -35,7 +35,7 @@ export function Icon({ name, small = false }: { name: string; small?: boolean })
 // ── layout ─────────────────────────────────────────────────────────────────
 export function Page({ title, sub, actions, children }:
   { title: string; sub?: string; actions?: ReactNode; children: ReactNode }) {
-  const { mode, refresh } = useApp();
+  const { mode, refresh, sampleView, setSampleView } = useApp();
   return (
     <>
       <div className="page-head">
@@ -45,12 +45,17 @@ export function Page({ title, sub, actions, children }:
         </div>
         {actions && <div className="row">{actions}</div>}
       </div>
-      {mode === "demo" && (
+      {mode === "demo" && (sampleView ? (
+        <div className="banner" role="status" data-testid="sample-banner">
+          <span><b>Sample data:</b> 100 nakli customers ki ek dukaan, sirf dikhane ke liye. Inme se kuch bhi asli nahi.</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setSampleView(false)}>Asli data dikhao</button>
+        </div>
+      ) : (
         <div className="banner" role="status" data-testid="sample-banner">
           <Icon name="refresh" small />
           Engine se connect nahi ho pa raha, isliye sample data dikha raha hoon. Thodi der mein dobara try karo.
         </div>
-      )}
+      ))}
       {mode === "offline" && (
         <div className="banner bad" role="alert" data-testid="offline-banner">
           <Icon name="x" small />
