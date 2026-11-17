@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -6,6 +7,8 @@ import react from "@vitejs/plugin-react";
 // proxies it in the compose stack. The prefix is stripped on the way through.
 export default defineConfig({
   plugins: [react()],
+  // "@/..." is src/, as tsconfig.json says; shadcn writes React Bits components with it.
+  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   server: {
     port: 5173,
     proxy: {

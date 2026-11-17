@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { engine } from "../engine";
+import Stepper, { Step } from "../components/Stepper";
 import { useApp } from "../state";
 import { Chip, Icon, NotLive, Page, Panel } from "../components/Common";
 import type { Draft, DraftRequest } from "../types";
@@ -75,11 +76,12 @@ export default function Onboard() {
 
   return (
     <Page title="Nayi dukaan" sub="Paanch sawaal, aur agent aapki dukaan ka phone uthane ko taiyaar.">
-      <ol className="steps" aria-label="Steps">
-        {STEPS.map((s, i) => <li key={s} className={i === step ? "on" : i < step ? "done" : undefined}><span>{i + 1}</span>{s}</li>)}
-      </ol>
+      {/* React Bits' Stepper draws the steps and slides between them; the
+          buttons below stay ours, so "Aage" still waits for each step's answer. */}
+      <Stepper step={step + 1} onStepChange={(n) => setStep(Math.min(Math.max(n, 1), STEPS.length) - 1)} linear showFooter={false}
+               theme="light" accentColor="#1B3B8C" frame={false} width="100%" radius={12} className="onboard-stepper">
 
-      {step === 0 && (
+        <Step title={STEPS[0]}>
         <Panel title="1 · Dukaan ke baare mein">
           <div className="body form">
             <label className="field"><span>Business ka naam</span><input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="jaise: Smile Care Dental" /></label>
@@ -91,8 +93,8 @@ export default function Onboard() {
             <label className="field"><span>Greeting (khali chhodo to apne aap banega)</span><input className="input" value={greeting} onChange={(e) => setGreeting(e.target.value)} placeholder={name ? `Haanji, ${name}. Main aapki kya madad karun?` : "Haanji, …"} /></label>
           </div>
         </Panel>
-      )}
-      {step === 1 && (
+        </Step>
+        <Step title={STEPS[1]}>
         <Panel title="2 · Log" hint="jinke naam se booking hogi">
           <div className="body form">
             <label className="field"><span>Inhe kya kehte hain (doctor, stylist, teacher…)</span><input className="input" value={role} onChange={(e) => setRole(e.target.value)} placeholder="khali chhodo to business type se" /></label>
@@ -100,8 +102,8 @@ export default function Onboard() {
             <div className="chips">{staff.map((p) => <Chip key={p} kind="ok">{p}</Chip>)}</div>
           </div>
         </Panel>
-      )}
-      {step === 2 && (
+        </Step>
+        <Step title={STEPS[2]}>
         <Panel title="3 · Timing" hint="jis din band ho, tick hata do">
           <div className="body form">
             {DAYS.map(([d, label]) => {
@@ -119,8 +121,8 @@ export default function Onboard() {
             })}
           </div>
         </Panel>
-      )}
-      {step === 3 && (
+        </Step>
+        <Step title={STEPS[3]}>
         <Panel title="4 · Services" hint="naam, kitna time, kitna daam, kaun karta hai" actions={<button className="btn btn-ghost btn-sm" onClick={() => setServices((s) => [...s, { name: "", duration: "30", price: "", staff: [], aliases: "" }])}>+ service</button>}>
           <div className="body form">
             {services.map((s, i) => {
@@ -144,8 +146,8 @@ export default function Onboard() {
             <label className="field"><span>Ilaaka / branch ke naam (comma se alag). Recogniser inhe galat sunta hai, isliye poochte hain</span><input className="input" value={placesText} onChange={(e) => setPlacesText(e.target.value)} placeholder="Vijay Nagar, Bhawarkuan" /></label>
           </div>
         </Panel>
-      )}
-      {step === 4 && (
+        </Step>
+        <Step title={STEPS[4]}>
         <Panel title="5 · Taiyaar" hint={draft ? `pack ${draft.pack_id}${draft.exists ? " (pehle se hai, save karne se overwrite hoga)" : ""}` : "pehle pack banao"}
                actions={<>
                  <button className="btn btn-primary btn-sm" onClick={build} disabled={busy !== null}>{busy === "draft" ? "Bana raha…" : "Pack banao"}</button>
@@ -166,7 +168,8 @@ export default function Onboard() {
             {draft && <details><summary>YAML dekho (Pack Studio mein baad mein bhi edit hoga)</summary><pre className="yaml">{draft.yaml}</pre></details>}
           </div>
         </Panel>
-      )}
+        </Step>
+      </Stepper>
 
       <div className="wizard-nav">
         <button className="btn btn-ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>Peeche</button>

@@ -65,6 +65,7 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = ["real_today: the test is about the live date, so the weekend shift in conftest leaves it alone"]
 
 [tool.ruff]
 line-length = 120

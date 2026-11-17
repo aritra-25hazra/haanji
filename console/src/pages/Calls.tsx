@@ -15,7 +15,7 @@ export default function Calls() {
   const { data, loading, error, reload } = useData(loader, [pack, mode]);
 
   if (!live && mode !== "demo") return <NotLive title="Calls" sub={SUB} />;
-  if (loading && !data) return <Loading />;
+  if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (
       <Page title="Calls">
@@ -26,14 +26,14 @@ export default function Calls() {
 
   return (
     <Page title="Calls" sub={SUB}>
-      <Panel title={live ? "Engine ki calls" : "Sample calls"} hint={`${data.length} calls · ${pack.replace(/_/g, " ")}`}>
+      <Panel title={live ? "Saari calls" : "Sample calls"} hint={`${data.length} calls · ${pack.replace(/_/g, " ")}`}>
         {data.length === 0 ? (
           <Empty>
             <p>Abhi koi call nahi.</p>
             <a className="btn btn-primary" href="/engine/talk" target="_blank" rel="noopener noreferrer">/talk pe ek call karke dekho <Icon name="external" small /></a>
           </Empty>
         ) : (
-          <Register head={<><th>Kab</th><th>Channel</th><th>Caller</th><th>Outcome</th><th className="right">Repairs</th><th className="right">Spec hits</th><th className="right">Latency p50</th></>}>
+          <Register cards head={<><th>Kab</th><th>Kahan se</th><th>Number</th><th>Nateeja</th><th className="right">Shabd sudhaare</th><th className="right">Pehle se taiyaar</th><th className="right">Jawab ka time</th></>}>
             {data.map((c, i) => (
               <tr key={c.call_id} {...rowButton(() => nav(`/calls/${c.call_id}`), `Call ${fmtDate(c.started_at)} ${fmtTime(c.started_at)} kholo`)}
                   data-reveal style={{ "--i": i } as CSSProperties}>

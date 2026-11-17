@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy aur data · HaanJi</title>
+<meta name="description" content="HaanJi kaunsa data rakhta hai, kitne din, aur customer use kaise dekh ya mita sakta hai.">
+<meta name="theme-color" content="#1B3B8C">
+<link rel="icon" href="static/icon-192.png" type="image/png">
+<link rel="stylesheet" href="static/fonts.css">
+<link rel="stylesheet" href="static/signboard.css">
+<style>
+  ::selection { background: var(--marigold); color: var(--cobalt); }
+  main { padding: 24px 0 96px; }
+  .doc { max-width: 68ch; }
+  h1 { font-size: clamp(36px, 5vw, 56px); margin: 24px 0 14px; text-wrap: balance; }
+  .doc > p.lead { color: var(--haze); opacity: 1; font-size: 18px; margin-bottom: 40px; text-wrap: pretty; }
+  .doc h2 { font-size: 26px; margin: 44px 0 12px; }
+  .doc p, .doc li { line-height: 1.65; text-wrap: pretty; }
+  .doc p { margin: 0 0 14px; }
+  .doc ul { margin: 0 0 14px; padding-left: 20px; }
+  .doc li { margin-bottom: 6px; }
+  .doc b { color: var(--chalk); }
+  .doc a { color: var(--marigold); }
+  .fact { display: inline-block; padding: 1px 8px; border-radius: 6px; background: rgba(245, 185, 30, .16); color: var(--marigold); font-weight: 600; }
+  .note { margin-top: 48px; padding: 18px 20px; border-radius: var(--r-card); background: var(--cobalt-deep); color: var(--haze); font-size: 15px; }
+  .foot { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 28px 24px; border-top: 1px solid rgba(255, 247, 230, .15); font-size: 14px; }
+  .foot a { color: var(--marigold); display: inline-flex; align-items: center; min-height: 24px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Seedha content pe jao</a>
+<header class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="wordmark" href="./">HaanJi <span class="dev">हाँजी</span></a>
+    <ul><li><a href="./">Home</a></li><li><a href="talk">Demo</a></li><li><a href="verify">Receipt verifier</a></li></ul>
+  </nav>
+</header>
+<main id="main" class="wrap">
+  <article class="doc">
+    <h1>Privacy aur data</h1>
+    <p class="lead">Ye page batata hai ki HaanJi ka software kya rakhta hai, kitne din, aur customer apna data kaise dekh ya mita sakta hai. Jo dukaan HaanJi chalati hai, uski apni privacy policy bhi ho sakti hai.</p>
+
+    <h2>Kya rakha jaata hai</h2>
+    <ul>
+      <li><b>Calls aur WhatsApp messages:</b> caller ne kya kaha, agent ne kya jawab diya, aur caller ka number.</li>
+      <li><b>Bookings:</b> service, din, time, kiske saath, aur customer ka naam aur number.</li>
+      <li><b>Receipts:</b> har booking ka signed record. Isme naam aur number har customer ki alag chaabi se encrypted rehte hain.</li>
+    </ul>
+    <p>Browser demo par awaaz ko browser ka speech recognition text banata hai (Chrome mein ye Google ki service hai). HaanJi ke server tak sirf text pahunchta hai.</p>
+
+    <h2>Kitne din</h2>
+    <p>Calls, WhatsApp messages aur missed calls <span class="fact" id="days">180 din</span> baad apne aap mit jaate hain. Bookings aur receipts dukaan ka record hain, isliye woh rehte hain.</p>
+
+    <h2>Call ki shuruaat mein bataana</h2>
+    <p id="consent">Har call ek line se shuru ho sakti hai ki baat record ho rahi hai. Line dukaan khud likhti hai.</p>
+
+    <h2>Customer ke haq</h2>
+    <ul>
+      <li><b>Dekhna:</b> customer ke kehne par dukaan uske number par rakha sab kuch dekh sakti hai: bookings, calls aur receipts.</li>
+      <li><b>Mitana:</b> customer ke kehne par uska record mita diya jaata hai. Receipts ki chaabi nasht hoti hai, isliye unme naam aur number phir kabhi padhe nahi ja sakte; receipt ki chain phir bhi verify hoti rehti hai.</li>
+      <li><b>Apni booking check karna:</b> confirmation code se customer <a href="verify">apni receipt</a> browser mein khud verify kar sakta hai.</li>
+    </ul>
+
+    <section id="demo-note" hidden>
+    <h2>Public demo par</h2>
+    <p>Is demo par login band hai, isliye koi bhi console dekh sakta hai. Wahan numbers ke sirf aakhri chaar ank dikhte hain, aur calendar ka secret link aur kisi number ka poora record band rehta hai. Demo par asli number dalne se pehle ye yaad rakhein.</p>
+    </section>
+
+    <h2>Data kahan rehta hai</h2>
+    <p>Jo server HaanJi chalata hai, usi par. Code <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub par khula hai</a>, to koi bhi dekh sakta hai ki upar likhi har baat code mein kahan hoti hai.</p>
+
+    <p class="note">Upar ke din aur consent line is server ki asli settings se aate hain (<code>/api/privacy/policy</code>), isliye ye page har deployment par wahi batata hai jo wahan set hai.</p>
+  </article>
+</main>
+<footer class="wrap foot">
+  <span><a href="./">HaanJi</a> · <a href="https://github.com/aritra-25hazra/haanji" rel="noopener">GitHub</a></span>
+  <span>Privacy aur data</span>
+</footer>
+<script src="static/signboard.js"></script>
+<script>
+  window.Signboard.mountIcons();
+  window.Signboard.status().then(function (s) { if (s && s.demo_readonly) document.getElementById("demo-note").hidden = false; });
+  fetch("api/privacy/policy").then(function (r) { return r.ok ? r.json() : null; }).then(function (p) {
+    if (!p) return;
+    const days = document.getElementById("days");
+    if (p.retention_days > 0) days.textContent = p.retention_days + " din";
+    else days.textContent = "kabhi nahi (is server par retention band hai)";
+    const c = document.getElementById("consent");
+    if (p.consent_line) {
+      c.textContent = "Is server par har call is line se shuru hoti hai: ";
+      const q = document.createElement("q"); q.textContent = p.consent_line; c.appendChild(q);
+    } else {
+      c.textContent = "Is server par abhi koi shuruaati line set nahi hai. Dukaan HAANJI_CONSENT_LINE mein apni line likh sakti hai.";
+    }
+  }).catch(function () {});
+</script>
+</body>
+</html>

@@ -194,3 +194,10 @@ a.frame:hover { transform: translateY(-2px); }
   .repair b { opacity: 1; transform: none; }
   .typing i { animation: none; opacity: .6; }
 }
+
+/* ── the parts of the browser the design also owns ───────────────────── */
+::selection { background: var(--marigold); color: var(--cobalt-deep); }
+.wall ::selection { background: var(--cobalt); color: var(--chalk); }
+html { scrollbar-color: rgba(159, 179, 232, .45) var(--cobalt-deep); }
+input, textarea { caret-color: var(--marigold); }
+.mono, .num { font-variant-numeric: tabular-nums; }

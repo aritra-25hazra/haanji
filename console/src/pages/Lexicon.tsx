@@ -20,7 +20,7 @@ export default function Lexicon() {
   const { data, loading, error, reload } = useData(loader, [pack, mode, debounced]);
 
   if (!live && mode !== "demo") return <NotLive title="Bhasha lexicon" sub={SUB} />;
-  if (loading && !data) return <Loading />;
+  if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (
       <Page title="Bhasha lexicon">

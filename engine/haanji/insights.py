@@ -21,6 +21,10 @@ RECEPTIONIST_MONTHLY = 12000       # a part-time front desk in a tier-2 city
 RECEPTIONIST_CALLS_PER_MONTH = 26 * 50
 
 
+def _calls(n: int) -> str:
+    return f"{n} call" if n == 1 else f"{n} calls"
+
+
 def cost_per_call() -> dict[str, float]:
     ai = round(AVG_CALL_MINUTES * (COST_TELEPHONY_PER_MIN + COST_STT_PER_MIN
                                    + COST_TTS_PER_MIN) + COST_INFRA_PER_CALL, 2)
@@ -68,25 +72,23 @@ def compute(tenant_id: str, store: DemoStore, backend: LocalBackend) -> dict[str
     lines: list[str] = []
     if calls:
         booked = outcomes.get("BOOKED", 0)
-        lines.append(f"{len(calls)} calls handled; {booked} became bookings "
+        lines.append(f"{_calls(len(calls))} aayi; {booked} booking bani "
                      f"({booked * 100 // max(len(calls), 1)}%).")
     if revenue:
-        lines.append(f"Bookings on the calendar are worth about ₹{revenue:,} at catalogue prices.")
+        lines.append(f"Calendar par bookings catalogue ke daam se lagbhag ₹{revenue:,} ki hain.")
     if missed["total"]:
-        lines.append(f"{missed['recovered']} of {missed['total']} missed calls were recovered "
-                     f"over WhatsApp — each one is a customer who would have called a competitor.")
+        lines.append(f"{missed['total']} missed calls mein se {missed['recovered']} WhatsApp se wapas aaye.")
     if by_hour:
         busiest = max(by_hour.items(), key=lambda kv: kv[1]["calls"])
-        lines.append(f"Busiest hour so far: {busiest[0]}:00, with {busiest[1]['calls']} calls.")
+        lines.append(f"Sabse busy ghanta ab tak: {busiest[0]}:00, {_calls(busiest[1]['calls'])}.")
     if corrections:
-        lines.append(f"Bhasha Bridge repaired {corrections} misheard words; "
-                     f"every one of them was a service, a name or a locality.")
+        lines.append(f"Bhasha Bridge ne {corrections} galat sune shabd theek kiye; "
+                     f"sab is dukaan ki apni shabd-list ke the.")
     if spec_started:
-        lines.append(f"Speculation answered {spec_hits} of {spec_started} tool calls before "
-                     f"they were asked for.")
-    lines.append(f"Cost per answered call ≈ ₹{costs['ai_per_call_inr']:.2f}, against "
-                 f"≈ ₹{costs['receptionist_per_call_inr']:.2f} per call for a part-time "
-                 f"receptionist.")
+        lines.append(f"Speculation ne {spec_started} mein se {spec_hits} tool calls poochhe jaane se "
+                     f"pehle hi taiyaar rakhe.")
+    lines.append(f"Ek jawab di gayi call ka kharcha ≈ ₹{costs['ai_per_call_inr']:.2f}; part-time "
+                 f"receptionist pe ≈ ₹{costs['receptionist_per_call_inr']:.2f} per call.")
 
     return {
         "tenant_id": tenant_id,

@@ -28,11 +28,11 @@ export default function Customers() {
   return (
     <Page title="Customers" sub="Kaun kitni baar aaya, aakhri baar kya karaya, aur kitni baar nahi aaya. Row kholo to poora record." actions={search}>
       <Panel title="Register" hint={data ? `${data.length} customers${debounced ? ` · "${debounced}"` : ""}` : ""}>
-        {loading && !data ? <Loading />
+        {loading && !data ? <Loading kind="table" />
           : !data ? <Empty>Load nahi hua: {error}<button className="btn btn-ghost btn-sm" onClick={reload}>Dobara try karo</button></Empty>
           : data.length === 0 ? <Empty><p>{debounced ? `"${debounced}" se koi customer nahi mila.` : "Abhi koi customer nahi. Pehli booking ke saath aayega."}</p></Empty>
           : (
-            <Register head={<><th>Naam</th><th>Phone</th><th className="right">Visits</th><th>Last visit</th><th>Last service</th><th className="right">No-shows</th></>}>
+            <Register cards head={<><th>Naam</th><th>Number</th><th className="right">Kitni baar aaye</th><th>Aakhri baar</th><th>Aakhri service</th><th className="right">Nahi aaye</th></>}>
               {data.map((c, i) => (
                 <tr key={c.phone} {...rowButton(() => setOpen(c), `${c.name || c.phone} ka record kholo`)} data-reveal style={{ "--i": Math.min(i, 20) } as CSSProperties}>
                   <td><strong>{c.name || "—"}</strong></td>

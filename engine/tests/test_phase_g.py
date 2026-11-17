@@ -226,6 +226,7 @@ def test_a_number_the_channel_vouched_for_cancels_directly():
 
 
 # ────────────────────────────────────────────────────────── backend
+@pytest.mark.real_today
 def test_today_is_live_and_the_past_cannot_be_booked():
     be = LocalBackend(sqlite3.connect(":memory:"))
     assert be.today == dt.datetime.now(dt.timezone(dt.timedelta(hours=5, minutes=30))).date()

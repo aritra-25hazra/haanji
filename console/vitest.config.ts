@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
@@ -5,6 +6,7 @@ import react from "@vitejs/plugin-react";
 // no engine is needed. Pure helpers are tested in node the same way.
 export default defineConfig({
   plugins: [react()],
+  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],

@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Empty, Icon, Loading } from "./components/Common";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -8,30 +8,36 @@ import Customers from "./pages/Customers";
 import Settings from "./pages/Settings";
 import Calls from "./pages/Calls";
 import CallDetail from "./pages/CallDetail";
-import Ledger from "./pages/Ledger";
 import Lexicon from "./pages/Lexicon";
 import Packs from "./pages/Packs";
 import PackStudio from "./pages/PackStudio";
-import Onboard from "./pages/Onboard";
-import Login from "./pages/Login";
 
-// The two chart pages carry recharts; they load when first opened.
+// The chart pages carry recharts and the animated ones gsap or motion; each
+// loads when first opened, so the first paint ships neither.
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Ops = lazy(() => import("./pages/Ops"));
+const Ledger = lazy(() => import("./pages/Ledger"));
+const Onboard = lazy(() => import("./pages/Onboard"));
+const Login = lazy(() => import("./pages/Login"));
 
-interface NavItem { to: string; label: string; owner?: boolean }
+interface NavItem { to: string; label: string; owner?: boolean; hint?: string }
+// The shop's daily work stays in the bar; the engine's own pages (receipts,
+// vocabulary, packs, latency) sit one click away so an owner is not asked
+// to read eleven tabs to find today's bookings.
 const LINKS: NavItem[] = [
   { to: "/dashboard", label: "Aaj" },
   { to: "/calendar", label: "Calendar" },
   { to: "/customers", label: "Customers" },
   { to: "/calls", label: "Calls" },
-  { to: "/ledger", label: "Pramaan" },
-  { to: "/lexicon", label: "Bhasha" },
-  { to: "/packs", label: "Packs" },
-  { to: "/studio", label: "Studio" },
-  { to: "/onboard", label: "Nayi dukaan" },
-  { to: "/ops", label: "Ops" },
   { to: "/settings", label: "Settings", owner: true },
+];
+const ENGINE: NavItem[] = [
+  { to: "/ledger", label: "Pramaan", hint: "har booking ki signed receipt" },
+  { to: "/lexicon", label: "Bhasha", hint: "shabd jo agent pehchanta hai" },
+  { to: "/packs", label: "Packs", hint: "kis business ke liye kya jaanta hai" },
+  { to: "/studio", label: "Studio", hint: "pack badlo aur test karo" },
+  { to: "/onboard", label: "Nayi dukaan", hint: "naya business 5 sawaal mein" },
+  { to: "/ops", label: "Ops", hint: "speed, errors, counters" },
 ];
 
 const PILL: Record<Mode, { text: string; title: string }> = {
@@ -44,17 +50,24 @@ const PILL: Record<Mode, { text: string; title: string }> = {
 export default function App() {
   const { mode, pack, packs, setPack, authRequired, user, isOwner, signOut } = useApp();
   const location = useLocation();
-  if (authRequired) return <Login />;
+  // On a phone the tabs scroll sideways; keep the current one in view.
+  useEffect(() => {
+    document.querySelector(".nav a.active")?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [location.pathname]);
+  if (authRequired) return <Suspense fallback={<Loading />}><Login /></Suspense>;
   const pill = PILL[mode];
   return (
     <>
       <header className="topbar">
         <Link className="wordmark" to="/dashboard">HaanJi <span className="dev">हाँजी</span></Link>
-        <nav className="nav" aria-label="Main">
-          {LINKS.filter((l) => !l.owner || isOwner).map((l) => (
-            <NavLink key={l.to} to={l.to} className={({ isActive }) => (isActive ? "active" : undefined)}>{l.label}</NavLink>
-          ))}
-        </nav>
+        <div className="navrow">
+          <nav className="nav" aria-label="Main">
+            {LINKS.filter((l) => !l.owner || isOwner).map((l) => (
+              <NavLink key={l.to} to={l.to} className={({ isActive }) => (isActive ? "active" : undefined)}>{l.label}</NavLink>
+            ))}
+          </nav>
+          <EngineMenu key={location.pathname} />
+        </div>
         <div className="tools">
           <select aria-label="Pack" value={pack} onChange={(e) => setPack(e.target.value)}>
             {packs.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -91,6 +104,42 @@ export default function App() {
         </ErrorBoundary>
       </main>
     </>
+  );
+}
+
+/** The engine's pages behind one button. Keyed by the path, so a navigation
+ *  always closes it; Escape and a click outside close it too. */
+function EngineMenu() {
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const current = ENGINE.find((l) => pathname.startsWith(l.to));
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); box.current?.querySelector("button")?.focus(); } };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
+  }, [open]);
+  return (
+    <div className="engine-menu" ref={box}>
+      <button type="button" className={current ? "active" : undefined} aria-expanded={open} aria-controls="engine-pages"
+              onClick={() => setOpen((o) => !o)}>
+        {current ? `Engine · ${current.label}` : "Engine"}<Icon name="chevron" small />
+      </button>
+      {open && (
+        <ul id="engine-pages" aria-label="Engine ke pages">
+          {ENGINE.map((l) => (
+            <li key={l.to}>
+              <NavLink to={l.to} className={({ isActive }) => (isActive ? "active" : undefined)}>
+                <b>{l.label}</b><span>{l.hint}</span>
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

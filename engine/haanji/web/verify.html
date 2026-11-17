@@ -4,14 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pramaan — public receipt verifier</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="icon" href="static/icon-192.png" type="image/png">
+<link rel="stylesheet" href="static/fonts.css">
 <link rel="stylesheet" href="static/signboard.css">
 <style>
   main { padding: 24px 0 80px; }
   h1 { font-size: clamp(36px, 5vw, 56px); margin: 16px 0 8px; }
-  .sub { max-width: 68ch; color: var(--haze); margin-bottom: 24px; }
+  .sub { max-width: 60ch; color: var(--haze); margin-bottom: 24px; text-wrap: pretty; }
   .sub b { color: var(--chalk); }
   .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px; }
   .tamper-note { font-size: 13px; color: #FFB3A3; }
@@ -19,7 +18,7 @@
   .verdict { display: none; margin: 22px 0 10px; }
   .verdict.show { display: inline-flex; }
   .verdict.stamp { font-size: 18px; padding: 12px 18px; gap: 12px; flex-wrap: wrap; transform: rotate(-1.5deg); }
-  .verdict small { font-family: var(--font-body); font-weight: 400; font-size: 13px; letter-spacing: 0; opacity: .85; }
+  .verdict small { font-family: var(--font-body); font-weight: 400; font-size: 13px; letter-spacing: 0; }
   .keyline { font: 12px/1.6 var(--font-mono); color: var(--haze); word-break: break-all; margin: 10px 0 16px; }
   .chainstrip { margin: 8px 0 20px; }
   .chainstrip i { width: 40px; height: 16px; }
@@ -30,7 +29,12 @@
   .st-ok { color: var(--leaf); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
   .st-bad { color: #FFB3A3; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
   .st-skip { color: var(--haze); }
-  .how { margin-top: 36px; padding: 20px 22px; border-radius: var(--r-card); background: var(--chalk); color: var(--ink); font-size: 15px; }
+  .how { margin-top: 36px; padding: 20px 22px; border-radius: var(--r-card); background: var(--chalk); color: var(--ink); font-size: 15px; max-width: 62ch; text-wrap: pretty; }
+  #tech { margin-top: 8px; }
+  #tech > summary { cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; color: var(--marigold); }
+  #tech[open] > summary { margin-bottom: 14px; }
+  .for-customer #tech { margin-top: 28px; border-top: 1px solid rgba(255, 247, 230, .16); padding-top: 12px; }
+  .for-customer .mine { margin-top: 4px; }
   .how b { color: var(--cobalt); }
   .how i { font-style: italic; font-family: var(--font-mono); font-size: 13px; }
   .mine { margin: 16px 0; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
@@ -51,10 +55,11 @@
   </nav>
 </header>
 <main id="main" class="wrap">
-  <span class="eyebrow">Pramaan ledger</span>
-  <h1>Public <span class="dev">सबूत</span> verifier</h1>
-  <p class="sub">Har hash aur har Ed25519 signature <b>aapke browser mein</b> dobara compute hota hai, server pe bharosa kiye bina. Export load kijiye, verify kijiye, phir kisi field se chhedchhad karke dekhiye ki chain kaise tootti hai.</p>
+  <h1 id="title">Public <span class="dev">सबूत</span> verifier</h1>
+  <p class="sub" id="lede">Har hash aur har Ed25519 signature <b>aapke browser mein</b> dobara compute hota hai, server pe bharosa kiye bina. Export load kijiye, verify kijiye, phir kisi field se chhedchhad karke dekhiye ki chain kaise tootti hai.</p>
 
+  <details id="tech" open>
+  <summary>Poora ledger khud verify karo</summary>
   <div class="controls">
     <label class="field"><span>Pack</span><select id="pack" class="input"></select></label>
     <button type="button" class="btn btn-primary" id="load">Is server ka export load karo</button>
@@ -80,6 +85,8 @@
     </table>
   </div>
 
+  </details>
+
   <div class="how">
     <b>Ye page kya karta hai:</b> har receipt ka payload hash uske stored fields se dobara banata hai (canonical JSON: sorted keys, no whitespace), chain link (<i>prev_hash‖payload_hash</i>) recompute karta hai, aur signature ko tenant ki public key se check karta hai (Ed25519, TweetNaCl). Ek bhi character badla → us receipt ka hash badla → aage ki poori chain toot gayi. Kuch bhi is server pe wapas nahi jaata.
   </div>
@@ -94,6 +101,41 @@
   const S = window.Signboard;
   const $ = function (id) { return document.getElementById(id); };
   let current = null;
+
+  // Opened from a booking's confirmation link: the customer's receipt comes
+  // first, in their words; the full-ledger tools fold away below it.
+  const askedCode = new URLSearchParams(location.search).get("code");
+  if (askedCode) {
+    document.body.classList.add("for-customer");
+    $("title").innerHTML = 'Aapki booking ka <span class="dev">सबूत</span>';
+    $("lede").textContent = "Ye receipt aapke confirmation code se khuli hai. Upar VALID ka matlab: booking bilkul waisi hai jaisi aapne haan boli thi, aur kisi ne use baad mein badla nahi.";
+    $("tech").open = false;
+    $("tech").parentNode.insertBefore($("mine"), $("tech"));
+    $("tech").parentNode.insertBefore($("verdict"), $("mine"));
+  }
+
+  const DAYS = ["Ravivaar", "Somvaar", "Mangalvaar", "Budhvaar", "Guruvaar", "Shukravaar", "Shanivaar"];
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const ACTIONS = { book_appointment: "Appointment book hua", reschedule_appointment: "Appointment ka time badla",
+                    cancel_appointment: "Appointment cancel hua", capture_lead: "Callback ke liye number liya" };
+  function niceDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+    if (!m) return iso;
+    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    return DAYS[d.getUTCDay()] + ", " + (+m[3]) + " " + MONTHS[+m[2] - 1] + " " + m[1];
+  }
+  function niceTime(hhmm) {
+    const m = /^(\d{1,2}):(\d{2})/.exec(hhmm || "");
+    if (!m) return hhmm;
+    const h = +m[1];
+    const part = h < 12 ? "subah" : h < 16 ? "dopahar" : h < 20 ? "shaam" : "raat";
+    return ((h + 11) % 12 + 1) + ":" + m[2] + " " + part;
+  }
+  function niceWhen(iso) {
+    const t = new Date(iso || "");
+    if (isNaN(t)) return iso;
+    return t.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }) + " IST";
+  }
 
   S.status().then(function (s) {
     if (!s) return;
@@ -148,9 +190,9 @@
     try { args = JSON.parse(r.action_args); } catch (e) {}
     try { conf = JSON.parse(r.confirmation); } catch (e) {}
     function paint(fields, erased) {
-      const rows = [["Kaam", r.action.replace(/_/g, " ")], ["Service", fields.service], ["Din", fields.date], ["Time", fields.time],
-                    ["Kiske saath", fields.staff], ["Naam", erased ? "(mita diya gaya)" : fields.customer_name], ["Agent ne poocha", conf.prompt_text],
-                    ["Aapne kaha", conf.reply_text], ["Kab", (r.occurred_at || "").replace("T", " ").slice(0, 16)]];
+      const rows = [["Kaam", ACTIONS[r.action] || r.action.replace(/_/g, " ")], ["Service", fields.service], ["Din", niceDate(fields.date)],
+                    ["Time", niceTime(fields.time)], ["Kiske saath", fields.staff], ["Naam", erased ? "(mita diya gaya)" : fields.customer_name],
+                    ["Agent ne poocha", conf.prompt_text], ["Aapne kaha", conf.reply_text], ["Kab confirm hua", niceWhen(r.occurred_at)]];
       $("mine-code").textContent = code + " · seq " + r.seq;
       $("mine-body").innerHTML = rows.filter(function (x) { return x[1]; }).map(function (x) { return "<dt>" + S.esc(x[0]) + "</dt><dd>" + S.esc(String(x[1])) + "</dd>"; }).join("");
       box.hidden = false;
@@ -163,7 +205,7 @@
       .catch(function () {});
     document.querySelectorAll("#rows tr").forEach(function (tr) {
       const td = tr.children[2];
-      if (td && td.textContent.replace("-", "").toUpperCase() === want) { tr.classList.add("mine-row"); tr.scrollIntoView({ block: "center", behavior: "smooth" }); }
+      if (td && td.textContent.replace("-", "").toUpperCase() === want) { tr.classList.add("mine-row"); if (!askedCode) tr.scrollIntoView({ block: "center", behavior: "smooth" }); }
     });
   }
 
@@ -171,7 +213,7 @@
     const r = await fetch("api/receipts/export?pack=" + encodeURIComponent($("pack").value));
     const exp = await r.json();
     $("json").value = JSON.stringify(exp, null, 1).slice(0, 4000);
-    await run(exp, "loaded live from this server");
+    await run(exp, "is server se abhi load hua");
     if (code) showMine(exp, code);
   }
   $("load").onclick = function () { loadLive(null); };

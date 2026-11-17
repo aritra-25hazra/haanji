@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HaanJi — WhatsApp simulator</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Yatra+One&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="icon" href="static/icon-192.png" type="image/png">
+<link rel="stylesheet" href="static/fonts.css">
 <link rel="stylesheet" href="static/signboard.css">
 <style>
   /* The chat canvas stays WhatsApp-like on purpose: same brain, different channel. */
@@ -14,7 +13,7 @@
   body { height: 100dvh; display: flex; overflow: hidden; }
   aside { width: 340px; min-width: 280px; display: flex; flex-direction: column; background: var(--cobalt-deep); border-right: 1px solid rgba(245, 185, 30, .28); }
   aside .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(245, 185, 30, .28); }
-  aside .head a.back { color: var(--haze); font-size: 13px; text-decoration: none; }
+  aside .head a.back { color: var(--haze); font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; min-height: 24px; }
   .newthread { display: flex; gap: 8px; padding: 12px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); }
   .newthread .input { flex: 1; min-width: 0; }
   .wa-live { padding: 10px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }

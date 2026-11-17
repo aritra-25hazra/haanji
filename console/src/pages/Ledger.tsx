@@ -1,4 +1,5 @@
 import { useCallback, useState, type CSSProperties } from "react";
+import DecryptedText from "../components/DecryptedText";
 import { engine, tamper, verifyExport } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
@@ -13,10 +14,11 @@ export default function Ledger() {
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [runs, setRuns] = useState(0);              // each verification re-draws the codes
 
   const run = useCallback(async (exp: Export, note: string) => {
     setBusy(true); setProblem(null);
-    try { setVerdict(await verifyExport(exp)); setLabel(note); }
+    try { setVerdict(await verifyExport(exp)); setLabel(note); setRuns((n) => n + 1); }
     catch (e) { setProblem((e as Error).message); }
     finally { setBusy(false); }
   }, []);
@@ -30,7 +32,7 @@ export default function Ledger() {
   const ops = useData(live ? () => engine.ops(pack) : null, [pack, mode]);
 
   if (!live && mode !== "demo") return <NotLive title="Pramaan ledger" sub={SUB} />;
-  if (loading && !data) return <Loading />;
+  if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (
       <Page title="Pramaan">
@@ -105,7 +107,11 @@ export default function Ledger() {
               <tr key={r.seq} data-reveal style={{ "--i": i } as CSSProperties}>
                 <td className="num">{r.seq}</td>
                 <td>{r.action}</td>
-                <td className="mono">{r.code ? `${r.code.slice(0, 4)}-${r.code.slice(4, 8)}` : "—"}</td>
+                <td className="mono">{r.code
+                  // The code's own characters settle into place each time the browser re-derives the chain.
+                  ? <DecryptedText key={`${runs}-${r.code}`} text={`${r.code.slice(0, 4)}-${r.code.slice(4, 8)}`} animateOn="view"
+                                   sequential revealDirection="start" useOriginalCharsOnly speed={40} />
+                  : "—"}</td>
                 <td>
                   {r.ok === true ? <Chip kind="ok"><Icon name="check" small />verified</Chip>
                     : r.ok === false ? <Chip kind="bad"><Icon name="x" small />BROKEN</Chip>

@@ -4,6 +4,43 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
 
 ## Unreleased
 
+### For the shop that is deciding, the owner, and the caller
+* **Landing page for a buyer.** "Customer ki call se aapke calendar tak" walks
+  one real booking through three real screens (the WhatsApp chat, the
+  customer's receipt, the owner's day); then who it is for (10 packs, 7
+  languages), the engine's numbers with their conditions stated (simulated
+  recognition noise, not live calls), privacy as the code enforces it, how to
+  start, and six questions answered from what the code does. "Free pilot
+  maango" opens WhatsApp with the number in `HAANJI_SALES_WHATSAPP` and is
+  hidden when it is unset. Eyebrow labels gone; the phone nav keeps Demo and
+  the ask.
+* **/verify for the customer.** A confirmation link now opens "Aapki booking
+  ka सबूत" with the receipt first, the day as "Somvaar, 16 Nov 2026", the time
+  as "10:30 subah" and the confirmation time in IST (it showed UTC); the
+  ledger tools fold below.
+* **Console for the owner.** Five daily tabs and an "Engine" menu; "Inhe wapas
+  call karo"; a first-run checklist; React Bits where motion carries state
+  (live feed, receipt codes, sign-in, onboarding steps), loaded lazily.
+* Accessibility: axe finds no serious or critical issue on 15 pages at 1440
+  and 390 px; contrast, small targets (24 px checkboxes, links) and line
+  lengths fixed; `.webp`/`.png` served with their media types.
+* **Premium pass.** Skeletons shaped like the page instead of "Loading…";
+  Calls and Customers become labelled cards on a phone; outcomes, table
+  headers and the engine's errors read in Hinglish; "Sample din dekho" shows
+  an empty shop a full day, watermarked SAMPLE; text selection, caret,
+  scrollbar and tabular numbers themed; the current tab scrolls into view.
+* **Fonts from this server.** The four families (latin, latin-ext for ₹,
+  devanagari; 186 kB in all, each file fetched only when a page needs it) are
+  self-hosted with their OFL notices, cached for a year; no visitor IP goes
+  to Google Fonts.
+* **Brand and pages.** Favicon on every page, a 1200×630 share image with
+  Open Graph and Twitter tags, and `/privacy`, which reads the retention days
+  and consent line from the server it runs on.
+* **Tests no longer fail at the weekend.** Server tests booked "kal" and
+  "parso" on the live clock, and the packs close on Sunday: 17 failed on a
+  Saturday. On Friday to Sunday the tests' today is now the Thursday before
+  (`wall_today()` in the backend; `@pytest.mark.real_today` opts out).
+
 ### Public demo
 * **Strangers no longer see whole phone numbers.** With sign-in off on a public
   server, calls, bookings, customers, the waitlist and payments show only the

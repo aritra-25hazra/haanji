@@ -25,6 +25,22 @@ TENANT = "t_test"
 set_speed(200.0)                     # the suite must not wait on simulated audio
 
 
+@pytest.fixture(autouse=True)
+def _no_relative_day_lands_on_sunday(request, monkeypatch):
+    """The server tests book "aaj", "kal" and "parso" through the live clock,
+    and the packs are closed on Sunday, so on a Friday, Saturday or Sunday
+    some of those bookings became leads (17 tests failed one Saturday). On
+    those days the server's today is the Thursday before, when all three are
+    open. A test about the live date itself opts out with @pytest.mark.real_today."""
+    if request.node.get_closest_marker("real_today"):
+        return
+    import haanji.backend.local as local
+    real = local.wall_today
+    back = real().weekday() - 3                  # Fri 1, Sat 2, Sun 3
+    if back > 0:
+        monkeypatch.setattr(local, "wall_today", lambda: real() - dt.timedelta(days=back))
+
+
 @pytest.fixture
 def pack():
     return load_pack("dental_clinic")
