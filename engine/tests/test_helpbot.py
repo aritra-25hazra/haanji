@@ -71,6 +71,7 @@ def test_claude_gets_the_guide_the_page_and_a_capped_reply():
     kw = b._claude.seen[0]
     assert kw["model"] == hb.CLAUDE_MODEL and kw["max_tokens"] == hb.MAX_REPLY_TOKENS
     assert "30.7% -> 0.96%" in kw["system"][0]["text"] and "cache_control" in kw["system"][0]
+    assert "plain text only" in kw["system"][0]["text"], "the widget shows text, not markdown"
     assert "/calendar" in kw["system"][1]["text"]
     asyncio.run(b.answer([{"role": "user", "content": "hi"}], page="/ledger"))
     assert b._claude.seen[1]["system"][0] == kw["system"][0]          # the cached guide is the same on every page
