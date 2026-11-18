@@ -48,20 +48,26 @@ left out. Say so plainly if asked.
 ### Five minutes before
 
 1. Open https://haanji-engine.onrender.com/api/status to wake the free Render
-   instance (about a minute).
-2. Keep four tabs open:
+   instance (about a minute). While it wakes, the console shows the shape of
+   each page and a seconds count instead of a blank screen.
+2. Sign in to the console (https://haanji-kappa.vercel.app) with the owner's
+   email and password, or with Google. Sign-in is on, so a visitor sees the
+   login page; "Try the demo (no account)" opens the made-up sample shop, not
+   the live bookings.
+3. Keep four tabs open:
    - `/whatsapp`, the WhatsApp simulator;
    - `/talk`, the browser call;
    - `/verify`;
-   - the console on Calls and Pramaan.
-3. Leave `main` alone on demo day. Render redeploys on every push; the engine
-   goes down for a minute or two and loses the demo's bookings.
-4. The dental pack is closed on Sundays. On a Friday, "kal" means Saturday and
+   - the console, signed in, on Calls and the Calendar.
+4. Leave `main` alone on demo day. Render redeploys on every push and the
+   engine goes down for a minute or two. Bookings are kept (they live in the
+   Postgres database), but a call in progress is cut.
+5. The dental pack is closed on Sundays. On a Friday, "kal" means Saturday and
    books fine.
 
 ### The WhatsApp part (2 minutes)
 
-5. In `/whatsapp`, type a 10-digit number and chat:
+6. In `/whatsapp`, type a 10-digit number and chat:
    - "kal subah teeth cleaning karwani hai"
    - pick a slot
    - give a name
@@ -69,6 +75,13 @@ left out. Say so plainly if asked.
 
    The reply carries the receipt link. Open it on `/verify`, then show the same
    booking in the console under Calls and in Pramaan.
+7. Missed-call recovery: type a number and press **Simulate a missed call**.
+   HaanJi writes the first WhatsApp message itself; if the chat ends in a
+   booking, the missed call counts as recovered on the dashboard. Nothing is
+   sent to a real WhatsApp from the simulator.
+
+The simulator's top note says "Meta test number: not for the public yet". If
+asked, that is the business-verification lock described above.
 
 ### When a teacher wants to book from their own phone
 
@@ -81,11 +94,13 @@ Show the QR code (`docs/media/qr-talk.png` for the call, `docs/media/qr-whatsapp
   - say "haan".
 - **Chat (`/whatsapp`).** The same flow, typed: their number at the top, then they chat as on WhatsApp.
 
-While they do it, keep the console on the laptop open on Calls or the Calendar: their booking appears there within a second. The confirmation code opens the signed receipt on `/verify`. On the public demo their number is shown masked, and no real WhatsApp is sent to it.
+Neither page needs an account, even with sign-in on: a visitor can chat and read back only their own conversation, never anyone else's or the list of chats.
+
+While they do it, keep the console on the laptop signed in and open on Calls or the Calendar: their booking appears there within a second. The confirmation code opens the signed receipt on `/verify`. No real WhatsApp is sent to the number they typed.
 
 ### If something breaks
 
-6. Render is down: on the laptop, run `research/collect/session.sh start` and
+8. Render is down: on the laptop, run `research/collect/session.sh start` and
    use http://localhost:8090/whatsapp and /talk.
 
 ### Real WhatsApp later

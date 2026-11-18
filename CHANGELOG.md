@@ -2,7 +2,39 @@
 
 All notable changes to HaanJi. Dates are when the work reached `main`.
 
-## Unreleased
+## 1.2.0 — 2026-11-19 (phase 1, phase 2, step D and the owner-ready audit)
+
+### Owner-ready audit (branch audit/owner-ready, 2026-11-18)
+* **Say who answers.** The header and Ops say "AI: built-in rules" or the
+  hosted model; `/api/status` carries `dialogue` and `storage`.
+* **Owner screens in plain words.** Settings speaks to the owner; setting
+  names live only under "Technical details".
+* **Sign in like a business.** Email + password for the owner and staff
+  (salted scrypt, a lockout after ten wrong tries, `haanji set-password`,
+  `HAANJI_OWNER_EMAIL` / `_PASSWORD`), and Sign in with Google for an email
+  already given to an owner or staff member. "Try the demo" needs no account.
+* **Data survives a redeploy.** Postgres (Neon) in production: a dropped
+  connection is reopened, a lone read ends its transaction, the schema is set
+  per transaction. `render.yaml` leaves `HAANJI_AUTH` to the dashboard
+  (`sync: false`), so a push cannot turn sign-in off.
+* **A landing of its own.** Site bar, screenshot, who it is for, plans with
+  features ("Price on request"), FAQ, footer; the engine pages are an "Admin"
+  menu for the owner only; a phone menu below 1100px; `1 call`, not `1 calls`.
+* **The demo works with sign-in on.** On a demo server (`HAANJI_DEMO`) a
+  visitor can use the WhatsApp simulator and its missed-call button and reads
+  back only their own chat through a signed pass; nothing reaches a real
+  WhatsApp. `/talk` offers the pack's own lines (`/api/packs/{id}/lines`).
+* **Waiting looks like the page.** While the free server wakes, each page
+  shows its own skeleton and a seconds count; the login carries the HaanJi
+  name; the simulator says plainly that Meta's test number cannot reply yet.
+
+### WhatsApp and step D
+* `/api/status` keeps the last send's error and Meta's delivery report (never
+  the token); replies leave from the number the customer wrote to; a number
+  typed on the public demo is never messaged.
+* **Step D, measured:** the dialogue policy and Gemini 3.5 Flash-Lite on all
+  44 scenarios (REPORT §7). The ablation prints the expected calls and cost
+  first, and a paid run needs `--yes`.
 
 ### Phase 2 (branch phase2/platform)
 * **Demo reset**: on demand with the operator's token, nightly at an IST hour; the old chain archived whole.

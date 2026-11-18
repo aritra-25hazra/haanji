@@ -42,7 +42,7 @@ export function SiteFooter() {
         <Link to="/how">{t("How it works")}</Link>
         <a href="https://github.com/aritra-25hazra/haanji" rel="noopener noreferrer" target="_blank">GitHub</a>
       </nav>
-      <p className="muted small">{t("Version {v}", { v: status?.version ?? "1.1.0" })}</p>
+      <p className="muted small">{t("Version {v}", { v: status?.version ?? "1.2.0" })}</p>
     </footer>
   );
 }
