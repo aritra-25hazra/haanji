@@ -36,7 +36,30 @@ GEMINI_MODEL = "gemini-3.8-flash"
 MAX_TURNS = 8                  # history sent to a model
 MAX_CHARS = 1200               # per message
 MAX_REPLY_TOKENS = 700
-TIMEOUT_S = 12.0               # per provider; two providers at most, so a reply never waits much past 24 s
+TIMEOUT_S = 15.0               # Claude; Gemini thinks first, so it gets GEMINI_TIMEOUT_S
+GEMINI_TIMEOUT_S = 25.0
+_SECRET = re.compile(r"(sk-ant-[A-Za-z0-9_\-]+|AIza[0-9A-Za-z_\-]{20,})")
+
+
+def describe_error(exc: Exception) -> str:
+    """What went wrong with a vendor, for the operator: the error's kind, the
+    HTTP status and the vendor's short reason. Anything shaped like a key is
+    blanked out."""
+    status = getattr(exc, "status_code", None) or getattr(getattr(exc, "response", None), "status_code", None)
+    reason = ""
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        err = body.get("error") or {}
+        reason = f"{err.get('type', '')}: {err.get('message', '')}" if isinstance(err, dict) else str(err)
+    resp = getattr(exc, "response", None)
+    if not reason and resp is not None:
+        try:
+            err = (resp.json() or {}).get("error") or {}
+            reason = f"{err.get('status', '')}: {err.get('message', '')}"
+        except Exception:                                  # noqa: BLE001 - not JSON
+            reason = ""
+    text = " ".join(x for x in (type(exc).__name__, str(status or ""), reason.strip(": ")) if x)
+    return _SECRET.sub("[key]", text)[:240]
 
 GUIDE = """You are the help assistant inside HaanJi's web console. HaanJi is an AI voice
 receptionist for small Indian businesses (dental clinics, salons, diagnostic labs,
@@ -138,6 +161,7 @@ class HelpBot:
     _claude: Any = None
     _http: Any = None
     _day: str = ""
+    last_error: dict = field(default_factory=dict)
     _used: int = 0
     usage: dict = field(default_factory=lambda: {"claude": {"replies": 0, "input": 0, "output": 0},
                                                  "gemini": {"replies": 0, "input": 0, "output": 0}, "faq": {"replies": 0}})
@@ -163,7 +187,8 @@ class HelpBot:
 
     def status(self) -> dict:
         return {"providers": self.providers(), "models": {"claude": self.claude_model, "gemini": self.gemini_model},
-                "daily_limit": self.daily_limit, "used_today": self._used_today()}
+                "daily_limit": self.daily_limit, "used_today": self._used_today(),
+                "last_error": dict(self.last_error)}
 
     def _used_today(self) -> int:
         today = dt.datetime.now(dt.timezone.utc).date().isoformat()
@@ -193,8 +218,10 @@ class HelpBot:
                     text = await self._ask_gemini(system, turns)
                     model = self.gemini_model
             except Exception as exc:                          # noqa: BLE001 - vendor boundary
-                log.warning("help: %s failed: %s", p, type(exc).__name__)
+                self.last_error[p] = describe_error(exc)
+                log.warning("help: %s failed: %s", p, self.last_error[p])
                 continue
+            self.last_error.pop(p, None)
             if text:
                 self._used += 1
                 self.usage[p]["replies"] += 1
@@ -223,13 +250,18 @@ class HelpBot:
     async def _ask_gemini(self, system: tuple[str, str], turns: list[dict]) -> str:
         if self._http is None:
             import httpx
-            self._http = httpx.AsyncClient(timeout=TIMEOUT_S)
+            self._http = httpx.AsyncClient(timeout=GEMINI_TIMEOUT_S)
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.gemini_model}:generateContent"
         body = {"systemInstruction": {"parts": [{"text": system[0]}, {"text": system[1]}]},
                 "contents": [{"role": "model" if t["role"] == "assistant" else "user", "parts": [{"text": t["content"]}]}
                              for t in turns],
-                "generationConfig": {"maxOutputTokens": MAX_REPLY_TOKENS * 3}}
-        r = await self._http.post(url, json=body, headers={"x-goog-api-key": self.gemini_key or ""})
+                # a help answer needs little thought: think briefly, answer fast
+                "generationConfig": {"maxOutputTokens": MAX_REPLY_TOKENS * 3, "thinkingConfig": {"thinkingLevel": "low"}}}
+        headers = {"x-goog-api-key": self.gemini_key or ""}
+        r = await self._http.post(url, json=body, headers=headers)
+        if r.status_code == 400 and "thinking" in r.text.lower():
+            body["generationConfig"].pop("thinkingConfig")      # a model without thinking levels
+            r = await self._http.post(url, json=body, headers=headers)
         r.raise_for_status()
         data = r.json()
         meta = data.get("usageMetadata") or {}
