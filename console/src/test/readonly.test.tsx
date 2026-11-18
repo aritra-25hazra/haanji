@@ -15,7 +15,7 @@ describe("the public demo is read-only", () => {
     expect(within(card).getByText("root canal")).toBeInTheDocument();
     expect(within(card).queryByRole("button", { name: "Cancel" })).toBeNull();
     expect(within(card).queryByRole("button", { name: "No-show" })).toBeNull();
-    expect(within(card).getByText(/read-only/)).toBeInTheDocument();
+    expect(within(card).getByText("Demo: badlaav band hain")).toBeInTheDocument();
   });
 
   it("warns the owner when no backup is configured and keeps the settings form read-only", async () => {
@@ -28,7 +28,7 @@ describe("the public demo is read-only", () => {
       "api/calendar/feed-url": () => ({ pack: "dental_clinic", url: "", webcal: "" }),
     });
     renderApp("/settings");
-    expect(await screen.findByText(/redeploy par data jaata hai/)).toBeInTheDocument();
+    expect(await screen.findByText("server restart hone par mit jaata hai")).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: /Read-only \(demo\)/ })).toBeDisabled();
   });
 });

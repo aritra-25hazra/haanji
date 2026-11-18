@@ -52,7 +52,7 @@ export default function CallDetail() {
             <div key={i} style={{ display: "contents" }}>
               <div className="bubble caller" data-reveal style={{ "--i": i * 2 } as CSSProperties}>
                 {dev.map(turn.heard)}
-                {turn.corrections.length > 0 && <div className="meta">{turn.corrections.map((c, j) => <Repair key={j} c={c} />)}</div>}
+                {turn.corrections.length > 0 && <div className="meta">{turn.corrections.map((c, j) => <Repair key={j} c={c} technical={showEngine} />)}</div>}
               </div>
               <div className="bubble agent" data-reveal style={{ "--i": i * 2 + 1 } as CSSProperties}>
                 {dev.map(turn.said)}

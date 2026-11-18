@@ -513,3 +513,12 @@ dl.kv dd { margin: 0; }
 
 .ai-chip { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border-radius: 999px; border: 1.5px solid rgba(255, 247, 230, .35); color: var(--chalk); font-size: 12px; font-weight: 600; white-space: nowrap; }
 @media (max-width: 760px) { .ai-chip { display: none; } }
+
+.conn-list { list-style: none; margin: 0; padding: 4px 18px 8px; display: grid; gap: 10px; }
+.conn-list li { display: grid; grid-template-columns: 18px 150px 1fr; gap: 10px; align-items: center; font-size: 15px; }
+.conn-list li span.ok { color: var(--leaf-ink); }
+.conn-list li span.warn { color: var(--sindoor-ink); }
+.conn-list li span.muted { color: var(--ink-2); }
+@media (max-width: 560px) { .conn-list li { grid-template-columns: 18px 1fr; } .conn-list li span { grid-column: 2; } }
+details.tech { padding: 0 18px 14px; }
+details.tech summary { cursor: pointer; color: var(--ink-2); font-size: 14px; min-height: 32px; display: flex; align-items: center; }

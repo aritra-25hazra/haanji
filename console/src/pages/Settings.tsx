@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { SettingsPreview } from "../components/Preview";
 import { engine } from "../engine";
+import { businessName, isTestNumber } from "../labels";
 import { t, useT } from "../i18n";
 import { useApp } from "../state";
 import { Chip, Confirm, Empty, Icon, Loading, NotLive, Page, Panel, Register, fmtTime, useData } from "../components/Common";
@@ -27,7 +28,7 @@ export default function Settings() {
   }
   const authOn = !!status?.auth?.enabled;
   return (
-    <Page title="Settings" sub={t("{pack}: reminders, deposit, waitlist, digest, and who can enter the console.", { pack: pack.replace(/_/g, " ") })}>
+    <Page title="Settings" sub={t("{pack}: reminders, deposit, waitlist, digest, and who can enter the console.", { pack: businessName(pack) })}>
       <Connections pack={pack} />
       <SettingsForm key={pack} pack={pack} />
       <GooglePanel pack={pack} />
@@ -35,30 +36,42 @@ export default function Settings() {
       <PrivacyPanel pack={pack} />
       {authOn
         ? <UsersPanel />
-        : <Panel title="Users" hint="HAANJI_AUTH off"><Empty><p>{t("The engine runs without sign-in, so everyone is the owner. Users work once HAANJI_AUTH=on.")}</p></Empty></Panel>}
+        : <Panel title={t("Users")}><Empty><p>{t("Sign-in is off on this server, so there is no user list. Once sign-in is on, the owner adds staff here.")}</p></Empty></Panel>}
       {authOn && <SessionPanel />}
       {authOn && <ActivityPanel />}
     </Page>
   );
 }
 
+/** What is connected, in an owner's words; the setting names behind each line
+ *  are in "Technical details", for whoever runs the server. */
 function Connections({ pack }: { pack: string }) {
   const { status } = useApp();
   const g = useData(() => engine.googleStatus(pack), [pack]);
   const wa = status?.whatsapp, ph = status?.phone;
   useT();
+  const waLine = !wa?.configured ? t("not connected yet")
+    : isTestNumber(wa.number) ? t("connected · demo number (Meta test)") : `${t("connected")}${wa.number ? ` · ${wa.number}` : ""}`;
+  const data = status?.storage === "postgres" ? t("saved in the database")
+    : status?.backup?.s3 ? t("backed up every night") : t("resets when the server restarts");
+  const google = !g.data ? (g.error ? t("could not check") : "…")
+    : g.data.connected ? t("connected") : g.data.configured ? t("not connected yet") : t("not set up yet");
   return (
-    <Panel title="Connections" hint={t("the channels connected to this engine")}>
-      <div className="status-row">
-        <Chip kind={wa?.configured ? "ok" : "muted"}><Icon name="phone" small />WhatsApp · {wa?.configured ? `${t("connected")}${wa.number ? ` · ${wa.number}` : ""}` : t("not set")}</Chip>
-        <Chip kind={ph?.configured ? "ok" : "muted"}><Icon name="mic" small />Phone line · {ph?.configured ? `${t("connected ")}${ph.number ? ` · ${ph.number}` : ""}` : t("not set")}</Chip>
-        <Chip kind={status?.backup?.s3 ? "ok" : "warn"} title={status?.backup?.s3 ? t("Backed up to S3 every night") : t("HAANJI_BACKUP_S3_BUCKET is not set: a redeploy loses bookings and the ledger (docs/operations.md)")}>
-          <Icon name="lock" small />Backup · {status?.backup?.s3 ? "S3 nightly" : t("not set; a redeploy loses data")}
-        </Chip>
-        <Chip kind={g.data?.connected ? "ok" : g.data?.configured ? "warn" : "muted"}>
-          <Icon name="calendar" small />Google Calendar · {g.data ? (g.data.connected ? t("connected") : g.data.configured ? t("keys set, not connected") : t("keys not set")) : g.error ? t("unknown") : "…"}
-        </Chip>
-      </div>
+    <Panel title={t("Connections")} hint={t("what this shop is connected to")}>
+      <ul className="conn-list">
+        <li><Icon name="phone" small /><b>WhatsApp</b><span className={wa?.configured ? "ok" : "muted"}>{waLine}</span></li>
+        <li><Icon name="mic" small /><b>{t("Phone line")}</b><span className={ph?.configured ? "ok" : "muted"}>
+          {ph?.configured ? `${t("connected ")}${ph.number ? ` · ${ph.number}` : ""}` : t("not connected yet")}</span></li>
+        <li><Icon name="calendar" small /><b>Google Calendar</b><span className={g.data?.connected ? "ok" : "muted"}>{google}
+          {g.data?.configured && !g.data.connected && <> — <a href="#google">{t("Connect")}</a></>}</span></li>
+        <li><Icon name="lock" small /><b>{t("Your data")}</b><span className={status?.storage === "postgres" || status?.backup?.s3 ? "ok" : "warn"}>{data}</span></li>
+        <li><Icon name="user" small /><b>{t("Sign-in")}</b><span className={status?.auth?.enabled ? "ok" : "muted"}>
+          {status?.auth?.enabled ? t("on") : t("off — anyone with the link can look (demo)")}</span></li>
+      </ul>
+      <details className="tech">
+        <summary>{t("Technical details")}</summary>
+        <p className="muted small">{t("For whoever runs the server. Sign-in: HAANJI_AUTH=on. Records that survive restarts: HAANJI_DATABASE_URL (Postgres) with HAANJI_VAULT_SECRET, or a nightly backup with HAANJI_BACKUP_S3_BUCKET. Google Calendar: HAANJI_GOOGLE_CLIENT_ID and HAANJI_GOOGLE_CLIENT_SECRET. WhatsApp: HAANJI_WA_TOKEN and HAANJI_WA_PHONE_ID. See docs/operations.md.")}</p>
+      </details>
     </Panel>
   );
 }
@@ -156,12 +169,12 @@ function GooglePanel({ pack }: { pack: string }) {
   };
   const url = feed.data?.url ?? "";
   return (
-    <Panel title="Calendar feed & Google" hint={t("every booking on the owner's own calendar")}
+    <Panel id="google" title="Calendar feed & Google" hint={t("every booking on the owner's own calendar")}
            actions={g.data?.configured
              ? (g.data.connected
                ? <button className="btn btn-ghost btn-sm" onClick={() => void disconnect()}>{t("Remove Google")}</button>
                : <button className="btn btn-primary btn-sm" onClick={() => void connect()}>{t("Connect Google Calendar")}</button>)
-             : <Chip kind="muted">{t("Google: keys not set")}</Chip>}>
+             : <Chip kind="muted">{t("Google: not set up yet")}</Chip>}>
       <div className="body form">
         {feed.data ? (
           <div className="row">
@@ -196,7 +209,7 @@ function DigestPanel({ pack }: { pack: string }) {
   };
   return (
     <Panel title={t("Today's digest")} hint={`${t("WhatsApp to the owner every day at {hour}:00 IST", { hour: data.hour_ist })}${data.to ? ` · ${data.to}` : t(" · number not set")}`}
-           actions={<button className="btn btn-primary btn-sm" onClick={() => void send()} disabled={!canSend || busy} title={canSend ? t("Send now") : t("Needs WhatsApp and HAANJI_OWNER_PHONE")}>
+           actions={<button className="btn btn-primary btn-sm" onClick={() => void send()} disabled={!canSend || busy} title={canSend ? t("Send now") : t("Needs WhatsApp and the owner's number")}>
              <Icon name="phone" small />{busy ? t("Sending…") : t("Send on WhatsApp now")}</button>}>
       <div className="body">
         <pre className="digest">{data.text}</pre>
@@ -307,7 +320,7 @@ function UsersPanel() {
             </td>
           </tr>
         ))}
-        {data && users.length === 0 && <tr><td colSpan={5} className="muted">{t("No users yet. The first owner comes from HAANJI_OWNER_PHONE.")}</td></tr>}
+        {data && users.length === 0 && <tr><td colSpan={5} className="muted">{t("No users yet. The first owner is added when the server is set up; add staff here.")}</td></tr>}
       </Register>
       <form className="body form" onSubmit={(e) => void add(e)}>
         <div className="row">

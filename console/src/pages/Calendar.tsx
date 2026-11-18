@@ -210,7 +210,7 @@ function BookingCard({ b, showStaff = false, busy, onAct, readOnly = false }: { 
           : b.status === "CONFIRMED" ? <Chip kind="muted"><Icon name="bell" small />{t("reminder pending")}</Chip> : null}
       </div>
       {readOnly ? (
-        <div className="acts"><Chip kind="muted" title={t("Public demo: changes are off. For a real shop, set HAANJI_AUTH=on.")}>{t("demo · read-only")}</Chip></div>
+        <div className="acts"><Chip kind="muted" title={t("This is the public demo, so bookings cannot be changed here. A shop's own console, with sign-in, can.")}>{t("Demo: changes are switched off")}</Chip></div>
       ) : confirm ? (
         <Confirm text={t("Cancel for sure? The caller gets a WhatsApp message (if the number is connected) and the free slot is offered to the waitlist.")} yes={t("Yes, cancel")} no={t("No")} busy={busy}
                  onYes={() => { setConfirm(false); onAct("cancel"); }} onNo={() => setConfirm(false)} />

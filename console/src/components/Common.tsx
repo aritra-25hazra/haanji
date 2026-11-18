@@ -88,10 +88,10 @@ export function Checking() {
   return <div className="loading" role="status" aria-live="polite">{t("Checking the engine… (the free server can take 30–60 seconds to wake up)")}</div>;
 }
 
-export function Panel({ title, hint, actions, children }:
-  { title: string; hint?: string; actions?: ReactNode; children: ReactNode }) {
+export function Panel({ title, hint, actions, children, id }:
+  { title: string; hint?: string; actions?: ReactNode; children: ReactNode; id?: string }) {
   return (
-    <section className="panel">
+    <section className="panel" id={id}>
       <header>
         <h2>{title}</h2>
         <div className="row">{hint && <span className="hint">{hint}</span>}{actions}</div>
@@ -175,7 +175,7 @@ export function Stamp({ tone = "red", big = false, children }:
   return <span ref={ref} className={"stamp" + (tone === "leaf" ? " leaf" : "") + (big ? " big" : "")}>{children}</span>;
 }
 
-export function Repair({ c }: { c: { from_token: string; to_surface: string; asr_confidence?: number } }) {
+export function Repair({ c, technical = false }: { c: { from_token: string; to_surface: string; asr_confidence?: number }; technical?: boolean }) {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     const s = ref.current;
@@ -194,7 +194,7 @@ export function Repair({ c }: { c: { from_token: string; to_surface: string; asr
         <svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><path d="M1 6 Q 25 3, 50 6 T 99 5" /></svg>
       </s>
       <b aria-label={t("read as: {w}", { w: c.to_surface })}>{c.to_surface}</b>
-      {c.asr_confidence != null && <small>{c.asr_confidence.toFixed(2)}</small>}
+      {technical && c.asr_confidence != null && <small title={t("how sure the speech recogniser was (0 to 1)")}>{c.asr_confidence.toFixed(2)}</small>}
     </span>
   );
 }
