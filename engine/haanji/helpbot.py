@@ -25,6 +25,7 @@ import datetime as dt
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -45,6 +46,16 @@ def _thinking(model: str) -> str:
     """The least thinking the model accepts: Flash-Lite and most Flash models
     take MINIMAL; gemini-3.8-flash starts at LOW."""
     return "LOW" if "3.8-flash" in model and "lite" not in model else "MINIMAL"
+
+
+BENCH_S = 3600.0
+
+
+def _operator_must_fix(exc: Exception) -> bool:
+    """A refusal that retrying cannot cure: no credit, a bad or unauthorised key."""
+    status = getattr(exc, "status_code", None) or getattr(getattr(exc, "response", None), "status_code", None)
+    text = describe_error(exc).lower()
+    return status in (401, 403) or "credit balance" in text or "billing" in text or "api key not valid" in text
 
 
 def describe_error(exc: Exception) -> str:
@@ -169,6 +180,7 @@ class HelpBot:
     _http: Any = None
     _day: str = ""
     last_error: dict = field(default_factory=dict)
+    down_until: dict = field(default_factory=dict)      # provider -> time.monotonic() it may be tried again
     _used: int = 0
     usage: dict = field(default_factory=lambda: {"claude": {"replies": 0, "input": 0, "output": 0},
                                                  "gemini": {"replies": 0, "input": 0, "output": 0}, "faq": {"replies": 0}})
@@ -185,10 +197,14 @@ class HelpBot:
 
     # ------------------------------------------------------------ status
     def providers(self) -> list[Provider]:
+        """The answerers to offer: a key is set, and the vendor has not just
+        refused us for something only the operator can fix (no credit, a bad
+        key); that one rests for BENCH_S and is not offered meanwhile."""
+        now = time.monotonic()
         out: list[Provider] = []
-        if self.enabled and self.claude_key:
+        if self.enabled and self.claude_key and self.down_until.get("claude", 0) <= now:
             out.append("claude")
-        if self.enabled and self.gemini_key:
+        if self.enabled and self.gemini_key and self.down_until.get("gemini", 0) <= now:
             out.append("gemini")
         return out + ["faq"]
 
@@ -226,6 +242,8 @@ class HelpBot:
                     model = self.gemini_model
             except Exception as exc:                          # noqa: BLE001 - vendor boundary
                 self.last_error[p] = describe_error(exc)
+                if _operator_must_fix(exc):
+                    self.down_until[p] = time.monotonic() + BENCH_S
                 log.warning("help: %s failed: %s", p, self.last_error[p])
                 continue
             self.last_error.pop(p, None)

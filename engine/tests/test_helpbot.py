@@ -125,6 +125,8 @@ def test_a_vendor_failure_is_described_for_the_operator_without_the_key():
     assert ask(b, "what is pramaan?")["provider"] == "faq"
     err = b.status()["last_error"]["claude"]
     assert "401" in err and "authentication_error" in err and "SECRET" not in err and "[key]" in err
+    assert "claude" not in b.providers(), "a bad key is not offered for an hour"
+    b.down_until.clear()                              # the hour is over, or the key was fixed and the server restarted
     b._claude = FakeClaude()
     ask(b, "what is pramaan?")
     assert "claude" not in b.status()["last_error"], "a success clears the error"
@@ -137,3 +139,36 @@ def test_gemini_is_asked_to_think_briefly():
     body = b._http.seen[0][1]
     assert body["generationConfig"]["thinkingConfig"] == {"thinkingLevel": "MINIMAL"}
     assert hb._thinking("gemini-3.8-flash") == "LOW"
+
+
+def test_a_provider_without_credit_rests_and_is_not_offered():
+    class NoCredit(Exception):
+        status_code = 400
+        body = {"error": {"type": "invalid_request_error", "message": "Your credit balance is too low to access the Anthropic API."}}
+
+    class Broke(FakeClaude):
+        async def create(self, **kw):
+            self.seen.append(kw)
+            raise NoCredit("no")
+
+    b = bot(claude_key="k", gemini_key="g")
+    b._claude, b._http = Broke(), FakeHttp()
+    assert ask(b, "what is pramaan?", provider="claude")["provider"] == "gemini"
+    assert b.providers() == ["gemini", "faq"], "not offered while it cannot answer"
+    assert ask(b, "and bhasha?", provider="claude")["provider"] == "gemini" and len(b._claude.seen) == 1, "not tried again"
+    b.down_until["claude"] = 0                       # the hour is over (or credit was added and the server restarted)
+    assert "claude" in b.providers()
+
+
+def test_a_passing_failure_does_not_bench_the_provider():
+    class Busy(Exception):
+        status_code = 529
+
+    class Overloaded(FakeClaude):
+        async def create(self, **kw):
+            raise Busy("overloaded")
+
+    b = bot(claude_key="k")
+    b._claude = Overloaded()
+    ask(b, "hi", provider="claude")
+    assert "claude" in b.providers()
