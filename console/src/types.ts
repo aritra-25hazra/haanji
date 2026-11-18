@@ -9,7 +9,8 @@ export interface Status {
   public_url?: string;
   whatsapp?: { configured: boolean; number: string | null; last_send?: { delivery?: { status?: string; code?: number } } };
   digest?: { owner_configured: boolean; hour_ist: number };
-  auth?: { enabled: boolean };
+  /** Sign-in: whether it is on, and whether 'Continue with Google' is offered. */
+  auth?: { enabled: boolean; google?: boolean };
   /** A public server with sign-in off: the console's destructive operations are refused (403). */
   demo_readonly?: boolean;
   google?: { configured: boolean; connected: string[] };

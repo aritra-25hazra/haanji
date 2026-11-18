@@ -232,6 +232,11 @@ class AuthStore:
         r = self.conn.execute("SELECT pw_hash FROM credentials WHERE email=?", (email.strip().lower(),)).fetchone()
         return bool(r) and self._matches(password, r["pw_hash"])
 
+    def phone_for_email(self, email: str) -> str | None:
+        """The user an email belongs to (set with an email login), if any."""
+        r = self.conn.execute("SELECT phone FROM credentials WHERE email=?", (email.strip().lower(),)).fetchone()
+        return r["phone"] if r else None
+
     def email_of(self, phone: str) -> str | None:
         r = self.conn.execute("SELECT email FROM credentials WHERE phone=?", (normalise_phone(phone),)).fetchone()
         return r["email"] if r else None

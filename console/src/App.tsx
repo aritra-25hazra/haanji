@@ -76,6 +76,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Home />} />
           <Route path="/how" element={<HowItWorks />} />
+          <Route path="/login" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/customers" element={<Customers />} />

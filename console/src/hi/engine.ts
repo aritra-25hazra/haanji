@@ -314,4 +314,8 @@ export default {
   "Use a WhatsApp code instead": "Iske bajaye WhatsApp code se",
   "Use email and password": "Email aur password se",
   "Try the demo (no account)": "Demo dekho (bina account)",
+  "This Google account is not on this shop's list. Ask the owner to add your email.": "Ye Google account is dukaan ki list mein nahi hai. Owner se apna email judwao.",
+  "Google sign-in did not finish. Try again, or use email and password.": "Google sign-in poora nahi hua. Dobara try karo, ya email aur password se aao.",
+  "Continue with Google": "Google se aage badho",
+  "or": "ya",
 } as Record<string, string>;

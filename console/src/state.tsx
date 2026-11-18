@@ -12,7 +12,23 @@ import type { Status, User } from "./types";
  */
 export type Mode = "checking" | "live" | "demo" | "offline";
 
+/** Coming back from Google: the engine put a token (or an error) in the URL
+ *  fragment, which no server ever sees. Keep the token, drop the fragment. */
+function takeLoginFragment(): string | null {
+  try {
+    const h = new URLSearchParams(window.location.hash.slice(1));
+    const token = h.get("token"), error = h.get("error");
+    if (!token && !error) return null;
+    if (token) setToken(token);
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    return error;
+  } catch { return null; }
+}
+const LOGIN_ERROR = typeof window === "undefined" ? null : takeLoginFragment();
+
 interface AppState {
+  /** Why a Google sign-in was turned away ("not-allowed", "google-failed"…), once. */
+  loginError: string | null;
   status: Status | null;
   online: boolean;
   checked: boolean;
@@ -119,6 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       packs: allowed(status ? status.packs : SAMPLE_STATUS.packs), setPack, refresh,
       authRequired: authOn && authChecked && !user,
       user, isOwner, readOnly, signIn, signOut, signOutEverywhere, sampleView, setSampleView,
+      loginError: LOGIN_ERROR,
     };
   }, [status, checked, pack, setPack, refresh, allowed, authChecked, hasToken, user, signIn, signOut, signOutEverywhere, sampleView, setSampleView]);
 

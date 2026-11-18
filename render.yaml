@@ -150,6 +150,10 @@ services:
         sync: false
       - key: HAANJI_OWNER_PASSWORD
         sync: false
+      # "Continue with Google" uses the same Google OAuth client as Calendar
+      # (HAANJI_GOOGLE_CLIENT_ID / _SECRET); add this redirect URI to it:
+      #   https://haanji-engine.onrender.com/api/auth/google/callback
+      # Only emails already given to an owner or staff member can enter.
       - key: HAANJI_DIGEST_HOUR
         value: "20"
       # A real phone number (docs/phone-setup.md): Twilio rings the engine,

@@ -34,7 +34,7 @@ from typing import Any
 import yaml
 from fastapi import FastAPI, HTTPException, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Literal
 
@@ -1859,6 +1859,50 @@ async def audit_log(limit: int = 200):
 PROTECTED.append(("GET", re.compile(r"^/api/audit$"), "owner"))
 
 
+# ── Sign in with Google (haanji/google_login.py) ────────────────────────────
+from . import google_login  # noqa: E402
+
+GOOGLE_LOGIN_REDIRECT = f"{PUBLIC_URL}/api/auth/google/callback"
+
+
+def _console_back(fragment: str) -> RedirectResponse:
+    """Back to the console's login page; the token rides in the URL fragment,
+    which the browser never sends to any server."""
+    base = (os.environ.get("HAANJI_CONSOLE_URL") or "").rstrip("/")
+    return RedirectResponse(f"{base}/login#{fragment}", status_code=302)
+
+
+@app.get("/api/auth/google/start")
+async def google_login_start():
+    if not AUTH_ENABLED or not google_login.configured():
+        raise HTTPException(409, "Google sign-in is not set up on this server")
+    return RedirectResponse(google_login.authorize_url(GOOGLE_LOGIN_REDIRECT, google_login.make_state(auth.secret)),
+                            status_code=302)
+
+
+@app.get("/api/auth/google/callback")
+async def google_login_callback(request: Request, code: str = "", state: str = "", error: str = ""):
+    if not AUTH_ENABLED or not google_login.configured():
+        raise HTTPException(409, "Google sign-in is not set up on this server")
+    if error:
+        return _console_back("error=google-cancelled")
+    if not google_login.check_state(auth.secret, state):
+        raise HTTPException(400, "this sign-in link has expired; start again")
+    try:
+        claims = await google_login.exchange(code, GOOGLE_LOGIN_REDIRECT)
+    except Exception as exc:                          # noqa: BLE001 - Google said no, or the token is not ours
+        log.warning("google sign-in refused: %s", type(exc).__name__)
+        return _console_back("error=google-failed")
+    email = str(claims.get("email", "")).strip().lower()
+    phone = auth.phone_for_email(email)
+    if phone is None and email and email == (os.environ.get("HAANJI_OWNER_EMAIL") or "").strip().lower():
+        phone = _owner_login_phone(email)
+    user = auth.user(phone) if phone else None
+    if user is None:
+        return _console_back("error=not-allowed")
+    return _console_back("token=" + auth.token_for(user, agent=request.headers.get("user-agent", "")))
+
+
 @app.get("/api/auth/me")
 async def auth_me(request: Request):
     if not AUTH_ENABLED:
@@ -2590,7 +2634,7 @@ async def status():
             "default_pack": DEFAULT_PACK, "packs": list_packs(),
             "public_url": PUBLIC_URL,
             "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
-            "auth": {"enabled": AUTH_ENABLED},
+            "auth": {"enabled": AUTH_ENABLED, "google": AUTH_ENABLED and google_login.configured()},
             "demo_readonly": DEMO_READONLY,
             "google": {"configured": gcal.configured, "connected": gcal.connected()},
             "phone": phone_status(),

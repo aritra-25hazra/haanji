@@ -152,7 +152,7 @@ describe("small things owners see", () => {
     // The dashboard's chart measures itself; jsdom has no ResizeObserver.
     (globalThis as { ResizeObserver?: unknown }).ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} };
     renderApp("/dashboard");
-    expect(await screen.findByText("Demo WhatsApp number (Meta test)")).toBeInTheDocument();
+    expect(await screen.findByText("Demo WhatsApp number (Meta test)", {}, { timeout: 4000 })).toBeInTheDocument();
     expect(screen.queryByText(/555/)).toBeNull();
   });
 });

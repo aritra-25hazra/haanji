@@ -66,3 +66,19 @@ describe("sign in", () => {
     expect(await screen.findByTestId("sample-banner")).toBeInTheDocument();
   });
 });
+
+describe("sign in with Google", () => {
+  it("offers Google only when the engine has it, and links to the engine's start", async () => {
+    mockEngine({ "api/status": () => ({ ...STATUS_AUTH, auth: { enabled: true, google: true } }) });
+    renderApp("/calls");
+    const google = await screen.findByRole("link", { name: /Google se aage badho/ });
+    expect(google).toHaveAttribute("href", "/engine/api/auth/google/start");
+  });
+
+  it("shows no Google button when the engine has no Google client", async () => {
+    mockEngine({ "api/status": () => STATUS_AUTH });
+    renderApp("/calls");
+    await screen.findByRole("heading", { name: "Sign in" });
+    expect(screen.queryByRole("link", { name: /Google/ })).toBeNull();
+  });
+});

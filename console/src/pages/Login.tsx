@@ -9,7 +9,7 @@ import { Icon } from "../components/Common";
  *  only while WhatsApp can actually deliver one. "Try demo" opens the
  *  made-up sample shop, read-only, with no account. */
 export default function Login() {
-  const { signIn, status, setSampleView } = useApp();
+  const { signIn, status, setSampleView, loginError } = useApp();
   useT();
   const waWorks = !!status?.whatsapp?.configured && status.whatsapp.last_send?.delivery?.status !== "failed";
   const [method, setMethod] = useState<"email" | "whatsapp">("email");
@@ -18,7 +18,9 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [stage, setStage] = useState<"phone" | "code">("phone");
-  const [note, setNote] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(
+    loginError === "not-allowed" ? t("This Google account is not on this shop's list. Ask the owner to add your email.")
+      : loginError ? t("Google sign-in did not finish. Try again, or use email and password.") : null);
   const [busy, setBusy] = useState(false);
 
   async function emailLogin() {
@@ -50,6 +52,15 @@ export default function Login() {
       <div className="login-card">
         <span className="eyebrow">{t("Receptionist console")}</span>
         <SplitText key={t("Sign in")} tag="h1" text={t("Sign in")} trigger="load" splitType="chars" effect="rise" textAlign="left" delay={35} duration={0.7} />
+        {status?.auth?.google && method === "email" && (
+          <>
+            <a className="btn btn-ghost google-btn" href="/engine/api/auth/google/start">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.4 14.6 2.5 12 2.5 6.8 2.5 2.5 6.8 2.5 12s4.3 9.5 9.5 9.5c5.5 0 9.1-3.9 9.1-9.3 0-.6-.1-1.1-.2-1.6H12z"/></svg>
+              {t("Continue with Google")}
+            </a>
+            <p className="muted small or-line">{t("or")}</p>
+          </>
+        )}
         {method === "email" ? (
           <form className="form" onSubmit={(e) => { e.preventDefault(); void emailLogin(); }}>
             <label className="field"><span>{t("Email")}</span><input className="input" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus /></label>

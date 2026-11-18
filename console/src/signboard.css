@@ -566,3 +566,7 @@ details.tech summary { cursor: pointer; color: var(--ink-2); font-size: 14px; mi
   .navrow.open .nav a, .navrow.open .engine-menu > button { width: 100%; justify-content: flex-start; }
 }
 .mbar .btn-primary, .mbar .btn-primary:visited { color: var(--cobalt-deep); }
+
+.google-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 46px; margin-top: 8px; background: #fff; color: #1f1f1f; border: 1px solid #dadce0; font-weight: 600; }
+.google-btn:hover { background: #f8f9fa; }
+.or-line { text-align: center; margin: 6px 0 0; }
