@@ -245,9 +245,10 @@ def cmd_db_copy(args) -> int:
             flag = "" if copied >= have else "  <-- short"
             short += copied < have
             print(f"{name:32} {table:24} {have:7} -> {copied:7}{flag}")
-    secret = os.path.join(args.var_dir, "vault.sqlite.secret")
-    if os.path.exists(secret):
-        print(f"\nSet HAANJI_VAULT_SECRET to the contents of {secret} (do not lose it: it opens every receipt key).")
+    vault_file = os.path.join(args.var_dir, "vault.sqlite.secret")
+    if os.path.exists(vault_file):                     # the path only; the value is never printed
+        print("\nSet HAANJI_VAULT_SECRET to the contents of the file vault.sqlite.secret in "
+              f"{os.path.abspath(args.var_dir)} (do not lose it: it opens every receipt key).")
     return 1 if short else 0
 
 

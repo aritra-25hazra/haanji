@@ -570,6 +570,10 @@ _last_auto_reset: dict[str, str] = {}
 def demo_reset(pack_id: str) -> dict[str, Any]:
     if AUTH_ENABLED:
         raise HTTPException(403, "a real shop's records are never reset (HAANJI_AUTH is on)")
+    # The file names below are built from the pack list itself, never from the request.
+    pack_id = next((p for p in list_packs() if p == pack_id), None) or ""
+    if not pack_id:
+        raise HTTPException(404, "no such pack")
     rt = runtime(pack_id)
     for sid in [sid for sid, h in _sessions.items() if h.rt.pack_id == pack_id]:
         _sessions.pop(sid, None)
