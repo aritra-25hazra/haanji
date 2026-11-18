@@ -12,6 +12,7 @@ is measured rather than guessed.
     python research/harness/llm_ablation.py --only claude --pack dental_clinic  # prints the estimate, stops
     python research/harness/llm_ablation.py --only claude --pack dental_clinic --yes   # a paid pilot
     python research/harness/llm_ablation.py --only claude --yes                 # the paid full run
+    python research/harness/llm_ablation.py --only gemini --pack dental_clinic --yes   # Gemini (free tier: no charge)
 
 A paid run never starts without --yes; before it, the script prints how many
 model calls to expect and what they may cost at the model's list price. A run
@@ -81,7 +82,8 @@ async def run_provider(provider: str, packs: list[str]) -> dict:
         "latency_p95_ms": round(sorted(latencies)[int(0.95 * (len(latencies) - 1))], 1) if latencies else 0.0,
         "llm_calls": llm_calls, "fallbacks": fallbacks, "tokens": tokens,
         "wall_s": round(time.perf_counter() - t_wall, 1),
-        "model": os.environ.get("HAANJI_LLM_MODEL", "claude-opus-4-8") if provider == "claude" else None,
+        "model": (os.environ.get("HAANJI_LLM_MODEL", "claude-opus-4-8") if provider == "claude" else
+                  os.environ.get("HAANJI_GEMINI_DIALOGUE_MODEL", "gemini-3.5-flash-lite") if provider == "gemini" else None),
     }
 
 
@@ -137,16 +139,29 @@ def estimate(packs: list[str], model: str) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--only", choices=["mock", "claude"], default=None)
+    ap.add_argument("--only", choices=["mock", "claude", "gemini"], default=None)
     ap.add_argument("--pack", default=None)
     ap.add_argument("--speed", type=float, default=40.0)
     ap.add_argument("--yes", action="store_true", help="run the paid provider after printing the estimate")
     args = ap.parse_args(argv)
     set_speed(args.speed)
     packs = [args.pack] if args.pack else list_packs()
-    providers = [args.only] if args.only else ["mock", "claude"]
+    providers = [args.only] if args.only else ["mock", "claude", "gemini"]
     results = json.loads(OUT.read_text()) if OUT.exists() else {}
     for provider in providers:
+        if provider == "gemini":
+            model = os.environ.get("HAANJI_GEMINI_DIALOGUE_MODEL", "gemini-3.5-flash-lite")
+            est = estimate(packs, model)
+            os.environ.setdefault("HAANJI_GEMINI_RPM", "10")           # a free-tier key's pace
+            print(f"gemini ({model}): {est['turns']} caller turns -> about {est['calls'][0]}–{est['calls'][1]} model calls "
+                  f"at {os.environ['HAANJI_GEMINI_RPM']}/min (≈ {est['calls'][1] / float(os.environ['HAANJI_GEMINI_RPM']):.0f} min at most). "
+                  "A free-tier key is not charged; a paid key is billed at Google's price for this model.")
+            if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
+                print("gemini: skipped — no GEMINI_API_KEY in the environment or engine/.env")
+                continue
+            if not args.yes:
+                print("gemini: not run — add --yes to start it")
+                continue
         if provider == "claude":
             model = os.environ.get("HAANJI_LLM_MODEL", "claude-opus-4-8")
             est = estimate(packs, model)
