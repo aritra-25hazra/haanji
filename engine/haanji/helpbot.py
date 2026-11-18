@@ -16,7 +16,7 @@ Environment:
     ANTHROPIC_API_KEY        turns Claude on
     HAANJI_HELP_CLAUDE_MODEL default claude-opus-4-8
     GEMINI_API_KEY           turns Gemini on (GOOGLE_API_KEY is accepted too)
-    HAANJI_HELP_GEMINI_MODEL default gemini-3.8-flash
+    HAANJI_HELP_GEMINI_MODEL default gemini-3.5-flash-lite
     HAANJI_HELP_DAILY_LIMIT  hosted replies per UTC day, default 100
 """
 from __future__ import annotations
@@ -32,13 +32,19 @@ log = logging.getLogger("haanji.help")
 
 Provider = Literal["claude", "gemini", "faq"]
 CLAUDE_MODEL = "claude-opus-4-8"
-GEMINI_MODEL = "gemini-3.8-flash"
+GEMINI_MODEL = "gemini-3.5-flash-lite"     # a help answer wants speed; Flash-Lite with minimal thinking
 MAX_TURNS = 8                  # history sent to a model
 MAX_CHARS = 1200               # per message
 MAX_REPLY_TOKENS = 700
 TIMEOUT_S = 15.0               # Claude; Gemini thinks first, so it gets GEMINI_TIMEOUT_S
-GEMINI_TIMEOUT_S = 25.0
+GEMINI_TIMEOUT_S = 30.0
 _SECRET = re.compile(r"(sk-ant-[A-Za-z0-9_\-]+|AIza[0-9A-Za-z_\-]{20,})")
+
+
+def _thinking(model: str) -> str:
+    """The least thinking the model accepts: Flash-Lite and most Flash models
+    take MINIMAL; gemini-3.8-flash starts at LOW."""
+    return "LOW" if "3.8-flash" in model and "lite" not in model else "MINIMAL"
 
 
 def describe_error(exc: Exception) -> str:
@@ -256,7 +262,7 @@ class HelpBot:
                 "contents": [{"role": "model" if t["role"] == "assistant" else "user", "parts": [{"text": t["content"]}]}
                              for t in turns],
                 # a help answer needs little thought: think briefly, answer fast
-                "generationConfig": {"maxOutputTokens": MAX_REPLY_TOKENS * 3, "thinkingConfig": {"thinkingLevel": "low"}}}
+                "generationConfig": {"maxOutputTokens": MAX_REPLY_TOKENS * 3, "thinkingConfig": {"thinkingLevel": _thinking(self.gemini_model)}}}
         headers = {"x-goog-api-key": self.gemini_key or ""}
         r = await self._http.post(url, json=body, headers=headers)
         if r.status_code == 400 and "thinking" in r.text.lower():
