@@ -29,6 +29,9 @@ OTP_ISSUE_WINDOW_S = 15 * 60
 OTP_LOCK_FAILURES = 10         # wrong guesses across codes before the number is locked
 OTP_LOCK_S = 15 * 60
 TOKEN_TTL_S = 30 * 24 * 3600
+IDLE_TTL_S = 14 * 24 * 3600    # a device unused this long is signed out
+TOUCH_EVERY_S = 300            # last_seen is written at most this often
+REFRESH_AFTER_S = 7 * 24 * 3600
 ROLES = ("owner", "staff")
 
 
@@ -58,6 +61,25 @@ CREATE TABLE IF NOT EXISTS otp_history (
 CREATE TABLE IF NOT EXISTS revoked (
   phone      TEXT PRIMARY KEY,
   revoked_at REAL NOT NULL             -- tokens issued before this instant are dead
+);
+CREATE TABLE IF NOT EXISTS sessions (  -- one row per signed-in device
+  sid        TEXT PRIMARY KEY,
+  phone      TEXT NOT NULL,
+  created    REAL NOT NULL,
+  last_seen  REAL NOT NULL,
+  agent      TEXT NOT NULL DEFAULT '',
+  revoked    REAL
+);
+CREATE INDEX IF NOT EXISTS sessions_phone_ix ON sessions (phone);
+CREATE TABLE IF NOT EXISTS audit (     -- who changed what, for the owner
+  id     INTEGER PRIMARY KEY AUTOINCREMENT,
+  at     REAL NOT NULL,
+  phone  TEXT NOT NULL,
+  role   TEXT NOT NULL,
+  method TEXT NOT NULL,
+  path   TEXT NOT NULL,
+  pack   TEXT,
+  status INTEGER NOT NULL
 );
 """
 
@@ -214,15 +236,33 @@ class AuthStore:
         return ok
 
     # ----------------------------------------------------------------- tokens
-    def token_for(self, p: Principal, now: float | None = None) -> str:
+    def token_for(self, p: Principal, now: float | None = None, *, agent: str = "", sid: str | None = None) -> str:
+        """A signed token for one device. A new sign-in opens a session row
+        (the owner's list of devices); a refresh keeps the same one."""
         now = now or time.time()
-        body = json.dumps({"phone": p.phone, "role": p.role, "packs": p.packs, "name": p.name,
+        if sid is None:
+            sid = secrets.token_hex(8)
+            with self.conn:
+                self.conn.execute("INSERT INTO sessions (sid, phone, created, last_seen, agent) VALUES (?,?,?,?,?)",
+                                  (sid, p.phone, now, now, agent[:160]))
+        body = json.dumps({"phone": p.phone, "role": p.role, "packs": p.packs, "name": p.name, "sid": sid,
                            "iat": int(now), "exp": int(now + TOKEN_TTL_S)}, separators=(",", ":"))
         payload = base64.urlsafe_b64encode(body.encode()).rstrip(b"=")
         sig = hmac.new(self.secret, payload, hashlib.sha256).digest()
         return payload.decode() + "." + base64.urlsafe_b64encode(sig).rstrip(b"=").decode()
 
     def verify_token(self, token: str | None, now: float | None = None) -> Principal | None:
+        claims = self.claims(token, now)
+        if claims is None:
+            return None
+        current = self.user(claims["phone"]) if claims.get("phone") else None
+        if current is not None:
+            return current
+        return Principal(claims["phone"], claims["role"], list(claims.get("packs", ["*"])), claims.get("name", ""))
+
+    def claims(self, token: str | None, now: float | None = None) -> dict | None:
+        """The token's body when it is genuine, unexpired, not revoked, and
+        its device session is open and was used in the last IDLE_TTL_S."""
         if not token or "." not in token:
             return None
         payload, sig = token.rsplit(".", 1)
@@ -238,9 +278,52 @@ class AuthStore:
         rev = self.conn.execute("SELECT revoked_at FROM revoked WHERE phone=?", (body.get("phone"),)).fetchone()
         if rev and float(body.get("iat", 0)) <= float(rev["revoked_at"]):
             return None                            # signed out everywhere, or removed
-        # A user still on the books carries their *current* role and packs,
-        # so a demotion takes effect without waiting for the token to expire.
-        current = self.user(body["phone"]) if body.get("phone") else None
-        if current is not None:
-            return current
-        return Principal(body["phone"], body["role"], list(body.get("packs", ["*"])), body.get("name", ""))
+        sid = body.get("sid")
+        if sid:                                    # tokens from before sessions carry none
+            t = now or time.time()
+            row = self.conn.execute("SELECT * FROM sessions WHERE sid=? AND phone=?", (sid, body.get("phone"))).fetchone()
+            if row is None or row["revoked"] is not None or t - float(row["last_seen"]) > IDLE_TTL_S:
+                return None
+            if t - float(row["last_seen"]) > TOUCH_EVERY_S:
+                with self.conn:
+                    self.conn.execute("UPDATE sessions SET last_seen=? WHERE sid=?", (t, sid))
+        # verify_token gives a user still on the books their *current* role
+        # and packs, so a demotion takes effect without waiting for expiry.
+        return body
+
+    def refresh(self, token: str | None, now: float | None = None) -> str | None:
+        """A fresh 30 days for a device that is still in use: same session,
+        new expiry. Only for a token older than REFRESH_AFTER_S."""
+        claims = self.claims(token, now)
+        now = now or time.time()
+        if claims is None or not claims.get("sid"):
+            return None
+        if now - float(claims.get("iat", now)) < REFRESH_AFTER_S:
+            return token
+        p = self.verify_token(token, now)
+        return self.token_for(p, now, sid=claims["sid"]) if p else None
+
+    # --------------------------------------------------------------- devices
+    def sessions_of(self, phone: str, now: float | None = None) -> list[dict]:
+        t = now or time.time()
+        rows = self.conn.execute("SELECT * FROM sessions WHERE phone=? AND revoked IS NULL ORDER BY last_seen DESC",
+                                 (normalise_phone(phone),))
+        return [{"sid": r["sid"], "created": r["created"], "last_seen": r["last_seen"], "agent": r["agent"]}
+                for r in rows if t - float(r["last_seen"]) <= IDLE_TTL_S]
+
+    def end_session(self, phone: str, sid: str, now: float | None = None) -> bool:
+        with self.conn:
+            cur = self.conn.execute("UPDATE sessions SET revoked=? WHERE sid=? AND phone=? AND revoked IS NULL",
+                                    (now or time.time(), sid, normalise_phone(phone)))
+        return cur.rowcount > 0
+
+    # ----------------------------------------------------------------- audit
+    def record(self, who: "Principal", method: str, path: str, pack: str | None, status: int,
+               now: float | None = None) -> None:
+        with self.conn:
+            self.conn.execute("INSERT INTO audit (at, phone, role, method, path, pack, status) VALUES (?,?,?,?,?,?,?)",
+                              (now or time.time(), who.phone, who.role, method, path[:200], pack, status))
+
+    def audit(self, limit: int = 200) -> list[dict]:
+        rows = self.conn.execute("SELECT * FROM audit ORDER BY id DESC LIMIT ?", (limit,))
+        return [dict(r) for r in rows]

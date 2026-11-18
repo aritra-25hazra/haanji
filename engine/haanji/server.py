@@ -236,6 +236,13 @@ async def hardening(request: Request, call_next):
                 return JSONResponse({"detail": "not your pack"}, status_code=403)
             request.state.user = who
     response = await call_next(request)
+    who = getattr(request.state, "user", None)
+    if who is not None and request.method in ("POST", "PUT", "DELETE", "PATCH"):
+        pack = _pack_in(request)
+        try:                                       # the owner's activity log; never fails a request
+            auth.record(who, request.method, path, pack if isinstance(pack, str) else None, response.status_code)
+        except Exception as exc:                   # noqa: BLE001
+            log.warning("audit: %s", exc)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -1710,14 +1717,14 @@ async def auth_otp(body: OtpIn):
 
 
 @app.post("/api/auth/verify")
-async def auth_verify(body: VerifyIn):
+async def auth_verify(body: VerifyIn, request: Request):
     if not AUTH_ENABLED:
         raise HTTPException(409, "auth is off")
     phone = normalise_phone(body.phone)
     user = auth.user(phone)
     if user is None or not auth.check_otp(phone, body.code):
         raise HTTPException(401, "wrong or expired code")
-    return {"token": auth.token_for(user), "user": user.as_dict()}
+    return {"token": auth.token_for(user, agent=request.headers.get("user-agent", "")), "user": user.as_dict()}
 
 
 @app.post("/api/auth/logout")
@@ -1729,6 +1736,55 @@ async def auth_logout(request: Request):
     if who is not None:
         auth.revoke(who.phone)
     return {"ok": True}
+
+
+def _bearer(request: Request) -> str | None:
+    header = request.headers.get("authorization", "")
+    return header[7:] if header.lower().startswith("bearer ") else None
+
+
+@app.post("/api/auth/refresh")
+async def auth_refresh(request: Request):
+    """A device in use keeps its sign-in: past a week, a new 30-day token for
+    the same session. Unused for IDLE_TTL_S, the device is signed out."""
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off")
+    token = auth.refresh(_bearer(request))
+    if token is None:
+        raise HTTPException(401, "sign in again")
+    return {"token": token}
+
+
+@app.get("/api/auth/sessions")
+async def auth_sessions(request: Request):
+    """The devices this number is signed in on; ``current`` marks this one."""
+    if not AUTH_ENABLED:
+        return {"sessions": []}
+    claims = auth.claims(_bearer(request))
+    if claims is None:
+        raise HTTPException(401, "sign in first")
+    return {"sessions": [{**d, "current": d["sid"] == claims.get("sid")} for d in auth.sessions_of(claims["phone"])]}
+
+
+@app.delete("/api/auth/sessions/{sid}")
+async def auth_end_session(sid: str, request: Request):
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off")
+    claims = auth.claims(_bearer(request))
+    if claims is None:
+        raise HTTPException(401, "sign in first")
+    if not auth.end_session(claims["phone"], sid):
+        raise HTTPException(404, "no such device")
+    return {"ok": True}
+
+
+@app.get("/api/audit")
+async def audit_log(limit: int = 200):
+    """Who changed what: every write a signed-in owner or staff member made."""
+    return {"entries": auth.audit(max(1, min(limit, 1000)))}
+
+
+PROTECTED.append(("GET", re.compile(r"^/api/audit$"), "owner"))
 
 
 @app.get("/api/auth/me")

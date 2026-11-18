@@ -274,4 +274,13 @@ export default {
   "Refuse this request?": "Ye request mana kar dun?",
   "Yes, refuse": "Haan, mana karo",
   "Refuse": "Mana karo",
+  "Unknown device": "Anjaan device",
+  "this device": "ye device",
+  "signed in {when} · last used {last}": "sign in {when} · aakhri use {last}",
+  "Sign out": "Sign out",
+  "Activity": "Activity",
+  "every change made in the console, newest first": "console mein hua har badlaav, naya pehle",
+  "No changes yet.": "Abhi koi badlaav nahi.",
+  "Who": "Kisne",
+  "What": "Kya",
 } as Record<string, string>;

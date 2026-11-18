@@ -138,6 +138,10 @@ export const engine = {
   me: () => request<{ enabled: boolean; user: User | null }>("api/auth/me"),
   /** Sign out everywhere: the engine revokes every token this number holds. */
   logout: () => request<{ ok: boolean }>("api/auth/logout", { method: "POST" }),
+  refreshToken: () => request<{ token: string }>("api/auth/refresh", { method: "POST" }),
+  devices: () => request<{ sessions: { sid: string; created: number; last_seen: number; agent: string; current: boolean }[] }>("api/auth/sessions"),
+  endDevice: (sid: string) => request<{ ok: boolean }>(`api/auth/sessions/${encodeURIComponent(sid)}`, { method: "DELETE" }),
+  audit: () => request<{ entries: { id: number; at: number; phone: string; role: string; method: string; path: string; pack: string | null; status: number }[] }>("api/audit"),
   users: () => request<{ users: User[] }>("api/auth/users"),
   addUser: (u: { phone: string; role: string; packs: string[]; name: string }) => request<{ user: User }>("api/auth/users", { method: "POST", body: JSON.stringify(u) }),
   removeUser: (phone: string) => request<{ removed: boolean }>(`api/auth/users/${encodeURIComponent(phone)}`, { method: "DELETE" }),

@@ -70,6 +70,13 @@ cancelled, the first waiting person is messaged on WhatsApp with the freed slot.
 Without `HAANJI_RAZORPAY_KEY_ID`/`_KEY_SECRET`, links are mock links on this
 server (`/pay/{payment_id}`) that a demo can "pay" with one click.
 
+## Devices and activity (sign-in on)
+
+`POST /api/auth/refresh` (bearer) → `{token}`: a token older than a week gets a new 30 days on the same device; a device
+unused for 14 days is signed out. `GET /api/auth/sessions` → `{sessions: [{sid, created, last_seen, agent, current}]}`
+for the caller's own number; `DELETE /api/auth/sessions/{sid}` ends one of them. `GET /api/audit` (owner) →
+`{entries: [{at, phone, role, method, path, pack, status}]}`: every POST/PUT/DELETE a signed-in person made.
+
 ## Users (unchanged)
 
 `GET/POST /api/auth/users`, `DELETE /api/auth/users/{phone}` (owner);

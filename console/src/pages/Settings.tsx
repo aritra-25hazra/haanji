@@ -37,6 +37,7 @@ export default function Settings() {
         ? <UsersPanel />
         : <Panel title="Users" hint="HAANJI_AUTH off"><Empty><p>{t("The engine runs without sign-in, so everyone is the owner. Users work once HAANJI_AUTH=on.")}</p></Empty></Panel>}
       {authOn && <SessionPanel />}
+      {authOn && <ActivityPanel />}
     </Page>
   );
 }
@@ -342,12 +343,67 @@ function SessionPanel() {
     <Panel title="Session" hint={user ? `${user.name || user.phone} · ${user.role}` : ""}>
       <div className="body form">
         <p className="muted">{t("Sign out of every device and browser. All of this number's tokens are revoked on the engine. You will need an OTP to come back in.")}</p>
+        <Devices />
         <div>
           <button className="btn btn-danger" onClick={() => { setBusy(true); void signOutEverywhere(); }} disabled={busy}>
             <Icon name="lock" small />{busy ? "Sign out…" : "Sign out everywhere"}
           </button>
         </div>
       </div>
+    </Panel>
+  );
+}
+
+const when = (secs: number) => new Date(secs * 1000).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Kolkata" });
+/** "Android · Chrome" from a user agent, enough to tell two devices apart. */
+function deviceName(agent: string): string {
+  const os = /Android/.test(agent) ? "Android" : /iPhone|iPad/.test(agent) ? "iPhone" : /Mac OS/.test(agent) ? "Mac" : /Windows/.test(agent) ? "Windows" : /Linux/.test(agent) ? "Linux" : "";
+  const app = /Edg\//.test(agent) ? "Edge" : /Chrome\//.test(agent) ? "Chrome" : /Firefox\//.test(agent) ? "Firefox" : /Safari\//.test(agent) ? "Safari" : "";
+  return [os, app].filter(Boolean).join(" · ") || agent.slice(0, 40) || t("Unknown device");
+}
+
+/** The devices this number is signed in on, each one ended on its own. */
+function Devices() {
+  useT();
+  const { data, reload } = useData(() => engine.devices().then((r) => r.sessions), []);
+  const [busy, setBusy] = useState<string | null>(null);
+  if (!data || data.length === 0) return null;
+  return (
+    <ul className="devices">
+      {data.map((d) => (
+        <li key={d.sid}>
+          <span><b>{deviceName(d.agent)}</b>{d.current && <Chip kind="ok">{t("this device")}</Chip>}
+            <small className="muted">{t("signed in {when} · last used {last}", { when: when(d.created), last: when(d.last_seen) })}</small></span>
+          {!d.current && (
+            <button className="btn btn-ghost btn-sm" disabled={busy === d.sid}
+                    onClick={() => { setBusy(d.sid); void engine.endDevice(d.sid).finally(() => { setBusy(null); reload(); }); }}>{t("Sign out")}</button>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Every change an owner or staff member made, newest first. */
+function ActivityPanel() {
+  useT();
+  const { data, error } = useData(() => engine.audit().then((r) => r.entries), []);
+  return (
+    <Panel title={t("Activity")} hint={t("every change made in the console, newest first")}>
+      {!data ? (error ? <Empty>{t("Could not load: {error}", { error })}</Empty> : <Loading kind="table" />)
+        : data.length === 0 ? <Empty><p>{t("No changes yet.")}</p></Empty>
+        : (
+          <Register head={<><th>{t("When")}</th><th>{t("Who")}</th><th>{t("What")}</th><th className="right">{t("Result")}</th></>}>
+            {data.slice(0, 50).map((e) => (
+              <tr key={e.id}>
+                <td className="mono">{when(e.at)}</td>
+                <td>{e.phone} <small className="muted">{e.role}</small></td>
+                <td className="mono">{e.method} {e.path}{e.pack ? ` · ${e.pack}` : ""}</td>
+                <td className="num right"><Chip kind={e.status < 400 ? "ok" : "bad"}>{e.status}</Chip></td>
+              </tr>
+            ))}
+          </Register>
+        )}
     </Panel>
   );
 }
