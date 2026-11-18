@@ -95,6 +95,25 @@ def receiving_phone_id(payload: dict) -> str | None:
     return None
 
 
+def note_statuses(payload: dict) -> int:
+    """Meta reports what became of a sent message later, in a delivery of its
+    own: sent, delivered, read, or failed with an error code. A 200 from the
+    send only means "accepted". Keep the latest, for the operator."""
+    seen = 0
+    for entry in payload.get("entry", []) or []:
+        for change in entry.get("changes", []) or []:
+            for st in (change.get("value", {}) or {}).get("statuses", []) or []:
+                seen += 1
+                err = (st.get("errors") or [{}])[0]
+                LAST_SEND["delivery"] = {
+                    "status": st.get("status"), "to": "…" + str(st.get("recipient_id", ""))[-4:],
+                    "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(int(st.get("timestamp") or time.time()))),
+                    **({"code": err.get("code"), "title": err.get("title"),
+                        "detail": ((err.get("error_data") or {}).get("details") or err.get("message") or "")[:200]}
+                       if st.get("status") == "failed" else {})}
+    return seen
+
+
 def note_incoming(phone_id: str | None) -> None:
     """For the operator: whether deliveries arrive on the configured number."""
     if phone_id:

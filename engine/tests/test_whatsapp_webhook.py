@@ -170,3 +170,20 @@ def test_the_reply_goes_from_the_number_the_customer_wrote_to(sent, monkeypatch)
     assert r.json()["handled"] == 1 and sent and set(sent.froms) == {"555000222"}
     assert sent[0][0] == "919811101499", "to the number exactly as Meta gave it, country code included"
     assert wa.LAST_SEND["incoming_on"] == "…0222" and wa.LAST_SEND["incoming_matches_config"] is False
+
+
+def test_meta_s_delivery_report_is_kept_for_the_operator(sent, monkeypatch):
+    """A 200 from the send only means accepted; Meta says later whether it was delivered."""
+    from fastapi.testclient import TestClient
+    monkeypatch.delenv("HAANJI_WA_APP_SECRET", raising=False)
+    monkeypatch.setattr(server, "IS_PUBLIC", False)
+    monkeypatch.setattr(wa, "LAST_SEND", {})
+    body = {"entry": [{"changes": [{"value": {"metadata": {"phone_number_id": "555000222"}, "statuses": [{
+        "id": "wamid.x", "status": "failed", "timestamp": "1795000000", "recipient_id": "919811101499",
+        "errors": [{"code": 131026, "title": "Message undeliverable",
+                    "error_data": {"details": "Message failed to send because of an unknown error"}}]}]}}]}]}
+    r = TestClient(server.app).post("/wa/webhook", json=body)
+    assert r.status_code == 200 and r.json()["handled"] == 0 and not sent
+    monkeypatch.setenv("HAANJI_WA_TOKEN", "t"); monkeypatch.setenv("HAANJI_WA_PHONE_ID", "555000222")
+    d = wa.status()["last_send"]["delivery"]
+    assert d["status"] == "failed" and d["code"] == 131026 and d["to"] == "…1499" and "unknown error" in d["detail"]

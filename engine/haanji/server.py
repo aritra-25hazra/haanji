@@ -1088,6 +1088,7 @@ async def wa_webhook(request: Request):
     handled = 0
     to_number = wa_channel.receiving_phone_id(payload)        # reply from the number they wrote to
     wa_channel.note_incoming(to_number)
+    wa_channel.note_statuses(payload)                          # sent / delivered / failed, for the operator
     for msg_id, phone, text in wa_channel.extract_incoming(payload):
         if msg_id and msg_id in _wa_seen:
             continue
