@@ -18,6 +18,10 @@ export interface Status {
   backup?: { s3: boolean; restore_from: boolean };
   /** The WhatsApp number a buyer can message for a demo (HAANJI_SALES_WHATSAPP). */
   sales_whatsapp?: string | null;
+  /** Who answers calls: the built-in rules, or a hosted model (no secrets). */
+  dialogue?: { provider: "rules" | "gemini" | "claude" | string; model: string | null };
+  /** Where the records live: a database that survives restarts, or the server's own disk. */
+  storage?: "postgres" | "local" | string;
 }
 
 export interface PrivacyRequest {

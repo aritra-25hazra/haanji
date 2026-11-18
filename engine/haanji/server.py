@@ -2556,7 +2556,22 @@ async def status():
             # The number a prospective shop messages to ask for a pilot; the
             # landing page shows its button only when this is set.
             "sales_whatsapp": os.environ.get("HAANJI_SALES_WHATSAPP") or None,
-            "whatsapp": wa_channel.status()}
+            "whatsapp": wa_channel.status(),
+            # Who answers calls, and where the records live, in words an owner can be told.
+            "dialogue": dialogue_status(),
+            "storage": "postgres" if db.database_url() else "local"}
+
+
+def dialogue_status() -> dict[str, Any]:
+    """The dialogue provider by its plain name: the built-in rules (the
+    deterministic policy), or a hosted model named with its model id."""
+    key = (os.environ.get("HAANJI_PROVIDER_LLM") or "mock").lower()
+    if key == "gemini":
+        from .adapters.gemini import DEFAULT_MODEL as GEMINI_DEFAULT
+        return {"provider": "gemini", "model": os.environ.get("HAANJI_GEMINI_DIALOGUE_MODEL") or GEMINI_DEFAULT}
+    if key == "claude":
+        return {"provider": "claude", "model": os.environ.get("HAANJI_LLM_MODEL") or "claude-opus-4-8"}
+    return {"provider": "rules", "model": None}
 
 
 def _page(name: str) -> FileResponse:

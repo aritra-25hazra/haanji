@@ -42,7 +42,9 @@ export default function Ops() {
         <Tile index={2} label="p95" value={slo.p95} suffix=" ms" mono foot={`max ${Math.round(slo.max)} ms`} />
         <Tile index={3} label="Tool turns p90" value={slo.tool_turn_p90} suffix=" ms" mono foot={t("turns that did some work")} />
         <Tile index={4} label="Speculation hit" value={hit} suffix="%" foot={`${data.speculation.hits}/${data.speculation.started} · ${data.speculation.wasted} wasted`} />
-        <Tile index={5} label="Live sessions" value={data.live_sessions} foot={`up ${Math.round(data.uptime_s / 60)} min · ${data.providers.llm} llm`} />
+        <Tile index={5} label="Live sessions" value={data.live_sessions} foot={`up ${Math.round(data.uptime_s / 60)} min`} />
+        <Tile index={6} label={t("Who answers calls")} value={data.providers.llm === "gemini" ? "Gemini" : data.providers.llm === "claude" ? "Claude" : t("Built-in rules")}
+              foot={t("speech: {stt} · voice: {tts}", { stt: data.providers.stt, tts: data.providers.tts })} />
       </div>
 
       <Panel title={t("How turn latency is spread")} hint={data.turns ? t("how many turns in each bucket (ms)") : undefined}>

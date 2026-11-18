@@ -86,3 +86,18 @@ describe("the help assistant", () => {
     expect(sent.messages).toEqual([{ role: "user", content: "how to book?" }]);
   });
 });
+
+describe("who answers calls is said plainly", () => {
+  it("names the built-in rules by default and a hosted model when one is on", async () => {
+    mockEngine({ "api/status": () => STATUS_OPEN, "api/conversations": () => ({ conversations: [] }) });
+    renderApp("/calls");
+    expect(await screen.findByText("AI: built-in rules")).toBeInTheDocument();
+  });
+
+  it("says Gemini when the engine runs on Gemini", async () => {
+    mockEngine({ "api/status": () => ({ ...STATUS_OPEN, dialogue: { provider: "gemini", model: "gemini-x" } }),
+                 "api/conversations": () => ({ conversations: [] }) });
+    renderApp("/calls");
+    expect(await screen.findByText("AI: Gemini")).toBeInTheDocument();
+  });
+});

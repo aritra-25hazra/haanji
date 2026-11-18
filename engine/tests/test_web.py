@@ -144,3 +144,15 @@ def test_the_talk_page_has_a_3d_counter_and_lines_to_try(client):
     three = client.get("/static/three-0.170.0.module.min.js")
     assert three.status_code == 200 and "immutable" in three.headers.get("cache-control", "")
     assert three.text.startswith("/**\n * @license\n * Copyright 2010-2024 Three.js Authors")
+
+
+def test_status_names_who_answers_calls_and_where_records_live(monkeypatch):
+    from fastapi.testclient import TestClient
+    from haanji import server
+    c = TestClient(server.app)
+    monkeypatch.delenv("HAANJI_PROVIDER_LLM", raising=False)
+    s = c.get("/api/status").json()
+    assert s["dialogue"] == {"provider": "rules", "model": None} and s["storage"] in ("local", "postgres")
+    monkeypatch.setenv("HAANJI_PROVIDER_LLM", "gemini")
+    monkeypatch.setenv("HAANJI_GEMINI_DIALOGUE_MODEL", "gemini-x")
+    assert c.get("/api/status").json()["dialogue"] == {"provider": "gemini", "model": "gemini-x"}

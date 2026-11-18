@@ -63,4 +63,13 @@ export default {
   "This page does not exist": "Yeh page nahi hai",
   "Back to today": "Aaj pe wapas",
   "{n} calls": "{n} calls",
+  "AI: Gemini": "AI: Gemini",
+  "AI: Claude": "AI: Claude",
+  "AI: built-in rules": "AI: apne rules",
+  "Calls are answered by HaanJi's own rules for this kind of shop: speech recognition, then rules that ask, check and book. No outside AI service is used.": "Calls HaanJi ke apne rules uthate hain: awaaz pehchaan ke, phir rules poochte, check karte aur book karte hain. Koi bahar ki AI service nahi lagti.",
+  "Calls are answered by a hosted AI model; every booking still needs the caller's yes, checked by HaanJi's own rules.": "Calls ek bahar ka AI model uthata hai; har booking phir bhi caller ki haan ke baad hi hoti hai, HaanJi ke apne rules se check hokar.",
+  "sample": "sample",
+  "Who answers calls": "Calls kaun uthata hai",
+  "Built-in rules": "Apne rules",
+  "speech: {stt} · voice: {tts}": "awaaz pehchaan: {stt} · bolna: {tts}",
 } as Record<string, string>;
