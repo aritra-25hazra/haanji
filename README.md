@@ -3,11 +3,7 @@
 [![ci](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml)
 [![engine](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-engine.onrender.com%2Fapi%2Fstatus&label=engine&up_message=live&down_message=waking)](https://haanji-engine.onrender.com)
 [![console](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-kappa.vercel.app&label=console&up_message=live)](https://haanji-kappa.vercel.app)
-<<<<<<< HEAD
-![tests](https://img.shields.io/badge/tests-689%20passing-1F6B45)
-=======
-![tests](https://img.shields.io/badge/tests-689%20passing-1F6B45)
->>>>>>> origin/main
+![tests](https://img.shields.io/badge/tests-690%20passing-1F6B45)
 [![security](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/aritra-25hazra/haanji?quickstart=1)
 ![licence](https://img.shields.io/badge/licence-Apache--2.0-1B3B8C)
@@ -92,11 +88,7 @@ pip install -e ".[dev]"
 
 python -m haanji.cli demo          # one narrated call, at real speaking speed
 python -m haanji.cli selftest      # all 44 packaged scenarios, all ten packs
-<<<<<<< HEAD
-pytest -q                          # 689 tests
-=======
-pytest -q                          # 689 tests
->>>>>>> origin/main
+pytest -q                          # 690 tests
 python -m haanji.bench             # regenerates research/results.json
 ```
 
@@ -192,11 +184,7 @@ PRAMAAN LEDGER
 │   │   ├── insights.py      outcome/revenue/cost analytics behind /api/insights
 │   │   ├── bench.py         the evaluation harness that produces every number
 │   │   └── cli.py           demo · selftest · bench · verify · serve · packs
-<<<<<<< HEAD
-│   └── tests/               689 tests, including the safety properties and the demo pages
-=======
-│   └── tests/               689 tests, including the safety properties and the demo pages
->>>>>>> origin/main
+│   └── tests/               690 tests, including the safety properties and the demo pages
 │   │   ├── admin.py         the console's operations: calendar, customers, settings, waitlist, payments, backup
 │   │   ├── reminders.py     the day-before WhatsApp reminder and the "1 / 2" replies
 │   │   ├── payments.py      deposit links (Razorpay, or this server's mock), the signed webhook
@@ -603,11 +591,16 @@ keeps the free instance warm; delete
 
 A project report should say what was verified and what was not.
 
-<<<<<<< HEAD
-* **The Python engine is fully executed here.** 647 tests, 44 scenarios across
-=======
-* **The Python engine is fully executed here.** 634 tests, 44 scenarios across
->>>>>>> origin/main
+* **WhatsApp delivery to real customers is blocked by Meta, not by the code.**
+  - What works, checked on 2026-11-18:
+    - a message to the test number reaches the engine;
+    - HaanJi answers it;
+    - Meta accepts the reply.
+  - Meta's delivery report is 131031 "Business account locked": the business portfolio is not verified. A verified Indian WhatsApp Business number is a manual Meta step (business verification with a registered business's documents), and no code changes when it is done.
+  - Until then the demo uses the WhatsApp simulator (`/whatsapp`).
+  - `/api/status` → `whatsapp.last_send` shows Meta's latest answer.
+
+* **The Python engine is fully executed here.** 690 tests, 44 scenarios across
   ten packs and seven languages, and the entire benchmark run on this
   machine. Every number in this README comes from that run.
 * **The React console builds here.** `npm run build` type-checks the whole

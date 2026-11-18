@@ -113,3 +113,14 @@ def test_the_facts_come_from_the_repository():
 def test_the_committed_readme_and_report_are_current():
     """What CI's `readme-check` enforces: run `make readme-sync` after adding tests, packs or scenarios."""
     assert rs.main(["--check"]) == 0
+
+
+def test_no_document_carries_merge_conflict_markers():
+    """A merge once left <<<<<<< blocks in the README on main; the count rules
+    still matched, so nothing else noticed."""
+    root = Path(__file__).resolve().parents[2]
+    docs = [root / "README.md", root / "CHANGELOG.md", root / "research" / "REPORT.md", *sorted((root / "docs").glob("*.md"))]
+    for doc in docs:
+        lines = doc.read_text(encoding="utf-8").splitlines()
+        bad = [i + 1 for i, line in enumerate(lines) if line.startswith(("<<<<<<< ", ">>>>>>> ")) or line == "======="]
+        assert not bad, f"{doc.relative_to(root)} has conflict markers at lines {bad}"
