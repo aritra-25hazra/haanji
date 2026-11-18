@@ -522,3 +522,35 @@ dl.kv dd { margin: 0; }
 @media (max-width: 560px) { .conn-list li { grid-template-columns: 18px 1fr; } .conn-list li span { grid-column: 2; } }
 details.tech { padding: 0 18px 14px; }
 details.tech summary { cursor: pointer; color: var(--ink-2); font-size: 14px; min-height: 32px; display: flex; align-items: center; }
+
+/* ── the landing's own frame ───────────────────────────────────────────── */
+.mbar { justify-content: space-between; }
+.mbar .mnav { display: flex; gap: 18px; }
+.mbar .mnav a { color: var(--chalk); text-decoration: none; font-weight: 500; min-height: 40px; display: inline-flex; align-items: center; }
+.mbar .mnav a:hover { text-decoration: underline; }
+.mbar .mbar-demo { color: var(--chalk); border-color: rgba(255, 247, 230, .45); }
+.main.marketing { max-width: 1120px; }
+.home-shot { margin: 0; display: grid; gap: 8px; }
+.home-shot img { width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--rule); box-shadow: 0 12px 36px rgba(20, 33, 61, .12); }
+.home-who h2, .home-faq h2 { font-size: 26px; margin-bottom: 14px; }
+.who-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.who { border: 1px solid var(--rule); border-radius: 12px; padding: 18px; background: var(--paper); display: grid; gap: 8px; align-content: start; }
+.who h3 { font-size: 17px; }
+.who p { margin: 0; color: var(--ink-2); line-height: 1.5; font-size: 15px; }
+.who-icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: rgba(27, 59, 140, .08); color: var(--cobalt); }
+.plan-points { list-style: none; margin: 4px 0; padding: 0; display: grid; gap: 6px; }
+.plan-points li { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; line-height: 1.45; }
+.plan-points li svg { color: var(--leaf-ink); margin-top: 3px; flex: none; }
+.faq { border-bottom: 1px solid var(--rule); padding: 14px 0; }
+.faq summary { cursor: pointer; font-weight: 600; font-size: 17px; min-height: 32px; display: flex; align-items: center; }
+.faq p { margin: 8px 0 0; color: var(--ink-2); line-height: 1.6; max-width: 75ch; font-size: 15px; }
+.site-foot { max-width: 1120px; margin: 40px auto 0; padding: 28px 24px 40px; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 1fr auto; gap: 12px 24px; align-items: start; }
+.site-foot nav { display: flex; gap: 16px; flex-wrap: wrap; }
+.site-foot nav a { color: var(--cobalt); min-height: 32px; display: inline-flex; align-items: center; }
+.site-foot p { margin: 4px 0 0; }
+@media (max-width: 860px) { .who-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .who-grid { grid-template-columns: 1fr; }
+  .mbar .mnav { display: none; }
+  .site-foot { grid-template-columns: 1fr; }
+}

@@ -101,3 +101,33 @@ describe("who answers calls is said plainly", () => {
     expect(await screen.findByText("AI: Gemini")).toBeInTheDocument();
   });
 });
+
+describe("the landing is its own page", () => {
+  it("shows the site bar, not the app's navigation, and answers the four questions", async () => {
+    mockEngine({ "api/status": () => STATUS_OPEN });
+    renderApp("/");
+    await screen.findByRole("heading", { level: 1, name: /answers every call/ });
+    expect(screen.queryByRole("navigation", { name: "Main" })).toBeNull();
+    expect(screen.getByRole("navigation", { name: "Site" })).toBeInTheDocument();
+    for (const q of ["Is it really AI?", "Does it speak Hindi?", "What if it gets it wrong?", "Is my data safe?"]) {
+      expect(screen.getByText(q)).toBeInTheDocument();
+    }
+    expect(screen.getByRole("heading", { name: "Who it's for" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Footer" })).toBeInTheDocument();
+  });
+
+  it("Try demo opens the sample shop inside the app", async () => {
+    mockEngine({ "api/status": () => STATUS_OPEN });
+    renderApp("/how");
+    fireEvent.click(await screen.findByRole("button", { name: "Try demo" }));
+    expect(await screen.findByRole("navigation", { name: "Main" })).toBeInTheDocument();
+    expect(localStorage.getItem("haanji.sample")).toBe("1");
+  });
+
+  it("with sign-in on, a visitor still sees the landing; the console asks to log in", async () => {
+    mockEngine({ "api/status": () => ({ ...STATUS_OPEN, auth: { enabled: true } }) });
+    renderApp("/");
+    expect(await screen.findByRole("link", { name: /Login/ })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Sign in" })).toBeNull();
+  });
+});

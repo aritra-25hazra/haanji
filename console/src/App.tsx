@@ -3,8 +3,10 @@ import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-route
 import { Empty, Icon, Loading } from "./components/Common";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { HelpChat } from "./components/HelpChat";
+import { MarketingBar, SiteFooter } from "./components/Marketing";
+import { AiChip, LangSwitch } from "./components/HeaderBits";
 import { packLabel } from "./labels";
-import { LANGS, en, setLang, t, useLang } from "./i18n";
+import { en, t, useLang } from "./i18n";
 import { useApp, type Mode } from "./state";
 import Calendar from "./pages/Calendar";
 import Customers from "./pages/Customers";
@@ -61,9 +63,44 @@ export default function App() {
   useEffect(() => {
     document.querySelector(".nav a.active")?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   }, [location.pathname]);
+  // The landing ("/", and How it works for a visitor) has its own bar and no app nav.
+  const marketing = !user && (location.pathname === "/" || (location.pathname === "/how" && !sampleView));
   // The sample shop ("Try demo") needs no sign-in: it is made up and read-only.
-  if (authRequired && !sampleView) return <Suspense fallback={<Loading />}><Login /></Suspense>;
+  if (authRequired && !sampleView && !marketing) return <Suspense fallback={<Loading />}><Login /></Suspense>;
   const pill = PILL[mode];
+  const routes = (
+    <ErrorBoundary resetKey={location.pathname}>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Home />} />
+          <Route path="/how" element={<HowItWorks />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/customers" element={<Customers />} />
+          <Route path="/calls" element={<Calls />} />
+          <Route path="/calls/:id" element={<CallDetail />} />
+          <Route path="/ledger" element={<Ledger />} />
+          <Route path="/lexicon" element={<Lexicon />} />
+          <Route path="/packs" element={<Packs />} />
+          <Route path="/studio" element={<PackStudio />} />
+          <Route path="/onboard" element={<Onboard />} />
+          <Route path="/ops" element={<Ops />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
+  );
+  if (marketing) {
+    return (
+      <>
+        <MarketingBar />
+        <main className="main marketing" id="main">{routes}</main>
+        <SiteFooter />
+        <HelpChat />
+      </>
+    );
+  }
   return (
     <>
       <header className="topbar">
@@ -95,29 +132,7 @@ export default function App() {
           )}
         </div>
       </header>
-      <main className="main" id="main">
-        <ErrorBoundary resetKey={location.pathname}>
-          <Suspense fallback={<Loading />}>
-            <Routes>
-              <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Home />} />
-              <Route path="/how" element={<HowItWorks />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/customers" element={<Customers />} />
-              <Route path="/calls" element={<Calls />} />
-              <Route path="/calls/:id" element={<CallDetail />} />
-              <Route path="/ledger" element={<Ledger />} />
-              <Route path="/lexicon" element={<Lexicon />} />
-              <Route path="/packs" element={<Packs />} />
-              <Route path="/studio" element={<PackStudio />} />
-              <Route path="/onboard" element={<Onboard />} />
-              <Route path="/ops" element={<Ops />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
-      </main>
+      <main className="main" id="main">{routes}</main>
       <HelpChat />
     </>
   );
@@ -172,28 +187,3 @@ function NotFound() {
   );
 }
 
-/** Who answers the calls, said plainly: the built-in rules (the default, and
- *  what the sample shop uses), or a hosted model named by its provider. */
-export function AiChip() {
-  const { status, sampleView } = useApp();
-  useLang();
-  const d = sampleView || !status ? { provider: "rules" } : status.dialogue ?? { provider: "rules" };
-  const label = d.provider === "gemini" ? t("AI: Gemini") : d.provider === "claude" ? t("AI: Claude") : t("AI: built-in rules");
-  const title = d.provider === "rules"
-    ? t("Calls are answered by HaanJi's own rules for this kind of shop: speech recognition, then rules that ask, check and book. No outside AI service is used.")
-    : t("Calls are answered by a hosted AI model; every booking still needs the caller's yes, checked by HaanJi's own rules.");
-  return <span className="ai-chip" title={title}>{label}{sampleView ? ` · ${t("sample")}` : ""}</span>;
-}
-
-/** English or Hindi for every screen; remembered per browser, `?lang=hi` in a link. */
-export function LangSwitch() {
-  const lang = useLang();
-  return (
-    <div className="lang-switch" role="group" aria-label="Language / भाषा">
-      {LANGS.map((l) => (
-        <button key={l.id} type="button" aria-pressed={lang === l.id} title={l.label} lang={l.id === "hi" ? "hi" : "en"}
-                onClick={() => setLang(l.id)}>{l.short}</button>
-      ))}
-    </div>
-  );
-}
