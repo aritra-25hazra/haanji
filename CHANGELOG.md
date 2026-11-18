@@ -4,6 +4,14 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
 
 ## Unreleased
 
+### Phase 2 (branch phase2/platform)
+* **Demo reset**: on demand with the operator's token, nightly at an IST hour; the old chain archived whole.
+* **Today means today**: the dashboard and the evening digest count only India's today, under the same names; the digest in the owner's language.
+* **Data rights**: a customer's own My data page (WhatsApp code; download, or ask for erasure), the owner's approval in Settings, a log that keeps only a hash, backups pruned past retention.
+* **Sign-in**: devices the owner can see and end, idle sign-out after 14 days, refresh while in use, an activity log.
+* **Phone**: one bridge for Twilio and Exotel AgentStream (Indian numbers), with a G.711 codec.
+* **PostgreSQL**: `HAANJI_DATABASE_URL`, `haanji db-copy`, the suite run on Postgres in CI; SQLite stays the default.
+
 ### Phase 1 review (branch phase1/demo-fixes)
 * **English by default, Hindi on a switch.** Every console screen and engine
   page reads English first; EN / हिं switches to the Hinglish the product
