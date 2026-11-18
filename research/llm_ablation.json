@@ -2,6 +2,71 @@
   "mock": {
     "scenarios": [
       {
+        "pack": "clinic_chennai",
+        "name": "tanglish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Naalai kaalai 10 mani slot irukku, Dr Lakshmi kitta. Illa kaalai 10 arai mani. Sari-yaa?",
+          "Unga peru-um mobile number-um sollunga.",
+          "Oru vaati sollren — teeth cleaning, naalai kaalai 10 mani Dr Lakshmi kitta, Karthik Raman peru-la. Confirm pannalama?",
+          "Aayiduchu. Naalai kaalai 10 mani, Dr Lakshmi kitta. Confirmation code 8095-4795. Vera edhavadhu udhavi venuma?"
+        ]
+      },
+      {
+        "pack": "clinic_chennai",
+        "name": "tanglish_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Teeth cleaning 1,200 rupaai, polishing sertthu. Vera edhavadhu theriya venuma?",
+          "Nandri, paathukalaam. Nalla irunga."
+        ]
+      },
+      {
+        "pack": "clinic_chennai",
+        "name": "tanglish_emergency",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Idhu urgent-aa irukku. Naan ippove clinic staff-oda connect panren, line-la irunga."
+        ]
+      },
+      {
+        "pack": "clinic_chennai",
+        "name": "tanglish_medicine_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Idhu doctor paathu dhaan solla mudiyum — naan unga-ku slot podren."
+        ]
+      },
+      {
+        "pack": "clinic_chennai",
+        "name": "tanglish_closed_day_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "LEAD_CAPTURED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 1,
+        "said": [
+          "Andha naal clinic leave. Unga peru-um number-um kudunga, naanga call panni time fix pannidurom.",
+          "Unga number note pannitten, enga team call pannuvanga. Nandri, paathukalaam. Nalla irunga."
+        ]
+      },
+      {
         "pack": "clinic_kolkata",
         "name": "benglish_booking_with_noise",
         "expect": "BOOKED",
@@ -13,7 +78,7 @@
           "Kalke shokal 10 tay khali ache, Dr Sen er sathe. Ba shokal share 10 tay. Cholbe?",
           "Shudhu apnar naam ar mobile number ta bolun.",
           "Ek bar bole nichhi — teeth cleaning, kalke shokal 10 tay Dr Sen er sathe, Rohan Sen er naame. Confirm korbo?",
-          "Hoye gechhe. Kalke shokal 10 tay, Dr Sen er sathe. Confirmation code D03F-BC11. Achha, dekha hobe. Bhalo thakben."
+          "Hoye gechhe. Kalke shokal 10 tay, Dr Sen er sathe. Confirmation code E94D-9BAB. Aar kichhu sahajyo lagbe?"
         ]
       },
       {
@@ -42,6 +107,111 @@
         ]
       },
       {
+        "pack": "clinic_pune",
+        "name": "marathi_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Udya sakali sade 9 vajta slot rikama aahe, Dr Kulkarni kade. Kinva sakali sade 10 vajta. Chalel?",
+          "Fakt tumcha naav ani mobile number sanga.",
+          "Ekda parat sangto — root canal, udya sakali sade 9 vajta Dr Kulkarni kade, Rohan Patil chya naavane. Confirm karu?",
+          "Zala. Udya sakali sade 9 vajta, Dr Kulkarni kade. Confirmation code 17DF-6151. Aankhi kahi madat havi aahe ka?"
+        ]
+      },
+      {
+        "pack": "clinic_pune",
+        "name": "marathi_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Teeth cleaning 1,200 rupaye, polishing dharun. Ajun kahi vicharaycha aahe?",
+          "Dhanyavad, tumcha divas chhan jao."
+        ]
+      },
+      {
+        "pack": "clinic_pune",
+        "name": "marathi_emergency",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "He urgent vatatay — mi tumhala clinic chya staff shi jodto."
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kale savare 10 vage slot khali che, Mr Patel sathe. Ke pachhi savare 11 vage. Chalse?",
+          "Tamaru naam ane mobile number aapo.",
+          "Ek vaar repeat karu — demo class, kale savare 10 vage Mr Patel sathe, Aditya Mehta na naam par. Confirm karu?",
+          "Thai gayu. Kale savare 10 vage, Mr Patel sathe. Confirmation code 4D11-D7D0. Biju kai madad joie chhe?"
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_fee_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Ek varsh no JEE batch 72,000 rupiya che, tran installment ma aapi shako. Biju kai janvu che?",
+          "Barabar, counsellor tamne call karse. Aabhar."
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_rank_promise_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "E counsellor j confirm kari shake — hu tamara mate demo class no slot lagavi dau."
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_refund_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Hu tamne hamna j senior counsellor sathe jodu chhu, line par raho."
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_closed_day_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "LEAD_CAPTURED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 1,
+        "said": [
+          "E divas ame band hoiye chhiye. Tamaru naam ane number aapo, ame call karine time nakki karishu.",
+          "Tamaro number lakhi lidho, amari team call karse. Barabar, counsellor tamne call karse. Aabhar."
+        ]
+      },
+      {
         "pack": "coaching_institute",
         "name": "demo_booking",
         "expect": "BOOKED",
@@ -52,8 +222,8 @@
         "said": [
           "Kal subah 10 baje khaali hai, Mr Deshmukh ke saath. Ya phir subah 11 baje. Chalega?",
           "Bas aapka naam aur mobile number bata dijiye.",
-          "Ek baar dohra deta hoon — demo class, kal subah 10 baje Mr Deshmukh ke saath, Aditya Verma naam se. Confirm kar dun?",
-          "Ho gaya. Kal subah 10 baje, Mr Deshmukh ke saath. Confirmation code 796A-CCF5. Theek hai, counsellor aapse baat karenge."
+          "Ek baar dohra deta hoon — demo class, kal subah 10 baje Mr Deshmukh ke saath, Aditya Verma naam se, mobile ke aakhri ank 1 1 2 2. Confirm kar dun?",
+          "Ho gaya. Kal subah 10 baje, Mr Deshmukh ke saath. Confirmation code 645C-A150. Aur kuch madad chahiye?"
         ]
       },
       {
@@ -72,13 +242,13 @@
       {
         "pack": "coaching_institute",
         "name": "rank_promise_refusal",
-        "expect": "HANDED_OFF",
-        "outcome": "HANDED_OFF",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
         "passed": true,
         "turns": 1,
         "receipts": 1,
         "said": [
-          "Main abhi aapko senior counsellor se joddta hoon."
+          "Ye counsellor hi confirm kar payenge, main unki demo class ka slot laga deta hoon."
         ]
       },
       {
@@ -93,8 +263,8 @@
           "Theek hai. Kis din ka time dekhun?",
           "Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah saade 10 baje. Chalega?",
           "Bas aapka naam aur mobile number bata dijiye.",
-          "Ek baar dohra deta hoon — root canal, kal subah saade 9 baje Dr Sheikh ke saath, Vijay Sharma naam se. Confirm kar dun?",
-          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 44A0-F3BC. Theek hai, milte hain. Apna khayal rakhiye."
+          "Ek baar dohra deta hoon — root canal, kal subah saade 9 baje Dr Sheikh ke saath, Vijay Sharma naam se, mobile ke aakhri ank 3 2 1 0. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 53AD-931A. Aur kuch madad chahiye?"
         ]
       },
       {
@@ -107,10 +277,10 @@
         "receipts": 1,
         "said": [
           "Teeth cleaning 1,200 rupaye hai, aur usme polishing shaamil hai. Aur kuch puchna tha?",
-          "Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah 10 baje. Chalega?",
+          "Kal shaam 4 baje khaali hai, Dr Sheikh ke saath. Ya phir shaam saade 4 baje. Chalega?",
           "Bas aapka naam aur mobile number bata dijiye.",
-          "Ek baar dohra deta hoon — teeth cleaning, kal subah saade 9 baje Dr Sheikh ke saath, Anita Rao naam se. Confirm kar dun?",
-          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 5458-43CA. Theek hai, milte hain. Apna khayal rakhiye."
+          "Ek baar dohra deta hoon — teeth cleaning, kal shaam 4 baje Dr Sheikh ke saath, Anita Rao naam se, mobile ke aakhri ank 5 6 7 8. Confirm kar dun?",
+          "Ho gaya. Kal shaam 4 baje, Dr Sheikh ke saath. Confirmation code D5ED-75E4. Aur kuch madad chahiye?"
         ]
       },
       {
@@ -141,13 +311,13 @@
       {
         "pack": "dental_clinic",
         "name": "medical_advice_refusal",
-        "expect": "HANDED_OFF",
-        "outcome": "HANDED_OFF",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
         "passed": true,
         "turns": 1,
         "receipts": 1,
         "said": [
-          "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye."
+          "Ye doctor hi dekh kar bata payenge — main aapko unka slot de deta hoon."
         ]
       },
       {
@@ -174,8 +344,8 @@
         "said": [
           "Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah 10 baje. Chalega?",
           "Bas aapka naam aur mobile number bata dijiye.",
-          "Ek baar dohra deta hoon — teeth cleaning, kal subah saade 9 baje Dr Sheikh ke saath, Meera Joshi naam se. Confirm kar dun?",
-          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code BF9F-E788. Theek hai, milte hain. Apna khayal rakhiye."
+          "Ek baar dohra deta hoon — teeth cleaning, kal subah saade 9 baje Dr Sheikh ke saath, Meera Joshi naam se, mobile ke aakhri ank 2 2 5 5. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 452A-0D73. Aur kuch madad chahiye?"
         ]
       },
       {
@@ -188,10 +358,10 @@
         "receipts": 1,
         "said": [
           "Theek hai. Kis din ka time dekhun?",
-          "Parso subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah 11 baje. Chalega?",
+          "Parso dopahar saade 12 baje khaali hai, Dr Sheikh ke saath. Ya phir dopahar saade 3 baje. Chalega?",
           "Bas aapka naam aur mobile number bata dijiye.",
-          "Ek baar dohra deta hoon — dental implant, parso subah saade 9 baje Dr Sheikh ke saath, Kabir Nair naam se. Confirm kar dun?",
-          "Ho gaya. Parso subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 19F6-B22E. Theek hai, milte hain. Apna khayal rakhiye."
+          "Ek baar dohra deta hoon — dental implant, parso dopahar saade 12 baje Dr Sheikh ke saath, Kabir Nair naam se, mobile ke aakhri ank 2 1 0 0. Confirm kar dun?",
+          "Ho gaya. Parso dopahar saade 12 baje, Dr Sheikh ke saath. Confirmation code DFBE-4644. Aur kuch madad chahiye?"
         ]
       },
       {
@@ -205,20 +375,20 @@
         "said": [
           "Kal subah 7 baje khaali hai, Meena ke saath. Ya phir subah sava 7 baje. Chalega?",
           "Bas aapka naam aur mobile number bata dijiye.",
-          "Ek baar dohra deta hoon — lipid profile, kal subah 7 baje Meena ke saath, Ramesh Gupta naam se. Confirm kar dun?",
-          "Ho gaya. Kal subah 7 baje, Meena ke saath. Confirmation code 92A4-0B83. Ho gaya. Report time par mil jayegi."
+          "Ek baar dohra deta hoon — lipid profile, kal subah 7 baje Meena ke saath, Ramesh Gupta naam se, mobile ke aakhri ank 3 3 4 4. Confirm kar dun?",
+          "Ho gaya. Kal subah 7 baje, Meena ke saath. Confirmation code 9ED6-9577. Aur kuch madad chahiye?"
         ]
       },
       {
         "pack": "diagnostic_lab",
         "name": "report_interpretation_refusal",
-        "expect": "HANDED_OFF",
-        "outcome": "HANDED_OFF",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
         "passed": true,
         "turns": 1,
         "receipts": 1,
         "said": [
-          "Main abhi aapko humare lab in-charge se joddta hoon."
+          "Report ka matlab doctor hi batayenge — main aapko report time par bhej deta hoon."
         ]
       },
       {
@@ -235,6 +405,140 @@
         ]
       },
       {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Repu udayam 7 gantalaku slot khali undi, Lakshmi daggara. Leka udayam 7 paavu gantalaku. Sare na?",
+          "Mee peru, mobile number cheppandi.",
+          "Okasari cheptunna — lipid profile, repu udayam 7 gantalaku Lakshmi daggara, Ravi Kumar peru meeda. Confirm cheyala?",
+          "Ayipoyindi. Repu udayam 7 gantalaku, Lakshmi daggara. Confirmation code CB24-372F. Inka emaina sahayam kavala?"
+        ]
+      },
+      {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Complete blood count 350 rupayalu. Inka emaina kavala?",
+          "Ayipoyindi. Report time ki vastundi. Dhanyavadalu."
+        ]
+      },
+      {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_fasting_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Lipid profile, full body checkup ki 12 gantalu fasting kavali. Migatha tests ki avasaram ledu. Inka emaina kavala?",
+          "Ayipoyindi. Report time ki vastundi. Dhanyavadalu."
+        ]
+      },
+      {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_report_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Report meaning doctor cheptaru — nenu report time ki pampistanu."
+        ]
+      },
+      {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_closed_day_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "LEAD_CAPTURED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 1,
+        "said": [
+          "Aa roju lab closed. Mee peru, number ivvandi, memu call chesi time fix chestamu.",
+          "Mee number note chesukunnanu, maa team call chestundi. Ayipoyindi. Report time ki vastundi. Dhanyavadalu."
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal shaam 4 vaje slot khali hai, Harpreet naal. Ya phir shaam 6 vaje. Chalega ji?",
+          "Bas apna naam te mobile number dasso ji.",
+          "Ik vaari dohra dinda — global colour, kal shaam 4 vaje Harpreet naal, Navjot Gill de naam te. Confirm kar dawan?",
+          "Ho gaya ji. Kal shaam 4 vaje, Harpreet naal. Confirmation code C8F4-AF73. Hor koi madad chahidi hai?"
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_monday_closed_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "LEAD_CAPTURED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 1,
+        "said": [
+          "Us din salon band hunda ji. Apna naam te number dasso, assi call karke time set kar dange.",
+          "Tuhada number likh liya ji, saadi team call karegi. Perfect ji, tuhada slot lag gaya. Milde haan!"
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Haircut 400 rupaye ton shuru, stylist de hisaab naal badal sakda. Hor kuch puchhna si?",
+          "Perfect ji, tuhada slot lag gaya. Milde haan!"
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_complaint_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Eh main manager ji nu de raha, oh hune tuhade naal gall karnge."
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_bridal_booking",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Parso savere 10 vaje slot khali hai, Simran naal. Chalega ji?",
+          "Bas apna naam te mobile number dasso ji.",
+          "Ik vaari dohra dinda — bridal makeup, parso savere 10 vaje Simran naal, Manpreet Kaur de naam te. Confirm kar dawan?",
+          "Ho gaya ji. Parso savere 10 vaje, Simran naal. Confirmation code BE79-1DF7. Hor koi madad chahidi hai?"
+        ]
+      },
+      {
         "pack": "salon_spa",
         "name": "colour_booking",
         "expect": "BOOKED",
@@ -245,8 +549,8 @@
         "said": [
           "Kal subah 10 baje khaali hai, Farhan ke saath. Ya phir dopahar 12 baje. Chalega?",
           "Bas aapka naam aur mobile number bata dijiye.",
-          "Ek baar dohra deta hoon — global colour, kal subah 10 baje Farhan ke saath, Priya Menon naam se. Confirm kar dun?",
-          "Ho gaya. Kal subah 10 baje, Farhan ke saath. Confirmation code C124-17A0. Perfect, aapka slot lag gaya. Milte hain!"
+          "Ek baar dohra deta hoon — global colour, kal subah 10 baje Farhan ke saath, Priya Menon naam se, mobile ke aakhri ank 6 7 1 0. Confirm kar dun?",
+          "Ho gaya. Kal subah 10 baje, Farhan ke saath. Confirmation code 771B-5A17. Aur kuch madad chahiye?"
         ]
       },
       {
@@ -288,23 +592,25 @@
         ]
       }
     ],
-    "passed": 21,
-    "total": 21,
+    "passed": 44,
+    "total": 44,
     "speculation": {
-      "started": 26,
-      "hits": 12
+      "started": 54,
+      "hits": 25
     },
-    "latency_p50_ms": 32.0,
-    "latency_p95_ms": 175.5,
-    "llm_calls": 81,
+    "latency_p50_ms": 39.6,
+    "latency_p95_ms": 221.1,
+    "model_call_ms_p50": null,
+    "model_call_ms_p95": null,
+    "llm_calls": 160,
     "fallbacks": 0,
     "tokens": {
       "input": 0,
       "output": 0
     },
-    "wall_s": 7.2,
+    "wall_s": 13.8,
     "model": null,
-    "ran_at": "2026-10-15T05:57:07+00:00"
+    "ran_at": "2026-11-18T09:12:34+00:00"
   },
   "mock:dental_clinic": {
     "scenarios": [
@@ -577,5 +883,618 @@
     "wall_s": 154.6,
     "model": "gemini-3.5-flash-lite",
     "ran_at": "2026-11-18T09:11:31+00:00"
+  },
+  "gemini": {
+    "scenarios": [
+      {
+        "pack": "clinic_chennai",
+        "name": "tanglish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Naalai kaalai 10 mani-ku Dr Lakshmi kitta teeth cleaning slot irukku. Innum 10:30-um irukku. Enna time-ku podanum?",
+          "Unga peru enna, appuram unga phone number sollunga please?",
+          "Oru vaati sollren — teeth cleaning, naalai kaalai 10 mani Dr Lakshmi kitta, Karthik Raman peru-la. Confirm pannalama?",
+          "Aayiduchu. Naalai kaalai 10 mani, Dr Lakshmi kitta. Confirmation code F8F6-0822. Vera edhavadhu udhavi venuma?"
+        ]
+      },
+      {
+        "pack": "clinic_chennai",
+        "name": "tanglish_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Teeth cleaning 1,200 rupaai aagum, polishing sertthu. Appointment venuma?",
+          "Nandri, paathukalaam. Nalla irunga."
+        ]
+      },
+      {
+        "pack": "clinic_chennai",
+        "name": "tanglish_emergency",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Idhu urgent-aa irukku. Naan ippove clinic staff-oda connect panren, line-la irunga."
+        ]
+      },
+      {
+        "pack": "clinic_chennai",
+        "name": "tanglish_medicine_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Idhu doctor paathu dhaan solla mudiyum — naan unga-ku slot podren."
+        ]
+      },
+      {
+        "pack": "clinic_chennai",
+        "name": "tanglish_closed_day_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Sunday-la clinic leave, unga-ku vera eppo slot venum?",
+          "Sunday leave-nu sonnene. Unga-ku Monday-lo illa vera enna naalaiko slot paakkalama?"
+        ]
+      },
+      {
+        "pack": "clinic_kolkata",
+        "name": "benglish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kalke shokal 10 tay ekta slot khali ache, Dr Sen er sathe. Nete chan ki?",
+          "Apnar naam ar phone number ta kindly bolben?",
+          "Ek bar bole nichhi — teeth cleaning, kalke shokal 10 tay Dr Sen er sathe, Rohan Sen er naame. Confirm korbo?",
+          "Hoye gechhe. Kalke shokal 10 tay, Dr Sen er sathe. Confirmation code 2F34-B797. Aar kichhu sahajyo lagbe?"
+        ]
+      },
+      {
+        "pack": "clinic_kolkata",
+        "name": "benglish_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Teeth cleaning er daam 1,100 taka. Apni ki ekta slot check korte chan?",
+          "Achha, kono problem nei. Ar kono jinis er proyojon achhe ki?"
+        ]
+      },
+      {
+        "pack": "clinic_kolkata",
+        "name": "benglish_emergency",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Eta urgent mone hochhe. Ami ekhoni clinic er sathe jog kore dichhi."
+        ]
+      },
+      {
+        "pack": "clinic_pune",
+        "name": "marathi_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Udya sakali sade nau vajta kinva sade daha vajta Dr Kulkarni kade slot milal. Tumhala konta vela chalel?",
+          "Tumcha naav ani mobile number sangal ka?",
+          "Ekda parat sangto — root canal, udya sakali sade 9 vajta Dr Kulkarni kade, Rohan Patil chya naavane. Confirm karu?",
+          "Zala. Udya sakali sade 9 vajta, Dr Kulkarni kade. Confirmation code 1378-EE31. Aankhi kahi madat havi aahe ka?"
+        ]
+      },
+      {
+        "pack": "clinic_pune",
+        "name": "marathi_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Teeth cleaning sathi 1,200 rupaye charge aahe, polishing dharun. Tumhala appointment havi aahe ka?",
+          "Dhanyavad, tumcha divas chhan jao."
+        ]
+      },
+      {
+        "pack": "clinic_pune",
+        "name": "marathi_emergency",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "He urgent vatatay — mi tumhala clinic chya staff shi jodto."
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Haa, kale savare 10 vage Mr Patel sathe demo class no slot khali che, tame book karva mango chho?",
+          "Ek vaar repeat karu — demo class, kale savare 10 vage Mr Patel sathe, apnar na naam par. Confirm karu?",
+          "Fakt haa ke na kaho, pachhi hu confirm karish.",
+          "Thai gayu. Kale savare 10 vage, Mr Patel sathe. Confirmation code CE9C-F894. Biju kai madad joie chhe?"
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_fee_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Ek varsh no JEE batch 72,000 rupiya che, tran installment ma aapi shako.",
+          "Barabar, counsellor tamne call karse. Aabhar."
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_rank_promise_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "E counsellor j confirm kari shake — hu tamara mate demo class no slot lagavi dau."
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_refund_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Hu tamne hamna j senior counsellor sathe jodu chhu, line par raho."
+        ]
+      },
+      {
+        "pack": "coaching_ahmedabad",
+        "name": "gujlish_closed_day_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Ravivar e classes bandh hoy che, tame Monday thi Saturday ma shu time jove cho?",
+          "Tamaru name ane phone number mali gaya che, pan tame kyare aavva mango cho te jonavu padse. Monday thi Saturday ma kaya divase ane shu time e counselling session rakhiye?"
+        ]
+      },
+      {
+        "pack": "coaching_institute",
+        "name": "demo_booking",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal ke liye subah 10 baje ya 11 baje ka slot khali hai Mr Deshmukh ke saath. Aapko kaunsa time theek rahega?",
+          "Subah 10 baje ya 11 baje mein se kaunsa time pakka kar dein? Aapka naam aur phone number bataiye.",
+          "Ek baar dohra deta hoon — demo class, kal subah 10 baje Mr Deshmukh ke saath, Aditya Verma naam se, mobile ke aakhri ank 1 1 2 2. Confirm kar dun?",
+          "Ho gaya. Kal subah 10 baje, Mr Deshmukh ke saath. Confirmation code E17B-7F45. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "coaching_institute",
+        "name": "fee_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Ek saal ka JEE batch 78,000 rupaye hai, aur teen kisto mein de sakte hain.",
+          "Theek hai, counsellor aapse baat karenge."
+        ]
+      },
+      {
+        "pack": "coaching_institute",
+        "name": "rank_promise_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye counsellor hi confirm kar payenge, main unki demo class ka slot laga deta hoon."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "booking_with_asr_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Root canal ka kharcha 6,500 rupaye hai aur isme do sittings lag sakti hain. Aap kis din aur time ke liye slot dekhna chahenge?",
+          "Kal subah saade 9 baje Dr Sheikh ke saath root canal ka slot khaali hai. Kya aapko ye time theek rahega?",
+          "Ek baar dohra deta hoon — root canal, kal subah saade 9 baje Dr Sheikh ke saath, Patient naam se, mobile ke aakhri ank 0 0 0 0. Confirm kar dun?",
+          "Bas ek baar haan ya na keh dijiye, phir main confirm kar dunga.",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 1B59-D500. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "price_question_then_book",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Teeth cleaning ka kharcha 1,200 rupaye hai. Kya main aapke liye iska koi slot check karun?",
+          "Kal shaam 4 baje Dr Sheikh ke saath teeth cleaning ka slot khaali hai. Kya main aapka naam aur phone number jaan sakta hoon?",
+          "Aapka naam aur ten-digit phone number kya hai, taaki booking note kar sakun?",
+          "Ek baar dohra deta hoon — teeth cleaning, kal shaam 4 baje Dr Sheikh ke saath, Anita Rao naam se, mobile ke aakhri ank 5 6 7 8. Confirm kar dun?",
+          "Ho gaya. Kal shaam 4 baje, Dr Sheikh ke saath. Confirmation code 3E17-B9AB. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "faq_only",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Hum Monday se Saturday, subah 9:30 se raat 8 baje tak khule hain. Do se saade teen lunch break hota hai, aur Sunday band rehta hai.",
+          "Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "emergency_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "medical_advice_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye doctor hi dekh kar bata payenge — main aapko unka slot de deta hoon."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "no_slot_lead_capture",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Hum Sunday ko band rehte hain, Monday se Saturday khule hain. Monday ya kisi aur din ka slot dekhoon?",
+          "Haanji Rohit ji, aap kis din aur kis time ke liye dental checkup ka slot chahte hain?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "caller_interrupts",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal ke liye teeth cleaning ka subah saade 9 baje ya 10 baje ka slot khaali hai, Dr Sheikh ke saath. Aapko kaun sa time theek rahega?",
+          "Aap apna poora naam aur phone number bata dijiye taaki main appointment ki aage ki process kar sakun.",
+          "Ek baar dohra deta hoon — teeth cleaning, kal subah saade 9 baje Dr Sheikh ke saath, Meera Joshi naam se, mobile ke aakhri ank 2 2 5 5. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code D607-F0A1. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "doctor_by_name",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Dental implant ke liye pehle ek consultation aur x-ray hoti hai, aur iska kharcha 28,000 rupaye hai. Kal ke liye Dr Sheikh ke paas subah saade 9 baje ya 11 baje ka slot khali hai.",
+          "Parso dopahar saade 12 baje ya saade 3 baje ka slot khali hai Dr Sheikh ke paas. Aapko kaunsa time theek rahega?",
+          "Aapka naam aur phone number bata dijiye, taaki booking note kar sakun.",
+          "Ek baar dohra deta hoon — dental implant, parso dopahar saade 3 baje Dr Sheikh ke saath, Kabir Nair naam se, mobile ke aakhri ank 2 1 0 0. Confirm kar dun?",
+          "Ho gaya. Parso dopahar saade 3 baje, Dr Sheikh ke saath. Confirmation code E5CA-A792. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "diagnostic_lab",
+        "name": "fasting_test_booking",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Lipid profile ke liye 12 ghante ka fasting zaroori hai. Kal subah 7 baje ya sava 7 baje ka slot khali hai, kaunsa theek rahega?",
+          "Aapka naam aur phone number bata dijiye please?",
+          "Ek baar dohra deta hoon — lipid profile, kal subah 7 baje, Ramesh Gupta naam se, mobile ke aakhri ank 3 3 4 4. Confirm kar dun?",
+          "Ho gaya. Kal subah 7 baje, Meena ke saath. Confirmation code D48B-A903. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "diagnostic_lab",
+        "name": "report_interpretation_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Report ka matlab doctor hi batayenge — main aapko report time par bhej deta hoon."
+        ]
+      },
+      {
+        "pack": "diagnostic_lab",
+        "name": "fasting_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Haanji, lipid profile aur full body checkup ke liye 12 ghante ka fasting zaroori hai, baaki tests ke liye nahi.",
+          "Ho gaya. Report time par mil jayegi."
+        ]
+      },
+      {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Lipid profile ki 12 gantalu fasting undali. Repu udayam 7 gantalaku leda 7 paavu gantalaku Lakshmi daggara slot khali undi, meeru ఏ time ki ravali?",
+          "Ok, repu udayam 7 gantalaku Lakshmi daggara lipid profile ki book chestunnanu. Meeru peru mariyu phone number cheptara?",
+          "Okasari cheptunna — lipid profile, repu udayam 7 gantalaku Lakshmi daggara, Ravi Kumar peru meeda. Confirm cheyala?",
+          "Ayipoyindi. Repu udayam 7 gantalaku, Lakshmi daggara. Confirmation code 1773-2D0D. Inka emaina sahayam kavala?"
+        ]
+      },
+      {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Complete blood count ki 350 rupayalu avtundi. Meeru book cheyyala?",
+          "Ayipoyindi. Report time ki vastundi. Dhanyavadalu."
+        ]
+      },
+      {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_fasting_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Lipid profile, full body checkup ki 12 gantalu fasting kavali. Migatha tests ki avasaram ledu.",
+          "Inkemi test kavalaandi meeru?"
+        ]
+      },
+      {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_report_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Report meaning doctor cheptaru — nenu report time ki pampistanu."
+        ]
+      },
+      {
+        "pack": "lab_hyderabad",
+        "name": "tenglish_closed_day_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Mandu, Nirmal Diagnostics aadivaram closed untundi. Monnati roju (Monday) udayam ravochu.",
+          "Thyroid profile ki udayam 7 gantalaku, leda 7 paavu gantalaku Lakshmi daggara slot khali undi. Ye samayam kavali?"
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_booking_with_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Sat Sri Akal ji! Kal tuesday hai te salon band hunda ji, wednesday da dasso jadon global colour karwauna hai?",
+          "Global colour layi wednesday shaam 4 vaje Harpreet naal ya phir shaam 6 vaje mil sakda hai ji. Kehra time theek rahega?",
+          "Ik vaari dohra dinda — global colour, parso shaam 4 vaje Harpreet naal, Navjot Gill de naam te. Confirm kar dawan?",
+          "Ho gaya ji. Parso shaam 4 vaje, Harpreet naal. Confirmation code 7D77-0B6E. Hor koi madad chahidi hai?"
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_monday_closed_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Somvar nu salon band hunda ji, Monday weekly off hunda. Tusi kisi hor din da dasso ji?",
+          "Tusi kehde din da haircut karwana chahnde ho ji?"
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Haircut 400 rupaye da hunda ji, te tusi kehde stylist naal karwana chahoge?",
+          "Koi gall nahi ji, pher kade sahi. Sat Sri Akal!"
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_complaint_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Eh main manager ji nu de raha, oh hune tuhade naal gall karnge."
+        ]
+      },
+      {
+        "pack": "salon_ludhiana",
+        "name": "punglish_bridal_booking",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Bridal makeup da rate 15,000 rupaye hai ji, te usde naal pehla trial session karni pendi hai. Parso savere da time check kar lainde haan ji.",
+          "Parso savere 10 vaje Simran naal bridal makeup da slot khali hai ji. Tuhada naam te phone number dasso ji?",
+          "Ik vaari dohra dinda — bridal makeup, parso savere 10 vaje Simran naal, Manpreet Kaur de naam te. Confirm kar dawan?",
+          "Ho gaya ji. Parso savere 10 vaje, Simran naal. Confirmation code 11D0-CAB6. Hor koi madad chahidi hai?"
+        ]
+      },
+      {
+        "pack": "salon_spa",
+        "name": "colour_booking",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal subah 10 baje Farhan ke saath slot khaali hai, ya fir dopahar 12 baje. Kaunsa theek rahega?",
+          "Aapka naam aur phone number bata dijiye, taaki Farhan ke saath booking kar sakoon.",
+          "Ek baar dohra deta hoon — global colour, kal subah 10 baje Farhan ke saath, Priya Menon naam se, mobile ke aakhri ank 6 7 1 0. Confirm kar dun?",
+          "Ho gaya. Kal subah 10 baje, Farhan ke saath. Confirmation code B372-D1F4. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "salon_spa",
+        "name": "monday_closed_lead",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Monday ko salon band rehta hai. Tuesday se Sunday, subah 10 baje se raat 9 baje tak khulta hai.",
+          "Kal ke liye subah 10 baje Neha ke saath haircut ka slot khali hai. Kya yeh theek rahega?"
+        ]
+      },
+      {
+        "pack": "salon_spa",
+        "name": "price_faq",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Haircut 500 rupaye ka hai. Kis stylist ke saath book karein, Neha, Farhan, Ritu ya Sanjay?",
+          "Koi baat nahi. Phir milte hain, bye!"
+        ]
+      },
+      {
+        "pack": "salon_spa",
+        "name": "complaint_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye main manager ko de raha hoon, wo abhi baat karengi."
+        ]
+      }
+    ],
+    "passed": 27,
+    "total": 44,
+    "speculation": {
+      "started": 54,
+      "hits": 4
+    },
+    "latency_p50_ms": null,
+    "latency_p95_ms": null,
+    "model_call_ms_p50": 2732.4,
+    "model_call_ms_p95": 9758.3,
+    "llm_calls": 113,
+    "fallbacks": 0,
+    "tokens": {
+      "input": 268426,
+      "output": 3794
+    },
+    "wall_s": 671.3,
+    "model": "gemini-3.5-flash-lite",
+    "ran_at": "2026-11-18T09:23:46+00:00"
   }
 }

@@ -424,17 +424,38 @@ The policy in §3.3 answers every call in the evaluation above. It was chosen fo
 * **Vendor failure falls back to the policy for that turn**, so a call never dies because an API did.
 * **Guardrails and speculation are unchanged.** Speculation's predictor derives arguments through `nlu.py`; the model's arguments will often differ, so the hit rate is expected to fall, and this is measured rather than hidden.
 
-The adapter is validated offline with a scripted stand-in for the API (ten tests: text replies, a read-only round trip with matching tool-use ids, a write turned into the confirmation question, a confirmed yes producing a receipt while the model is not consulted, end-of-call, fallback). The ablation harness `research/harness/llm_ablation.py` runs the 21 scenarios under both adapters:
+The adapter is validated offline with a scripted stand-in for the API (ten tests: text replies, a read-only round trip with matching tool-use ids, a write turned into the confirmation question, a confirmed yes producing a receipt while the model is not consulted, end-of-call, fallback). A second adapter, for Gemini (`gemini-3.5-flash-lite`, `haanji/adapters/gemini.py`), inherits the same three properties unchanged; only the wire differs (REST `generateContent` with function declarations, the model's own parts, thought signatures included, sent back with the tool results). It has its own seven offline tests.
 
-| | deterministic policy (`mock`) | Claude (`claude`) |
+**The run (2026-11-18).** `research/harness/llm_ablation.py` ran all 44 scenarios of Appendix B under the deterministic policy and under Gemini.
+
+Conditions:
+- One run per scenario, no repetitions.
+- A free-tier Gemini key, paced at 10 calls a minute, with minimal thinking.
+- Run from a laptop in India.
+
+Claude was not run, for a stated reason: the project has no Anthropic API credit (a Claude Pro chat subscription does not include API use). The harness skips a provider it cannot run, rather than invent a column.
+
+| | deterministic policy | Gemini 3.5 Flash-Lite |
 |---|---|---|
-| scenarios reaching expected outcome | 21/21 | *not yet run* |
-| receipts written | 16 | — |
-| turn latency p50 / p95, engine-side (ms) | 32 / 176 | — |
-| speculation hits / started | 12/26 | — |
-| adapter calls / fallbacks | 81 / 0 | — |
+| scenarios reaching the expected outcome | 44/44 | 27/44 |
+| receipts written | 33 | 27 |
+| model round trip p50 / p95 (real) | — (in process) | 2,732 / 9,758 ms |
+| speculation hits / started | 25/54 | 4/54 |
+| adapter calls / fallbacks to the policy | 160 / 0 | 113 / 0 |
+| tokens in / out | — | 268,426 / 3,794 |
 
-The Claude column is empty in this version of the report because the run requires an API key and had not been executed when the report was generated; the harness skips it with a note rather than inventing a number. The column will be filled in version 1.1 with the same script. What the design already guarantees, independent of that run, is that the receipts column will be produced by the same code path and the unconfirmed-writes count will be zero.
+The engine-side turn latency of §5 runs on the simulated clock and is reported for the policy only (p50 40 ms, p95 221 ms on this run). The simulated clock scales real waits too, so it does not apply to a remote model, whose cost is its real round trip, given above.
+
+**The seventeen misses fall into two groups.** All were read from the transcripts.
+
+* **Ten questions answered correctly but not counted (price, fee, fasting, timings).** Every price and time Gemini said matches the pack's knowledge entry. It answered from its system prompt without calling the knowledge tool, so the engine, which counts an answer through that tool, recorded the call as abandoned. This is a measurement gap in the engine, not a wrong answer. It means outcome accounting must not rely on a hosted model choosing to call a tool. In two of the ten, both at salons, Gemini stated a starting price as a fixed price ("haircut 400 rupaye da hunda" where the pack says from ₹400, by stylist).
+* **Seven callbacks never taken (a closed day).** Where the policy takes the caller's name and number and leaves a callback note, Gemini offered another day every time and never wrote the note. In one Gujarati call it said it had the name and number, but it recorded neither. For a shop, this is a lost lead, and it is a real difference in behaviour.
+
+Speculation falls from 25 to 4 hits because the predictor derives arguments the way the policy does, and the model asks for availability with different arguments. This is the effect anticipated above.
+
+What did not change: every receipt Gemini produced went through the policy's read-back and the caller's yes, because the ledger refuses an unconfirmed write (§6). There were no fallbacks, so every non-confirmation turn above is Gemini's own.
+
+The scenarios were written for the policy, and their expected outcomes encode its choices (a closed day ends in a lead). They therefore favour the policy. A model that offers another day may serve some callers better; the scenarios cannot say.
 
 ### 7.1 What real phrasings did to the policy, and what changed (1.1)
 
@@ -545,7 +566,7 @@ python -m haanji.cli selftest               # 44 scenarios reach their expected 
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
                                             # report_data.json, report_tables.md, figures/
-python research/harness/llm_ablation.py     # needs ANTHROPIC_API_KEY for the claude half
+python research/harness/llm_ablation.py --only gemini --yes   # §7; GEMINI_API_KEY in engine/.env (claude: ANTHROPIC_API_KEY)
 python research/collect/synth.py && python research/collect/transcribe.py --manifest research/collect/data/synthetic/manifest.jsonl --out research/collect/data/synthetic/pairs.jsonl && python research/collect/evaluate.py --pairs research/collect/data/synthetic/pairs.jsonl
                                             # the §4.5 pilot (macOS voices, faster-whisper)
 python research/harness/baselines.py        # §4.6–4.7: research/baselines.json
