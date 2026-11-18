@@ -75,6 +75,14 @@ server (`/pay/{payment_id}`) that a demo can "pay" with one click.
 `GET/POST /api/auth/users`, `DELETE /api/auth/users/{phone}` (owner);
 `POST /api/auth/logout` revokes the caller's tokens; `GET /api/auth/me`.
 
+## Demo reset
+
+`POST /api/admin/demo-reset?pack=` → `{pack, removed: {calls, missed_calls, wa_messages, payments, bookings, receipts}, archived_to}`.
+Empties one pack's calls, chats, bookings, waitlist and payments, and starts a new Pramaan chain; the old backend and
+ledger files move to `var/archive/<pack>-<UTC stamp>/` untouched. Refused (403) when `HAANJI_AUTH` is on. On a public
+server it needs `X-HaanJi-Reset: $HAANJI_DEMO_RESET_TOKEN`. `HAANJI_DEMO_RESET_HOUR` (IST) resets every pack in use
+once a day at that hour.
+
 ## Help assistant
 
 `GET /api/help/status` → `{providers: ["claude"?, "gemini"?, "faq"], models: {claude, gemini}, daily_limit, used_today}`.

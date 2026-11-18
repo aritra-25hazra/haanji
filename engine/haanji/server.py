@@ -538,6 +538,68 @@ async def _gc_loop() -> None:
     while True:
         await asyncio.sleep(60)
         _gc()
+        try:
+            _nightly_demo_reset()
+        except Exception as exc:                      # noqa: BLE001 - keep the loop alive
+            log.warning("demo reset: %s", exc)
+
+
+# ─────────────────────────────────────────────────────────────── demo reset
+# A public demo collects every visitor's test calls. A reset empties one
+# pack's calls, chats, bookings, waitlist and payments and starts a new
+# Pramaan chain; the old backend and ledger files are moved to
+# var/archive/, never rewritten. Never for a real shop (sign-in on).
+DEMO_RESET_TOKEN = os.environ.get("HAANJI_DEMO_RESET_TOKEN") or None
+DEMO_RESET_HOUR = os.environ.get("HAANJI_DEMO_RESET_HOUR")          # IST hour, e.g. "4"; unset = never
+_last_auto_reset: dict[str, str] = {}
+
+
+def demo_reset(pack_id: str) -> dict[str, Any]:
+    if AUTH_ENABLED:
+        raise HTTPException(403, "a real shop's records are never reset (HAANJI_AUTH is on)")
+    rt = runtime(pack_id)
+    for sid in [sid for sid, h in _sessions.items() if h.rt.pack_id == pack_id]:
+        _sessions.pop(sid, None)
+    for key in [k for k in _wa_sessions if k[0] == pack_id]:
+        _wa_sessions.pop(key, None)
+    removed: dict[str, int] = {}
+    for table in ("calls", "missed_calls", "wa_messages"):
+        removed[table] = store.conn.execute(f"DELETE FROM {table} WHERE tenant_id = ?", (pack_id,)).rowcount
+    store.conn.commit()
+    removed["payments"] = payments.conn.execute("DELETE FROM payments WHERE tenant_id = ?", (pack_id,)).rowcount
+    payments.conn.commit()
+    removed["bookings"] = len(rt.backend.conn.execute("SELECT 1 FROM bookings WHERE tenant_id = ?", (pack_id,)).fetchall())
+    removed["receipts"] = len(rt.ledger.receipts(pack_id))
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    archive = os.path.join(VAR_DIR, "archive", f"{pack_id}-{stamp}")
+    os.makedirs(archive, exist_ok=True)
+    rt.backend.conn.close()
+    rt.ledger.conn.close()
+    _runtimes.pop(pack_id, None)
+    for name in (f"backend-{pack_id}.sqlite", f"ledger-{pack_id}.sqlite"):
+        src = os.path.join(VAR_DIR, name)
+        if os.path.exists(src):
+            os.replace(src, os.path.join(archive, name))
+    runtime(pack_id)                                   # a fresh calendar and chain, re-seeded
+    publish("demo.reset", pack=pack_id)
+    log.info("demo reset %s: %s (archived to %s)", pack_id, removed, archive)
+    return {"pack": pack_id, "removed": removed, "archived_to": os.path.relpath(archive, VAR_DIR)}
+
+
+def _nightly_demo_reset(now: dt.datetime | None = None) -> list[str]:
+    """At HAANJI_DEMO_RESET_HOUR (IST) once a day, reset every pack in use."""
+    if AUTH_ENABLED or DEMO_RESET_HOUR is None:
+        return []
+    now = now or dt.datetime.now(IST)
+    if now.hour != int(DEMO_RESET_HOUR):
+        return []
+    done = []
+    for pack_id in list(_runtimes):
+        if _last_auto_reset.get(pack_id) != now.date().isoformat():
+            _last_auto_reset[pack_id] = now.date().isoformat()
+            demo_reset(pack_id)
+            done.append(pack_id)
+    return done
 
 
 async def _new_session(pack_id: str, channel: str, phone: str | None, *, verified: bool = False) -> tuple[str, Holder]:
@@ -2022,6 +2084,17 @@ def customer_record(pack: str, phone: str) -> dict[str, Any]:
                              "pii_readable": not shredded})
     return {"pack": pack, "phone": p, "bookings": bookings, "leads": leads, "calls": calls, "whatsapp_messages": wa,
             "receipts": receipts, "erased": shredded}
+
+
+@app.post("/api/admin/demo-reset")
+async def demo_reset_route(request: Request, pack: str = DEFAULT_PACK):
+    """Empty one pack's demo data. On a public server it needs the
+    X-HaanJi-Reset header to match HAANJI_DEMO_RESET_TOKEN; with no token set
+    there, only the nightly reset (HAANJI_DEMO_RESET_HOUR) runs."""
+    if IS_PUBLIC and not (DEMO_RESET_TOKEN and hmac.compare_digest(
+            request.headers.get("x-haanji-reset", ""), DEMO_RESET_TOKEN)):
+        raise HTTPException(403, "demo reset needs the reset token on a public server")
+    return demo_reset(pack)
 
 
 def erase_customer(pack: str, phone: str) -> dict[str, int | bool]:
