@@ -61,7 +61,8 @@ export default function App() {
   useEffect(() => {
     document.querySelector(".nav a.active")?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   }, [location.pathname]);
-  if (authRequired) return <Suspense fallback={<Loading />}><Login /></Suspense>;
+  // The sample shop ("Try demo") needs no sign-in: it is made up and read-only.
+  if (authRequired && !sampleView) return <Suspense fallback={<Loading />}><Login /></Suspense>;
   const pill = PILL[mode];
   return (
     <>

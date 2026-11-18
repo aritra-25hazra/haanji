@@ -31,7 +31,12 @@ OTP_ISSUE_WINDOW_S = 15 * 60
 OTP_LOCK_FAILURES = 10         # wrong guesses across codes before the number is locked
 OTP_LOCK_S = 15 * 60
 TOKEN_TTL_S = 30 * 24 * 3600
-IDLE_TTL_S = 14 * 24 * 3600    # a device unused this long is signed out
+IDLE_TTL_S = 14 * 24 * 3600
+LOGIN_MAX_FAILURES = 10        # wrong passwords per email in LOGIN_WINDOW_S before a lock
+LOGIN_WINDOW_S = 15 * 60
+LOGIN_LOCK_S = 15 * 60
+MIN_PASSWORD = 8
+_SCRYPT = (2 ** 14, 8, 1)      # n, r, p    # a device unused this long is signed out
 TOUCH_EVERY_S = 300            # last_seen is written at most this often
 REFRESH_AFTER_S = 7 * 24 * 3600
 ROLES = ("owner", "staff")
@@ -73,6 +78,18 @@ CREATE TABLE IF NOT EXISTS sessions (  -- one row per signed-in device
   revoked    REAL
 );
 CREATE INDEX IF NOT EXISTS sessions_phone_ix ON sessions (phone);
+CREATE TABLE IF NOT EXISTS credentials ( -- email + password sign-in, beside the WhatsApp code
+  email    TEXT PRIMARY KEY,
+  phone    TEXT NOT NULL,              -- the user it signs in as
+  pw_hash  TEXT NOT NULL,              -- scrypt$n$r$p$salt$hash; the password itself is never kept
+  created  TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS login_history (
+  email        TEXT PRIMARY KEY,
+  failures     INTEGER NOT NULL DEFAULT 0,
+  window_start REAL NOT NULL DEFAULT 0,
+  locked_until REAL NOT NULL DEFAULT 0
+);
 CREATE TABLE IF NOT EXISTS audit (     -- who changed what, for the owner
   id     INTEGER PRIMARY KEY AUTOINCREMENT,
   at     REAL NOT NULL,
@@ -161,6 +178,7 @@ class AuthStore:
     def remove_user(self, phone: str, now: float | None = None) -> bool:
         phone = normalise_phone(phone)
         with self.conn:
+            self.conn.execute("DELETE FROM credentials WHERE phone=?", (phone,))
             cur = self.conn.execute("DELETE FROM users WHERE phone=?", (phone,))
             if cur.rowcount:
                 self.revoke(phone, now)
@@ -175,6 +193,71 @@ class AuthStore:
 
     def count(self) -> int:
         return self.conn.execute("SELECT COUNT(*) c FROM users").fetchone()["c"]
+
+    # --------------------------------------------------------------- password
+    @staticmethod
+    def _hash(password: str, salt: bytes | None = None) -> str:
+        n, r, p = _SCRYPT
+        salt = salt or secrets.token_bytes(16)
+        digest = hashlib.scrypt(password.encode(), salt=salt, n=n, r=r, p=p, dklen=32)
+        return "$".join(["scrypt", str(n), str(r), str(p), base64.b64encode(salt).decode(), base64.b64encode(digest).decode()])
+
+    @staticmethod
+    def _matches(password: str, stored: str) -> bool:
+        try:
+            _, n, r, p, salt, digest = stored.split("$")
+            got = hashlib.scrypt(password.encode(), salt=base64.b64decode(salt), n=int(n), r=int(r), p=int(p), dklen=32)
+            return hmac.compare_digest(got, base64.b64decode(digest))
+        except (ValueError, TypeError):
+            return False
+
+    def set_password(self, phone: str, email: str, password: str) -> None:
+        """Email + password for an existing user. Only a salted scrypt hash is kept."""
+        email = email.strip().lower()
+        if "@" not in email or len(email) > 200:
+            raise ValueError("a valid email address")
+        if len(password) < MIN_PASSWORD:
+            raise ValueError(f"a password of at least {MIN_PASSWORD} characters")
+        phone = normalise_phone(phone)
+        if self.user(phone) is None:
+            raise ValueError("no such user")
+        with self.conn:
+            self.conn.execute("DELETE FROM credentials WHERE phone=? AND email<>?", (phone, email))
+            self.conn.execute("INSERT OR REPLACE INTO credentials (email, phone, pw_hash, created) VALUES (?,?,?,?)",
+                              (email, phone, self._hash(password),
+                               dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")))
+
+    def has_password(self, email: str, password: str) -> bool:
+        """Whether this email's stored password is this one (no lockout bookkeeping)."""
+        r = self.conn.execute("SELECT pw_hash FROM credentials WHERE email=?", (email.strip().lower(),)).fetchone()
+        return bool(r) and self._matches(password, r["pw_hash"])
+
+    def email_of(self, phone: str) -> str | None:
+        r = self.conn.execute("SELECT email FROM credentials WHERE phone=?", (normalise_phone(phone),)).fetchone()
+        return r["email"] if r else None
+
+    def check_password(self, email: str, password: str, now: float | None = None) -> Principal | None:
+        """The user, if the email and password match and the email is not
+        locked. Ten wrong passwords in fifteen minutes lock it for fifteen.
+        An unknown email costs the same hash, so timing does not reveal it."""
+        email = email.strip().lower()
+        now = now or time.time()
+        h = self.conn.execute("SELECT * FROM login_history WHERE email=?", (email,)).fetchone()
+        if h and float(h["locked_until"]) > now:
+            raise OtpThrottled("too many wrong passwords; try again in 15 minutes")
+        r = self.conn.execute("SELECT * FROM credentials WHERE email=?", (email,)).fetchone()
+        ok = self._matches(password, r["pw_hash"] if r else self._hash("not-a-password"))
+        if ok and r is not None:
+            with self.conn:
+                self.conn.execute("DELETE FROM login_history WHERE email=?", (email,))
+            return self.user(r["phone"])
+        start = float(h["window_start"]) if h and now - float(h["window_start"]) < LOGIN_WINDOW_S else now
+        failures = (int(h["failures"]) if h and start == float(h["window_start"]) else 0) + 1
+        locked = now + LOGIN_LOCK_S if failures >= LOGIN_MAX_FAILURES else 0
+        with self.conn:
+            self.conn.execute("INSERT OR REPLACE INTO login_history (email, failures, window_start, locked_until) VALUES (?,?,?,?)",
+                              (email, failures, start, locked))
+        return None
 
     # -------------------------------------------------------------------- otp
     def _history(self, phone: str) -> sqlite3.Row | None:

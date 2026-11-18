@@ -7,7 +7,7 @@ export interface Status {
   packs: string[];
   console_url?: string;
   public_url?: string;
-  whatsapp?: { configured: boolean; number: string | null };
+  whatsapp?: { configured: boolean; number: string | null; last_send?: { delivery?: { status?: string; code?: number } } };
   digest?: { owner_configured: boolean; hour_ist: number };
   auth?: { enabled: boolean };
   /** A public server with sign-in off: the console's destructive operations are refused (403). */
@@ -41,6 +41,7 @@ export interface User {
   role: Role | string;
   packs: string[];
   name: string;
+  email?: string | null;
 }
 
 export interface DraftRequest {

@@ -13,6 +13,7 @@ import asyncio
 import base64
 import csv
 import datetime as dt
+import hashlib
 import hmac
 import io
 import json
@@ -330,11 +331,32 @@ ROLE_RANK = {"staff": 1, "owner": 2}
 SCOPED = object()        # "the handler filters by the user's own packs"
 
 
+def _owner_login_phone(email: str) -> str:
+    """The account an email-only owner signs in as: HAANJI_OWNER_PHONE when it
+    is set, else a stable placeholder starting with 0, which no Indian mobile
+    number does, so it can never be mistaken for a customer's."""
+    if OWNER_PHONE:
+        return normalise_phone(OWNER_PHONE)
+    return "0" + str(int(hashlib.sha256(email.strip().lower().encode()).hexdigest(), 16))[-9:]
+
+
 def seed_owner() -> None:
     """A fresh deployment with auth on and no users makes HAANJI_OWNER_PHONE
-    the owner of every pack, so nobody is locked out of their own console."""
+    the owner of every pack, so nobody is locked out of their own console.
+    HAANJI_OWNER_EMAIL + HAANJI_OWNER_PASSWORD give that owner an email login;
+    the password is hashed at boot and never logged."""
     if AUTH_ENABLED and OWNER_PHONE and auth.count() == 0:
         auth.upsert_user(OWNER_PHONE, "owner", ["*"], name="Owner")
+    email, password = os.environ.get("HAANJI_OWNER_EMAIL"), os.environ.get("HAANJI_OWNER_PASSWORD")
+    if AUTH_ENABLED and email and password:
+        phone = _owner_login_phone(email)
+        if auth.user(phone) is None:
+            auth.upsert_user(phone, "owner", ["*"], name="Owner")
+        if not auth.has_password(email, password):
+            try:
+                auth.set_password(phone, email, password)
+            except ValueError as exc:
+                log.warning("owner email login not set: %s", exc)
 
 
 def _pack_in(request: Request):
@@ -1717,6 +1739,13 @@ class UserIn(BaseModel):
     role: str = "staff"
     packs: list[str] = ["*"]
     name: str = ""
+    email: str | None = None          # optional: an email + password sign-in for this user
+    password: str | None = Field(None, max_length=200)
+
+
+class LoginIn(BaseModel):
+    email: str = Field(max_length=200)
+    password: str = Field(max_length=200)
 
 
 @app.post("/api/auth/otp")
@@ -1741,6 +1770,22 @@ async def auth_otp(body: OtpIn):
     if AUTH_DEV:
         return {"sent": True, "channel": "dev", "dev_code": code}
     raise HTTPException(503, "no way to deliver the code: connect WhatsApp or set HAANJI_AUTH_DEV=1")
+
+
+@app.post("/api/auth/login")
+async def auth_login(body: LoginIn, request: Request):
+    """Email + password, beside the WhatsApp code. The same token, device
+    session and activity log as a code sign-in."""
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off (HAANJI_AUTH=on to enable)")
+    try:
+        user = auth.check_password(body.email, body.password)
+    except OtpThrottled as exc:
+        raise HTTPException(429, str(exc), headers={"Retry-After": "900"})
+    if user is None:
+        raise HTTPException(401, "wrong email or password")
+    return {"token": auth.token_for(user, agent=request.headers.get("user-agent", "")),
+            "user": {**user.as_dict(), "email": auth.email_of(user.phone)}}
 
 
 @app.post("/api/auth/verify")
@@ -1832,7 +1877,10 @@ async def auth_users():
 @app.post("/api/auth/users")
 async def auth_users_add(body: UserIn):
     try:
-        return {"user": auth.upsert_user(body.phone, body.role, body.packs, body.name).as_dict()}
+        user = auth.upsert_user(body.phone, body.role, body.packs, body.name)
+        if body.email and body.password:
+            auth.set_password(user.phone, body.email, body.password)
+        return {"user": {**user.as_dict(), "email": auth.email_of(user.phone)}}
     except ValueError as exc:
         raise HTTPException(422, str(exc))
 

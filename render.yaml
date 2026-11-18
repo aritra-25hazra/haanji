@@ -137,6 +137,12 @@ services:
         value: "off"
       - key: HAANJI_AUTH_SECRET
         sync: false
+      # Email + password for the owner (hashed at boot, never logged). With
+      # HAANJI_AUTH=on the console asks for these; "Try demo" needs no account.
+      - key: HAANJI_OWNER_EMAIL
+        sync: false
+      - key: HAANJI_OWNER_PASSWORD
+        sync: false
       - key: HAANJI_DIGEST_HOUR
         value: "20"
       # A real phone number (docs/phone-setup.md): Twilio rings the engine,

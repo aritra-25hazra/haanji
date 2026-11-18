@@ -186,6 +186,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--force", action="store_true", help="overwrite a data directory that already has databases")
     p.set_defaults(func=cmd_restore)
 
+    p = sub.add_parser("set-password", help="give a console user an email + password sign-in")
+    p.add_argument("--email", required=True)
+    p.add_argument("--phone", required=True, help="the user's 10-digit number (created as owner if new)")
+    p.add_argument("--role", default="owner", choices=["owner", "staff"])
+    p.add_argument("--var-dir", default=os.environ.get("HAANJI_VAR_DIR", "var"))
+    p.set_defaults(func=cmd_set_password)
+
     p = sub.add_parser("db-copy", help="copy the SQLite stores into the Postgres at HAANJI_DATABASE_URL")
     p.add_argument("--var-dir", default=os.environ.get("HAANJI_VAR_DIR", "var"))
     p.set_defaults(func=cmd_db_copy)
@@ -233,6 +240,26 @@ def cmd_restore(args) -> int:
         return 1
     files = backup_mod.restore(args.var_dir, data, only_if_empty=not args.force)
     print(f"restored {len(files)} files into {args.var_dir}")
+    return 0
+
+
+def cmd_set_password(args) -> int:
+    import getpass
+
+    from .auth import AuthStore
+    store = AuthStore(os.path.join(args.var_dir, "auth.sqlite"), os.environ.get("HAANJI_AUTH_SECRET") or None)
+    password = getpass.getpass("password (not shown): ")
+    if password != getpass.getpass("again: "):
+        print("the two passwords differ", file=sys.stderr)
+        return 1
+    if store.user(args.phone) is None:
+        store.upsert_user(args.phone, args.role, ["*"], name=args.role.title())
+    try:
+        store.set_password(args.phone, args.email, password)
+    except ValueError as exc:
+        print(f"not set: {exc}", file=sys.stderr)
+        return 1
+    print(f"{args.email} can now sign in as {args.role}")
     return 0
 
 

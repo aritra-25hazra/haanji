@@ -134,6 +134,8 @@ export const engine = {
   sendDigest: (pack: string) => request<{ sent: boolean; to: string; text: string }>(`api/digest/send?${q(pack)}`, { method: "POST" }),
   anchors: (pack: string) => request<Anchors>(`api/anchors?${q(pack)}`),
   requestOtp: (phone: string) => request<{ sent: boolean; channel: string; dev_code?: string }>("api/auth/otp", { method: "POST", body: JSON.stringify({ phone }) }),
+  login: (email: string, password: string) =>
+    request<{ token: string; user: User }>("api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   verifyOtp: (phone: string, code: string) => request<{ token: string; user: User }>("api/auth/verify", { method: "POST", body: JSON.stringify({ phone, code }) }),
   me: () => request<{ enabled: boolean; user: User | null }>("api/auth/me"),
   /** Sign out everywhere: the engine revokes every token this number holds. */

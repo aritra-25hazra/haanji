@@ -307,4 +307,11 @@ export default {
   "Google: not set up yet": "Google: abhi set up nahi",
   "Needs WhatsApp and the owner's number": "WhatsApp aur owner ka number chahiye",
   "No users yet. The first owner is added when the server is set up; add staff here.": "Abhi koi user nahi. Pehla owner server set up karte waqt judta hai; staff yahan jodo.",
+  "Wrong email or password.": "Email ya password galat hai.",
+  "Email": "Email",
+  "Password": "Password",
+  "Forgot the password? The person who set up your HaanJi can set a new one.": "Password bhool gaye? Jinhone aapka HaanJi set up kiya, wo naya set kar sakte hain.",
+  "Use a WhatsApp code instead": "Iske bajaye WhatsApp code se",
+  "Use email and password": "Email aur password se",
+  "Try the demo (no account)": "Demo dekho (bina account)",
 } as Record<string, string>;
