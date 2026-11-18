@@ -1904,7 +1904,8 @@ def phone_configured() -> bool:
 
 def phone_status() -> dict[str, Any]:
     return {"configured": phone_configured(), "number": os.environ.get("HAANJI_PHONE_DISPLAY") or None,
-            "stream_url": twilio_mod.stream_url(PUBLIC_URL)}
+            "stream_url": twilio_mod.stream_url(PUBLIC_URL),
+            "exotel_stream_url": twilio_mod.stream_url(PUBLIC_URL).replace("/twilio/", "/exotel/")}
 
 
 @app.post("/telephony/twilio/voice")
@@ -1992,6 +1993,35 @@ async def twilio_stream(ws: WebSocket):
                                      on_turn=_phone_turn, human_hook=_phone_human,
                                      on_partial=lambda text, holder: publish("partial", sid=holder_sid(holder),
                                                                              pack=holder.rt.pack_id, text=text))
+    await bridge.run()
+
+
+async def _exotel_open(pack: str, caller: str | None, params: dict[str, Any] | None = None):
+    """Exotel's media socket carries no signature: the applet's URL carries
+    ?key=HAANJI_EXOTEL_STREAM_KEY, and a public server refuses a stream
+    without it."""
+    key = os.environ.get("HAANJI_EXOTEL_STREAM_KEY")
+    given = str((params or {}).get("key") or "")
+    if (IS_PUBLIC and not key) or (key and not hmac.compare_digest(given, key)):
+        TELEMETRY.inc("telephony_rejected_total")
+        log.warning("exotel stream without the right key was refused")
+        return None
+    if pack not in list_packs():
+        pack = DEFAULT_PACK
+    phone = "".join(ch for ch in (caller or "") if ch.isdigit())[-10:] or None
+    return await _new_session(pack, "PHONE", phone, verified=phone is not None)   # network caller-id
+
+
+@app.websocket("/telephony/exotel/stream")
+async def exotel_stream(ws: WebSocket):
+    """Exotel AgentStream: the Voicebot applet's WebSocket (telephony/exotel.py)."""
+    from .telephony.exotel import ExotelWire
+    await ws.accept()
+    bridge = twilio_mod.MediaBridge(ws, wire=ExotelWire(), open_session=_exotel_open, close_session=_finish,
+                                    stt_factory=PHONE_FACTORIES["stt"], tts=PHONE_FACTORIES["tts"],
+                                    on_turn=_phone_turn, human_hook=_phone_human,
+                                    on_partial=lambda text, holder: publish("partial", sid=holder_sid(holder),
+                                                                            pack=holder.rt.pack_id, text=text))
     await bridge.run()
 
 

@@ -143,6 +143,9 @@ services:
       # Deepgram hears, ElevenLabs speaks. All entered in the dashboard.
       - key: HAANJI_TWILIO_AUTH_TOKEN
         sync: false
+      # Exotel instead of Twilio: the Voicebot applet's URL carries ?key=<this>
+      - key: HAANJI_EXOTEL_STREAM_KEY
+        sync: false
       - key: HAANJI_DEEPGRAM_KEY
         sync: false
       - key: HAANJI_ELEVENLABS_KEY
