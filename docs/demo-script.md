@@ -70,6 +70,19 @@ left out. Say so plainly if asked.
    The reply carries the receipt link. Open it on `/verify`, then show the same
    booking in the console under Calls and in Pramaan.
 
+### When a teacher wants to book from their own phone
+
+Show the QR code (`docs/media/qr-talk.png` for the call, `docs/media/qr-whatsapp-simulator.png` for the chat) or say the link.
+
+- **Call (`/talk`).** They type their own 10-digit number in the number box and press the mic. Chrome on Android hears speech; on an iPhone, typing is the safe way. They then:
+  - say or type "kal subah teeth cleaning karwani hai";
+  - pick a slot;
+  - give their name;
+  - say "haan".
+- **Chat (`/whatsapp`).** The same flow, typed: their number at the top, then they chat as on WhatsApp.
+
+While they do it, keep the console on the laptop open on Calls or the Calendar: their booking appears there within a second. The confirmation code opens the signed receipt on `/verify`. On the public demo their number is shown masked, and no real WhatsApp is sent to it.
+
 ### If something breaks
 
 6. Render is down: on the laptop, run `research/collect/session.sh start` and
