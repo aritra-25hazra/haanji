@@ -5,7 +5,7 @@ export type HelpProvider = "claude" | "gemini" | "faq";
  * /engine/, which Vite proxies in development, Vercel rewrites in production
  * and nginx proxies in the compose stack. The contract is docs/console-api.md.
  */
-import type {
+import type { PrivacyRequest,
   CallRow, Export, Insights, Lexicon, PackSummary, Status, Turn, Verdict,
   Digest,
   Anchors,
@@ -166,6 +166,9 @@ export const engine = {
   save: (id: string, yaml: string) =>
     request<{ ok: boolean; problems: string[]; backup: string }>(`api/packs/${encodeURIComponent(id)}`,
       { method: "PUT", body: JSON.stringify({ yaml }) }),
+  privacyRequests: (pack: string) => request<{ requests: PrivacyRequest[] }>(`api/privacy/requests?${q(pack)}`),
+  decidePrivacy: (pack: string, id: string, approve: boolean) =>
+    request<PrivacyRequest>(`api/privacy/requests/${encodeURIComponent(id)}?${q(pack)}`, { method: "POST", body: JSON.stringify({ approve }) }),
   // ── the help assistant (engine/haanji/helpbot.py) ─────────────────────────
   helpStatus: () => request<{ providers: HelpProvider[]; models: Record<string, string>; daily_limit: number; used_today: number }>("api/help/status"),
   helpChat: (body: { messages: { role: "user" | "assistant"; content: string }[]; provider?: HelpProvider; lang: "en" | "hi"; page: string }) =>

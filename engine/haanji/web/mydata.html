@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-hi="Mera data · HaanJi">My data · HaanJi</title>
+<meta name="description" content="Download what a shop that uses HaanJi holds about your number, or ask for it to be erased.">
+<meta name="theme-color" content="#1B3B8C">
+<link rel="icon" href="static/icon-192.png" type="image/png">
+<link rel="stylesheet" href="static/fonts.css">
+<link rel="stylesheet" href="static/signboard.css">
+<style>
+  ::selection { background: var(--marigold); color: var(--cobalt); }
+  main { padding: 24px 0 96px; }
+  .doc { max-width: 60ch; }
+  h1 { font-size: clamp(34px, 5vw, 52px); margin: 24px 0 14px; text-wrap: balance; }
+  .lead { color: var(--haze); font-size: 18px; margin: 0 0 32px; line-height: 1.6; text-wrap: pretty; }
+  form { display: grid; gap: 16px; padding: 22px; border-radius: var(--r-card); background: var(--cobalt-deep); }
+  form[hidden] { display: none; }
+  label { display: grid; gap: 6px; font-weight: 600; }
+  input, select { font: inherit; font-size: 17px; min-height: 46px; padding: 0 12px; border-radius: 10px; border: 1.5px solid rgba(255, 247, 230, .35); background: var(--cobalt); color: var(--chalk); }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; }
+  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; }
+  legend { font-weight: 600; margin-bottom: 6px; }
+  .choice { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; line-height: 1.5; }
+  .choice input { min-height: 0; width: 20px; height: 20px; margin-top: 3px; accent-color: var(--marigold); }
+  .go { justify-self: start; min-height: 46px; padding: 0 20px; border: 0; border-radius: 10px; background: var(--marigold); color: var(--cobalt-deep); font: 700 16px/1 var(--font-body); cursor: pointer; }
+  .go:disabled { opacity: .55; cursor: wait; }
+  .msg { margin: 18px 0 0; padding: 14px 16px; border-radius: 10px; line-height: 1.55; }
+  .msg.ok { background: rgba(143, 214, 148, .16); }
+  .msg.bad { background: rgba(226, 85, 58, .2); }
+  .msg[hidden] { display: none; }
+  .msg a { color: var(--marigold); }
+  .small { font-size: 14px; color: var(--haze); line-height: 1.6; margin-top: 28px; }
+  .small a { color: var(--marigold); }
+</style>
+</head>
+<body>
+<a class="skip" href="#main" data-hi="Seedha content pe jao">Skip to content</a>
+<header class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="wordmark" href="./">HaanJi <span class="dev">हाँजी</span></a>
+    <ul><li><a href="./">Home</a></li><li><a href="privacy" data-hi="Privacy">Privacy</a></li><li><div data-lang-switch></div></li></ul>
+  </nav>
+</header>
+<main id="main" class="wrap">
+  <article class="doc">
+    <h1 data-hi="Mera data">My data</h1>
+    <p class="lead" data-hi="Jis dukaan ne HaanJi se aapki call ya WhatsApp li, wo aapke number par jo rakhti hai uski copy le sakte ho, ya use mitane ko keh sakte ho. Pehle hum aapke WhatsApp par ek code bhejenge, taaki pakka ho ki number aapka hai.">Get a copy of what a shop that answered you with HaanJi holds about your number, or ask for it to be erased. First we send a code to your WhatsApp, so we know the number is yours.</p>
+
+    <form id="ask">
+      <label><span data-hi="Dukaan">Shop</span><select id="pack"></select></label>
+      <label><span data-hi="Aapka mobile number">Your mobile number</span>
+        <input id="phone" inputmode="numeric" autocomplete="tel" maxlength="14" placeholder="98765 43210" required></label>
+      <button class="go" type="submit" data-hi="Code bhejo">Send the code</button>
+    </form>
+
+    <form id="prove" hidden>
+      <label><span data-hi="WhatsApp par aaya 6 ank ka code">The 6-digit code from WhatsApp</span>
+        <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></label>
+      <fieldset>
+        <legend data-hi="Aap kya chahte ho?">What would you like?</legend>
+        <label class="choice"><input type="radio" name="kind" value="export" checked><span data-hi="Mera data download karo (bookings, calls, messages, receipts)">Download my data (bookings, calls, messages, receipts)</span></label>
+        <label class="choice"><input type="radio" name="kind" value="erase"><span data-hi="Mera data mitao. Dukaan ke haan kehne ke baad mitaya jaata hai.">Erase my data. It is erased once the shop says yes.</span></label>
+      </fieldset>
+      <button class="go" type="submit" data-hi="Aage badho">Continue</button>
+    </form>
+
+    <p id="msg" class="msg" role="status" hidden></p>
+
+    <p class="small" data-hi-html="Erase karne par naam aur number har receipt se padhne layak nahi rehte, calls aur messages hat jaate hain, aur backups bhi retention ke baad hat jaate hain. Poori jaankari &lt;a href=&quot;privacy&quot;&gt;privacy page&lt;/a&gt; par hai.">Erasing makes your name and number unreadable in every receipt, removes your calls and messages, and backups drop them once they age past the retention period. The details are on the <a href="privacy">privacy page</a>.</p>
+  </article>
+</main>
+
+<script src="static/signboard.js"></script>
+<script src="static/lang.js"></script>
+<script>
+(function () {
+  const T = function (en, hi) { return HaanJiLang.t(en, hi); };
+  const $ = function (id) { return document.getElementById(id); };
+  const msg = function (text, ok) { const m = $("msg"); m.textContent = text; m.className = "msg " + (ok ? "ok" : "bad"); m.hidden = false; };
+  const post = function (path, body) {
+    return fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status)); return j; }); });
+  };
+  Signboard.status().then(function (s) {
+    const sel = $("pack");
+    (s && s.packs ? s.packs : ["dental_clinic"]).forEach(function (p) {
+      const o = document.createElement("option"); o.value = p; o.textContent = p.replace(/_/g, " "); sel.appendChild(o);
+    });
+    const want = new URLSearchParams(location.search).get("pack");
+    if (want) sel.value = want; else if (s && s.default_pack) sel.value = s.default_pack;
+  });
+  $("ask").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const b = e.submitter; if (b) b.disabled = true;
+    post("api/privacy/request", { pack: $("pack").value, phone: $("phone").value })
+      .then(function (r) {
+        $("ask").hidden = true; $("prove").hidden = false; $("code").focus();
+        msg(r.dev_code ? T("Test server: your code is " + r.dev_code + ".", "Test server: aapka code " + r.dev_code + " hai.")
+                       : T("We sent a code to your WhatsApp. It works for 5 minutes.", "Aapke WhatsApp par code bheja hai. 5 minute tak chalega."), true);
+      })
+      .catch(function (err) { msg(T("Could not send the code: ", "Code nahi bhej paaye: ") + err.message, false); })
+      .finally(function () { if (b) b.disabled = false; });
+  });
+  $("prove").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const b = e.submitter; if (b) b.disabled = true;
+    const kind = document.querySelector("input[name=kind]:checked").value;
+    post("api/privacy/request/verify", { pack: $("pack").value, phone: $("phone").value, code: $("code").value, kind: kind })
+      .then(function (r) {
+        $("prove").hidden = true;
+        if (r.kind === "export") {
+          const blob = new Blob([JSON.stringify(r.record, null, 2)], { type: "application/json" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob); a.download = "my-data-" + $("pack").value + ".json";
+          a.textContent = T("Download my-data.json", "my-data.json download karo");
+          msg(T("Here is everything the shop holds about your number: ", "Dukaan aapke number par jo rakhti hai, sab yahan hai: "), true);
+          $("msg").appendChild(a);
+          a.click();
+        } else {
+          msg(T("Your request is with the shop. Once they say yes, your data is erased. Reference: ", "Aapki request dukaan ke paas hai. Unke haan kehte hi data mita diya jaayega. Reference: ") + r.request.request_id, true);
+        }
+      })
+      .catch(function (err) { msg(T("That did not work: ", "Nahi hua: ") + err.message, false); })
+      .finally(function () { if (b) b.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -20,6 +20,16 @@ export interface Status {
   sales_whatsapp?: string | null;
 }
 
+export interface PrivacyRequest {
+  request_id: string;
+  kind: "export" | "erase" | string;
+  status: "DONE" | "PENDING" | "ERASED" | "REJECTED" | string;
+  shown: string;
+  requested_at: string;
+  decided_at: string | null;
+  result: Record<string, number | boolean>;
+}
+
 export type Role = "owner" | "staff";
 
 export interface User {

@@ -75,6 +75,16 @@ server (`/pay/{payment_id}`) that a demo can "pay" with one click.
 `GET/POST /api/auth/users`, `DELETE /api/auth/users/{phone}` (owner);
 `POST /api/auth/logout` revokes the caller's tokens; `GET /api/auth/me`.
 
+## Customers' data requests (DPDP)
+
+`POST /api/privacy/request {pack, phone}` sends a 6-digit code on WhatsApp (on a server without WhatsApp and not public,
+the answer carries `dev_code`). `POST /api/privacy/request/verify {pack, phone, code, kind: "export"|"erase"}`:
+export returns `{record}` at once (logged as DONE); erase files a PENDING request. Owner only:
+`GET /api/privacy/requests?pack=` lists them (masked number, kind, status, what was removed), and
+`POST /api/privacy/requests/{id}?pack= {approve}` erases (ERASED) or refuses (REJECTED). A closed request keeps only
+the keyed hash of the number. The page customers use is `/my-data`. Nightly backups older than
+`HAANJI_RETENTION_DAYS` are deleted from S3, never the newest.
+
 ## Demo reset
 
 `POST /api/admin/demo-reset?pack=` → `{pack, removed: {calls, missed_calls, wa_messages, payments, bookings, receipts}, archived_to}`.

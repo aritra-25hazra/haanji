@@ -32,6 +32,7 @@ export default function Settings() {
       <SettingsForm key={pack} pack={pack} />
       <GooglePanel pack={pack} />
       <DigestPanel pack={pack} />
+      <PrivacyPanel pack={pack} />
       {authOn
         ? <UsersPanel />
         : <Panel title="Users" hint="HAANJI_AUTH off"><Empty><p>{t("The engine runs without sign-in, so everyone is the owner. Users work once HAANJI_AUTH=on.")}</p></Empty></Panel>}
@@ -205,6 +206,58 @@ function DigestPanel({ pack }: { pack: string }) {
 }
 
 /** Who may sign in: list, add, remove (never yourself). */
+const PRIVACY_KIND: Record<string, string> = { export: "Copy downloaded", erase: "Erase my data" };
+const PRIVACY_STATUS: Record<string, string> = { DONE: "Done", PENDING: "Waiting for you", ERASED: "Erased", REJECTED: "Refused" };
+
+/** Customers' own requests from the My data page: a copy they took, or an
+ *  erasure that waits here for the owner's yes. */
+function PrivacyPanel({ pack }: { pack: string }) {
+  const { readOnly } = useApp();
+  const { data, error, reload } = useData(() => engine.privacyRequests(pack).then((r) => r.requests), [pack]);
+  const [asking, setAsking] = useState<{ id: string; approve: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  async function decide(id: string, approve: boolean) {
+    setBusy(true); setNote(null);
+    try {
+      const r = await engine.decidePrivacy(pack, id, approve);
+      setNote(r.status === "ERASED" ? t("Erased. The receipts stay sealed, with the name and number unreadable.") : t("Refused. Nothing was erased."));
+      reload();
+    } catch (e) { setNote((e as Error).message); } finally { setBusy(false); setAsking(null); }
+  }
+  const rows = data ?? [];
+  const open = rows.filter((r) => r.status === "PENDING").length;
+  return (
+    <Panel title={t("Customers' data requests")} hint={open ? t("{n} waiting for you", { n: open }) : t("from the My data page")}
+           actions={<a className="btn btn-ghost btn-sm" href="/engine/my-data" target="_blank" rel="noopener noreferrer">{t("Open My data")} <Icon name="external" small /></a>}>
+      {note && <p className="body muted" role="status">{note}</p>}
+      {!data ? (error ? <Empty>{t("Could not load: {error}", { error })}</Empty> : <Loading kind="table" />)
+        : rows.length === 0 ? <Empty><p>{t("No requests yet. A customer can download or ask to erase their data on the My data page.")}</p></Empty>
+        : (
+          <Register head={<><th>{t("When")}</th><th>{t("Number")}</th><th>{t("Request")}</th><th>{t("Status")}</th><th /></>}>
+            {rows.map((r) => (
+              <tr key={r.request_id}>
+                <td className="mono">{fmtTime(r.requested_at)}</td>
+                <td className="mono">{r.shown}</td>
+                <td>{t(PRIVACY_KIND[r.kind] ?? r.kind)}</td>
+                <td><Chip kind={r.status === "PENDING" ? "warn" : r.status === "ERASED" ? "ok" : "muted"}>{t(PRIVACY_STATUS[r.status] ?? r.status)}</Chip></td>
+                <td className="right">
+                  {r.status === "PENDING" && !readOnly && (asking?.id === r.request_id
+                    ? <Confirm text={asking.approve ? t("Erase this customer's data for good?") : t("Refuse this request?")} yes={asking.approve ? t("Yes, erase") : t("Yes, refuse")}
+                               busy={busy} onYes={() => void decide(r.request_id, asking.approve)} onNo={() => setAsking(null)} />
+                    : <span className="row">
+                        <button className="btn btn-danger btn-sm" onClick={() => setAsking({ id: r.request_id, approve: true })}>{t("Erase")}</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => setAsking({ id: r.request_id, approve: false })}>{t("Refuse")}</button>
+                      </span>)}
+                </td>
+              </tr>
+            ))}
+          </Register>
+        )}
+    </Panel>
+  );
+}
+
 function UsersPanel() {
   const { readOnly } = useApp();
   const { packs, user: me } = useApp();

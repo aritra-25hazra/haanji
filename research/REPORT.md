@@ -540,7 +540,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 639 tests, about 6 s
+pytest -q                                   # 647 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -588,14 +588,14 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (639 tests)
+## Appendix C. Test inventory (647 tests)
 
 | file | tests | what it guards |
 |---|---|---|
 | test_adversarial.py | 89 | prompt injection against the model adapter still meets the read-back gate; the guardrail corpus (research/benchmark/guardrail_corpus.yaml) in every pack; random Latin, Devanagari and digit text never crashes, books or silences the agent |
 | test_numeric_repair.py | 48 | the closed-vocabulary date/time/number pass: what it restores, what it must never turn into a different number, the benchmark's date_time score |
 | test_pipeline.py | 54 | the turn controller, barge-in, confirmation flow, receipts per call, speculation on/off identity, a Devanagari turn |
-| test_web.py | 41 | the demo server, design tokens, relative URLs, no emoji (every page, including the research pages) |
+| test_web.py | 43 | the demo server, design tokens, relative URLs, no emoji (every page, including the research pages) |
 | test_packs.py | 45 | every pack validates and every scenario reaches its outcome |
 | test_agent_behaviour.py | 19 | AI disclosure, everyday dental words, a name kept out of order, a bad number explained then handed off, a named time confirmed free, the number's last digits read back, "aur kuch?" once (never on WhatsApp), no transfer promised after hours or in the lunch break; identity questions told apart from party sizes, dates in digits not taken for a phone, the new lines in every pack language, an outcome counted once |
 | test_bhasha.py | 36 | the two-condition rule, name protection, harmful-correction detection, the pilot's guards, the merged-token rule and its ordering |
@@ -622,6 +622,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_helpbot.py | 7 | the help assistant answers from its FAQ with no key, uses the picked model with the other as fallback, keeps history short, stops paying past the daily cap, never shows a key |
 | test_demo_reset.py | 4 | a demo reset empties one pack and archives its chain whole (it still verifies); a public server needs the operator's token; a real shop is never reset; the nightly reset runs once at its hour |
 | test_digest.py | 3 | every number in the evening digest is the dashboard's (today's, India's day) under the dashboard's names; the owner's language; a quiet day says so |
+| test_data_rights.py | 6 | a WhatsApp code proves the number; a copy comes back at once; an erasure waits for the owner's yes and its log keeps only a keyed hash; a public server never shows a code; backups past retention are pruned, never the newest |
 | test_telephony.py | 4 | the Twilio media-stream bridge with fake recogniser and synthesiser |
 | test_timezone.py | 4 | timestamps stored in UTC with an offset; the hourly chart and "today" counted in India's time; the cost comparison from Settings; yesterday's calls |
 | test_reschedule.py | 4 | a booking moved through the ordinary confirmation flow and sealed with its previous receipt |

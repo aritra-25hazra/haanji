@@ -1655,6 +1655,9 @@ async def _evening_loop() -> None:
             try:
                 where = backup_mod.upload_s3(backup_mod.make_backup(VAR_DIR), backup_mod.backup_name())
                 log.warning("nightly backup written to %s", where)
+                pruned = backup_mod.prune_s3(RETENTION_DAYS)
+                if pruned:
+                    log.warning("pruned %d backups past %d days", len(pruned), RETENTION_DAYS)
             except Exception as exc:                  # noqa: BLE001
                 log.warning(f"backup: {exc}")
         digest_pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
@@ -2178,6 +2181,96 @@ async def privacy_erase(phone: str, pack: str = DEFAULT_PACK):
     return erase_customer(pack, phone)
 
 
+# ── a customer's own data-rights requests (DPDP) ───────────────────────────
+# The customer proves the number with a WhatsApp code. A copy of their data
+# comes back at once; an erasure waits for the owner's yes in Settings (the
+# shop may have to keep a booking record), and its log keeps only a keyed
+# hash of the number and what was removed.
+class PrivacyAsk(BaseModel):
+    pack: str = DEFAULT_PACK
+    phone: str = Field(min_length=10, max_length=20)
+
+
+class PrivacyProve(PrivacyAsk):
+    code: str = Field(min_length=4, max_length=8)
+    kind: Literal["export", "erase"]
+
+
+class PrivacyDecision(BaseModel):
+    approve: bool
+
+
+def _privacy_pack(pack: str) -> None:
+    if pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {pack}")
+
+
+@app.post("/api/privacy/request")
+async def privacy_request_code(body: PrivacyAsk):
+    _privacy_pack(body.pack)
+    phone = _customer_phone(body.phone)
+    if len(phone) < 10:
+        raise HTTPException(422, "a 10-digit mobile number")
+    try:
+        code = auth.issue_otp(phone)
+    except OtpThrottled as exc:
+        raise HTTPException(429, str(exc), headers={"Retry-After": "900"})
+    name = runtime(body.pack).pack.persona.business_name
+    if wa_channel.configured():
+        ok = await wa_channel.send_template(
+            phone, "otp", [code],
+            fallback_text=f"{name}: your data request code is {code}. It works for 5 minutes. Do not share it.")
+        if ok is False:
+            raise HTTPException(503, "could not deliver the code on WhatsApp; try again in a minute")
+        return {"sent": True, "channel": "whatsapp"}
+    if not IS_PUBLIC or AUTH_DEV:
+        return {"sent": True, "channel": "dev", "dev_code": code}
+    raise HTTPException(503, "no way to deliver the code: this server has no WhatsApp number connected")
+
+
+@app.post("/api/privacy/request/verify")
+async def privacy_request_verify(body: PrivacyProve):
+    _privacy_pack(body.pack)
+    phone = _customer_phone(body.phone)
+    if not auth.check_otp(phone, body.code):
+        raise HTTPException(401, "wrong or expired code")
+    subject = vault.subject(phone, body.pack) or ""
+    if body.kind == "export":
+        record = customer_record(body.pack, phone)
+        counts = {k: (len(v) if isinstance(v, list) else v) for k, v in record.items() if isinstance(v, (list, int))}
+        store.add_privacy_request(body.pack, subject, phone, _mask(phone) or "", "export", "DONE", counts)
+        return {"kind": "export", "record": record}
+    req = store.add_privacy_request(body.pack, subject, phone, _mask(phone) or "", "erase", "PENDING")
+    publish("privacy.requested", pack=body.pack, request="erase", phone=_mask(phone))
+    return {"kind": "erase", "request": req}
+
+
+@app.get("/api/privacy/requests")
+async def privacy_requests(pack: str = DEFAULT_PACK):
+    _privacy_pack(pack)
+    return {"pack": pack, "requests": store.privacy_requests(pack)}
+
+
+@app.post("/api/privacy/requests/{request_id}")
+async def privacy_decide(request_id: str, body: PrivacyDecision, pack: str = DEFAULT_PACK):
+    _privacy_pack(pack)
+    req = store.privacy_request(pack, request_id, with_phone=True)
+    if req is None:
+        raise HTTPException(404, "no such request")
+    if req["status"] != "PENDING" or not req.get("phone"):
+        raise HTTPException(409, f"this request is already {req['status'].lower()}")
+    if body.approve:
+        store.decide_privacy_request(pack, request_id, "ERASED", erase_customer(pack, req["phone"]))
+    else:
+        store.decide_privacy_request(pack, request_id, "REJECTED")
+    return store.privacy_request(pack, request_id)
+
+
+PROTECTED.append(("GET", re.compile(r"^/api/privacy/requests$"), "owner"))
+PROTECTED.append(("POST", re.compile(r"^/api/privacy/requests/[^/]+$"), "owner"))
+DEMO_LOCKED.append(("POST", re.compile(r"^/api/privacy/requests/[^/]+$")))
+
+
 @app.get("/api/receipts/{code}/open")
 async def receipt_open(code: str, pack: str = DEFAULT_PACK):
     """The personal fields of one receipt, for whoever holds its code (the
@@ -2395,6 +2488,11 @@ async def transparency_page():
 @app.get("/privacy")
 async def privacy_page():
     return _page("privacy.html")
+
+
+@app.get("/my-data")
+async def my_data_page():
+    return _page("mydata.html")
 
 
 @app.get("/design")

@@ -48,3 +48,29 @@ describe("settings", () => {
     await screen.findByRole("heading", { name: "Sign in" });
   });
 });
+
+describe("customers' data requests", () => {
+  it("lists the requests and erases only after the owner confirms", async () => {
+    localStorage.setItem("haanji.token", "tok");
+    let status = "PENDING";
+    const { calls } = mockEngine({
+      ...ownerRoutes,
+      "api/privacy/requests": () => ({ requests: [
+        { request_id: "r1", kind: "erase", status, shown: "98XXXXX032", requested_at: "2026-11-18T04:00:00+00:00", decided_at: null, result: {} },
+        { request_id: "r0", kind: "export", status: "DONE", shown: "98XXXXX031", requested_at: "2026-11-18T03:00:00+00:00", decided_at: "2026-11-18T03:00:00+00:00", result: {} },
+      ] }),
+      "POST api/privacy/requests/*": ({ body }) => { status = (body as { approve: boolean }).approve ? "ERASED" : "REJECTED"; return { request_id: "r1", kind: "erase", status, shown: "98XXXXX032", requested_at: "", decided_at: "", result: {} }; },
+    });
+    const user = userEvent.setup();
+    renderApp("/settings");
+    expect(await screen.findByText("98XXXXX032")).toBeInTheDocument();
+    expect(screen.getByText("1 aapke intezaar mein")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Mita do" }));
+    expect(calls.some((c) => c.method === "POST" && c.path.startsWith("api/privacy/requests/"))).toBe(false);
+    await user.click(screen.getByRole("button", { name: "Haan, mita do" }));
+    await waitFor(() => expect(screen.getByText(/Mita diya. Receipts seal rehti hain/)).toBeInTheDocument());
+    const post = calls.find((c) => c.method === "POST" && c.path === "api/privacy/requests/r1")!;
+    expect(post.body).toEqual({ approve: true });
+    expect(post.query.get("pack")).toBe("dental_clinic");
+  });
+});

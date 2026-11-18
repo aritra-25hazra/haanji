@@ -112,6 +112,28 @@ def latest_s3() -> bytes | None:
     return client.get_object(Bucket=bucket, Key=newest["Key"])["Body"].read()
 
 
+def prune_s3(days: int, now: dt.datetime | None = None, client=None) -> list[str]:
+    """Delete backups older than ``days`` (the retention period), so a customer
+    erased from the live data also leaves the backups once they age out. The
+    newest backup is always kept."""
+    if days <= 0:
+        return []
+    if client is None:
+        import boto3
+        client = boto3.client("s3", endpoint_url=os.environ.get("HAANJI_BACKUP_S3_ENDPOINT") or None)
+    bucket = os.environ["HAANJI_BACKUP_S3_BUCKET"]
+    prefix = os.environ.get("HAANJI_BACKUP_S3_PREFIX", "haanji/").rstrip("/") + "/"
+    listing = client.list_objects_v2(Bucket=bucket, Prefix=prefix).get("Contents") or []
+    if len(listing) <= 1:
+        return []
+    newest = max(listing, key=lambda o: o["LastModified"])["Key"]
+    cutoff = (now or dt.datetime.now(dt.timezone.utc)) - dt.timedelta(days=days)
+    old = [o["Key"] for o in listing if o["LastModified"] < cutoff and o["Key"] != newest]
+    for key in old:
+        client.delete_object(Bucket=bucket, Key=key)
+    return old
+
+
 def restore_on_boot(var_dir: str) -> str | None:
     """HAANJI_RESTORE_FROM=<https url | s3> restores an empty data directory
     on start-up, so a redeploy does not start a real shop from zero."""

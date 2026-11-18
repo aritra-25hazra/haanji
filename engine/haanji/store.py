@@ -49,7 +49,27 @@ CREATE TABLE IF NOT EXISTS wa_messages (
   meta_json  TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS wa_thread_ix ON wa_messages (tenant_id, phone, at);
+CREATE TABLE IF NOT EXISTS privacy_requests (
+  request_id   TEXT PRIMARY KEY,
+  tenant_id    TEXT NOT NULL,
+  subject      TEXT NOT NULL,             -- keyed hash of the number (the vault's subject)
+  phone        TEXT,                      -- kept only while the request is open
+  shown        TEXT NOT NULL,             -- the masked number, for the owner's list
+  kind         TEXT NOT NULL,             -- export | erase
+  status       TEXT NOT NULL,             -- DONE | PENDING | ERASED | REJECTED
+  requested_at TEXT NOT NULL,
+  decided_at   TEXT,
+  result_json  TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS privacy_requests_ix ON privacy_requests (tenant_id, requested_at DESC);
 """
+
+
+def _privacy_row(r: sqlite3.Row) -> dict[str, Any]:
+    d = dict(r)
+    d["result"] = json.loads(d.pop("result_json") or "{}")
+    d.pop("phone", None)
+    return d
 
 
 def _now() -> str:
@@ -178,3 +198,39 @@ class DemoStore:
             "SELECT phone, MAX(at) AS last_at, COUNT(*) AS messages FROM wa_messages"
             " WHERE tenant_id=? GROUP BY phone ORDER BY last_at DESC", (tenant_id,))
         return [dict(r) for r in rows]
+
+    # ── data-rights requests (DPDP): a log that outlives the data it erased ──
+    def add_privacy_request(self, tenant_id: str, subject: str, phone: str, shown: str, kind: str,
+                            status: str, result: dict[str, Any] | None = None) -> dict[str, Any]:
+        rid = uuid.uuid4().hex[:12]
+        now = _now()
+        with self.conn:
+            self.conn.execute(
+                "INSERT INTO privacy_requests (request_id, tenant_id, subject, phone, shown, kind, status,"
+                " requested_at, decided_at, result_json) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (rid, tenant_id, subject, phone if status == "PENDING" else None, shown, kind, status, now,
+                 None if status == "PENDING" else now, json.dumps(result or {})))
+        return self.privacy_request(tenant_id, rid)  # type: ignore[return-value]
+
+    def privacy_request(self, tenant_id: str, request_id: str, *, with_phone: bool = False) -> dict[str, Any] | None:
+        r = self.conn.execute("SELECT * FROM privacy_requests WHERE tenant_id=? AND request_id=?",
+                              (tenant_id, request_id)).fetchone()
+        if r is None:
+            return None
+        d = _privacy_row(r)
+        if with_phone:
+            d["phone"] = r["phone"]
+        return d
+
+    def privacy_requests(self, tenant_id: str, limit: int = 200) -> list[dict[str, Any]]:
+        rows = self.conn.execute("SELECT * FROM privacy_requests WHERE tenant_id=? ORDER BY requested_at DESC LIMIT ?",
+                                 (tenant_id, limit))
+        return [_privacy_row(r) for r in rows]
+
+    def decide_privacy_request(self, tenant_id: str, request_id: str, status: str,
+                               result: dict[str, Any] | None = None) -> None:
+        """Close a request; the number itself is dropped, only its hash stays."""
+        with self.conn:
+            self.conn.execute("UPDATE privacy_requests SET status=?, decided_at=?, phone=NULL, result_json=?"
+                              " WHERE tenant_id=? AND request_id=?",
+                              (status, _now(), json.dumps(result or {}), tenant_id, request_id))
