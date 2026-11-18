@@ -758,6 +758,10 @@ def payment_note(links: list[dict[str, Any]]) -> str:
 async def _notify_customer(holder: Holder, codes: list[str], links: list[dict[str, Any]] | None = None) -> None:
     """A web or phone caller who gave a number gets the receipt link (and the
     deposit link) on WhatsApp, if a real number is connected. Never blocks."""
+    # On the public demo anyone can type anyone's number into /talk: only a number
+    # the channel proved (PSTN caller-id) is written to there.
+    if DEMO_READONLY and not holder.session.ctx.phone_verified:
+        return
     if codes and holder.phone and holder.channel != "WHATSAPP" and wa_channel.configured():
         try:
             text = receipt_note(holder.rt.pack_id, codes)

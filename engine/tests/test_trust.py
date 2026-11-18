@@ -112,3 +112,18 @@ def test_a_web_caller_with_a_number_gets_the_link_on_whatsapp(client, monkeypatc
         t = client.post(f"/api/sessions/{sid}/utterance", json={"text": u.truth}).json()
         codes += t.get("receipts", [])
     assert codes and any(f"verify?code={codes[-1]}" in text and to == "9811100014" for to, text in sent)
+
+
+def test_on_the_public_demo_a_typed_number_is_never_sent_a_whatsapp(client, monkeypatch, sent):
+    """A stranger on the public demo must not be able to make the shop message
+    someone else's number by typing it into the web call."""
+    monkeypatch.setenv("HAANJI_WA_TOKEN", "t"); monkeypatch.setenv("HAANJI_WA_PHONE_ID", "1")
+    monkeypatch.setattr(server, "DEMO_READONLY", True)
+    sid = client.post("/api/sessions", json={"pack": "dental_clinic", "phone": "9811100015"}).json()["session_id"]
+    sc = next(s for s in scenarios_of(load_pack("dental_clinic")) if s.name == "booking_with_asr_noise")
+    codes = []
+    for u in sc.utterances:
+        r = client.post(f"/api/sessions/{sid}/utterance", json={"text": u.truth}).json()
+        codes += r.get("receipts", [])
+    assert codes, "the booking itself still happens"
+    assert not [m for m in sent if m[0].endswith("9811100015")]

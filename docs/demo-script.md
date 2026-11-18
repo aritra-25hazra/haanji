@@ -28,39 +28,55 @@ hero on the landing page by hovering so it does not distract while you talk.
 Upload (YouTube unlisted or Loom), then put the link in the README under
 "See it live" — the placeholder line is already there.
 
-## Demo day: WhatsApp live (Fri 18 Dec 2026)
+## Demo day (Fri 18 Dec 2026): WhatsApp through the simulator
 
-### The day before (17 Dec)
+**Where real WhatsApp stands (checked 2026-11-18).** The engine side works end
+to end:
+- a message to the test number reaches the engine;
+- HaanJi answers it;
+- Meta accepts the reply.
 
-1. Add the examiner's number. In Meta, open the Haanji app → Use cases →
-   WhatsApp → Customize → API Setup → **To** → *Manage phone number list*, and
-   enter their WhatsApp number with +91. Meta sends them an OTP on WhatsApp, so
-   ask for the number a day early. The test number answers at most 5 numbers;
-   remove an old one if the list is full.
-2. Plan the token. The temporary token lasts 24 hours. Unless you have made a
-   permanent system-user token, generate a new one on the morning of the demo
-   (API Setup → *Generate access token*), paste it into Render → `haanji-engine`
-   → Environment → `HAANJI_WA_TOKEN`, and save. The engine restarts in 1–2
-   minutes.
-3. Leave `main` alone on demo day. Render redeploys on every push: the engine
-   goes down for 1–2 minutes and loses its bookings and receipts.
-4. The dental pack is closed on Sundays. On a Friday, "kal" means Saturday and
-   books fine; if the demo moves to a Saturday, ask for another day, because a
-   Sunday request ends as a lead instead of a booking.
+Meta then refuses to deliver it: `/api/status` → `whatsapp.last_send.delivery`
+shows **131031 "Business account locked"**. The Haanji business portfolio is not
+verified, and Meta now restricts messaging until it is. Verification needs a
+legally registered business and its documents.
+
+So on demo day, WhatsApp is shown with HaanJi's own simulator. It is the same
+engine, the same booking flow and the same receipts; only Meta's delivery is
+left out. Say so plainly if asked.
 
 ### Five minutes before
 
-5. Open https://haanji-engine.onrender.com/api/status to wake the free Render
-   instance, and wait for `"whatsapp": {"configured": true, …}`.
-6. From your phone, send `hi` to the test number. A greeting back means
-   WhatsApp works.
-7. Keep three Chrome tabs open: `/talk`, `/verify`, and the console on Calls
-   and Pramaan.
+1. Open https://haanji-engine.onrender.com/api/status to wake the free Render
+   instance (about a minute).
+2. Keep four tabs open:
+   - `/whatsapp`, the WhatsApp simulator;
+   - `/talk`, the browser call;
+   - `/verify`;
+   - the console on Calls and Pramaan.
+3. Leave `main` alone on demo day. Render redeploys on every push; the engine
+   goes down for a minute or two and loses the demo's bookings.
+4. The dental pack is closed on Sundays. On a Friday, "kal" means Saturday and
+   books fine.
+
+### The WhatsApp part (2 minutes)
+
+5. In `/whatsapp`, type a 10-digit number and chat:
+   - "kal subah teeth cleaning karwani hai"
+   - pick a slot
+   - give a name
+   - "haan"
+
+   The reply carries the receipt link. Open it on `/verify`, then show the same
+   booking in the console under Calls and in Pramaan.
 
 ### If something breaks
 
-8. WhatsApp stays silent (expired token, number not on the list, Meta outage):
-   switch to `/talk` and click the "Ye boliye" lines. The browser call runs on
-   the same engine, and its receipt opens on `/verify` like a WhatsApp one.
-9. Render is down: on the laptop, run `cd engine && .venv/bin/haanji serve` and
-   open http://localhost:8090/talk.
+6. Render is down: on the laptop, run `research/collect/session.sh start` and
+   use http://localhost:8090/whatsapp and /talk.
+
+### Real WhatsApp later
+
+When a registered business can be verified (Business Settings → Security
+Center → Business verification), the same token, number and webhook start
+delivering, with no code change.

@@ -561,7 +561,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 681 tests, about 6 s
+pytest -q                                   # 682 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -609,7 +609,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (681 tests)
+## Appendix C. Test inventory (682 tests)
 
 | file | tests | what it guards |
 |---|---|---|
@@ -632,7 +632,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_whatsapp_webhook.py | 12 | Meta signature, dedup, handshake; a refused send is described for the operator without the token; the reply goes from the number the customer wrote to; Meta's delivery report is kept |
 | test_auth.py | 9 | one-time codes over WhatsApp, signed scoped tokens, roles, per-pack scope, lockout |
 | test_research_kit.py | 8 | the recording page, the study page, scoring of real recogniser pairs |
-| test_trust.py | 6 | receipt links in replies, daily anchors and their signatures, the owner's digest |
+| test_trust.py | 7 | receipt links in replies, daily anchors and their signatures, the owner's digest; on the public demo a typed number is never sent a WhatsApp |
 | test_text_channels.py | 6 | the WhatsApp simulator and text turns |
 | test_pramaan_properties.py | 6 | property-based: random receipts and mutations; truncation is caught by the anchor, not the chain |
 | test_onboard.py | 5 | the onboarding wizard's draft is a valid pack whose generated scenarios pass |
