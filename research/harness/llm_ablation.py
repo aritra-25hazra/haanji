@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic policy versus a hosted model, on the same 21 scenarios.
+"""Deterministic policy versus a hosted model, on the same packaged scenarios (44 over 10 packs).
 
 Runs every packaged scenario under the ``mock`` adapter and, when an API key
 is configured, under ``claude``; writes ``research/llm_ablation.json`` and
@@ -8,8 +8,14 @@ outcomes, the receipts and the guarantees are the same whichever one talks,
 and that the cost of the model (latency, tokens, fallbacks, lost speculation)
 is measured rather than guessed.
 
-    python research/harness/llm_ablation.py            # both, if a key exists
-    python research/harness/llm_ablation.py --only mock
+    python research/harness/llm_ablation.py --only mock                         # free
+    python research/harness/llm_ablation.py --only claude --pack dental_clinic  # prints the estimate, stops
+    python research/harness/llm_ablation.py --only claude --pack dental_clinic --yes   # a paid pilot
+    python research/harness/llm_ablation.py --only claude --yes                 # the paid full run
+
+A paid run never starts without --yes; before it, the script prints how many
+model calls to expect and what they may cost at the model's list price. A run
+on one pack is stored under "claude:<pack>" so it never replaces a full run.
 """
 from __future__ import annotations
 import argparse
@@ -96,24 +102,69 @@ def table(results: dict) -> str:
     return head + body
 
 
+# List prices per million tokens (input, output), USD; check the provider's
+# pricing page before a large run. Unknown models get no estimate.
+PRICES = {"claude-opus-4-8": (5.0, 25.0), "claude-sonnet-4-6": (3.0, 15.0), "claude-haiku-4-5": (1.0, 5.0)}
+USD_INR = 85.0
+
+
+def estimate(packs: list[str], model: str) -> dict:
+    """How many model calls a run makes, and a cost range, from the scenarios
+    and the measured size of the system prompt and tool list. A range, not a
+    measurement: the real tokens are counted during the run and written out."""
+    from haanji.adapters.claude import build_tools
+    from haanji.adapters.prompt import build_system_prompt
+    turns, prefix_chars = 0, []
+    for pid in packs:
+        pack = load_pack(pid)
+        backend, _ = open_backend(pack, "t_estimate", today=TODAY)
+        registry = build_registry("t_estimate", backend, pack, Ledger(sqlite3.connect(":memory:")))
+        prefix_chars.append(len(build_system_prompt(pack, today=TODAY)) + len(json.dumps(build_tools(registry))))
+        turns += sum(len(sc.utterances) for sc in scenarios_of(pack))
+    prefix = statistics.fmean(prefix_chars) / 3.3               # ≈ tokens for Hinglish and JSON
+    low_calls, high_calls = turns, 2 * turns                    # one call per turn, two with a tool round
+    low_in, high_in = low_calls * (prefix + 300), high_calls * (prefix + 1200)
+    low_out, high_out = low_calls * 120, high_calls * 450       # replies, plus a little adaptive thinking
+    price = PRICES.get(model)
+    out = {"turns": turns, "calls": [low_calls, high_calls], "input_tokens": [int(low_in), int(high_in)],
+           "output_tokens": [low_out, high_out], "model": model}
+    if price:
+        usd = [(low_in * price[0] + low_out * price[1]) / 1e6, (high_in * price[0] + high_out * price[1]) / 1e6]
+        out["usd"] = [round(usd[0], 2), round(usd[1], 2)]
+        out["inr"] = [round(usd[0] * USD_INR), round(usd[1] * USD_INR)]
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", choices=["mock", "claude"], default=None)
     ap.add_argument("--pack", default=None)
     ap.add_argument("--speed", type=float, default=40.0)
+    ap.add_argument("--yes", action="store_true", help="run the paid provider after printing the estimate")
     args = ap.parse_args(argv)
     set_speed(args.speed)
     packs = [args.pack] if args.pack else list_packs()
     providers = [args.only] if args.only else ["mock", "claude"]
     results = json.loads(OUT.read_text()) if OUT.exists() else {}
     for provider in providers:
-        if provider == "claude" and not os.environ.get("ANTHROPIC_API_KEY"):
-            print("claude: skipped — no ANTHROPIC_API_KEY in the environment or engine/.env")
-            continue
-        print(f"\n== {provider} ==")
-        results[provider] = asyncio.run(run_provider(provider, packs))
-        results[provider]["ran_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    if not results:
+        if provider == "claude":
+            model = os.environ.get("HAANJI_LLM_MODEL", "claude-opus-4-8")
+            est = estimate(packs, model)
+            cost = (f"≈ ${est['usd'][0]}–{est['usd'][1]} (≈ ₹{est['inr'][0]}–{est['inr'][1]}) at list price"
+                    if "usd" in est else "no price known for this model")
+            print(f"claude ({model}): {est['turns']} caller turns -> about {est['calls'][0]}–{est['calls'][1]} model calls, "
+                  f"{est['input_tokens'][0]:,}–{est['input_tokens'][1]:,} input tokens; {cost}. An estimate, not a measurement.")
+            if not os.environ.get("ANTHROPIC_API_KEY"):
+                print("claude: skipped — no ANTHROPIC_API_KEY in the environment or engine/.env")
+                continue
+            if not args.yes:
+                print("claude: not run — add --yes to spend this")
+                continue
+        key = f"{provider}:{args.pack}" if args.pack else provider
+        print(f"\n== {key} ==")
+        results[key] = asyncio.run(run_provider(provider, packs))
+        results[key]["ran_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    if not results or not any(k in results for k in [f"{p}:{args.pack}" if args.pack else p for p in providers]):
         return 1
     OUT.write_text(json.dumps(results, indent=2, ensure_ascii=False) + "\n")
     print(f"\nwrote {OUT.relative_to(ROOT)}\n")
