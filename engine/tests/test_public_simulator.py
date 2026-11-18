@@ -88,3 +88,25 @@ def test_talk_lines_are_public_and_only_lines(client):
     body = r.json()
     assert list(body) == ["lines"] and body["lines"] and all(isinstance(x, str) for x in body["lines"])
     assert client.get("/api/packs/no_such_pack/lines").status_code == 404
+
+
+def test_a_stranger_can_simulate_a_missed_call_and_nothing_real_is_sent(client, monkeypatch):
+    sent = []
+
+    async def fake_send(*args, **kwargs):
+        sent.append(args)
+    monkeypatch.setenv("HAANJI_WA_TOKEN", "t"); monkeypatch.setenv("HAANJI_WA_PHONE_ID", "1")
+    monkeypatch.setattr(server.wa_channel, "send_template", fake_send)
+    r = client.post("/api/wa/missed", json={"pack": PACK, "phone": "9811100008"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["delivered"] is None and body["visitor"] and not sent
+    thread = client.get("/api/wa/threads/9811100008", params={"pack": PACK, "visitor": body["visitor"]}).json()
+    assert [m["text"] for m in thread["messages"]] == [body["outreach"]]
+    reply = send(client, "9811100008", "haan ji root canal", body["visitor"])
+    assert reply["replies"]
+
+
+def test_the_missed_call_button_stays_behind_sign_in_for_a_real_shop(client, monkeypatch):
+    monkeypatch.setattr(server, "PUBLIC_SIMULATOR", False)
+    assert client.post("/api/wa/missed", json={"pack": PACK, "phone": "9811100009"}).status_code == 401

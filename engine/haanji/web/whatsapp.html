@@ -13,11 +13,14 @@
   body { height: 100dvh; display: flex; overflow: hidden; }
   aside { width: 340px; min-width: 280px; display: flex; flex-direction: column; background: var(--cobalt-deep); border-right: 1px solid rgba(245, 185, 30, .28); }
   aside .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(245, 185, 30, .28); }
+  aside .head { flex-wrap: wrap; }
+  aside .head [data-lang-switch] { flex: none; margin-left: auto; }
   aside .head a.back { color: var(--haze); font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; min-height: 24px; }
   .newthread { display: flex; gap: 8px; padding: 12px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); }
   .newthread .input { flex: 1; min-width: 0; }
   .wa-live { padding: 10px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
   .wa-live p { font-size: 12.5px; }
+  .wa-live .chip { max-width: 100%; white-space: normal; }
   .missed { padding: 12px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); display: flex; flex-direction: column; gap: 8px; }
   .missed .btn { width: 100%; }
   .missed p, #threads-note { color: var(--haze); font-size: 13px; }
@@ -72,7 +75,7 @@
   </div>
   <div class="missed">
     <button type="button" id="missed" class="btn btn-primary"><i data-icon="phoneMissed"></i><span data-hi="Missed call simulate karo">Simulate a missed call</span></button>
-    <p data-hi="Telephony webhook fire hota hai → HaanJi khud WhatsApp pe pehla message bhejta hai → reply se booking hui to missed call &quot;recovered&quot; ginti hai.">The telephony webhook fires → HaanJi sends the first WhatsApp message itself → if the reply ends in a booking, the missed call counts as "recovered".</p>
+    <p data-hi="Jaise phone company HaanJi ko batati hai ki call chhoot gayi → HaanJi khud WhatsApp pe pehla message likhta hai → reply se booking hui to missed call &quot;recovered&quot; ginti hai. Yahan sab simulator mein hota hai, asli WhatsApp nahi jata.">As if the phone company told HaanJi a call was missed → HaanJi writes the first WhatsApp message itself → if the reply ends in a booking, the missed call counts as "recovered". It all happens here in the simulator; no real WhatsApp is sent.</p>
   </div>
   <p id="threads-note" hidden data-hi="Public demo: doosron ki chats yahan nahi dikhti. Apna number daal ke apna thread kholo.">Public demo: other people's chats are not shown here. Enter your number to open your own thread.</p>
   <div id="threads" role="list"></div>
@@ -86,7 +89,7 @@
   <div id="msgs" tabindex="-1">
     <div class="empty">
       <h2>WhatsApp channel demo</h2>
-      <p data-hi="Left mein number daal ke thread kholo, ya &quot;Simulate a missed call&quot; dabao aur dekho HaanJi khud pehla message bhejta hai. Engine, policy aur ledger wahi hain jo phone call ke; sirf channel alag hai.">Enter a number on the left to open a thread, or press "Simulate a missed call" and watch HaanJi send the first message itself. The engine, policy and ledger are the same as on a phone call; only the channel is different.</p>
+      <p data-hi="Apna number daal ke thread kholo, ya &quot;Missed call simulate karo&quot; dabao aur dekho HaanJi khud pehla message bhejta hai. Engine, policy aur ledger wahi hain jo phone call ke; sirf channel alag hai.">Enter your number to open a thread, or press "Simulate a missed call" and watch HaanJi send the first message itself. The engine, policy and ledger are the same as on a phone call; only the channel is different.</p>
     </div>
   </div>
   <div class="compose">
@@ -124,12 +127,18 @@
     if (!s) return;
     $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
     if (s.whatsapp && s.whatsapp.configured) {
-      // A real number is connected: say so, and which one, above the simulator.
+      // A number is connected: say which, above the simulator. Meta's test
+      // numbers (+1 555 …) answer only a few numbers added in Meta, and only
+      // once Meta lets the business send, so a visitor is not told to message it.
+      const test = /^1555/.test(String(s.whatsapp.number || "").replace(/\D/g, ""));
       const live = document.createElement("div");
       live.className = "wa-live";
-      live.innerHTML = '<span class="chip chip-spec">' + S.icon("phone") + S.esc(L("A real number is connected", "Asli number juda hai")) +
-        (s.whatsapp.number ? " · " + S.esc(s.whatsapp.number) : "") + "</span>" +
-        '<p class="muted">' + S.esc(L("Send a real WhatsApp to this number; the engine and ledger are the same. The simulator below runs separately.", "Is number pe asli WhatsApp karo; engine aur ledger wahi hain. Neeche wala simulator alag chalta hai.")) + '</p>';
+      live.innerHTML = test
+        ? '<span class="chip">' + S.icon("phone") + S.esc(L("Meta test number: not for the public yet", "Meta ka test number: abhi sabke liye nahi")) + "</span>" +
+          '<p class="muted">' + S.esc(L("Real WhatsApp replies start once Meta verifies the business. Until then, book in the simulator below: it is the same engine and the same receipts.", "Asli WhatsApp jawab tab shuru honge jab Meta business verify karega. Tab tak neeche simulator mein booking karo: engine aur receipts wahi hain.")) + "</p>"
+        : '<span class="chip chip-spec">' + S.icon("phone") + S.esc(L("A real number is connected", "Asli number juda hai")) +
+          (s.whatsapp.number ? " · " + S.esc(s.whatsapp.number) : "") + "</span>" +
+          '<p class="muted">' + S.esc(L("Send a real WhatsApp to this number; the engine and ledger are the same. The simulator below runs separately.", "Is number pe asli WhatsApp karo; engine aur ledger wahi hain. Neeche wala simulator alag chalta hai.")) + "</p>";
       document.querySelector("aside .head").insertAdjacentElement("afterend", live);
     }
     loadThreads();
@@ -209,7 +218,8 @@
   $("missed").onclick = async function () {
     const p = $("phone").value.trim() || String(9700000000 + Math.floor(Math.random() * 9999999));
     $("phone").value = p;
-    await api("api/telephony/missed-call", { method: "POST", body: JSON.stringify({ pack: $("pack").value, phone: p }) });
+    const r = await api("api/wa/missed", { method: "POST", body: JSON.stringify({ pack: $("pack").value, phone: p }) });
+    keepPass(passKey(p), r.visitor);
     openThread(p);
   };
   $("send").onclick = send;

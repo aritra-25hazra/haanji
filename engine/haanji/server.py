@@ -290,7 +290,7 @@ AUTH_DEV = os.environ.get("HAANJI_AUTH_DEV", "0").lower() in ("1", "true", "yes"
 # so its simulator stays behind sign-in. HAANJI_PUBLIC_SIMULATOR=0 closes it.
 PUBLIC_SIMULATOR = AUTH_ENABLED and os.environ.get(
     "HAANJI_PUBLIC_SIMULATOR", "1" if DEMO_DATA else "0").lower() in ("1", "true", "yes", "on")
-SIMULATOR_ROUTES = re.compile(r"^/api/wa/(incoming|threads(/\d{10})?)$")
+SIMULATOR_ROUTES = re.compile(r"^/api/wa/(incoming|missed|threads(/\d{10})?)$")
 # A public server with sign-in off is a demo for strangers: the console's
 # destructive operations (settings, cancelling bookings, users, pack saves,
 # erasure, backups) are refused there, and so are the two reads that hand a
@@ -326,7 +326,7 @@ PROTECTED: list[tuple[str, re.Pattern, str]] = [
     # The WhatsApp *simulator* drives the real tenant's thread store; the
     # research pages write to disk. Both are demo/research surfaces that a
     # real shop keeps behind sign-in.
-    ("POST", re.compile(r"^/api/(wa/incoming|record|study)$"), "staff"),
+    ("POST", re.compile(r"^/api/(wa/(incoming|missed)|record|study)$"), "staff"),
     ("POST", re.compile(r"^/api/(packs/(draft|validate|[^/]+/selftest)|anchors/seal|digest/send)$"), "owner"),
     ("PUT", re.compile(r"^/api/packs/[^/]+$"), "owner"),
     ("GET|POST|DELETE", re.compile(r"^/api/auth/users(/.*)?$"), "owner"),
@@ -1196,24 +1196,46 @@ async def missed_call(body: MissedIn, request: Request):
     phone = _norm_phone(body.phone)
     if len(phone) != 10:
         raise HTTPException(422, "phone must be ten digits")
-    body.phone = phone
-    rt = runtime(body.pack)
-    store.record_missed(body.pack, body.phone)
+    return await _open_missed(body.pack, phone, send=True, verified=True)
+
+
+async def _open_missed(pack: str, phone: str, *, send: bool, verified: bool) -> dict[str, Any]:
+    """Count the missed call and open a fresh WhatsApp thread with the
+    outreach message; ``send`` also delivers it on a connected number."""
+    rt = runtime(pack)
+    store.record_missed(pack, phone)
     outreach = (f"Namaste! Aapne abhi {rt.pack.persona.business_name} ko call kiya tha — "
                 f"maaf kijiye, hum utha nahi paye. Main yahin WhatsApp par appointment "
                 f"book kar sakta hoon. Kaunsi service chahiye?")
-    key = (body.pack, body.phone)
+    key = (pack, phone)
     if key in _wa_sessions:                       # a fresh thread for the recovery
         _sessions.pop(_wa_sessions.pop(key), None)
-    sid, holder = await _new_session(body.pack, "WHATSAPP", body.phone, verified=True)
+    sid, holder = await _new_session(pack, "WHATSAPP", phone, verified=verified)
     _wa_sessions[key] = sid
     holder.session.ctx.last_agent_utterance = outreach
-    store.add_wa(body.pack, body.phone, "out", outreach, meta={"missed_call_recovery": True})
+    store.add_wa(pack, phone, "out", outreach, meta={"missed_call_recovery": True})
     delivered = None
-    if wa_channel.configured():
-        delivered = await wa_channel.send_template(body.phone, "outreach", [rt.pack.persona.business_name],
+    if send and wa_channel.configured():
+        delivered = await wa_channel.send_template(phone, "outreach", [rt.pack.persona.business_name],
                                                   fallback_text=outreach)
     return {"ok": True, "outreach": outreach, "delivered": delivered}
+
+
+@app.post("/api/wa/missed")
+async def wa_missed(body: MissedIn, request: Request):
+    """The simulator's missed-call button: the same outreach as the telephony
+    webhook, shown in the simulator and never sent to a real WhatsApp (anyone
+    can type any number here). An anonymous visitor gets their pass."""
+    phone = _norm_phone(body.phone)
+    if len(phone) != 10:
+        raise HTTPException(422, "phone must be ten digits")
+    since = dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds")
+    anonymous = _anonymous(request)
+    out = await _open_missed(body.pack, phone, send=False,
+                             verified=not anonymous and not wa_channel.configured())
+    if anonymous:
+        out["visitor"] = _visitor_pass(body.pack, phone, since)
+    return out
 
 
 # ─────────────────────────────────────────────────────── insights + history
