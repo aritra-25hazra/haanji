@@ -20,6 +20,8 @@ import sqlite3
 import uuid
 from typing import Any
 
+from . import db
+
 log = logging.getLogger("haanji.payments")
 
 SCHEMA = """
@@ -60,7 +62,7 @@ def verify_razorpay_signature(secret: str, raw: bytes, header: str | None) -> bo
 
 class PaymentStore:
     def __init__(self, path: str, public_url: str):
-        self.conn = sqlite3.connect(path, check_same_thread=False)
+        self.conn = db.connect(path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
         self.conn.commit()

@@ -540,7 +540,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 660 tests, about 6 s
+pytest -q                                   # 668 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -588,7 +588,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (660 tests)
+## Appendix C. Test inventory (668 tests)
 
 | file | tests | what it guards |
 |---|---|---|
@@ -626,6 +626,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_auth_sessions.py | 6 | each sign-in is a device the owner can see and end; staff cannot end another's device; two idle weeks sign a device out; a device in use is refreshed; every write lands in an owner-only activity log; older tokens still work until they expire |
 | test_telephony.py | 4 | the Twilio media-stream bridge with fake recogniser and synthesiser |
 | test_telephony_exotel.py | 5 | the same bridge on Exotel's wire: G.711 conversion matches the standard, outgoing audio in valid Exotel chunks, a call greeted, answered and recorded, the recogniser always hears μ-law, a public server needs the applet's key |
+| test_db.py | 8 | SQLite's dialect on Postgres: placeholders outside literals, comment-safe schema scripts, upserts, case-blind LIKE, table_info, serial keys, a failed statement undone alone; SQLite stays the default; with Postgres the backup download points at the database host; a SQLite data directory moves to Postgres whole and its chain still verifies |
 | test_timezone.py | 4 | timestamps stored in UTC with an offset; the hourly chart and "today" counted in India's time; the cost comparison from Settings; yesterday's calls |
 | test_reschedule.py | 4 | a booking moved through the ordinary confirmation flow and sealed with its previous receipt |
 | test_privacy.py | 4 | the per-customer vault, access and erasure, crypto-shredding |

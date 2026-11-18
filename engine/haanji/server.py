@@ -67,6 +67,7 @@ from .pramaan.ledger import Ledger
 from .store import DemoStore
 from .tools.builtin import build_registry
 from .vertical import PACK_DIR, PackError, from_dict, list_packs, load_pack
+from . import db
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 VAR_DIR = os.path.abspath(os.environ.get("HAANJI_VAR_DIR", "var"))
@@ -255,7 +256,14 @@ store = DemoStore(os.path.join(VAR_DIR, "store.sqlite"))
 
 gcal = GoogleCalendar(os.path.join(VAR_DIR, "gcal.sqlite"), redirect_uri=f"{PUBLIC_URL}/api/google/callback")
 # Personal data in receipts is encrypted per customer (docs/privacy-dpdp.md).
-vault = Vault(os.path.join(VAR_DIR, "vault.sqlite"))
+# The vault's key-encryption secret. With SQLite it can live in a file next to
+# the vault; with Postgres the records outlive the host's disk, so the secret
+# must too: an engine that would lose it refuses to start.
+VAULT_SECRET = os.environ.get("HAANJI_VAULT_SECRET") or None
+if db.database_url() and not VAULT_SECRET:
+    raise RuntimeError("HAANJI_DATABASE_URL is set but HAANJI_VAULT_SECRET is not: the customers' receipt keys "
+                       "would become unreadable after a redeploy. Set HAANJI_VAULT_SECRET (keep a copy).")
+vault = Vault(os.path.join(VAR_DIR, "vault.sqlite"), secret=VAULT_SECRET.encode() if VAULT_SECRET else None)
 # With HAANJI_LEDGER_KEY_SECRET set, tenants' signing keys are encrypted at rest.
 LEDGER_KEY_SECRET = os.environ.get("HAANJI_LEDGER_KEY_SECRET") or None
 settings = SettingsStore(os.path.join(VAR_DIR, "settings.sqlite"))
@@ -397,8 +405,7 @@ def runtime(pack_id: str) -> TenantRuntime:
     if pack_id not in list_packs():
         raise HTTPException(404, f"no pack '{pack_id}'")
     pack = load_pack(pack_id)
-    conn = sqlite3.connect(os.path.join(VAR_DIR, f"backend-{pack_id}.sqlite"),
-                           check_same_thread=False)
+    conn = db.connect(os.path.join(VAR_DIR, f"backend-{pack_id}.sqlite"))
     backend = LocalBackend(conn)
     backend.load_pack(pack_id, pack)
     demo = DEMO_CUSTOMERS.get(pack_id)
@@ -406,8 +413,7 @@ def runtime(pack_id: str) -> TenantRuntime:
         # "Vijay ji, wapas swagat hai" is for the public demo; a real shop's
         # customer table starts empty.
         backend.seed_customer(pack_id, *demo[:2], last_service=demo[2])
-    ledger = Ledger(sqlite3.connect(os.path.join(VAR_DIR, f"ledger-{pack_id}.sqlite"),
-                                    check_same_thread=False), key_secret=LEDGER_KEY_SECRET)
+    ledger = Ledger(db.connect(os.path.join(VAR_DIR, f"ledger-{pack_id}.sqlite")), key_secret=LEDGER_KEY_SECRET)
     registry = build_registry(pack_id, backend, pack, ledger, vault=vault)
     _runtimes[pack_id] = TenantRuntime(pack_id, pack, backend, ledger, registry)
     return _runtimes[pack_id]
@@ -577,20 +583,28 @@ def demo_reset(pack_id: str) -> dict[str, Any]:
     payments.conn.commit()
     removed["bookings"] = len(rt.backend.conn.execute("SELECT 1 FROM bookings WHERE tenant_id = ?", (pack_id,)).fetchall())
     removed["receipts"] = len(rt.ledger.receipts(pack_id))
-    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    archive = os.path.join(VAR_DIR, "archive", f"{pack_id}-{stamp}")
-    os.makedirs(archive, exist_ok=True)
+    # A second reset within the same second must not collide with the first.
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid.uuid4().hex[:4]
     rt.backend.conn.close()
     rt.ledger.conn.close()
     _runtimes.pop(pack_id, None)
-    for name in (f"backend-{pack_id}.sqlite", f"ledger-{pack_id}.sqlite"):
-        src = os.path.join(VAR_DIR, name)
-        if os.path.exists(src):
-            os.replace(src, os.path.join(archive, name))
+    names = (f"backend-{pack_id}.sqlite", f"ledger-{pack_id}.sqlite")
+    if db.database_url():                              # Postgres: the schemas are renamed, kept whole
+        archived = {name.split("-")[0]: db.archive(os.path.join(VAR_DIR, name), f"archive_{stamp.lower()}") for name in names}
+        where = ", ".join(archived.values())
+    else:
+        archive = os.path.join(VAR_DIR, "archive", f"{pack_id}-{stamp}")
+        os.makedirs(archive, exist_ok=True)
+        for name in names:
+            src = os.path.join(VAR_DIR, name)
+            if os.path.exists(src):
+                os.replace(src, os.path.join(archive, name))
+        archived = {name.split("-")[0]: os.path.relpath(os.path.join(archive, name), VAR_DIR) for name in names}
+        where = os.path.relpath(archive, VAR_DIR)
     runtime(pack_id)                                   # a fresh calendar and chain, re-seeded
     publish("demo.reset", pack=pack_id)
-    log.info("demo reset %s: %s (archived to %s)", pack_id, removed, archive)
-    return {"pack": pack_id, "removed": removed, "archived_to": os.path.relpath(archive, VAR_DIR)}
+    log.info("demo reset %s: %s (archived to %s)", pack_id, removed, where)
+    return {"pack": pack_id, "removed": removed, "archived_to": where, "archived": archived}
 
 
 def _nightly_demo_reset(now: dt.datetime | None = None) -> list[str]:
@@ -1408,7 +1422,9 @@ class StudyIn(BaseModel):
 
 
 def _study_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(STUDY_DB)
+    # Participants' study answers stay in a local file whatever the engine's
+    # database is: they never go to a hosted database.
+    conn = sqlite3.connect(STUDY_DB, check_same_thread=False)
     conn.execute("CREATE TABLE IF NOT EXISTS responses (id TEXT PRIMARY KEY, participant TEXT, "
                  "pack TEXT, created TEXT, sus_score REAL, payload TEXT)")
     return conn
@@ -1658,7 +1674,7 @@ async def _evening_loop() -> None:
             purge_old_records(RETENTION_DAYS)
         except Exception as exc:                      # noqa: BLE001
             log.warning(f"retention: {exc}")
-        if backup_mod.s3_configured():
+        if backup_mod.s3_configured() and not db.database_url():   # Postgres: the database host backs up
             try:
                 where = backup_mod.upload_s3(backup_mod.make_backup(VAR_DIR), backup_mod.backup_name())
                 log.warning("nightly backup written to %s", where)

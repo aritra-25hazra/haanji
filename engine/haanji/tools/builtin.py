@@ -8,6 +8,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
+from .. import db
 from ..backend.local import BackendError, LocalBackend
 from ..models import ToolResult
 from ..pramaan.ledger import Ledger, LedgerError
@@ -350,7 +351,7 @@ def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
 
 def open_backend(pack: Pack, tenant_id: str, *, path: str = ":memory:",
                  today=None) -> tuple[LocalBackend, sqlite3.Connection]:
-    conn = sqlite3.connect(path, check_same_thread=False)
+    conn = db.connect(path)
     backend = LocalBackend(conn, today=today)
     backend.load_pack(tenant_id, pack)
     return backend, conn

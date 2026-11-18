@@ -17,6 +17,8 @@ from typing import Any
 
 import httpx
 
+from . import db
+
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 EVENTS_URL = "https://www.googleapis.com/calendar/v3/calendars/{calendar}/events"
@@ -49,7 +51,7 @@ CREATE TABLE IF NOT EXISTS google_events (
 class GoogleCalendar:
     def __init__(self, path: str, client_id: str | None = None, client_secret: str | None = None,
                  redirect_uri: str = "", transport: httpx.AsyncBaseTransport | None = None):
-        self.conn = sqlite3.connect(path, check_same_thread=False)
+        self.conn = db.connect(path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
         self.conn.commit()

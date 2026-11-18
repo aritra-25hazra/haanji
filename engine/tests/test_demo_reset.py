@@ -39,10 +39,12 @@ def test_a_reset_empties_the_pack_and_archives_the_old_chain_whole(client):
     fresh = server.runtime(PACK)
     assert fresh is not rt and fresh.ledger.receipts(PACK) == [] and server.store.calls(PACK, 50) == []
     assert [c["phone"] for c in fresh.backend.customers(PACK)] == ["9876543210"]     # only the seeded returning caller
-    archived = os.path.join(server.VAR_DIR, body["archived_to"], f"ledger-{PACK}.sqlite")
     import sqlite3
+    from haanji import db
     from haanji.pramaan.ledger import Ledger
-    kept = Ledger(sqlite3.connect(archived), key_secret=server.LEDGER_KEY_SECRET)
+    where = body["archived"]["ledger"]                # a file under var/archive/, or a renamed Postgres schema
+    conn = db.open_schema(where) if db.database_url() else sqlite3.connect(os.path.join(server.VAR_DIR, where))
+    kept = Ledger(conn, key_secret=server.LEDGER_KEY_SECRET)
     receipts = kept.receipts(PACK)
     assert len(receipts) == len(old)
     public = kept.public_key(kept.ensure_key(PACK))

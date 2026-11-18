@@ -19,6 +19,8 @@ from typing import Any
 
 from cryptography.fernet import Fernet, InvalidToken
 
+from .. import db
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS customer_keys (
   subject   TEXT PRIMARY KEY,          -- keyed hash of the normalised phone number
@@ -40,7 +42,7 @@ def normalise_phone(phone: str | None) -> str:
 
 class Vault:
     def __init__(self, path: str, secret: bytes | None = None):
-        self.conn = sqlite3.connect(path, check_same_thread=False)
+        self.conn = db.connect(path)
         self.conn.row_factory = sqlite3.Row
         # Crypto-shredding deletes a key row; secure_delete makes SQLite
         # overwrite the freed page instead of leaving the key readable in

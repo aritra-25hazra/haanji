@@ -261,6 +261,8 @@ def test_backups_are_consistent_restorable_and_never_overwrite_a_live_shop(tmp_p
     assert backup_mod.restore(str(fresh), data, only_if_empty=False)
 
 
+@pytest.mark.skipif(bool(__import__("haanji.db", fromlist=["x"]).database_url()),
+                    reason="with Postgres the database host backs up; tests/test_db.py checks the refusal")
 def test_the_owner_downloads_a_backup_from_the_console(client):
     r = client.get("/api/admin/backup")
     assert r.status_code == 200 and r.headers["content-type"] == "application/gzip"

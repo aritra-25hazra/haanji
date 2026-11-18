@@ -22,6 +22,8 @@ import sqlite3
 import time
 from dataclasses import dataclass, field
 
+from . import db
+
 OTP_TTL_S = 300
 OTP_MAX_ATTEMPTS = 5
 OTP_ISSUE_LIMIT = 3            # codes per phone per OTP_ISSUE_WINDOW_S
@@ -114,7 +116,7 @@ def normalise_phone(phone: str) -> str:
 
 class AuthStore:
     def __init__(self, path: str, secret: str | None = None):
-        self.conn = sqlite3.connect(path, check_same_thread=False)
+        self.conn = db.connect(path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
         self.conn.commit()

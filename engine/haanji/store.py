@@ -11,6 +11,8 @@ import sqlite3
 import uuid
 from typing import Any
 
+from . import db
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS calls (
   call_id      TEXT PRIMARY KEY,
@@ -92,7 +94,7 @@ def to_ist(stamp: str) -> dt.datetime:
 
 class DemoStore:
     def __init__(self, path: str):
-        self.conn = sqlite3.connect(path, check_same_thread=False)
+        self.conn = db.connect(path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
         self.conn.commit()

@@ -5,8 +5,9 @@ data. Nothing here is a secret; secrets stay in the environment. Unknown keys
 are rejected so a typo in the console cannot silently become a setting."""
 from __future__ import annotations
 import json
-import sqlite3
 from typing import Any
+
+from . import db
 
 DEFAULTS: dict[str, Any] = {
     "reminders_on": True,          # WhatsApp reminder the day before a booking
@@ -33,7 +34,7 @@ class SettingsError(ValueError):
 
 class SettingsStore:
     def __init__(self, path: str):
-        self.conn = sqlite3.connect(path, check_same_thread=False)
+        self.conn = db.connect(path)
         self.conn.execute("CREATE TABLE IF NOT EXISTS settings (tenant_id TEXT PRIMARY KEY, json TEXT NOT NULL)")
         self.conn.commit()
 
