@@ -54,3 +54,12 @@ def test_the_digest_speaks_the_owner_s_language(client):
 def test_a_quiet_day_says_so(client):
     text = client.get("/api/digest", params={"pack": PACK}).json()["text"]
     assert "Aaj koi call nahi aayi." in text and "Callback chahiye: 0." in text
+
+
+def test_the_engine_s_notes_come_in_the_console_s_language(client):
+    book(client, "9811100025")
+    en = client.get("/api/insights", params={"pack": PACK, "lang": "en"}).json()["insights"]
+    hi = client.get("/api/insights", params={"pack": PACK}).json()["insights"]
+    assert en[0].startswith("1 call came in today; 1 became bookings") and hi[0].startswith("Aaj 1 call aayi")
+    assert len(en) == len(hi)
+    assert client.get("/api/insights", params={"pack": PACK, "lang": "fr"}).status_code == 422

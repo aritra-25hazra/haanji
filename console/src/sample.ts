@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 /**
  * The made-up shop the console shows in sample mode: when the engine cannot
  * be reached and nobody is signed in, or when the Sample switch is on. Every
@@ -333,12 +334,12 @@ export function insightsOf(s: Shop): Insights {
       speculation: { started: specStarted, hits: specHits, hit_rate: specStarted ? specHits / specStarted : 0 },
       cost: { ai_per_call_inr: 3.16, receptionist_per_call_inr: 9.23 },
       insights: [
-        `${n} calls aayi; ${booked} booking bani (${n ? Math.round((booked * 100) / n) : 0}%).`,
-        `Aaj bani bookings catalogue ke daam se lagbhag ₹${revenue.toLocaleString("en-IN")} ki hain.`,
-        `${s.missed.total} missed calls mein se ${s.missed.recovered} WhatsApp se wapas aaye.`,
-        `Sabse busy ghanta: ${busiest.hour}:00, ${busiest.calls} calls.`,
-        `Bhasha Bridge ne ${corrections} galat sune shabd theek kiye.`,
-        `Sample data: ${s.pack.business_name} ka ek nakli din. Asli numbers ke liye Sample switch band karo.`,
+        t("{n} calls came in today; {booked} became bookings ({pct}%).", { n, booked, pct: n ? Math.round((booked * 100) / n) : 0 }),
+        t("Today's bookings are worth about ₹{revenue} at catalogue prices.", { revenue: revenue.toLocaleString("en-IN") }),
+        t("{recovered} of {total} missed calls came back on WhatsApp.", { recovered: s.missed.recovered, total: s.missed.total }),
+        t("Busiest hour so far: {hour}:00, {calls} calls.", { hour: busiest.hour, calls: busiest.calls }),
+        t("Bhasha fixed {n} misheard words.", { n: corrections }),
+        t("Sample data: a made-up day at {business}. Switch Sample off for real numbers.", { business: s.pack.business_name }),
       ],
     };
 }

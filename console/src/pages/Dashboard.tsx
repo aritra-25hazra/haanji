@@ -6,7 +6,7 @@ import { engine, subscribeLive, enablePush } from "../engine";
 import { callbackWhy } from "../callbacks";
 import { NEEDS_CALLBACK, sample } from "../sample";
 import { useApp } from "../state";
-import { t, useT } from "../i18n";
+import { t, useLang, useT } from "../i18n";
 import AnimatedList from "../components/AnimatedList";
 import { Chip, Empty, Icon, Loading, NotLive, OutcomeChip, Page, Panel, Repair, Tile, fmtInr, fmtTime, useData } from "../components/Common";
 import { OUTCOMES, type LiveEvent, type LiveSession } from "../types";
@@ -21,7 +21,8 @@ export default function Dashboard() {
   useT();
   const live = mode === "live";
   const loader = live ? () => engine.insights(pack) : mode === "demo" ? () => Promise.resolve(sample.insights(pack)) : null;
-  const { data, loading, error, reload } = useData(loader, [pack, mode]);
+  const lang = useLang();
+  const { data, loading, error, reload } = useData(loader, [pack, mode, lang]);
   useEffect(() => {
     if (!live) return;
     const timer = setInterval(reload, 5000);

@@ -230,4 +230,10 @@ export default {
   "Yes, erase": "Haan, mita do",
   "Erase": "Mita do",
   "Erased · {what}": "Mita diya · {what}",
+  "{n} calls came in today; {booked} became bookings ({pct}%).": "{n} calls aayi; {booked} booking bani ({pct}%).",
+  "Today's bookings are worth about ₹{revenue} at catalogue prices.": "Aaj bani bookings catalogue ke daam se lagbhag ₹{revenue} ki hain.",
+  "{recovered} of {total} missed calls came back on WhatsApp.": "{total} missed calls mein se {recovered} WhatsApp se wapas aaye.",
+  "Busiest hour so far: {hour}:00, {calls} calls.": "Sabse busy ghanta: {hour}:00, {calls} calls.",
+  "Bhasha fixed {n} misheard words.": "Bhasha Bridge ne {n} galat sune shabd theek kiye.",
+  "Sample data: a made-up day at {business}. Switch Sample off for real numbers.": "Sample data: {business} ka ek nakli din. Asli numbers ke liye Sample switch band karo.",
 } as Record<string, string>;

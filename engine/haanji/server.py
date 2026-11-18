@@ -1143,9 +1143,9 @@ async def missed_call(body: MissedIn, request: Request):
 
 # ─────────────────────────────────────────────────────── insights + history
 @app.get("/api/insights")
-async def insights(pack: str = DEFAULT_PACK):
+async def insights(pack: str = DEFAULT_PACK, lang: Literal["hi", "en"] = "hi"):
     rt = runtime(pack)
-    return compute_insights(pack, store, rt.backend, settings.get(pack))
+    return compute_insights(pack, store, rt.backend, settings.get(pack), lang=lang)
 
 
 @app.get("/api/conversations")

@@ -45,8 +45,28 @@ def cost_per_call(receptionist_monthly: int = RECEPTIONIST_MONTHLY,
             }}
 
 
+# The engine's notes on the day, in the console's two languages.
+LINES = {
+    "hi": {"calls": "Aaj {calls} aayi; {booked} booking bani ({pct}%).",
+           "revenue": "Aaj bani bookings catalogue ke daam se lagbhag ₹{revenue} ki hain.",
+           "missed": "{total} missed calls mein se {recovered} WhatsApp se wapas aaye.",
+           "busy": "Sabse busy ghanta ab tak: {hour}:00, {calls}.",
+           "fixed": "Bhasha Bridge ne {n} galat sune shabd theek kiye; sab is dukaan ki apni shabd-list ke the.",
+           "spec": "Speculation ne {started} mein se {hits} tool calls poochhe jaane se pehle hi taiyaar rakhe.",
+           "cost": "Ek jawab di gayi call ka kharcha ≈ ₹{ai}; part-time receptionist pe ≈ ₹{rec} per call."},
+    "en": {"calls": "{calls} came in today; {booked} became bookings ({pct}%).",
+           "revenue": "Today's bookings are worth about ₹{revenue} at catalogue prices.",
+           "missed": "{recovered} of {total} missed calls came back on WhatsApp.",
+           "busy": "Busiest hour so far: {hour}:00, {calls}.",
+           "fixed": "Bhasha fixed {n} misheard words, all from this shop's own word list.",
+           "spec": "Speculation had {hits} of {started} tool calls ready before they were asked.",
+           "cost": "An answered call costs about ₹{ai}; a part-time receptionist about ₹{rec} per call."},
+}
+
+
 def compute(tenant_id: str, store: DemoStore, backend: LocalBackend,
-            settings: dict[str, Any] | None = None, now: dt.datetime | None = None) -> dict[str, Any]:
+            settings: dict[str, Any] | None = None, now: dt.datetime | None = None,
+            lang: str = "hi") -> dict[str, Any]:
     """The owner's day. Everything on the "Today" screen and in the evening
     digest is today's (India's day): the outcomes, the hourly chart, the
     bookings made and what they are worth, the repairs. Only ``calls_total``
@@ -87,27 +107,25 @@ def compute(tenant_id: str, store: DemoStore, backend: LocalBackend,
     costs = cost_per_call(int(s.get("receptionist_monthly_inr", RECEPTIONIST_MONTHLY)),
                           int(s.get("receptionist_calls_per_month", RECEPTIONIST_CALLS_PER_MONTH)))
 
+    w = LINES.get(lang, LINES["hi"])
     lines: list[str] = []
     if calls_today:
         booked = outcomes.get("BOOKED", 0)
-        lines.append(f"Aaj {_calls(len(calls_today))} aayi; {booked} booking bani "
-                     f"({booked * 100 // max(len(calls_today), 1)}%).")
+        lines.append(w["calls"].format(calls=_calls(len(calls_today)), booked=booked,
+                                       pct=booked * 100 // max(len(calls_today), 1)))
     if revenue:
-        lines.append(f"Aaj bani bookings catalogue ke daam se lagbhag ₹{revenue:,} ki hain.")
+        lines.append(w["revenue"].format(revenue=f"{revenue:,}"))
     if missed["total"]:
-        lines.append(f"{missed['total']} missed calls mein se {missed['recovered']} WhatsApp se wapas aaye.")
+        lines.append(w["missed"].format(total=missed["total"], recovered=missed["recovered"]))
     if by_hour:
         busiest = max(by_hour.items(), key=lambda kv: kv[1]["calls"])
-        lines.append(f"Sabse busy ghanta ab tak: {busiest[0]}:00, {_calls(busiest[1]['calls'])}.")
+        lines.append(w["busy"].format(hour=busiest[0], calls=_calls(busiest[1]["calls"])))
     if corrections:
-        lines.append(f"Bhasha Bridge ne {corrections} galat sune shabd theek kiye; "
-                     f"sab is dukaan ki apni shabd-list ke the.")
+        lines.append(w["fixed"].format(n=corrections))
     if spec_started:
-        lines.append(f"Speculation ne {spec_started} mein se {spec_hits} tool calls poochhe jaane se "
-                     f"pehle hi taiyaar rakhe.")
+        lines.append(w["spec"].format(started=spec_started, hits=spec_hits))
     if calls_today:
-        lines.append(f"Ek jawab di gayi call ka kharcha ≈ ₹{costs['ai_per_call_inr']:.2f}; part-time "
-                     f"receptionist pe ≈ ₹{costs['receptionist_per_call_inr']:.2f} per call.")
+        lines.append(w["cost"].format(ai=f"{costs['ai_per_call_inr']:.2f}", rec=f"{costs['receptionist_per_call_inr']:.2f}"))
 
     return {
         "tenant_id": tenant_id,

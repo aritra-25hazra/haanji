@@ -1,4 +1,4 @@
-import { t } from "./i18n";
+import { getLang, t } from "./i18n";
 export type HelpProvider = "claude" | "gemini" | "faq";
 /**
  * The only way the console talks to the engine. Every path goes through
@@ -121,7 +121,7 @@ export const engine = {
       return null;
     }
   },
-  insights: (pack: string) => request<Insights>(`api/insights?${q(pack)}`),
+  insights: (pack: string) => request<Insights>(`api/insights?${q(pack)}&lang=${getLang()}`),
   calls: (pack: string, limit = 50) => request<{ conversations: CallRow[] }>(`api/conversations?${q(pack)}&limit=${limit}`),
   call: (pack: string, id: string) =>
     request<CallRow>(`api/conversations/${encodeURIComponent(id)}?${q(pack)}`),
