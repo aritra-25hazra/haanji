@@ -30,6 +30,18 @@ services:
         value: claude-opus-4-8
       - key: HAANJI_LLM_EFFORT
         value: low
+      # The help assistant (console widget and landing page) uses Claude when
+      # ANTHROPIC_API_KEY is set and Gemini when GEMINI_API_KEY is set; the
+      # person picks one, and with neither it answers from a built-in FAQ.
+      # HAANJI_HELP_DAILY_LIMIT caps paid replies per UTC day for the server.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: HAANJI_HELP_CLAUDE_MODEL
+        value: claude-opus-4-8
+      - key: HAANJI_HELP_GEMINI_MODEL
+        value: gemini-3.8-flash
+      - key: HAANJI_HELP_DAILY_LIMIT
+        value: "100"
       - key: HAANJI_PROVIDER_TTS
         value: mock
       - key: HAANJI_PACK

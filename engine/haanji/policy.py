@@ -60,7 +60,7 @@ class DialoguePolicy:
             line = f"{opener}. {first} ji, wapas swagat hai!"
             if customer.get("last_service"):
                 line += f" Pichhli baar {customer['last_service']} karaya tha."
-            return line + " Aaj kya madad karun?"
+            return self._with_ai_note(line + " Aaj kya madad karun?")
         return self._with_ai_note(self.pack.persona.greeting)
 
     def _with_ai_note(self, greeting: str) -> str:
@@ -131,12 +131,27 @@ class DialoguePolicy:
             if ctx.customer_phone and phone != ctx.customer_phone:
                 ctx.phone_verified = False     # a different number than the one the channel gave us
             ctx.customer_phone = phone
-        elif nlu.phone_attempt(text):
+        elif nlu.phone_attempt(text) and (nlu.mentions_number(text)
+                                          or "number" in (ctx.last_agent_utterance or "").lower()):
             ctx.flags["bad_phone"] = int(ctx.flags.get("bad_phone", 0)) + 1
             ctx.flags["bad_phone_now"] = True
 
     # ------------------------------------------------------------- deciding
     def plan(self, text: str, ctx: ConversationContext) -> LLMTurn:
+        ctx.flags.pop("bad_phone_now", None)        # only this turn's digits may trigger step 2c
+        # 0b. A booking is done and we asked "aur kuch?": a no (or thanks) ends the
+        #     call; anything new starts from a clean slate. Decided before absorb(),
+        #     so the utterance is folded into the call exactly once.
+        if ctx.flags.get("asked_more") and not nlu.asks_identity(text):
+            ctx.flags.pop("asked_more")
+            w0 = nlu.words(text)
+            new_request = (w0 & (nlu.QUESTION_WORDS | nlu.CANCEL_WORDS | nlu.RESCHEDULE_WORDS)) or \
+                nlu.match_service(text, self.aliases) or self._wants_booking(w0, ctx)
+            if not new_request:
+                return LLMTurn(say=self.closing(), end_call=True)
+            ctx.service = ctx.date = ctx.time = None
+            ctx.last_offered_slots = []
+            ctx.flags.pop("time_checked", None)
         self.absorb(text, ctx)
         low = text.lower()
 
@@ -153,19 +168,6 @@ class DialoguePolicy:
             if ctx.pending_confirmation:
                 line += " " + self._p("yes_or_no", "Bas ek baar haan ya na keh dijiye, phir main confirm kar dunga.")
             return LLMTurn(say=line)
-
-        # 0b. A booking is done and we asked "aur kuch?": a no (or thanks) ends the call;
-        #     anything new is handled as usual.
-        if ctx.flags.pop("asked_more", None):
-            w0 = nlu.words(text)
-            new_request = (w0 & (nlu.QUESTION_WORDS | nlu.CANCEL_WORDS | nlu.RESCHEDULE_WORDS)) or \
-                nlu.match_service(text, self.aliases) or self._wants_booking(w0, ctx)
-            if not new_request:
-                return LLMTurn(say=self.closing(), end_call=True)
-            ctx.service = ctx.date = ctx.time = None
-            ctx.last_offered_slots = []
-            ctx.flags.pop("time_checked", None)
-            self.absorb(text, ctx)
 
         # 1. An outstanding confirmation outranks everything else in the call.
         if ctx.pending_confirmation:
@@ -312,6 +314,8 @@ class DialoguePolicy:
             ctx.pending_confirmation = None
             if r.ok:
                 ctx.outcome = Outcome.BOOKED
+                if ctx.flags.get("chat"):             # WhatsApp: the booking closes the chat
+                    return LLMTurn(say=r.spoken)
                 ctx.flags["asked_more"] = True        # once; the next "nahi" closes the call
                 return LLMTurn(say=f"{r.spoken} {self._p('anything_else', 'Aur kuch madad chahiye?')}")
             ctx.time = None

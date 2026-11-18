@@ -75,6 +75,17 @@ server (`/pay/{payment_id}`) that a demo can "pay" with one click.
 `GET/POST /api/auth/users`, `DELETE /api/auth/users/{phone}` (owner);
 `POST /api/auth/logout` revokes the caller's tokens; `GET /api/auth/me`.
 
+## Help assistant
+
+`GET /api/help/status` → `{providers: ["claude"?, "gemini"?, "faq"], models: {claude, gemini}, daily_limit, used_today}`.
+A provider is listed only when its key is set; keys are never returned.
+
+`POST /api/help/chat` with `{messages: [{role: "user"|"assistant", content}], provider?: "claude"|"gemini"|"faq", lang: "en"|"hi", page}`
+→ `{reply, provider, model}`. Public (no sign-in), at most `HAANJI_HELP_PER_MIN` (default 6) a minute per client
+(429 after), the last 8 turns of at most 1,200 characters each. The picked model answers, the other hosted one is the
+fallback, and the built-in FAQ answers when neither is configured, both fail, or the server's daily cap is reached.
+The assistant knows the product and the benchmark's numbers, never the shop's data.
+
 ## Outcomes
 
 A call's `outcome` is one of `BOOKED`, `RESCHEDULED`, `FAQ_ANSWERED`,

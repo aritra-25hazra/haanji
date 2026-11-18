@@ -36,7 +36,7 @@ GEMINI_MODEL = "gemini-3.8-flash"
 MAX_TURNS = 8                  # history sent to a model
 MAX_CHARS = 1200               # per message
 MAX_REPLY_TOKENS = 700
-TIMEOUT_S = 25.0
+TIMEOUT_S = 12.0               # per provider; two providers at most, so a reply never waits much past 24 s
 
 GUIDE = """You are the help assistant inside HaanJi's web console. HaanJi is an AI voice
 receptionist for small Indian businesses (dental clinics, salons, diagnostic labs,
@@ -68,8 +68,8 @@ Rules:
 - Never invent numbers, prices, customers or features. Prices are "on request"; suggest asking for a demo.
   Quote only the measured numbers above, and say they come from simulated calls.
 - You cannot see the shop's data, bookings or calls. If asked, point to the page where they can look.
-- Never ask for passwords, OTPs, keys or payment details.
-The person is on the page: {page}"""
+- Never ask for passwords, OTPs, keys or payment details."""
+PAGE_NOTE = "The person is on the console page: {page}"
 
 FAQ: list[tuple[tuple[str, ...], str, str]] = [
     (("haanji", "about", "kaun", "who", "receptionist"),
@@ -182,7 +182,8 @@ class HelpBot:
         order = ([provider] if provider in hosted else []) + [p for p in hosted if p != provider]
         if provider == "faq" or self._used_today() >= self.daily_limit:
             order = []
-        system = GUIDE.format(measured=self.measured or "(not available)", page=page[:80])
+        # The guide is the same on every page (so it can be cached); the page goes after it.
+        system = (GUIDE.format(measured=self.measured or "(not available)"), PAGE_NOTE.format(page=page[:80]))
         for p in order:
             try:
                 if p == "claude":
@@ -201,13 +202,15 @@ class HelpBot:
         self.usage["faq"]["replies"] += 1
         return {"reply": faq_answer(question, lang), "provider": "faq", "model": None}
 
-    async def _ask_claude(self, system: str, turns: list[dict]) -> str:
+    async def _ask_claude(self, system: tuple[str, str], turns: list[dict]) -> str:
         if self._claude is None:
             import anthropic  # the optional extra, imported late
-            self._claude = anthropic.AsyncAnthropic(api_key=self.claude_key, timeout=TIMEOUT_S, max_retries=1)
+            self._claude = anthropic.AsyncAnthropic(api_key=self.claude_key, timeout=TIMEOUT_S, max_retries=0)
+        guide, page = system
         reply = await self._claude.messages.create(
             model=self.claude_model, max_tokens=MAX_REPLY_TOKENS,
-            system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+            system=[{"type": "text", "text": guide, "cache_control": {"type": "ephemeral"}},
+                    {"type": "text", "text": page}],
             messages=turns)
         if getattr(reply, "stop_reason", None) == "refusal":
             return ""
@@ -217,12 +220,12 @@ class HelpBot:
             self.usage["claude"]["output"] += int(getattr(u, "output_tokens", 0) or 0)
         return "".join(getattr(b, "text", "") for b in reply.content if getattr(b, "type", "") == "text").strip()
 
-    async def _ask_gemini(self, system: str, turns: list[dict]) -> str:
+    async def _ask_gemini(self, system: tuple[str, str], turns: list[dict]) -> str:
         if self._http is None:
             import httpx
             self._http = httpx.AsyncClient(timeout=TIMEOUT_S)
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.gemini_model}:generateContent"
-        body = {"systemInstruction": {"parts": [{"text": system}]},
+        body = {"systemInstruction": {"parts": [{"text": system[0]}, {"text": system[1]}]},
                 "contents": [{"role": "model" if t["role"] == "assistant" else "user", "parts": [{"text": t["content"]}]}
                              for t in turns],
                 "generationConfig": {"maxOutputTokens": MAX_REPLY_TOKENS * 3}}

@@ -4,6 +4,25 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
 
 ## Unreleased
 
+### Phase 1 review (branch phase1/demo-fixes)
+* **English by default, Hindi on a switch.** Every console screen and engine
+  page reads English first; EN / हिं switches to the Hinglish the product
+  always used (remembered per browser, `?lang=hi` in a link). The agent still
+  speaks the shop's language. A test checks every string has its Hindi.
+* **Help assistant.** A "Help" button on every console page and the landing
+  page answers questions about HaanJi and the console: Claude or Gemini (the
+  person picks) when their keys are set, a built-in FAQ otherwise. Short
+  history, capped replies, a per-client rate limit and a daily cap.
+* **A front door and How it works.** The console's `/` says what HaanJi does,
+  the three ideas with the benchmark's numbers (copied from
+  research/results.json by a script, with a test) and plans without prices;
+  `/how` walks one call and shows the measured table, and runs the shop's
+  scenarios on the live engine.
+* **Sample mode with no dead ends**, consistent sample data, India's time
+  everywhere, the agent's behaviour fixes (says it is an AI, keeps details,
+  reads back the number, no transfer promised after hours) and the owner
+  screens (plain outcome names, filters, a customer drawer, a week grid).
+
 ### For the shop that is deciding, the owner, and the caller
 * **Landing page for a buyer.** "Customer ki call se aapke calendar tak" walks
   one real booking through three real screens (the WhatsApp chat, the

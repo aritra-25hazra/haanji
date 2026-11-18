@@ -615,8 +615,10 @@ def availability_args(text: str, ctx, services, staff: list[str] | None = None,
 # ── who is speaking, and a number that is not one ──────────────────────────
 _WHO_TALKS = re.compile(r"\bkaun (bol|baat kar) (raha|rahi|rahe)\b|\bkis se baat ho rahi\b")
 _BOT = re.compile(r"\b(robot|bot|chatbot)\b")
-_PERSON_Q = re.compile(r"\b(insaan|insan|human|aadmi|real person|asli insaan)\b.*\b(ho|hain|hai kya|ho kya)\b")
-_MACHINE_Q = re.compile(r"\b(aap|ap|tum)\b.*\b(ai|a\.i\.|machine|computer)\b")
+# "aap insaan ho?", "tum real person ho kya" — not "hum teen aadmi hain" (a party size)
+_PERSON_Q = re.compile(r"\b(aap|ap|tum)\b(\s+\w+){0,2}?\s+(insaan|insan|human|real person|asli insaan)\s+(ho|hain|hai)\b")
+# "aap AI ho?", "AI ho kya", "machine hain kya" — not "aap computer course karate ho?"
+_MACHINE_Q = re.compile(r"(\b(aap|ap|tum)\b(\s+\w+){0,2}?\s+|^\s*)(ai|a\.i\.|machine|computer)\s+(ho|hain|hai)\b")
 
 
 def asks_identity(text: str) -> bool:
@@ -628,6 +630,12 @@ def asks_identity(text: str) -> bool:
 
 
 _DIGITS_RUN = re.compile(r"\+?\d[\d\s\-]{3,}\d")
+_NUMBER_WORDS = re.compile(r"\b(number|nambar|numbar|mobile|phone|fon|no\.?)\b")
+
+
+def mentions_number(text: str) -> bool:
+    """The caller is talking about a phone number ("mera number ...")."""
+    return bool(_NUMBER_WORDS.search(text.lower()))
 
 
 def phone_attempt(text: str) -> bool:

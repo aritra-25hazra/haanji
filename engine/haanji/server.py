@@ -420,6 +420,7 @@ class Holder:
     speak: Any = None                         # telephony: how to say something on this call
     finished: bool = False                    # _finish ran (a DELETE after end_call must not run it twice)
     kept_open: bool = False                   # finished at the booking, still listening for "aur kuch?"
+    after_done: tuple[int, str] | None = None  # (receipts, outcome) the after-work has already seen
 
 
 _sessions: dict[str, Holder] = {}
@@ -557,6 +558,8 @@ async def _new_session(pack_id: str, channel: str, phone: str | None, *, verifie
         if session.ctx.turns:
             session.ctx.turns[-1].text = session.ctx.last_agent_utterance
     sid = uuid.uuid4().hex[:16]
+    if channel == "WHATSAPP":
+        session.ctx.flags["chat"] = True            # a booking closes a chat; no "aur kuch?" left hanging
     holder = Holder(session, rt, channel, phone)
     _sessions[sid] = holder
     publish("session.started", sid=sid, pack=pack_id, channel=channel, phone=_mask(phone),
@@ -753,7 +756,11 @@ def _finish(sid: str, holder: Holder, keep_open: bool = False) -> None:
     if holder.finished:
         if holder.kept_open and not keep_open:
             holder.kept_open = False
-            store.record_call(holder.session.finish(), channel=holder.channel, phone=holder.phone)
+            report = holder.session.finish()
+            store.record_call(report, channel=holder.channel, phone=holder.phone)
+            # A second booking (or a change) after "aur kuch?" gets its own after-work.
+            if holder.after_done != (len(report.receipts), report.outcome.value):
+                _after_work(holder, report)
             _sessions.pop(sid, None)
             _wa_sessions.pop((holder.rt.pack_id, holder.phone or ""), None)
         return
@@ -771,6 +778,18 @@ def _finish(sid: str, holder: Holder, keep_open: bool = False) -> None:
             outcome=report.outcome.value, call_id=report.conversation_id,
             receipts=len(report.receipts), turns=len(report.turns))
     TELEMETRY.gauge("live_sessions", max(0, len(_sessions) - 1))
+    _after_work(holder, report)
+    if keep_open:
+        holder.kept_open = True
+        return
+    _sessions.pop(sid, None)
+    _wa_sessions.pop((holder.rt.pack_id, holder.phone or ""), None)
+
+
+def _after_work(holder: Holder, report) -> None:
+    """What a finished call sets off: the owner's push, a missed call marked
+    recovered, a waitlist place marked booked."""
+    holder.after_done = (len(report.receipts), report.outcome.value)
     _push_outcome(holder, report)
     if holder.phone and report.receipts and store.has_open_missed(holder.rt.pack_id, holder.phone):
         store.mark_recovered(holder.rt.pack_id, holder.phone, report.receipts[-1])
@@ -778,11 +797,6 @@ def _finish(sid: str, holder: Holder, keep_open: bool = False) -> None:
         for entry in holder.rt.backend.waitlist(holder.rt.pack_id):
             if entry["phone"] == holder.phone and entry["status"] in ("WAITING", "OFFERED"):
                 holder.rt.backend.waitlist_mark(holder.rt.pack_id, entry["entry_id"], "BOOKED")
-    if keep_open:
-        holder.kept_open = True
-        return
-    _sessions.pop(sid, None)
-    _wa_sessions.pop((holder.rt.pack_id, holder.phone or ""), None)
 
 
 def _push_outcome(holder: Holder, report) -> None:

@@ -106,6 +106,7 @@ class CallSession:
         self.registry = registry
         self.ledger = ledger
         self.metrics = metrics or Metrics()
+        self._counted_outcome: str | None = None    # finish() may run twice (a call kept open after a booking)
 
         self.lexicon = lexicon or TenantLexicon.build(version=pack.version, **pack.lexicon_seed())
         self.bhasha = BhashaBridge(self.lexicon, self.cfg.bhasha)
@@ -134,13 +135,17 @@ class CallSession:
     # ------------------------------------------------------------------ speech
     def _open_now(self) -> bool:
         """Whether the shop is open right now by its pack's hours."""
+        if getattr(self.backend, "_now", None) is None and getattr(self.backend, "_today", None) is not None:
+            return True          # a pinned day with no pinned clock (tests, the benchmark): no wall clock decides
         now = self.backend.now()
         hours = self.pack.hours.get(now.weekday())
         if not hours:
             return False
         minute = now.hour * 60 + now.minute
-        opens, closes = (int(t[:2]) * 60 + int(t[3:5]) for t in hours[:2])
-        return opens <= minute < closes
+        mins = [int(t[:2]) * 60 + int(t[3:5]) for t in hours]
+        if len(mins) >= 4 and mins[2] <= minute < mins[3]:
+            return False         # the lunch break: nobody at the desk to take a transfer
+        return mins[0] <= minute < mins[1]
 
     async def say(self, text: str) -> None:
         """Start speaking. Returns as soon as audio is on its way, because the
@@ -443,7 +448,11 @@ class CallSession:
                 outcome = Outcome.REFUSED
             else:
                 outcome = Outcome.ABANDONED
-        self.metrics.inc(f"outcome_{outcome.value}")
+        if self._counted_outcome != outcome.value:      # one outcome per call, however often it is finished
+            if self._counted_outcome:
+                self.metrics.inc(f"outcome_{self._counted_outcome}", -1)
+            self.metrics.inc(f"outcome_{outcome.value}")
+            self._counted_outcome = outcome.value
         return CallReport(
             conversation_id=self.ctx.conversation_id, tenant_id=self.tenant_id,
             pack_id=self.pack.pack_id, outcome=outcome, turns=self.turns,

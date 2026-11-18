@@ -236,6 +236,69 @@ LANG: dict[str, dict[str, str]] = {
     },
 }
 
+# The lines the agent gained in the Phase 1 review: it says it is an AI, says
+# a named time is free, asks only for the number when it has the name,
+# explains a bad number, and asks "anything else?" once after a booking.
+# Without these a Tamil or Bengali caller heard them in Hindi.
+CALL_LINES: dict[str, dict[str, str]] = {
+    "benglish": {
+        "ai_note": "Ami ekhaner AI assistant.",
+        "ai_disclosure": "Ami {business} er AI assistant. Chaile apnake staff er sathe jure dite pari.",
+        "anything_else": "Aar kichhu sahajyo lagbe?",
+        "ask_number": "{name}, shudhu apnar mobile number ta bolun.",
+        "phone_invalid": "Number 10 digit er hote hobe, 6, 7, 8 ba 9 diye shuru. Abar bolun.",
+        "phone_give_up": "Number ta thik bujhte parchhi na. Apnar kotha staff ke pouchhe dichhi; ei number e WhatsApp o korte paren.",
+        "slot_free": "{when} {staff} er sathe khali ache.",
+    },
+    "marathinglish": {
+        "ai_note": "Mi ithla AI assistant aahe.",
+        "ai_disclosure": "Mi {business} cha AI assistant aahe. Havya tar tumhala staff shi jodun deto.",
+        "anything_else": "Aankhi kahi madat havi aahe ka?",
+        "ask_number": "{name}, fakt tumcha mobile number sanga.",
+        "phone_invalid": "Number 10 ankancha asava, 6, 7, 8 kinva 9 ne suru. Parat sanga.",
+        "phone_give_up": "Number neet milat nahi. Tumchi baat staff paryant pochavto; ya number var WhatsApp pan karu shakta.",
+        "slot_free": "{when} {staff} sobat jaga aahe.",
+    },
+    "tanglish": {
+        "ai_note": "Naan inge irukura AI assistant.",
+        "ai_disclosure": "Naan {business} oda AI assistant. Venumna ungala staff kitta connect panren.",
+        "anything_else": "Vera edhavadhu udhavi venuma?",
+        "ask_number": "{name}, unga mobile number mattum sollunga.",
+        "phone_invalid": "Number 10 digit-a irukkanum, 6, 7, 8 illa 9-la start aaganum. Thirumba sollunga.",
+        "phone_give_up": "Number sariya kidaikkala. Unga vishayatha staff kitta solren; indha number-la WhatsApp-um pannalam.",
+        "slot_free": "{when} {staff} kooda free-a irukku.",
+    },
+    "tenglish": {
+        "ai_note": "Nenu ikkadi AI assistant ni.",
+        "ai_disclosure": "Nenu {business} AI assistant ni. Kavalante mimmalni staff ki connect chestanu.",
+        "anything_else": "Inka emaina sahayam kavala?",
+        "ask_number": "{name} garu, mee mobile number matram cheppandi.",
+        "phone_invalid": "Number 10 digits undali, 6, 7, 8 leda 9 tho modalavvali. Malli cheppandi.",
+        "phone_give_up": "Number sariga raavatledu. Mee vishayam staff ki chepthanu; ee number ki WhatsApp kuda cheyyochu.",
+        "slot_free": "{when} {staff} tho khaali undi.",
+    },
+    "gujlish": {
+        "ai_note": "Hu ahiya no AI assistant chhu.",
+        "ai_disclosure": "Hu {business} no AI assistant chhu. Tame chaho to staff sathe jodi aapu.",
+        "anything_else": "Biju kai madad joie chhe?",
+        "ask_number": "{name}, fakt tamaro mobile number aapo.",
+        "phone_invalid": "Number 10 ank no hovo joie, 6, 7, 8 ke 9 thi sharu. Fari kaho.",
+        "phone_give_up": "Number barabar nathi madto. Tamari vaat staff sudhi pahonchadu chhu; aa number par WhatsApp pan kari shako.",
+        "slot_free": "{when} {staff} sathe khaali chhe.",
+    },
+    "punglish": {
+        "ai_note": "Main ethe da AI assistant haan.",
+        "ai_disclosure": "Main {business} da AI assistant haan. Tusi chaho taan staff naal jod sakda haan.",
+        "anything_else": "Hor koi madad chahidi hai?",
+        "ask_number": "{name} ji, bas apna mobile number dasso.",
+        "phone_invalid": "Number 10 digit da hona chahida, 6, 7, 8 ya 9 naal shuru. Dobara dasso.",
+        "phone_give_up": "Number theek nahi mil reha. Tuhadi gall staff tak pahuncha denda haan; is number te WhatsApp vi kar sakde ho.",
+        "slot_free": "{when} {staff} naal khaali hai.",
+    },
+}
+for _lang, _lines in CALL_LINES.items():
+    LANG[_lang].update(_lines)
+
 
 def phrase(lang: str, key: str, default: str) -> str:
     return LANG.get(lang, {}).get(key, default)

@@ -119,3 +119,76 @@ async def test_a_pack_can_name_its_own_emergency_contact(pack):
     s, _ = call(pack, now=dt.datetime(2026, 9, 7, 22, 30))
     r = await say(s, "bahut zyada khoon aa raha hai")
     assert "108" in r.said
+
+
+# ── from the Phase 1 code review ──────────────────────────────────────────
+def test_only_real_identity_questions_get_the_ai_answer():
+    from haanji import nlu
+    for q in ("aap insaan ho ya robot?", "AI ho kya?", "aap AI ho?", "kaun bol raha hai", "tum real person ho kya"):
+        assert nlu.asks_identity(q), q
+    for q in ("hum teen aadmi hain", "aap computer course karate ho?", "do aadmi ke liye slot chahiye"):
+        assert not nlu.asks_identity(q), q
+
+
+async def test_a_date_said_in_digits_is_not_a_bad_phone_number(pack):
+    s, _ = call(pack)
+    r = await say(s, "teeth cleaning karwani hai", "15 11 2026 ko aana hai")
+    assert "10 digit" not in r.said and not s.ctx.flags.get("bad_phone")
+
+
+async def test_a_bad_number_flag_never_leaks_into_a_later_turn(pack):
+    s, _ = call(pack)
+    await say(s, "kal subah 10 baje teeth cleaning karwani hai", "Amit Verma 9876543210")
+    assert s.ctx.pending_confirmation
+    await say(s, "mera number 98765")                     # while a confirmation is pending
+    r = await say(s, "haan confirm kar do")
+    assert s.ctx.outcome == Outcome.BOOKED and "10 digit" not in r.said
+
+
+async def test_after_a_booking_one_bad_number_counts_once(pack):
+    s, _ = call(pack)
+    await say(s, "kal subah 10 baje teeth cleaning karwani hai", "Amit Verma 9876543210", "haan confirm kar do")
+    assert s.ctx.flags.get("asked_more")
+    r = await say(s, "ek aur appointment teeth cleaning ka, number 12345")
+    assert s.ctx.flags.get("bad_phone", 0) <= 1 and "handoff" not in r.tools
+
+
+async def test_on_whatsapp_a_booking_asks_no_question_it_cannot_hear_the_answer_to(pack):
+    s, _ = call(pack)
+    s.ctx.flags["chat"] = True
+    r = await say(s, "kal subah 10 baje teeth cleaning karwani hai", "Amit Verma 9876543210", "haan confirm kar do")
+    assert s.ctx.outcome == Outcome.BOOKED and "Aur kuch" not in r.said and not s.ctx.flags.get("asked_more")
+
+
+def test_a_returning_caller_is_told_it_is_an_ai_too(pack):
+    from haanji.policy import DialoguePolicy
+    backend, _ = open_backend(pack, TENANT, today=TODAY)
+    line = DialoguePolicy(pack, backend, TENANT).greeting({"name": "Priya Shah", "last_service": "teeth cleaning"})
+    assert "Priya ji" in line and "AI assistant" in line
+
+
+async def test_an_emergency_in_the_lunch_break_promises_no_transfer(pack):
+    s, _ = call(pack, now=dt.datetime(2026, 9, 7, 14, 30))   # the clinic breaks 14:00-15:30
+    r = await say(s, "khoon ruk nahi raha daant se")
+    assert "jod raha" not in r.said and "hospital" in r.said
+
+
+def test_every_language_has_the_new_call_lines_with_the_same_blanks():
+    import re
+    from haanji.speak import CALL_LINES, LANG
+    hindi = {"ai_disclosure": "{business}", "ask_number": "{name}", "slot_free": "{when} {staff}"}
+    for lang in LANG:
+        if lang == "hinglish":
+            continue
+        assert set(CALL_LINES[lang]) == {"ai_note", "ai_disclosure", "anything_else", "ask_number",
+                                         "phone_invalid", "phone_give_up", "slot_free"}, lang
+        for key, blanks in hindi.items():
+            assert sorted(re.findall(r"\{\w+\}", LANG[lang][key])) == sorted(blanks.split()), (lang, key)
+
+
+def test_finishing_a_call_twice_counts_its_outcome_once(pack):
+    s, _ = call(pack)
+    s.ctx.outcome = Outcome.BOOKED
+    s.finish()
+    s.finish()
+    assert s.metrics.counters["outcome_BOOKED"] == 1
