@@ -140,8 +140,10 @@ services:
       # code). Keep auth off for a public demo; turn it on for a real shop.
       - key: HAANJI_OWNER_PHONE
         sync: false
+      # Set in the dashboard, never by this file: a value here is re-applied on
+      # every blueprint sync and once turned a live shop's sign-in back off.
       - key: HAANJI_AUTH
-        value: "off"
+        sync: false
       - key: HAANJI_AUTH_SECRET
         sync: false
       # Email + password for the owner (hashed at boot, never logged). With
