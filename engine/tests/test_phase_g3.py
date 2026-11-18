@@ -83,6 +83,8 @@ def test_the_public_demo_shows_strangers_no_whole_phone_number(client, monkeypat
     assert any(t["phone"] == phone for t in client.get("/api/wa/threads", params={"pack": PACK}).json()["threads"])
 
 
+@pytest.mark.skipif(bool(__import__("haanji.db", fromlist=["x"]).database_url()),
+                    reason="with Postgres the database host backs up; tests/test_db.py checks the refusal")
 def test_backups_leave_a_public_server_only_with_sign_in(client, monkeypatch):
     monkeypatch.setattr(server, "IS_PUBLIC", True)
     r = client.get("/api/admin/backup")

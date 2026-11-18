@@ -12,6 +12,8 @@ import os
 import sqlite3
 from typing import Any, Callable
 
+from . import db
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS push_subscriptions (
   endpoint  TEXT PRIMARY KEY,
@@ -51,7 +53,7 @@ def _vapid_keys(path: str) -> tuple[str, str]:
 class PushStore:
     def __init__(self, db_path: str, keys_path: str, sender: Callable[..., Any] | None = None,
                  contact: str = "mailto:owner@example.com"):
-        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.conn = db.connect(db_path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
         self.conn.commit()

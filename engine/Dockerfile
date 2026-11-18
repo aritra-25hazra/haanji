@@ -12,7 +12,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY engine/pyproject.toml ./
-RUN pip install --upgrade pip && pip install ".[live,web,llm]"
+RUN pip install --upgrade pip && pip install ".[live,web,llm,postgres]"
 
 COPY engine/haanji ./haanji
 COPY engine/tests ./tests

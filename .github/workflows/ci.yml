@@ -34,6 +34,30 @@ jobs:
           name: measured-results
           path: research/results.json
 
+  engine-postgres:
+    name: voice engine on PostgreSQL
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: haanji, POSTGRES_PASSWORD: haanji, POSTGRES_DB: haanji_test }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U haanji" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      HAANJI_DATABASE_URL: postgresql://haanji:haanji@localhost:5432/haanji_test
+      HAANJI_VAULT_SECRET: ci-vault-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: install
+        working-directory: engine
+        run: pip install -e ".[dev,web,llm,postgres]" jellyfish metaphone
+      - name: the whole suite, every store on Postgres
+        working-directory: engine
+        run: pytest -q
+
   core-api:
     name: core api (experimental, not deployed)
     runs-on: ubuntu-latest

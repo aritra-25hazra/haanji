@@ -82,7 +82,7 @@ def test_days_are_sealed_and_the_anchor_signature_verifies(client):
 def test_the_owner_digest_reads_like_a_message_and_sends_over_whatsapp(client, monkeypatch, sent):
     monkeypatch.setattr(server, "PUBLIC_URL", "https://haanji.example")
     d = client.get("/api/digest", params={"pack": "dental_clinic"}).json()
-    assert d["text"].startswith("HaanJi · Smile Care Dental") and "calls uthayi" in d["text"]
+    assert d["text"].startswith("HaanJi · Smile Care Dental") and "Callback chahiye:" in d["text"]
     assert "https://haanji.example/verify?pack=dental_clinic" in d["text"]
     assert client.get("/api/digest", params={"pack": "nope"}).status_code == 404
     monkeypatch.setattr(server, "OWNER_PHONE", None)

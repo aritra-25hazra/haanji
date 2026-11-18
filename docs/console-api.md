@@ -70,10 +70,35 @@ cancelled, the first waiting person is messaged on WhatsApp with the freed slot.
 Without `HAANJI_RAZORPAY_KEY_ID`/`_KEY_SECRET`, links are mock links on this
 server (`/pay/{payment_id}`) that a demo can "pay" with one click.
 
+## Devices and activity (sign-in on)
+
+`POST /api/auth/refresh` (bearer) → `{token}`: a token older than a week gets a new 30 days on the same device; a device
+unused for 14 days is signed out. `GET /api/auth/sessions` → `{sessions: [{sid, created, last_seen, agent, current}]}`
+for the caller's own number; `DELETE /api/auth/sessions/{sid}` ends one of them. `GET /api/audit` (owner) →
+`{entries: [{at, phone, role, method, path, pack, status}]}`: every POST/PUT/DELETE a signed-in person made.
+
 ## Users (unchanged)
 
 `GET/POST /api/auth/users`, `DELETE /api/auth/users/{phone}` (owner);
 `POST /api/auth/logout` revokes the caller's tokens; `GET /api/auth/me`.
+
+## Customers' data requests (DPDP)
+
+`POST /api/privacy/request {pack, phone}` sends a 6-digit code on WhatsApp (on a server without WhatsApp and not public,
+the answer carries `dev_code`). `POST /api/privacy/request/verify {pack, phone, code, kind: "export"|"erase"}`:
+export returns `{record}` at once (logged as DONE); erase files a PENDING request. Owner only:
+`GET /api/privacy/requests?pack=` lists them (masked number, kind, status, what was removed), and
+`POST /api/privacy/requests/{id}?pack= {approve}` erases (ERASED) or refuses (REJECTED). A closed request keeps only
+the keyed hash of the number. The page customers use is `/my-data`. Nightly backups older than
+`HAANJI_RETENTION_DAYS` are deleted from S3, never the newest.
+
+## Demo reset
+
+`POST /api/admin/demo-reset?pack=` → `{pack, removed: {calls, missed_calls, wa_messages, payments, bookings, receipts}, archived_to}`.
+Empties one pack's calls, chats, bookings, waitlist and payments, and starts a new Pramaan chain; the old backend and
+ledger files move to `var/archive/<pack>-<UTC stamp>/` untouched. Refused (403) when `HAANJI_AUTH` is on. On a public
+server it needs `X-HaanJi-Reset: $HAANJI_DEMO_RESET_TOKEN`. `HAANJI_DEMO_RESET_HOUR` (IST) resets every pack in use
+once a day at that hour.
 
 ## Help assistant
 

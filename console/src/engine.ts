@@ -5,7 +5,7 @@ export type HelpProvider = "claude" | "gemini" | "faq";
  * /engine/, which Vite proxies in development, Vercel rewrites in production
  * and nginx proxies in the compose stack. The contract is docs/console-api.md.
  */
-import type {
+import type { PrivacyRequest,
   CallRow, Export, Insights, Lexicon, PackSummary, Status, Turn, Verdict,
   Digest,
   Anchors,
@@ -138,6 +138,10 @@ export const engine = {
   me: () => request<{ enabled: boolean; user: User | null }>("api/auth/me"),
   /** Sign out everywhere: the engine revokes every token this number holds. */
   logout: () => request<{ ok: boolean }>("api/auth/logout", { method: "POST" }),
+  refreshToken: () => request<{ token: string }>("api/auth/refresh", { method: "POST" }),
+  devices: () => request<{ sessions: { sid: string; created: number; last_seen: number; agent: string; current: boolean }[] }>("api/auth/sessions"),
+  endDevice: (sid: string) => request<{ ok: boolean }>(`api/auth/sessions/${encodeURIComponent(sid)}`, { method: "DELETE" }),
+  audit: () => request<{ entries: { id: number; at: number; phone: string; role: string; method: string; path: string; pack: string | null; status: number }[] }>("api/audit"),
   users: () => request<{ users: User[] }>("api/auth/users"),
   addUser: (u: { phone: string; role: string; packs: string[]; name: string }) => request<{ user: User }>("api/auth/users", { method: "POST", body: JSON.stringify(u) }),
   removeUser: (phone: string) => request<{ removed: boolean }>(`api/auth/users/${encodeURIComponent(phone)}`, { method: "DELETE" }),
@@ -166,6 +170,9 @@ export const engine = {
   save: (id: string, yaml: string) =>
     request<{ ok: boolean; problems: string[]; backup: string }>(`api/packs/${encodeURIComponent(id)}`,
       { method: "PUT", body: JSON.stringify({ yaml }) }),
+  privacyRequests: (pack: string) => request<{ requests: PrivacyRequest[] }>(`api/privacy/requests?${q(pack)}`),
+  decidePrivacy: (pack: string, id: string, approve: boolean) =>
+    request<PrivacyRequest>(`api/privacy/requests/${encodeURIComponent(id)}?${q(pack)}`, { method: "POST", body: JSON.stringify({ approve }) }),
   // ── the help assistant (engine/haanji/helpbot.py) ─────────────────────────
   helpStatus: () => request<{ providers: HelpProvider[]; models: Record<string, string>; daily_limit: number; used_today: number }>("api/help/status"),
   helpChat: (body: { messages: { role: "user" | "assistant"; content: string }[]; provider?: HelpProvider; lang: "en" | "hi"; page: string }) =>

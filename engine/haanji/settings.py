@@ -5,8 +5,9 @@ data. Nothing here is a secret; secrets stay in the environment. Unknown keys
 are rejected so a typo in the console cannot silently become a setting."""
 from __future__ import annotations
 import json
-import sqlite3
 from typing import Any
+
+from . import db
 
 DEFAULTS: dict[str, Any] = {
     "reminders_on": True,          # WhatsApp reminder the day before a booking
@@ -16,6 +17,7 @@ DEFAULTS: dict[str, Any] = {
     "waitlist_on": True,           # a caller who found no slot is offered the next freed one
     "digest_hour_ist": 20,         # the owner's evening WhatsApp
     "language_script": "latin",    # latin | devanagari for the owner's own messages
+    "owner_language": "hi",        # hi | en: the language of the owner's evening digest
     # what the dashboard compares the agent's cost with: the shop's own front desk
     "receptionist_monthly_inr": 12000,
     "receptionist_calls_per_month": 1300,
@@ -23,7 +25,7 @@ DEFAULTS: dict[str, Any] = {
 TYPES: dict[str, type] = {k: type(v) for k, v in DEFAULTS.items()}
 LIMITS = {"reminder_hour_ist": (0, 23), "digest_hour_ist": (0, 23), "deposit_inr": (0, 100000),
           "receptionist_monthly_inr": (0, 1000000), "receptionist_calls_per_month": (1, 100000)}
-CHOICES = {"language_script": ("latin", "devanagari")}
+CHOICES = {"language_script": ("latin", "devanagari"), "owner_language": ("hi", "en")}
 
 
 class SettingsError(ValueError):
@@ -32,7 +34,7 @@ class SettingsError(ValueError):
 
 class SettingsStore:
     def __init__(self, path: str):
-        self.conn = sqlite3.connect(path, check_same_thread=False)
+        self.conn = db.connect(path)
         self.conn.execute("CREATE TABLE IF NOT EXISTS settings (tenant_id TEXT PRIMARY KEY, json TEXT NOT NULL)")
         self.conn.commit()
 

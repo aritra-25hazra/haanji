@@ -54,14 +54,48 @@ def stream_url(public_url: str) -> str:
     return f"{base}/telephony/twilio/stream"
 
 
-class TwilioBridge:
-    """One phone call over one WebSocket."""
+class TwilioWire:
+    """Twilio Media Streams on the wire: μ-law both ways, camelCase fields."""
+    name = "twilio"
 
-    def __init__(self, ws, *, open_session, close_session, stt_factory: STTFactory, tts: TTSFactory,
+    def start(self, msg: dict[str, Any]) -> tuple[str | None, dict[str, Any], str | None]:
+        st = msg.get("start") or {}
+        params = st.get("customParameters") or {}
+        return st.get("streamSid"), params, params.get("caller") or None
+
+    def inbound(self, msg: dict[str, Any]) -> bytes | None:
+        media = msg.get("media") or {}
+        if media.get("track", "inbound") != "inbound":
+            return None
+        return base64.b64decode(media["payload"])
+
+    def media(self, sid: str | None, ulaw: bytes) -> list[str]:
+        return [json.dumps({"event": "media", "streamSid": sid, "media": {"payload": base64.b64encode(ulaw).decode()}})]
+
+    def flush(self, sid: str | None) -> list[str]:
+        return []
+
+    def drop(self) -> None:
+        pass
+
+    def clear(self, sid: str | None) -> str:
+        return json.dumps({"event": "clear", "streamSid": sid})
+
+    def mark(self, sid: str | None, name: str) -> str:
+        return json.dumps({"event": "mark", "streamSid": sid, "mark": {"name": name}})
+
+
+class MediaBridge:
+    """One phone call over one media WebSocket, whatever the provider: the
+    ``wire`` says how its messages look and what audio it carries; the
+    recogniser and the synthesiser always see 8 kHz μ-law."""
+
+    def __init__(self, ws, *, open_session, close_session, stt_factory: STTFactory, tts: TTSFactory, wire=None,
                  on_turn: Callable[[Any, Any], Awaitable[None]] | None = None,
                  on_partial: Callable[[str, Any], Any] | None = None,
                  human_hook: Callable[[Any, Any, str], bool] | None = None):
         self.ws = ws
+        self.wire = wire or TwilioWire()
         self.open_session = open_session          # async (pack, caller) -> (sid, holder)
         self.close_session = close_session        # (sid, holder) -> None
         self.stt_factory = stt_factory
@@ -83,12 +117,13 @@ class TwilioBridge:
 
     # ---------------------------------------------------------------- audio
     async def _send_media(self, mulaw: bytes) -> None:
-        await self.ws.send_text(json.dumps({"event": "media", "streamSid": self.stream_sid,
-                                            "media": {"payload": base64.b64encode(mulaw).decode()}}))
-        self.frames_out += 1
+        for message in self.wire.media(self.stream_sid, mulaw):
+            await self.ws.send_text(message)
+            self.frames_out += 1
 
     async def _clear(self) -> None:
-        await self.ws.send_text(json.dumps({"event": "clear", "streamSid": self.stream_sid}))
+        self.wire.drop()
+        await self.ws.send_text(self.wire.clear(self.stream_sid))
 
     async def say(self, text: str) -> None:
         """Start speaking; returns at once so the caller can interrupt."""
@@ -101,7 +136,10 @@ class TwilioBridge:
         try:
             async for chunk in self.tts(text):
                 await self._send_media(chunk)
-            await self.ws.send_text(json.dumps({"event": "mark", "streamSid": self.stream_sid, "mark": {"name": "end"}}))
+            for message in self.wire.flush(self.stream_sid):
+                await self.ws.send_text(message)
+                self.frames_out += 1
+            await self.ws.send_text(self.wire.mark(self.stream_sid, "end"))
         except asyncio.CancelledError:
             raise
         except Exception:                                  # noqa: BLE001 - audio failed, the call survives
@@ -173,11 +211,11 @@ class TwilioBridge:
                 msg = json.loads(raw)
                 ev = msg.get("event")
                 if ev == "start":
-                    await self._on_start(msg["start"])
+                    await self._on_start(msg)
                 elif ev == "media":
                     self.frames_in += 1
-                    if self.stt is not None and msg["media"].get("track", "inbound") == "inbound":
-                        chunk = base64.b64decode(msg["media"]["payload"])
+                    chunk = self.wire.inbound(msg) if self.stt is not None else None
+                    if chunk:
                         if len(self._reply_audio) < 8000 * 60:          # at most a minute of a reply
                             self._reply_audio.extend(chunk)
                         await self.stt.send(chunk)
@@ -188,11 +226,9 @@ class TwilioBridge:
         finally:
             await self.hangup()
 
-    async def _on_start(self, start: dict[str, Any]) -> None:
-        self.stream_sid = start.get("streamSid")
-        params = start.get("customParameters") or {}
+    async def _on_start(self, msg: dict[str, Any]) -> None:
+        self.stream_sid, params, caller = self.wire.start(msg)
         pack = params.get("pack") or os.environ.get("HAANJI_PHONE_PACK") or os.environ.get("HAANJI_PACK", "dental_clinic")
-        caller = params.get("caller") or None
         try:
             opened = await self.open_session(pack, caller, params)
         except TypeError:                                  # an older two-argument opener
@@ -220,3 +256,10 @@ class TwilioBridge:
         except Exception:                                  # noqa: BLE001
             pass
 
+
+
+class TwilioBridge(MediaBridge):
+    """The bridge on Twilio's wire (kept under its old name)."""
+
+    def __init__(self, ws, **kw):
+        super().__init__(ws, wire=TwilioWire(), **kw)

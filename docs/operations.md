@@ -66,6 +66,30 @@ WhatsApp / payment lagana ho.
 * CLI: `haanji backup --out file.tar.gz [--s3]`, `haanji restore file.tar.gz
   [--force]`.
 
+## PostgreSQL (redeploy pe data na jaaye)
+
+Default mein har store ek SQLite file hai (`var/`). Render ki free disk redeploy
+pe saaf ho jaati hai, isliye asli dukaan ke liye Postgres:
+
+1. Ek managed Postgres lo (host ki current free/paid terms dekh ke) aur uska URL copy karo.
+2. Render → Environment:
+   - `HAANJI_DATABASE_URL` = `postgresql://user:pass@host:5432/db`
+   - `HAANJI_VAULT_SECRET` = ek lamba random secret (iske bina engine start hi nahi hota;
+     isse har customer ki receipt-key khulti hai, iski copy sambhaal ke rakho)
+   - `HAANJI_AUTH_SECRET` (sign-in on ho to; warna har deploy pe sab sign out)
+   - `HAANJI_LEDGER_KEY_SECRET` (signing keys encrypted rahein)
+3. Pehle se SQLite mein data hai to, usi machine par jahan `var/` hai:
+   `HAANJI_DATABASE_URL=... haanji db-copy --var-dir var` — har table ki ginti dono
+   taraf dikhata hai; dobara chalane se kuch double nahi hota. Phir
+   `HAANJI_VAULT_SECRET` ko `var/vault.sqlite.secret` ki value do.
+4. Har SQLite file Postgres mein apna schema ban jaati hai (`backend_dental_clinic`,
+   `ledger_dental_clinic`, `store`, ...). Study ke answers (`study.sqlite`) kabhi copy
+   nahi hote; wo local hi rehte hain.
+5. Backup ab database host ka kaam hai (snapshots / `pg_dump`); console ka backup
+   button Postgres mode mein yahi batata hai. Vault secret backup ke saath rakho.
+
+CI mein ek alag job poora test suite Postgres par chalata hai.
+
 ## Public demo = read-only console
 
 `HAANJI_AUTH=off` wale **public** server (Render) par console ki destructive

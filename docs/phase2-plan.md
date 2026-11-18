@@ -1,11 +1,15 @@
-# Phase 2 plan (not built)
+# Phase 2 plan
+
+**Status (2026-11-18): all six items are built on the `phase2/platform` branch.** What was built is listed under each heading as **Built**; the plan text below it is kept as it was proposed.
 
 The review brief asked for these six items as a plan first. Nothing below is
 implemented on `phase1/demo-fixes`. Each item lists what exists today, what
 would change, how it would be tested, and what it needs from the owner.
 Order is the suggested build order: each step leaves `main` deployable.
 
-## 1. Demo reset (smallest; makes every later demo repeatable)
+## 1. Demo reset
+
+**Built.** `POST /api/admin/demo-reset` (operator token on a public server), nightly at `HAANJI_DEMO_RESET_HOUR`; old files (or Postgres schemas) archived whole. Tests: test_demo_reset.py. (smallest; makes every later demo repeatable)
 
 **Today.** The public demo writes to SQLite files on Render's disk. A
 redeploy starts clean (`HAANJI_DEMO=1` seeds one returning caller); between
@@ -27,6 +31,8 @@ deploys, test calls pile up in the console.
 **Needs.** Nothing.
 
 ## 2. Digest consistency
+
+**Built.** Today-only insights (bookings by today's receipts), the digest built from them under the dashboard's labels, `owner_language` setting. Tests: test_digest.py.
 
 **Today.** `digest_text()` in server.py already reads `compute_insights(...)`,
 the same function the dashboard uses, so the numbers come from one place. The
@@ -50,6 +56,8 @@ dashboard tile, including just after midnight IST.
 **Needs.** Nothing.
 
 ## 3. Sign-in for real shops (auth)
+
+**Built.** Device sessions (list, end one), 14-day idle sign-out, weekly refresh, owner-only activity log; console Settings shows both. Not built: the OTP template itself (the owner approves it in Meta). Tests: test_auth_sessions.py.
 
 **Today.**
 - `auth.py` already has a WhatsApp OTP: 5-minute TTL, 5 attempts.
@@ -76,6 +84,8 @@ dashboard tile, including just after midnight IST.
 **Needs.** The owner approves an OTP template in Meta Business Manager.
 
 ## 4. Postgres instead of SQLite files
+
+**Built.** `HAANJI_DATABASE_URL` (haanji/db.py), `haanji db-copy`, a CI job on Postgres; the suite passes on Postgres 18 locally. Tests: test_db.py.
 
 **Today.**
 - 13 modules open their own SQLite files under `HAANJI_VAR_DIR`: store,
@@ -104,6 +114,8 @@ dashboard tile, including just after midnight IST.
 
 ## 5. Telephony adapter (a real phone number)
 
+**Built.** A provider-neutral bridge with Twilio and Exotel (AgentStream) wires and a G.711 codec. Not built: call transfer to the shop's line. Tests: test_telephony_exotel.py.
+
 **Today.**
 - `telephony/twilio.py` handles inbound calls with media streams; Deepgram is
   the speech recogniser and ElevenLabs the voice.
@@ -130,6 +142,8 @@ dashboard tile, including just after midnight IST.
 - These all cost money; nothing is bought without the owner's yes.
 
 ## 6. Data rights (DPDP)
+
+**Built.** `/my-data` (WhatsApp code, download, erasure request), owner approval in Settings, a hash-only log, S3 backups pruned past retention. Tests: test_data_rights.py.
 
 **Today.**
 - `/api/privacy/customer/{phone}` exports (GET) and erases (DELETE):

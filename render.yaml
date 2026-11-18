@@ -72,6 +72,15 @@ services:
       # can be shown; a real shop (HAANJI_AUTH=on) starts with an empty table.
       - key: HAANJI_DEMO
         value: "1"
+      # The public demo starts each day clean: at 04:00 IST every pack's test
+      # calls, chats, bookings and payments are emptied and a new Pramaan chain
+      # begins (the old one is archived whole, never rewritten). An operator
+      # can also reset on demand with POST /api/admin/demo-reset and the
+      # X-HaanJi-Reset header set to HAANJI_DEMO_RESET_TOKEN.
+      - key: HAANJI_DEMO_RESET_HOUR
+        value: "4"
+      - key: HAANJI_DEMO_RESET_TOKEN
+        sync: false
       # Privacy defaults the public demo also keeps: a spoken notice at the
       # start of every call, and call records purged after 180 days (bookings
       # and receipts stay; docs/privacy-dpdp.md).
@@ -133,6 +142,9 @@ services:
       # A real phone number (docs/phone-setup.md): Twilio rings the engine,
       # Deepgram hears, ElevenLabs speaks. All entered in the dashboard.
       - key: HAANJI_TWILIO_AUTH_TOKEN
+        sync: false
+      # Exotel instead of Twilio: the Voicebot applet's URL carries ?key=<this>
+      - key: HAANJI_EXOTEL_STREAM_KEY
         sync: false
       - key: HAANJI_DEEPGRAM_KEY
         sync: false

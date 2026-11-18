@@ -67,6 +67,7 @@ from .pramaan.ledger import Ledger
 from .store import DemoStore
 from .tools.builtin import build_registry
 from .vertical import PACK_DIR, PackError, from_dict, list_packs, load_pack
+from . import db
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 VAR_DIR = os.path.abspath(os.environ.get("HAANJI_VAR_DIR", "var"))
@@ -236,6 +237,13 @@ async def hardening(request: Request, call_next):
                 return JSONResponse({"detail": "not your pack"}, status_code=403)
             request.state.user = who
     response = await call_next(request)
+    who = getattr(request.state, "user", None)
+    if who is not None and request.method in ("POST", "PUT", "DELETE", "PATCH"):
+        pack = _pack_in(request)
+        try:                                       # the owner's activity log; never fails a request
+            auth.record(who, request.method, path, pack if isinstance(pack, str) else None, response.status_code)
+        except Exception as exc:                   # noqa: BLE001
+            log.warning("audit: %s", exc)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -248,7 +256,14 @@ store = DemoStore(os.path.join(VAR_DIR, "store.sqlite"))
 
 gcal = GoogleCalendar(os.path.join(VAR_DIR, "gcal.sqlite"), redirect_uri=f"{PUBLIC_URL}/api/google/callback")
 # Personal data in receipts is encrypted per customer (docs/privacy-dpdp.md).
-vault = Vault(os.path.join(VAR_DIR, "vault.sqlite"))
+# The vault's key-encryption secret. With SQLite it can live in a file next to
+# the vault; with Postgres the records outlive the host's disk, so the secret
+# must too: an engine that would lose it refuses to start.
+VAULT_SECRET = os.environ.get("HAANJI_VAULT_SECRET") or None
+if db.database_url() and not VAULT_SECRET:
+    raise RuntimeError("HAANJI_DATABASE_URL is set but HAANJI_VAULT_SECRET is not: the customers' receipt keys "
+                       "would become unreadable after a redeploy. Set HAANJI_VAULT_SECRET (keep a copy).")
+vault = Vault(os.path.join(VAR_DIR, "vault.sqlite"), secret=VAULT_SECRET.encode() if VAULT_SECRET else None)
 # With HAANJI_LEDGER_KEY_SECRET set, tenants' signing keys are encrypted at rest.
 LEDGER_KEY_SECRET = os.environ.get("HAANJI_LEDGER_KEY_SECRET") or None
 settings = SettingsStore(os.path.join(VAR_DIR, "settings.sqlite"))
@@ -390,8 +405,7 @@ def runtime(pack_id: str) -> TenantRuntime:
     if pack_id not in list_packs():
         raise HTTPException(404, f"no pack '{pack_id}'")
     pack = load_pack(pack_id)
-    conn = sqlite3.connect(os.path.join(VAR_DIR, f"backend-{pack_id}.sqlite"),
-                           check_same_thread=False)
+    conn = db.connect(os.path.join(VAR_DIR, f"backend-{pack_id}.sqlite"))
     backend = LocalBackend(conn)
     backend.load_pack(pack_id, pack)
     demo = DEMO_CUSTOMERS.get(pack_id)
@@ -399,8 +413,7 @@ def runtime(pack_id: str) -> TenantRuntime:
         # "Vijay ji, wapas swagat hai" is for the public demo; a real shop's
         # customer table starts empty.
         backend.seed_customer(pack_id, *demo[:2], last_service=demo[2])
-    ledger = Ledger(sqlite3.connect(os.path.join(VAR_DIR, f"ledger-{pack_id}.sqlite"),
-                                    check_same_thread=False), key_secret=LEDGER_KEY_SECRET)
+    ledger = Ledger(db.connect(os.path.join(VAR_DIR, f"ledger-{pack_id}.sqlite")), key_secret=LEDGER_KEY_SECRET)
     registry = build_registry(pack_id, backend, pack, ledger, vault=vault)
     _runtimes[pack_id] = TenantRuntime(pack_id, pack, backend, ledger, registry)
     return _runtimes[pack_id]
@@ -538,6 +551,80 @@ async def _gc_loop() -> None:
     while True:
         await asyncio.sleep(60)
         _gc()
+        try:
+            _nightly_demo_reset()
+        except Exception as exc:                      # noqa: BLE001 - keep the loop alive
+            log.warning("demo reset: %s", exc)
+
+
+# ─────────────────────────────────────────────────────────────── demo reset
+# A public demo collects every visitor's test calls. A reset empties one
+# pack's calls, chats, bookings, waitlist and payments and starts a new
+# Pramaan chain; the old backend and ledger files are moved to
+# var/archive/, never rewritten. Never for a real shop (sign-in on).
+DEMO_RESET_TOKEN = os.environ.get("HAANJI_DEMO_RESET_TOKEN") or None
+DEMO_RESET_HOUR = os.environ.get("HAANJI_DEMO_RESET_HOUR")          # IST hour, e.g. "4"; unset = never
+_last_auto_reset: dict[str, str] = {}
+
+
+def demo_reset(pack_id: str) -> dict[str, Any]:
+    if AUTH_ENABLED:
+        raise HTTPException(403, "a real shop's records are never reset (HAANJI_AUTH is on)")
+    # The file names below are built from the pack list itself, never from the request.
+    pack_id = next((p for p in list_packs() if p == pack_id), None) or ""
+    if not pack_id:
+        raise HTTPException(404, "no such pack")
+    rt = runtime(pack_id)
+    for sid in [sid for sid, h in _sessions.items() if h.rt.pack_id == pack_id]:
+        _sessions.pop(sid, None)
+    for key in [k for k in _wa_sessions if k[0] == pack_id]:
+        _wa_sessions.pop(key, None)
+    removed: dict[str, int] = {}
+    for table in ("calls", "missed_calls", "wa_messages"):
+        removed[table] = store.conn.execute(f"DELETE FROM {table} WHERE tenant_id = ?", (pack_id,)).rowcount
+    store.conn.commit()
+    removed["payments"] = payments.conn.execute("DELETE FROM payments WHERE tenant_id = ?", (pack_id,)).rowcount
+    payments.conn.commit()
+    removed["bookings"] = len(rt.backend.conn.execute("SELECT 1 FROM bookings WHERE tenant_id = ?", (pack_id,)).fetchall())
+    removed["receipts"] = len(rt.ledger.receipts(pack_id))
+    # A second reset within the same second must not collide with the first.
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid.uuid4().hex[:4]
+    rt.backend.conn.close()
+    rt.ledger.conn.close()
+    _runtimes.pop(pack_id, None)
+    names = (f"backend-{pack_id}.sqlite", f"ledger-{pack_id}.sqlite")
+    if db.database_url():                              # Postgres: the schemas are renamed, kept whole
+        archived = {name.split("-")[0]: db.archive(os.path.join(VAR_DIR, name), f"archive_{stamp.lower()}") for name in names}
+        where = ", ".join(archived.values())
+    else:
+        archive = os.path.join(VAR_DIR, "archive", f"{pack_id}-{stamp}")
+        os.makedirs(archive, exist_ok=True)
+        for name in names:
+            src = os.path.join(VAR_DIR, name)
+            if os.path.exists(src):
+                os.replace(src, os.path.join(archive, name))
+        archived = {name.split("-")[0]: os.path.relpath(os.path.join(archive, name), VAR_DIR) for name in names}
+        where = os.path.relpath(archive, VAR_DIR)
+    runtime(pack_id)                                   # a fresh calendar and chain, re-seeded
+    publish("demo.reset", pack=pack_id)
+    log.info("demo reset %s: %s (archived to %s)", pack_id, removed, where)
+    return {"pack": pack_id, "removed": removed, "archived_to": where, "archived": archived}
+
+
+def _nightly_demo_reset(now: dt.datetime | None = None) -> list[str]:
+    """At HAANJI_DEMO_RESET_HOUR (IST) once a day, reset every pack in use."""
+    if AUTH_ENABLED or DEMO_RESET_HOUR is None:
+        return []
+    now = now or dt.datetime.now(IST)
+    if now.hour != int(DEMO_RESET_HOUR):
+        return []
+    done = []
+    for pack_id in list(_runtimes):
+        if _last_auto_reset.get(pack_id) != now.date().isoformat():
+            _last_auto_reset[pack_id] = now.date().isoformat()
+            demo_reset(pack_id)
+            done.append(pack_id)
+    return done
 
 
 async def _new_session(pack_id: str, channel: str, phone: str | None, *, verified: bool = False) -> tuple[str, Holder]:
@@ -1339,7 +1426,9 @@ class StudyIn(BaseModel):
 
 
 def _study_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(STUDY_DB)
+    # Participants' study answers stay in a local file whatever the engine's
+    # database is: they never go to a hosted database.
+    conn = sqlite3.connect(STUDY_DB, check_same_thread=False)
     conn.execute("CREATE TABLE IF NOT EXISTS responses (id TEXT PRIMARY KEY, participant TEXT, "
                  "pack TEXT, created TEXT, sus_score REAL, payload TEXT)")
     return conn
@@ -1437,24 +1526,47 @@ async def anchors_seal(pack: str = DEFAULT_PACK):
     return {"sealed": seal_pending_days(rt), "anchors": rt.ledger.anchors(pack)}
 
 
+DIGEST_WORDS = {
+    "hi": {"calls": "Aaj {calls} · {booked} booking hui (lagbhag ₹{worth}).", "callback": "Callback chahiye: {n}.",
+           "missed": "Missed calls wapas aayi: {recovered}/{total}.", "fixed": "Galat suna, theek kiya: {n}.",
+           "busy": "Sabse busy ghanta: {hour}:00 ({n}).", "link": "Receipts aur poora hisaab: {url}",
+           "quiet": "Aaj koi call nahi aayi."},
+    "en": {"calls": "Today {calls} · {booked} booked (about ₹{worth}).", "callback": "Needs a callback: {n}.",
+           "missed": "Missed calls recovered: {recovered}/{total}.", "fixed": "Misheard, then fixed: {n}.",
+           "busy": "Busiest hour: {hour}:00 ({n}).", "link": "Receipts and records: {url}",
+           "quiet": "No calls today."},
+}
+
+
+def _n_calls(n: int) -> str:
+    return f"{n} call" if n == 1 else f"{n} calls"
+
+
 def digest_text(pack_id: str) -> str:
-    """The owner's evening message: what the desk did today, in six lines."""
+    """The owner's evening message: the "Today" screen in a few lines. Every
+    number is the dashboard's own (insights.compute, India's day), under the
+    dashboard's names, in the owner's language (settings: owner_language)."""
     rt = runtime(pack_id)
-    ins = compute_insights(pack_id, store, rt.backend, settings.get(pack_id))
-    name = rt.pack.persona.business_name
-    today = dt.datetime.now(IST).strftime("%d %b")
-    booked = ins["outcomes"].get("BOOKED", 0)
-    lines = [f"HaanJi · {name} · {today}",
-             f"Aaj {ins['calls_today']} calls uthayi (kul {ins['calls_total']}).",
-             f"{ins['bookings_confirmed']} bookings calendar pe, lagbhag ₹{ins['revenue_booked_inr']:,} ki.",
-             f"{booked} calls booking bani; {ins['leads_open']} log callback chahte hain."]
+    prefs = settings.get(pack_id)
+    ins = compute_insights(pack_id, store, rt.backend, prefs)
+    w = DIGEST_WORDS.get(prefs.get("owner_language", "hi"), DIGEST_WORDS["hi"])
+    day = dt.date.fromisoformat(ins["day"]).strftime("%d %b")
+    lines = [f"HaanJi · {rt.pack.persona.business_name} · {day}"]
+    if ins["calls_today"]:
+        lines.append(w["calls"].format(calls=_n_calls(ins["calls_today"]), booked=ins["bookings_confirmed"],
+                                       worth=f"{ins['revenue_booked_inr']:,}"))
+    else:
+        lines.append(w["quiet"])
+    lines.append(w["callback"].format(n=ins["leads_open"]))
     m = ins["missed_calls"]
     if m.get("total"):
-        lines.append(f"{m['recovered']} of {m['total']} missed calls WhatsApp pe wapas aayi.")
+        lines.append(w["missed"].format(recovered=m["recovered"], total=m["total"]))
+    if ins["corrections_total"]:
+        lines.append(w["fixed"].format(n=ins["corrections_total"]))
     if ins["by_hour"]:
         busiest = max(ins["by_hour"], key=lambda h: h["calls"])
-        lines.append(f"Sabse busy ghanta: {busiest['hour']}:00 ({busiest['calls']} calls).")
-    lines.append(f"Receipts aur poora hisaab: {PUBLIC_URL}/verify?pack={pack_id}")
+        lines.append(w["busy"].format(hour=busiest["hour"], n=_n_calls(busiest["calls"])))
+    lines.append(w["link"].format(url=f"{PUBLIC_URL}/verify?pack={pack_id}"))
     return "\n".join(lines)
 
 
@@ -1566,10 +1678,13 @@ async def _evening_loop() -> None:
             purge_old_records(RETENTION_DAYS)
         except Exception as exc:                      # noqa: BLE001
             log.warning(f"retention: {exc}")
-        if backup_mod.s3_configured():
+        if backup_mod.s3_configured() and not db.database_url():   # Postgres: the database host backs up
             try:
                 where = backup_mod.upload_s3(backup_mod.make_backup(VAR_DIR), backup_mod.backup_name())
                 log.warning("nightly backup written to %s", where)
+                pruned = backup_mod.prune_s3(RETENTION_DAYS)
+                if pruned:
+                    log.warning("pruned %d backups past %d days", len(pruned), RETENTION_DAYS)
             except Exception as exc:                  # noqa: BLE001
                 log.warning(f"backup: {exc}")
         digest_pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
@@ -1622,14 +1737,14 @@ async def auth_otp(body: OtpIn):
 
 
 @app.post("/api/auth/verify")
-async def auth_verify(body: VerifyIn):
+async def auth_verify(body: VerifyIn, request: Request):
     if not AUTH_ENABLED:
         raise HTTPException(409, "auth is off")
     phone = normalise_phone(body.phone)
     user = auth.user(phone)
     if user is None or not auth.check_otp(phone, body.code):
         raise HTTPException(401, "wrong or expired code")
-    return {"token": auth.token_for(user), "user": user.as_dict()}
+    return {"token": auth.token_for(user, agent=request.headers.get("user-agent", "")), "user": user.as_dict()}
 
 
 @app.post("/api/auth/logout")
@@ -1641,6 +1756,55 @@ async def auth_logout(request: Request):
     if who is not None:
         auth.revoke(who.phone)
     return {"ok": True}
+
+
+def _bearer(request: Request) -> str | None:
+    header = request.headers.get("authorization", "")
+    return header[7:] if header.lower().startswith("bearer ") else None
+
+
+@app.post("/api/auth/refresh")
+async def auth_refresh(request: Request):
+    """A device in use keeps its sign-in: past a week, a new 30-day token for
+    the same session. Unused for IDLE_TTL_S, the device is signed out."""
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off")
+    token = auth.refresh(_bearer(request))
+    if token is None:
+        raise HTTPException(401, "sign in again")
+    return {"token": token}
+
+
+@app.get("/api/auth/sessions")
+async def auth_sessions(request: Request):
+    """The devices this number is signed in on; ``current`` marks this one."""
+    if not AUTH_ENABLED:
+        return {"sessions": []}
+    claims = auth.claims(_bearer(request))
+    if claims is None:
+        raise HTTPException(401, "sign in first")
+    return {"sessions": [{**d, "current": d["sid"] == claims.get("sid")} for d in auth.sessions_of(claims["phone"])]}
+
+
+@app.delete("/api/auth/sessions/{sid}")
+async def auth_end_session(sid: str, request: Request):
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off")
+    claims = auth.claims(_bearer(request))
+    if claims is None:
+        raise HTTPException(401, "sign in first")
+    if not auth.end_session(claims["phone"], sid):
+        raise HTTPException(404, "no such device")
+    return {"ok": True}
+
+
+@app.get("/api/audit")
+async def audit_log(limit: int = 200):
+    """Who changed what: every write a signed-in owner or staff member made."""
+    return {"entries": auth.audit(max(1, min(limit, 1000)))}
+
+
+PROTECTED.append(("GET", re.compile(r"^/api/audit$"), "owner"))
 
 
 @app.get("/api/auth/me")
@@ -1760,7 +1924,8 @@ def phone_configured() -> bool:
 
 def phone_status() -> dict[str, Any]:
     return {"configured": phone_configured(), "number": os.environ.get("HAANJI_PHONE_DISPLAY") or None,
-            "stream_url": twilio_mod.stream_url(PUBLIC_URL)}
+            "stream_url": twilio_mod.stream_url(PUBLIC_URL),
+            "exotel_stream_url": twilio_mod.stream_url(PUBLIC_URL).replace("/twilio/", "/exotel/")}
 
 
 @app.post("/telephony/twilio/voice")
@@ -1848,6 +2013,35 @@ async def twilio_stream(ws: WebSocket):
                                      on_turn=_phone_turn, human_hook=_phone_human,
                                      on_partial=lambda text, holder: publish("partial", sid=holder_sid(holder),
                                                                              pack=holder.rt.pack_id, text=text))
+    await bridge.run()
+
+
+async def _exotel_open(pack: str, caller: str | None, params: dict[str, Any] | None = None):
+    """Exotel's media socket carries no signature: the applet's URL carries
+    ?key=HAANJI_EXOTEL_STREAM_KEY, and a public server refuses a stream
+    without it."""
+    key = os.environ.get("HAANJI_EXOTEL_STREAM_KEY")
+    given = str((params or {}).get("key") or "")
+    if (IS_PUBLIC and not key) or (key and not hmac.compare_digest(given, key)):
+        TELEMETRY.inc("telephony_rejected_total")
+        log.warning("exotel stream without the right key was refused")
+        return None
+    if pack not in list_packs():
+        pack = DEFAULT_PACK
+    phone = "".join(ch for ch in (caller or "") if ch.isdigit())[-10:] or None
+    return await _new_session(pack, "PHONE", phone, verified=phone is not None)   # network caller-id
+
+
+@app.websocket("/telephony/exotel/stream")
+async def exotel_stream(ws: WebSocket):
+    """Exotel AgentStream: the Voicebot applet's WebSocket (telephony/exotel.py)."""
+    from .telephony.exotel import ExotelWire
+    await ws.accept()
+    bridge = twilio_mod.MediaBridge(ws, wire=ExotelWire(), open_session=_exotel_open, close_session=_finish,
+                                    stt_factory=PHONE_FACTORIES["stt"], tts=PHONE_FACTORIES["tts"],
+                                    on_turn=_phone_turn, human_hook=_phone_human,
+                                    on_partial=lambda text, holder: publish("partial", sid=holder_sid(holder),
+                                                                            pack=holder.rt.pack_id, text=text))
     await bridge.run()
 
 
@@ -2024,6 +2218,17 @@ def customer_record(pack: str, phone: str) -> dict[str, Any]:
             "receipts": receipts, "erased": shredded}
 
 
+@app.post("/api/admin/demo-reset")
+async def demo_reset_route(request: Request, pack: str = DEFAULT_PACK):
+    """Empty one pack's demo data. On a public server it needs the
+    X-HaanJi-Reset header to match HAANJI_DEMO_RESET_TOKEN; with no token set
+    there, only the nightly reset (HAANJI_DEMO_RESET_HOUR) runs."""
+    if IS_PUBLIC and not (DEMO_RESET_TOKEN and hmac.compare_digest(
+            request.headers.get("x-haanji-reset", ""), DEMO_RESET_TOKEN)):
+        raise HTTPException(403, "demo reset needs the reset token on a public server")
+    return demo_reset(pack)
+
+
 def erase_customer(pack: str, phone: str) -> dict[str, int | bool]:
     """Right to erasure: shred the receipt key, anonymise bookings, delete the
     rest. Receipts stay sealed and verifiable; their personal fields become
@@ -2080,6 +2285,96 @@ async def privacy_erase(phone: str, pack: str = DEFAULT_PACK):
     if pack not in list_packs():
         raise HTTPException(404, f"unknown pack {pack}")
     return erase_customer(pack, phone)
+
+
+# ── a customer's own data-rights requests (DPDP) ───────────────────────────
+# The customer proves the number with a WhatsApp code. A copy of their data
+# comes back at once; an erasure waits for the owner's yes in Settings (the
+# shop may have to keep a booking record), and its log keeps only a keyed
+# hash of the number and what was removed.
+class PrivacyAsk(BaseModel):
+    pack: str = DEFAULT_PACK
+    phone: str = Field(min_length=10, max_length=20)
+
+
+class PrivacyProve(PrivacyAsk):
+    code: str = Field(min_length=4, max_length=8)
+    kind: Literal["export", "erase"]
+
+
+class PrivacyDecision(BaseModel):
+    approve: bool
+
+
+def _privacy_pack(pack: str) -> None:
+    if pack not in list_packs():
+        raise HTTPException(404, f"unknown pack {pack}")
+
+
+@app.post("/api/privacy/request")
+async def privacy_request_code(body: PrivacyAsk):
+    _privacy_pack(body.pack)
+    phone = _customer_phone(body.phone)
+    if len(phone) < 10:
+        raise HTTPException(422, "a 10-digit mobile number")
+    try:
+        code = auth.issue_otp(phone)
+    except OtpThrottled as exc:
+        raise HTTPException(429, str(exc), headers={"Retry-After": "900"})
+    name = runtime(body.pack).pack.persona.business_name
+    if wa_channel.configured():
+        ok = await wa_channel.send_template(
+            phone, "otp", [code],
+            fallback_text=f"{name}: your data request code is {code}. It works for 5 minutes. Do not share it.")
+        if ok is False:
+            raise HTTPException(503, "could not deliver the code on WhatsApp; try again in a minute")
+        return {"sent": True, "channel": "whatsapp"}
+    if not IS_PUBLIC or AUTH_DEV:
+        return {"sent": True, "channel": "dev", "dev_code": code}
+    raise HTTPException(503, "no way to deliver the code: this server has no WhatsApp number connected")
+
+
+@app.post("/api/privacy/request/verify")
+async def privacy_request_verify(body: PrivacyProve):
+    _privacy_pack(body.pack)
+    phone = _customer_phone(body.phone)
+    if not auth.check_otp(phone, body.code):
+        raise HTTPException(401, "wrong or expired code")
+    subject = vault.subject(phone, body.pack) or ""
+    if body.kind == "export":
+        record = customer_record(body.pack, phone)
+        counts = {k: (len(v) if isinstance(v, list) else v) for k, v in record.items() if isinstance(v, (list, int))}
+        store.add_privacy_request(body.pack, subject, phone, _mask(phone) or "", "export", "DONE", counts)
+        return {"kind": "export", "record": record}
+    req = store.add_privacy_request(body.pack, subject, phone, _mask(phone) or "", "erase", "PENDING")
+    publish("privacy.requested", pack=body.pack, request="erase", phone=_mask(phone))
+    return {"kind": "erase", "request": req}
+
+
+@app.get("/api/privacy/requests")
+async def privacy_requests(pack: str = DEFAULT_PACK):
+    _privacy_pack(pack)
+    return {"pack": pack, "requests": store.privacy_requests(pack)}
+
+
+@app.post("/api/privacy/requests/{request_id}")
+async def privacy_decide(request_id: str, body: PrivacyDecision, pack: str = DEFAULT_PACK):
+    _privacy_pack(pack)
+    req = store.privacy_request(pack, request_id, with_phone=True)
+    if req is None:
+        raise HTTPException(404, "no such request")
+    if req["status"] != "PENDING" or not req.get("phone"):
+        raise HTTPException(409, f"this request is already {req['status'].lower()}")
+    if body.approve:
+        store.decide_privacy_request(pack, request_id, "ERASED", erase_customer(pack, req["phone"]))
+    else:
+        store.decide_privacy_request(pack, request_id, "REJECTED")
+    return store.privacy_request(pack, request_id)
+
+
+PROTECTED.append(("GET", re.compile(r"^/api/privacy/requests$"), "owner"))
+PROTECTED.append(("POST", re.compile(r"^/api/privacy/requests/[^/]+$"), "owner"))
+DEMO_LOCKED.append(("POST", re.compile(r"^/api/privacy/requests/[^/]+$")))
 
 
 @app.get("/api/receipts/{code}/open")
@@ -2299,6 +2594,11 @@ async def transparency_page():
 @app.get("/privacy")
 async def privacy_page():
     return _page("privacy.html")
+
+
+@app.get("/my-data")
+async def my_data_page():
+    return _page("mydata.html")
 
 
 @app.get("/design")

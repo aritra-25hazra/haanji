@@ -20,6 +20,16 @@ export interface Status {
   sales_whatsapp?: string | null;
 }
 
+export interface PrivacyRequest {
+  request_id: string;
+  kind: "export" | "erase" | string;
+  status: "DONE" | "PENDING" | "ERASED" | "REJECTED" | string;
+  shown: string;
+  requested_at: string;
+  decided_at: string | null;
+  result: Record<string, number | boolean>;
+}
+
 export type Role = "owner" | "staff";
 
 export interface User {
@@ -303,6 +313,8 @@ export interface Settings {
   waitlist_on: boolean;
   digest_hour_ist: number;
   language_script: "latin" | "devanagari" | string;
+  /** The language of the owner's evening digest. */
+  owner_language?: "hi" | "en" | string;
   receptionist_monthly_inr?: number;
   receptionist_calls_per_month?: number;
 }

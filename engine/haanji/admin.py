@@ -304,6 +304,10 @@ button{{font:inherit;padding:.8rem 1.4rem;border:0;border-radius:.6rem;backgroun
             raise HTTPException(409, "backups are downloadable only with HAANJI_AUTH=on; use `haanji backup` on the host")
         if not _is_owner(request, deps):
             raise HTTPException(403, "owner role needed")
+        from .db import database_url
+        if database_url():
+            raise HTTPException(409, "the records live in PostgreSQL (HAANJI_DATABASE_URL): back them up with the "
+                                     "database host (pg_dump or its snapshots); keep HAANJI_VAULT_SECRET with them")
         data = backup_mod.make_backup(deps.var_dir)
         return Response(data, media_type="application/gzip",
                         headers={"Content-Disposition": f'attachment; filename="{backup_mod.backup_name()}"'})

@@ -68,7 +68,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setStatus(s);
       setChecked(true);
       if (s?.auth?.enabled && getToken()) {
-        try { const me = await engine.me(); setUser(me.user); } catch { setUser(null); }
+        try {
+          const me = await engine.me();
+          setUser(me.user);
+          // A device in use keeps its sign-in: the engine renews a token older than a week.
+          engine.refreshToken().then((r) => { if (r.token && r.token !== getToken()) setToken(r.token); }).catch(() => undefined);
+        } catch { setUser(null); }
       } else {
         setUser(null);
       }

@@ -273,7 +273,7 @@ function build(p: PackInfo, now: Date): Shop {
         calls.push(finish(`sample-${p.pack_id}-o${i}`, channelOf(), person.phone, at, "HANDED_OFF", turns, []));
         continue;
       }
-      turns = [turn(`mujhe ${p.staff_role} se seedha baat karni hai`, "Zaroor. Main aapki baat staff tak pahuncha deta hoon; woh aapko call karenge.", { tools: ["handoff"], guard: "handoff.request" })];
+      turns = [turn("mujhe kisi insaan se baat karni hai", "Zaroor. Main aapki baat staff tak pahuncha deta hoon; woh aapko call karenge.", { tools: ["handoff"], guard: "handoff.request" })];
     } else if (outcome === "REFUSED") {
       turns = [turn("koi discount mil jayega kya", p.refusal_line, { guard: "never_quote_outside_catalogue" })];
     } else {
