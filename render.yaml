@@ -39,7 +39,7 @@ services:
       - key: HAANJI_HELP_CLAUDE_MODEL
         value: claude-opus-4-8
       - key: HAANJI_HELP_GEMINI_MODEL
-        value: gemini-3.8-flash
+        value: gemini-3.5-flash-lite
       - key: HAANJI_HELP_DAILY_LIMIT
         value: "100"
       - key: HAANJI_PROVIDER_TTS

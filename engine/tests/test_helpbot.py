@@ -134,4 +134,5 @@ def test_gemini_is_asked_to_think_briefly():
     b._http = FakeHttp()
     ask(b, "hi", provider="gemini")
     body = b._http.seen[0][1]
-    assert body["generationConfig"]["thinkingConfig"] == {"thinkingLevel": "low"}
+    assert body["generationConfig"]["thinkingConfig"] == {"thinkingLevel": "MINIMAL"}
+    assert hb._thinking("gemini-3.8-flash") == "LOW"
