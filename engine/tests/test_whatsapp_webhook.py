@@ -126,3 +126,24 @@ def test_extract_incoming_yields_ids_senders_and_text():
     assert wa.verify_signature("s", b"body", sign("s", b"body")) is True
     assert wa.verify_signature("s", b"body", "sha256=00") is False
     assert wa.verify_signature("s", b"body", None) is False
+
+
+def test_a_refused_send_is_described_for_the_operator_without_the_token(monkeypatch):
+    import asyncio
+    from types import SimpleNamespace
+    from haanji.channels import whatsapp as wa
+    monkeypatch.setenv("HAANJI_WA_TOKEN", "EAAG-secret-token"); monkeypatch.setenv("HAANJI_WA_PHONE_ID", "123")
+    monkeypatch.setattr(wa, "LAST_SEND", {})
+    meta = '{"error":{"message":"(#131030) Recipient phone number not in allowed list","type":"OAuthException","code":131030}}'
+
+    class Client:
+        def __init__(self, **kw): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *a): return False
+        async def post(self, url, headers, json): return SimpleNamespace(status_code=400, text=meta)
+
+    monkeypatch.setattr("httpx.AsyncClient", Client)
+    assert asyncio.run(wa.send_text("919811101499", "hi")) is False
+    last = wa.status()["last_send"]["error"]
+    assert last["status"] == 400 and last["code"] == 131030 and "allowed list" in last["message"]
+    assert last["to"] == "…1499" and "EAAG" not in str(wa.status())

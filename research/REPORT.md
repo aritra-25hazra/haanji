@@ -540,7 +540,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 678 tests, about 6 s
+pytest -q                                   # 679 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -588,7 +588,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (678 tests)
+## Appendix C. Test inventory (679 tests)
 
 | file | tests | what it guards |
 |---|---|---|
@@ -608,7 +608,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_phase_g2.py | 12 | reminders, deposits, the waitlist, the console's calendar and settings, backups, the audio hash in a receipt |
 | test_phase_g3.py | 6 | the second review: a read-only public demo, a body cap that counts bytes, a cancellation the customer hears about, privacy defaults |
 | test_claude_adapter.py | 10 | the hosted-model adapter and its confirmation gate |
-| test_whatsapp_webhook.py | 9 | Meta signature, dedup, handshake |
+| test_whatsapp_webhook.py | 10 | Meta signature, dedup, handshake; a refused send is described for the operator without the token |
 | test_auth.py | 9 | one-time codes over WhatsApp, signed scoped tokens, roles, per-pack scope, lockout |
 | test_research_kit.py | 8 | the recording page, the study page, scoring of real recogniser pairs |
 | test_trust.py | 6 | receipt links in replies, daily anchors and their signatures, the owner's digest |

@@ -16,9 +16,11 @@ the simulator uses.
 from __future__ import annotations
 import hashlib
 import hmac
+import json
 import logging
 import os
-from typing import Iterator
+import time
+from typing import Any, Iterator
 
 GRAPH = "https://graph.facebook.com/v20.0"
 log = logging.getLogger(__name__)
@@ -28,14 +30,38 @@ def configured() -> bool:
     return bool(os.environ.get("HAANJI_WA_TOKEN") and os.environ.get("HAANJI_WA_PHONE_ID"))
 
 
+# The last time Meta refused a send, for the operator: when, to whom (last
+# four digits), the HTTP status and Meta's own error code and message. The
+# access token never appears in Meta's error, and is never stored here.
+LAST_SEND: dict[str, Any] = {}
+
+
+def _remember(to: str, ok: bool, status_code: int | None = None, body: str = "") -> None:
+    if ok:
+        LAST_SEND.update({"ok_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
+        return
+    code = message = None
+    try:
+        err = (json.loads(body) or {}).get("error") or {}
+        code, message = err.get("code"), err.get("message")
+    except (ValueError, AttributeError):
+        message = body[:160] or None
+    LAST_SEND["error"] = {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "to": "…" + to[-4:],
+                          "status": status_code, "code": code, "message": (message or "")[:200]}
+
+
 def status() -> dict:
-    """What the UI shows: whether a real number is connected, and which."""
+    """What the UI shows: whether a real number is connected, and which, and
+    (for the operator) the last send that Meta refused."""
     if not configured():
         return {"configured": False, "number": None}
     shown = os.environ.get("HAANJI_WA_DISPLAY_NUMBER")
     if not shown:
         shown = "…" + os.environ.get("HAANJI_WA_PHONE_ID", "")[-4:]
-    return {"configured": True, "number": shown}
+    out: dict[str, Any] = {"configured": True, "number": shown}
+    if LAST_SEND:
+        out["last_send"] = dict(LAST_SEND)
+    return out
 
 
 def extract_incoming(payload: dict) -> Iterator[tuple[str, str, str]]:
@@ -67,10 +93,13 @@ async def _post(body: dict) -> bool:
                 json={"messaging_product": "whatsapp", **body})
             if r.status_code >= 400:
                 log.warning("whatsapp send to …%s failed: %s %s", to[-4:], r.status_code, r.text[:200])
+                _remember(to, False, r.status_code, r.text)
                 return False
+            _remember(to, True)
             return True
     except Exception as e:                       # noqa: BLE001 — see send_text
         log.warning("whatsapp send to …%s failed: %s", to[-4:], e)
+        _remember(to, False, None, type(e).__name__)
         return False
 
 
