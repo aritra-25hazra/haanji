@@ -35,7 +35,7 @@ class FakeHttp:
     async def post(self, url, json, headers):
         self.seen.append((url, json, headers))
         text = self.text
-        return types.SimpleNamespace(raise_for_status=lambda: None,
+        return types.SimpleNamespace(raise_for_status=lambda: None, status_code=200, text="",
                                      json=lambda: {"candidates": [{"content": {"parts": [{"text": text}]}}],
                                                    "usageMetadata": {"promptTokenCount": 800, "candidatesTokenCount": 30}})
 
@@ -108,3 +108,30 @@ def test_the_engine_quotes_the_benchmark_from_its_own_results_file():
     from haanji import server
     text = server._measured_summary()
     assert "Bhasha" in text and "Pramaan" in text and "ms" in text
+
+
+def test_a_vendor_failure_is_described_for_the_operator_without_the_key():
+    class Denied(Exception):
+        status_code = 401
+        body = {"error": {"type": "authentication_error", "message": "invalid x-api-key sk-ant-api03-abcdefSECRET"}}
+
+    class Failing(FakeClaude):
+        async def create(self, **kw):
+            raise Denied("no")
+
+    b = bot(claude_key="sk-ant-api03-abcdefSECRET")
+    b._claude = Failing()
+    assert ask(b, "what is pramaan?")["provider"] == "faq"
+    err = b.status()["last_error"]["claude"]
+    assert "401" in err and "authentication_error" in err and "SECRET" not in err and "[key]" in err
+    b._claude = FakeClaude()
+    ask(b, "what is pramaan?")
+    assert "claude" not in b.status()["last_error"], "a success clears the error"
+
+
+def test_gemini_is_asked_to_think_briefly():
+    b = bot(gemini_key="g")
+    b._http = FakeHttp()
+    ask(b, "hi", provider="gemini")
+    body = b._http.seen[0][1]
+    assert body["generationConfig"]["thinkingConfig"] == {"thinkingLevel": "low"}

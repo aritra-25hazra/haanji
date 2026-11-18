@@ -3,7 +3,11 @@
 [![ci](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml)
 [![engine](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-engine.onrender.com%2Fapi%2Fstatus&label=engine&up_message=live&down_message=waking)](https://haanji-engine.onrender.com)
 [![console](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-kappa.vercel.app&label=console&up_message=live)](https://haanji-kappa.vercel.app)
-![tests](https://img.shields.io/badge/tests-647%20passing-1F6B45)
+<<<<<<< HEAD
+![tests](https://img.shields.io/badge/tests-649%20passing-1F6B45)
+=======
+![tests](https://img.shields.io/badge/tests-649%20passing-1F6B45)
+>>>>>>> origin/main
 [![security](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/aritra-25hazra/haanji?quickstart=1)
 ![licence](https://img.shields.io/badge/licence-Apache--2.0-1B3B8C)
@@ -88,7 +92,11 @@ pip install -e ".[dev]"
 
 python -m haanji.cli demo          # one narrated call, at real speaking speed
 python -m haanji.cli selftest      # all 44 packaged scenarios, all ten packs
-pytest -q                          # 647 tests
+<<<<<<< HEAD
+pytest -q                          # 649 tests
+=======
+pytest -q                          # 649 tests
+>>>>>>> origin/main
 python -m haanji.bench             # regenerates research/results.json
 ```
 
@@ -184,7 +192,11 @@ PRAMAAN LEDGER
 │   │   ├── insights.py      outcome/revenue/cost analytics behind /api/insights
 │   │   ├── bench.py         the evaluation harness that produces every number
 │   │   └── cli.py           demo · selftest · bench · verify · serve · packs
-│   └── tests/               647 tests, including the safety properties and the demo pages
+<<<<<<< HEAD
+│   └── tests/               649 tests, including the safety properties and the demo pages
+=======
+│   └── tests/               649 tests, including the safety properties and the demo pages
+>>>>>>> origin/main
 │   │   ├── admin.py         the console's operations: calendar, customers, settings, waitlist, payments, backup
 │   │   ├── reminders.py     the day-before WhatsApp reminder and the "1 / 2" replies
 │   │   ├── payments.py      deposit links (Razorpay, or this server's mock), the signed webhook
@@ -591,7 +603,11 @@ keeps the free instance warm; delete
 
 A project report should say what was verified and what was not.
 
+<<<<<<< HEAD
 * **The Python engine is fully executed here.** 647 tests, 44 scenarios across
+=======
+* **The Python engine is fully executed here.** 634 tests, 44 scenarios across
+>>>>>>> origin/main
   ten packs and seven languages, and the entire benchmark run on this
   machine. Every number in this README comes from that run.
 * **The React console builds here.** `npm run build` type-checks the whole
