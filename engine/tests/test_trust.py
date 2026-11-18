@@ -23,7 +23,7 @@ def client(tmp_path, monkeypatch):
 def sent(monkeypatch):
     out: list[tuple[str, str]] = []
 
-    async def fake_send(to: str, text: str) -> None:
+    async def fake_send(to: str, text: str, phone_id: str | None = None) -> None:
         out.append((to, text))
 
     monkeypatch.setattr(wa, "send_text", fake_send)

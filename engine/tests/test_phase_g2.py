@@ -42,7 +42,7 @@ def client(monkeypatch):
 def sent(monkeypatch):
     out = []
 
-    async def fake_text(to, text):
+    async def fake_text(to, text, phone_id=None):
         out.append((to, text))
         return True
 

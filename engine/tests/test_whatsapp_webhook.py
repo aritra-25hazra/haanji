@@ -40,13 +40,19 @@ def client():
 
 @pytest.fixture
 def sent(monkeypatch):
-    out: list[tuple[str, str]] = []
+    class Sent(list):                      # the (to, text) pairs, plus the number each was sent from
+        froms: list
 
-    async def fake_send(to: str, text: str) -> None:
+    out = Sent()
+    froms: list[str | None] = []
+
+    async def fake_send(to: str, text: str, phone_id: str | None = None) -> None:
         out.append((to, text))
+        froms.append(phone_id)
 
     monkeypatch.setattr(wa, "send_text", fake_send)
     server._wa_seen.clear()
+    out.froms = froms
     return out
 
 
@@ -147,3 +153,20 @@ def test_a_refused_send_is_described_for_the_operator_without_the_token(monkeypa
     last = wa.status()["last_send"]["error"]
     assert last["status"] == 400 and last["code"] == 131030 and "allowed list" in last["message"]
     assert last["to"] == "…1499" and "EAAG" not in str(wa.status())
+
+
+def test_the_reply_goes_from_the_number_the_customer_wrote_to(sent, monkeypatch):
+    """A test number's allowed-recipient list belongs to that number: replying
+    from a different HAANJI_WA_PHONE_ID got Meta's 131030 'not in allowed list'."""
+    from fastapi.testclient import TestClient
+    monkeypatch.delenv("HAANJI_WA_APP_SECRET", raising=False)
+    monkeypatch.setattr(server, "IS_PUBLIC", False)
+    monkeypatch.setenv("HAANJI_WA_PHONE_ID", "999000111")
+    monkeypatch.setattr(wa, "LAST_SEND", {})
+    body = {"entry": [{"changes": [{"value": {"metadata": {"phone_number_id": "555000222"},
+                                              "messages": [{"id": "wamid.pid1", "from": "919811101499", "type": "text",
+                                                            "text": {"body": "clinic kab khulta hai"}}]}}]}]}
+    r = TestClient(server.app).post("/wa/webhook", json=body)
+    assert r.json()["handled"] == 1 and sent and set(sent.froms) == {"555000222"}
+    assert sent[0][0] == "919811101499", "to the number exactly as Meta gave it, country code included"
+    assert wa.LAST_SEND["incoming_on"] == "…0222" and wa.LAST_SEND["incoming_matches_config"] is False

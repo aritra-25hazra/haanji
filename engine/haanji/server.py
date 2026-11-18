@@ -1086,6 +1086,8 @@ async def wa_webhook(request: Request):
         raise HTTPException(400, "not json")
     pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
     handled = 0
+    to_number = wa_channel.receiving_phone_id(payload)        # reply from the number they wrote to
+    wa_channel.note_incoming(to_number)
     for msg_id, phone, text in wa_channel.extract_incoming(payload):
         if msg_id and msg_id in _wa_seen:
             continue
@@ -1093,7 +1095,7 @@ async def wa_webhook(request: Request):
             _wa_seen.append(msg_id)
         replies = await _wa_turn(pack, phone[-10:], text, verified=True)   # Meta vouches for the sender
         for r in replies:
-            await wa_channel.send_text(phone, r["text"])
+            await wa_channel.send_text(phone, r["text"], phone_id=to_number)
         handled += 1
     return {"ok": True, "handled": handled}
 

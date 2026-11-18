@@ -82,13 +82,33 @@ def verify_signature(secret: str, raw: bytes, header: str | None) -> bool:
     return hmac.compare_digest(expected, header[len("sha256="):])
 
 
-async def _post(body: dict) -> bool:
+def receiving_phone_id(payload: dict) -> str | None:
+    """The phone number id the customer wrote to (``metadata.phone_number_id``
+    in the delivery). Replying from that number, not from whatever
+    HAANJI_WA_PHONE_ID says, is what keeps a reply in the same chat: a test
+    number's allowed-recipient list belongs to that number."""
+    for entry in payload.get("entry", []) or []:
+        for change in entry.get("changes", []) or []:
+            pid = ((change.get("value", {}) or {}).get("metadata", {}) or {}).get("phone_number_id")
+            if pid:
+                return str(pid)
+    return None
+
+
+def note_incoming(phone_id: str | None) -> None:
+    """For the operator: whether deliveries arrive on the configured number."""
+    if phone_id:
+        LAST_SEND["incoming_on"] = "…" + phone_id[-4:]
+        LAST_SEND["incoming_matches_config"] = phone_id == os.environ.get("HAANJI_WA_PHONE_ID", "")
+
+
+async def _post(body: dict, phone_id: str | None = None) -> bool:
     import httpx
     to = str(body.get("to", ""))
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             r = await client.post(
-                f"{GRAPH}/{os.environ['HAANJI_WA_PHONE_ID']}/messages",
+                f"{GRAPH}/{phone_id or os.environ['HAANJI_WA_PHONE_ID']}/messages",
                 headers={"Authorization": f"Bearer {os.environ['HAANJI_WA_TOKEN']}"},
                 json={"messaging_product": "whatsapp", **body})
             if r.status_code >= 400:
@@ -103,7 +123,7 @@ async def _post(body: dict) -> bool:
         return False
 
 
-async def send_text(to: str, text: str) -> bool:
+async def send_text(to: str, text: str, phone_id: str | None = None) -> bool:
     """Send one free-form text message. Failures are logged and reported as
     False, never raised: the webhook must still answer Meta with a 200 or
     the delivery is retried.
@@ -113,7 +133,7 @@ async def send_text(to: str, text: str) -> bool:
     evening digest) use :func:`send_template`."""
     if not configured():
         return False
-    return await _post({"to": to, "type": "text", "text": {"body": text}})
+    return await _post({"to": to, "type": "text", "text": {"body": text}}, phone_id)
 
 
 def template_name(kind: str) -> str | None:
