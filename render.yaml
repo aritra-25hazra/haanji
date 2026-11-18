@@ -62,6 +62,13 @@ services:
       #                              approved Meta template names (needed outside the 24-hour window)
       # Behind Render's proxy X-Forwarded-* is trusted (HAANJI_TRUST_PROXY=1,
       # the default; RENDER is set so uvicorn honours the forwarded scheme).
+      # Records that survive a redeploy (docs/operations.md, "PostgreSQL"):
+      # a free Postgres (Neon, Supabase...) URL, and the vault secret that opens
+      # every receipt key -- the engine refuses to start without it in this mode.
+      - key: HAANJI_DATABASE_URL
+        sync: false
+      - key: HAANJI_VAULT_SECRET
+        sync: false
       - key: HAANJI_LEDGER_KEY_SECRET
         sync: false
       - key: HAANJI_METRICS_TOKEN
