@@ -2607,7 +2607,8 @@ async def status():
             "whatsapp": wa_channel.status(),
             # Who answers calls, and where the records live, in words an owner can be told.
             "dialogue": dialogue_status(),
-            "storage": "postgres" if db.database_url() else "local"}
+            "storage": "postgres" if db.database_url() else "local",
+            **({"storage_error": dict(db.LAST_ERROR)} if db.LAST_ERROR else {})}
 
 
 def dialogue_status() -> dict[str, Any]:

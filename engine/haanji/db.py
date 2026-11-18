@@ -30,6 +30,9 @@ import threading
 from typing import Any, Iterator, Sequence
 
 URL_ENV = ("HAANJI_DATABASE_URL", "DATABASE_URL")
+# The last database failure, for the operator: its kind and SQLSTATE, never
+# its text (which can quote data). /api/status shows it.
+LAST_ERROR: dict[str, Any] = {}
 
 
 def database_url() -> str | None:
@@ -178,6 +181,13 @@ def _param(v: Any) -> Any:
     return v
 
 
+def _note(exc: Exception) -> None:
+    import time as _time
+    LAST_ERROR.clear()
+    LAST_ERROR.update({"type": type(exc).__name__, "sqlstate": getattr(exc, "sqlstate", None),
+                       "at": _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())})
+
+
 class PgRow(tuple):
     """A row that answers by position and by column name, like sqlite3.Row."""
 
@@ -224,21 +234,44 @@ class PgConnection:
         import psycopg  # the optional [postgres] extra
         self._psycopg = psycopg
         self.schema = schema
-        self._conn = psycopg.connect(url, autocommit=False)
+        self._url = url
         self._lock = threading.RLock()
         self._depth = 0                                    # `with conn:` nesting
         self._tables: dict[str, tuple[list[str], list[str]]] = {}
         self.row_factory = None                            # accepted and ignored: rows are always PgRow
-        with self._conn.cursor() as cur:
-            cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
-            cur.execute(f'SET search_path TO "{schema}"')
-        self._conn.commit()
+        self._conn = self._open()
+
+    def _open(self):
+        """A fresh connection. Prepared statements are off and the schema is
+        set per transaction (SET LOCAL), so a transaction-mode pooler (Neon's
+        "-pooler" host) works as well as a direct connection."""
+        conn = self._psycopg.connect(self._url, autocommit=False, prepare_threshold=None)
+        with conn.cursor() as cur:
+            cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{self.schema}"')
+            cur.execute(f'SET search_path TO "{self.schema}"')
+        conn.commit()
+        return conn
+
+    def _usable(self) -> None:
+        """Reopen a connection the server dropped (a serverless database that
+        went to sleep, a network blip) before the next transaction starts."""
+        if self._conn.closed or self._conn.broken:
+            try:
+                self._conn.close()
+            except Exception:                              # noqa: BLE001 - already gone
+                pass
+            self._conn = self._open()
+
+    def _idle(self) -> bool:
+        return self._conn.info.transaction_status == self._psycopg.pq.TransactionStatus.IDLE
 
     # -------------------------------------------------------------- dialect
     def _columns(self, table: str) -> tuple[list[str], list[str]]:
         """(every column in order, the primary key's columns) of a table."""
         if table not in self._tables:
             with self._conn.cursor() as cur:
+                if self._idle():
+                    cur.execute(f'SET LOCAL search_path TO "{self.schema}"')
                 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_schema=%s AND table_name=%s"
                             " ORDER BY ordinal_position", (self.schema, table.lower()))
                 cols = [r[0] for r in cur.fetchall()]
@@ -284,25 +317,50 @@ class PgConnection:
             named = isinstance(params, dict)
             args: Any = ({k: _param(v) for k, v in params.items()} if named else [_param(v) for v in params]) if params else None
             text = _placeholders(text, named) if args else text
-            with self._conn.cursor() as cur:
-                cur.execute("SAVEPOINT haanji_stmt")
+            reading = bool(re.match(r"^\s*(SELECT|WITH)\b", sql, re.I))
+            for attempt in (1, 2):
+                if self._depth == 0 or attempt == 2:
+                    self._usable()
+                starts = self._idle()                       # this statement opens a transaction
                 try:
-                    cur.execute(text, args)
-                except self._psycopg.errors.IntegrityError as exc:
-                    cur.execute("ROLLBACK TO SAVEPOINT haanji_stmt")
-                    raise sqlite3.IntegrityError(str(exc)) from exc
-                except self._psycopg.Error:
-                    cur.execute("ROLLBACK TO SAVEPOINT haanji_stmt")
-                    raise
-                rows: list[PgRow] = []
-                if cur.description:
-                    names = [d.name for d in cur.description]
-                    rows = [PgRow(r, names) for r in cur.fetchall()]
-                count = cur.rowcount
-                cur.execute("RELEASE SAVEPOINT haanji_stmt")
+                    rows, count = self._run(text, args, starts)
+                    break
+                except self._psycopg.OperationalError as exc:
+                    _note(exc)
+                    # A dropped connection at the start of a transaction loses
+                    # nothing: reconnect and try once more. Inside one, the
+                    # caller's earlier statements are gone, so it must fail.
+                    if attempt == 2 or not starts or self._depth > 0 or not (self._conn.closed or self._conn.broken):
+                        raise
+            if reading and starts and self._depth == 0:
+                self._conn.commit()                         # a lone read ends its transaction, as in SQLite
             if _DDL.match(sql):
                 self._tables.clear()
             return PgCursor(rows, count)
+
+    def _run(self, text: str, args: Any, starts: bool) -> tuple[list[PgRow], int]:
+        with self._conn.cursor() as cur:
+            if starts:
+                cur.execute(f'SET LOCAL search_path TO "{self.schema}"')
+            cur.execute("SAVEPOINT haanji_stmt")
+            try:
+                cur.execute(text, args)
+            except self._psycopg.errors.IntegrityError as exc:
+                cur.execute("ROLLBACK TO SAVEPOINT haanji_stmt")
+                raise sqlite3.IntegrityError(str(exc)) from exc
+            except self._psycopg.OperationalError:
+                raise                                       # the connection itself is in doubt
+            except self._psycopg.Error as exc:
+                _note(exc)
+                cur.execute("ROLLBACK TO SAVEPOINT haanji_stmt")
+                raise
+            rows: list[PgRow] = []
+            if cur.description:
+                names = [d.name for d in cur.description]
+                rows = [PgRow(r, names) for r in cur.fetchall()]
+            count = cur.rowcount
+            cur.execute("RELEASE SAVEPOINT haanji_stmt")
+        return rows, count
 
     def executemany(self, sql: str, seq: Sequence[Sequence[Any]]) -> PgCursor:
         total = 0
@@ -332,6 +390,8 @@ class PgConnection:
 
     def __enter__(self) -> "PgConnection":
         self._lock.acquire()
+        if self._depth == 0:
+            self._usable()
         self._depth += 1
         return self
 

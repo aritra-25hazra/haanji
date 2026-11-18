@@ -112,3 +112,44 @@ def test_a_sqlite_data_directory_moves_to_postgres_whole_and_the_chain_still_ver
     assert len(receipts) == 3 and verify_chain(receipts, lambda _k: public).ok
     assert db.copy_sqlite_dir(str(folder))["ledger-t.sqlite"]["receipts"] == (3, 3), "a re-run adds nothing twice"
     assert DemoStore(str(folder / "store.sqlite")).calls("t")[0]["call_id"] == "c1"
+
+
+@needs_pg
+def test_a_lone_read_leaves_no_transaction_open(tmp_path):
+    """A serverless database can only sleep, and a pooler can only reuse a
+    connection, when nothing sits 'idle in transaction'."""
+    conn = db.connect(str(tmp_path / "idle.sqlite"))
+    conn.execute("CREATE TABLE IF NOT EXISTS t (k TEXT PRIMARY KEY)")
+    conn.commit()
+    conn.execute("SELECT * FROM t").fetchall()
+    assert conn._idle()
+    with conn:
+        conn.execute("INSERT INTO t VALUES (?)", ("a",))
+        conn.execute("SELECT * FROM t").fetchall()
+        assert not conn._idle(), "inside a block the read is part of the write's transaction"
+    assert conn._idle()
+
+
+@needs_pg
+def test_a_connection_the_server_dropped_is_reopened(tmp_path):
+    """Neon's free plan suspends an idle database and drops its connections;
+    the next request must not fail with 'Internal Server Error'."""
+    import psycopg
+    conn = db.connect(str(tmp_path / "drop.sqlite"))
+    conn.execute("CREATE TABLE IF NOT EXISTS t (k TEXT PRIMARY KEY)")
+    conn.execute("INSERT INTO t VALUES (?)", ("kept",))
+    conn.commit()
+    with psycopg.connect(PG, autocommit=True) as admin:
+        admin.execute("SELECT pg_terminate_backend(%s)", (conn._conn.info.backend_pid,))
+    assert [r["k"] for r in conn.execute("SELECT k FROM t")] == ["kept"]
+
+
+@needs_pg
+def test_a_database_failure_is_recorded_by_kind_only(tmp_path):
+    import psycopg
+    conn = db.connect(str(tmp_path / "err.sqlite"))
+    with pytest.raises(psycopg.Error):
+        conn.execute("SELECT * FROM no_such_table WHERE secret = ?", ("hunter2",))
+    assert db.LAST_ERROR["type"] == "UndefinedTable" and db.LAST_ERROR["sqlstate"] == "42P01"
+    assert "hunter2" not in str(db.LAST_ERROR)
+    assert conn.execute("SELECT 1 AS one").fetchone()["one"] == 1, "the connection is still usable"
