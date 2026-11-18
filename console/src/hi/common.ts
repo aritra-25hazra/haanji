@@ -15,6 +15,7 @@ export default {
   "Yes": "Haan",
   "No": "Nahi",
   "Loading…": "Load ho raha hai…",
+  "{n} s": "{n} sec",
   "Show the transcript in Devanagari (approximate)": "Transcript Devanagari mein dikhao (approximate)",
   "Booked": "Booking hui",
   "Rescheduled": "Time badla",

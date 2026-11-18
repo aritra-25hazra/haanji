@@ -18,8 +18,8 @@ export default function CallDetail() {
   // Hooks before any early return: the transliteration table follows the data.
   const dev = useDevanagari(data ? parseTurns(data.turns_json).flatMap((x) => [x.heard, x.said]) : []);
 
-  if (!live && mode !== "demo") return <NotLive title={t("Call")} />;
-  if (loading && !data) return <Loading />;
+  if (!live && mode !== "demo") return <NotLive title={t("Call")} kind="call" />;
+  if (loading && !data) return <Loading kind="call" />;
   if (!data) {
     return (
       <Page title={t("Call")}>

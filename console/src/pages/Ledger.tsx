@@ -33,7 +33,7 @@ export default function Ledger() {
   // The real counter: writes the ledger refused for lacking a confirmation proof.
   const ops = useData(live ? () => engine.ops(pack) : null, [pack, mode]);
 
-  if (!live && mode !== "demo") return <NotLive title="Pramaan ledger" sub={t(SUB)} />;
+  if (!live && mode !== "demo") return <NotLive title="Pramaan ledger" sub={t(SUB)} kind="table" />;
   if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (

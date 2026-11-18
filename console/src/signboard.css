@@ -58,7 +58,7 @@ p { margin: 0; }
 .engine-menu ul a.active { background: rgba(245, 185, 30, .18); }
 .engine-menu ul a:focus-visible { outline-color: var(--cobalt); }
 .tools { display: flex; gap: 10px; align-items: center; margin-left: auto; flex: none; }
-.tools select { min-height: 40px; padding: 0 10px; border-radius: var(--r-ctl); border: 1.5px solid rgba(255, 247, 230, .35); background: var(--cobalt-deep); color: var(--chalk); max-width: 160px; }
+.tools select { min-height: 40px; padding: 0 10px; border-radius: var(--r-ctl); border: 1.5px solid rgba(255, 247, 230, .35); background: var(--cobalt-deep); color: var(--chalk); max-width: 190px; }
 .tools a { color: var(--chalk); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 10px; border-radius: var(--r-ctl); font-weight: 500; opacity: .9; }
 .tools a:hover { background: rgba(255, 247, 230, .08); }
 .live { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .06em; background: rgba(255, 247, 230, .12); color: var(--chalk); }
@@ -251,7 +251,10 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 .feed .session-started, .feed .session-ended { color: var(--ink-2); }
 
 /* sign in */
-.login { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--cobalt); }
+.login { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; background: var(--cobalt); }
+.login-mark { font-size: 30px; }
+.login-mark .dev { font-size: 26px; }
+.login-tag { margin: 0; max-width: 440px; text-align: center; color: var(--chalk); opacity: .85; font-size: 15px; }
 .login-card { width: min(440px, 100%); background: var(--paper); border-radius: var(--r-card); padding: 28px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--frame); }
 .login-card h1 { font-size: 28px; }
 .login-card .small { font-size: 14px; }
@@ -374,6 +377,21 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 .sk-row { display: grid; grid-template-columns: 1.2fr 1fr 1.4fr .8fr; gap: 16px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
 .sk-row .sk { height: 12px; }
 .sk-chart { height: 180px; border-radius: 8px; }
+.sk-tile-sm { height: 76px; }
+.sk-staff { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.sk-col { display: flex; flex-direction: column; gap: 10px; }
+.sk-col .sk-head { width: 40%; margin-bottom: 0; }
+.sk-card { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
+.sk-box { height: 48px; border-radius: 8px; }
+.sk-bubble { height: 38px; border-radius: 14px; }
+.sk-bubble-r { align-self: flex-end; }
+/* the cold start: what is happening, and for how long */
+.waking { display: flex; flex-direction: column; gap: 14px; }
+.waking-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0; padding: 12px 16px; border-radius: 10px; background: var(--paper); border: 1px solid var(--rule); color: var(--ink-2); font-size: 15px; }
+.waking-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--marigold); flex: none; animation: waking-pulse 1.2s ease-in-out infinite; }
+.waking-time { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+@keyframes waking-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .waking-dot { animation: none; } }
 @keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 @media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
 
@@ -483,6 +501,12 @@ dl.kv dd { margin: 0; }
 /* ── help assistant ───────────────────────────────────────────────────── */
 .help-fab { position: fixed; right: 16px; bottom: 16px; z-index: 40; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; padding: 10px 16px 10px 10px; background: var(--ink); color: var(--paper); font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 6px 20px rgba(20, 33, 61, .25); min-height: 44px; }
 .help-fab span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--marigold); color: var(--ink); font-weight: 800; }
+/* Below 1440px the page has no gutter wide enough for the label, so the
+   button shrinks to its "?" and stops covering the content's edge. */
+@media (max-width: 1439px) {
+  .help-fab { padding: 10px; }
+  .help-fab .help-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 .help-fab:focus-visible { outline: 3px solid var(--sindoor); outline-offset: 2px; }
 .help-chat { position: fixed; right: 16px; bottom: 72px; z-index: 41; width: min(380px, calc(100vw - 32px)); max-height: min(560px, calc(100vh - 96px)); display: grid; grid-template-rows: auto auto 1fr auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; box-shadow: 0 16px 48px rgba(20, 33, 61, .22); overflow: hidden; }
 .help-chat header { display: flex; justify-content: space-between; gap: 8px; padding: 14px 14px 8px; }

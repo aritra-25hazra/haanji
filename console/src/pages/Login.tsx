@@ -49,6 +49,7 @@ export default function Login() {
 
   return (
     <div className="login">
+      <a className="wordmark login-mark" href="/">HaanJi <span className="dev">हाँजी</span></a>
       <div className="login-card">
         <span className="eyebrow">{t("Receptionist console")}</span>
         <SplitText key={t("Sign in")} tag="h1" text={t("Sign in")} trigger="load" splitType="chars" effect="rise" textAlign="left" delay={35} duration={0.7} />
@@ -91,6 +92,7 @@ export default function Login() {
           <button className="btn btn-ghost btn-sm" type="button" onClick={tryDemo}>{t("Try the demo (no account)")}</button>
         </div>
       </div>
+      <p className="login-tag">{t("The receptionist that answers your shop's phone in Hinglish.")}</p>
     </div>
   );
 }

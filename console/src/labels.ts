@@ -26,6 +26,8 @@ export const packLabel = (pack: string) => {
   const p = NAMES.get(pack);
   return p ? `${p.business_name} · ${p.display_name}` : pack.replace(/_/g, " ");
 };
+/** The shop's own name alone, for the narrow switcher in the top bar. */
+export const packShort = (pack: string) => NAMES.get(pack)?.business_name ?? pack.replace(/_/g, " ");
 
 /** Meta's sandbox numbers are +1 555 …; never call one "asli". */
 export const isTestNumber = (n?: string | null) => !!n && /^\+?1[\s(]*555/.test(n.replace(/[^\d+(]/g, "").replace(/\(/g, ""));

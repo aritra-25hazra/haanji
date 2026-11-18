@@ -29,7 +29,7 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, [live, reload]);
 
-  if (!live && mode !== "demo") return <NotLive title={t("Today")} />;
+  if (!live && mode !== "demo") return <NotLive title={t("Today")} kind="dashboard" />;
   if (loading && !data) return <Loading kind="dashboard" />;
   if (!data) {
     return (

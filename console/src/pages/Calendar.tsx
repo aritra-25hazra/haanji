@@ -41,7 +41,7 @@ export default function Calendar() {
       : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode, from, to, filter]);
 
-  if (!live && mode !== "demo") return <NotLive title={t("Calendar")} sub={t("Every booking for the day or week, by staff.")} />;
+  if (!live && mode !== "demo") return <NotLive title={t("Calendar")} sub={t("Every booking for the day or week, by staff.")} kind="staff" />;
 
   const act = async (b: Booking, what: Action) => {
     if (!live) { setNote(t("This is a sample calendar; nothing changes here.")); return; }
@@ -82,7 +82,7 @@ export default function Calendar() {
       {note && <div className="banner" role="status"><Icon name="check" small />{note}</div>}
       <Panel title={view === "day" ? t("Day, by staff") : t("Week")} hint={data ? tn("{n} booking", "{n} bookings", data.length) : ""}
              actions={<button className="btn btn-ghost btn-sm" onClick={reload} disabled={loading}><Icon name="refresh" small />{t("Refresh")}</button>}>
-        {loading && !data ? <Loading />
+        {loading && !data ? <Loading kind={view === "day" ? "staff" : "panel"} />
           : !data ? <Empty>{t("Could not load: {error}", { error: error ?? "" })}<button className="btn btn-ghost btn-sm" onClick={reload}>{t("Try again")}</button></Empty>
           : view === "day"
             ? <DayGrid bookings={data} busy={busy} onAct={act} readOnly={readOnly} />

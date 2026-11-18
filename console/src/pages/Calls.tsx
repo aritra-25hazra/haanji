@@ -29,7 +29,7 @@ export default function Calls() {
       && (!digits || (c.phone ?? "").replace(/\D/g, "").includes(digits)));
   }, [data, outcome, channel, day, number]);
 
-  if (!live && mode !== "demo") return <NotLive title={t("Calls")} sub={t(SUB)} />;
+  if (!live && mode !== "demo") return <NotLive title={t("Calls")} sub={t(SUB)} kind="table" />;
   if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (

@@ -74,23 +74,39 @@ export function Page({ title, sub, actions, children }:
 
 /** What a page shows while it cannot read from the engine: a checking state
  *  first, then either the demo note or the offline note. */
-export function NotLive({ title, sub, demo }: { title: string; sub?: string; demo?: ReactNode }) {
+export function NotLive({ title, sub, demo, kind }: { title: string; sub?: string; demo?: ReactNode; kind?: SkeletonKind }) {
   const { mode } = useApp();
   useT();
   return (
     <Page title={title} sub={sub}>
-      {mode === "checking"
-        ? <Checking />
-        : mode === "demo"
-          ? <Empty>{demo ?? <p>{t("This page needs the live engine.")}</p>}</Empty>
-          : <Empty><p>{t("This page fills in as soon as the engine is back.")}</p></Empty>}
+      {mode === "demo"
+        ? <Empty>{demo ?? <p>{t("This page needs the live engine.")}</p>}</Empty>
+        : <Checking kind={kind} offline={mode !== "checking"} />}
     </Page>
   );
 }
 
-export function Checking() {
+/** The first thing a visitor sees while Render's free server wakes (30–60 s):
+ *  the shape of the page that is coming, and how long the wait has been. It
+ *  stays mounted from "checking" to "offline", so the count runs on. */
+export function Checking({ kind = "panel", offline = false }: { kind?: SkeletonKind; offline?: boolean }) {
   useT();
-  return <div className="loading" role="status" aria-live="polite">{t("Checking the engine… (the free server can take 30–60 seconds to wake up)")}</div>;
+  const [waited, setWaited] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setWaited((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="waking">
+      <p className="waking-note" role="status" aria-live="polite">
+        <span className="waking-dot" aria-hidden="true" />
+        <span>{offline ? t("This page fills in as soon as the engine is back.")
+                       : t("Checking the engine… (the free server can take 30–60 seconds to wake up)")}</span>
+        {waited >= 5 && <span className="waking-time" aria-hidden="true">{t("{n} s", { n: waited })}</span>}
+      </p>
+      <Loading kind={kind} head={false} announce={false} />
+    </div>
+  );
 }
 
 export function Panel({ title, hint, actions, children, id }:
@@ -254,23 +270,43 @@ export function Confirm({ text, yes = t("Yes"), no = t("No"), busy = false, onYe
 }
 
 export function Empty({ children }: { children: ReactNode }) { return <div className="empty">{children}</div>; }
+export type SkeletonKind = "panel" | "table" | "dashboard" | "staff" | "call";
+
 /** The shape of what is coming, not a word: tiles and panels for the day,
- *  rows for a register, lines for anything else. */
-export function Loading({ kind = "panel" }: { kind?: "panel" | "table" | "dashboard" }) {
-  const lines = (n: number) => Array.from({ length: n }, (_, i) => <span key={i} className="sk sk-line" style={{ width: `${88 - ((i * 17) % 40)}%` }} />);
-  return (
-    <div className={`skeleton skeleton-${kind}`} role="status" aria-live="polite">
-      <span className="sr-only">{t("Loading…")}</span>
-      <div aria-hidden="true">
-        <span className="sk sk-title" /><span className="sk sk-sub" />
-        {kind === "dashboard" && <div className="sk-tiles">{Array.from({ length: 6 }, (_, i) => <span key={i} className="sk sk-tile" />)}</div>}
+ *  rows for a register, lines for anything else. `staff` is the Calendar's
+ *  day (columns of booking cards, inside its own panel); `call` is one
+ *  conversation. */
+export function Loading({ kind = "panel", head = kind !== "staff", announce = true }:
+  { kind?: SkeletonKind; head?: boolean; announce?: boolean }) {
+  const range = (n: number) => Array.from({ length: n }, (_, i) => i);
+  const lines = (n: number) => range(n).map((i) => <span key={i} className="sk sk-line" style={{ width: `${88 - ((i * 17) % 40)}%` }} />);
+  const card = (i: number) => (
+    <div key={i} className="sk-card">
+      <span className="sk sk-line" style={{ width: "45%" }} /><span className="sk sk-line" style={{ width: "70%" }} />
+      <span className="sk sk-box" /><span className="sk sk-line" style={{ width: "55%" }} />
+    </div>
+  );
+  const body = kind === "staff"
+    ? <div className="sk-staff">{range(3).map((c) => <div key={c} className="sk-col"><span className="sk sk-head" />{range(c === 0 ? 2 : 1).map((i) => card(i))}</div>)}</div>
+    : <>
+        {kind === "dashboard" && <div className="sk-tiles">{range(6).map((i) => <span key={i} className="sk sk-tile" />)}</div>}
+        {kind === "call" && <div className="sk-tiles">{range(4).map((i) => <span key={i} className="sk sk-tile sk-tile-sm" />)}</div>}
         <div className="sk-panel">
           <span className="sk sk-head" />
           {kind === "table"
-            ? Array.from({ length: 6 }, (_, i) => <div key={i} className="sk-row"><span className="sk" /><span className="sk" /><span className="sk" /><span className="sk" /></div>)
-            : lines(kind === "dashboard" ? 3 : 4)}
+            ? range(6).map((i) => <div key={i} className="sk-row"><span className="sk" /><span className="sk" /><span className="sk" /><span className="sk" /></div>)
+            : kind === "call"
+              ? range(6).map((i) => <span key={i} className={`sk sk-bubble${i % 2 ? " sk-bubble-r" : ""}`} style={{ width: `${62 - ((i * 13) % 26)}%` }} />)
+              : lines(kind === "dashboard" ? 3 : 4)}
         </div>
         {kind === "dashboard" && <div className="sk-panel"><span className="sk sk-head" /><span className="sk sk-chart" /></div>}
+      </>;
+  return (
+    <div className={`skeleton skeleton-${kind}`} {...(announce ? { role: "status", "aria-live": "polite" as const } : {})}>
+      {announce && <span className="sr-only">{t("Loading…")}</span>}
+      <div aria-hidden="true">
+        {head && <><span className="sk sk-title" /><span className="sk sk-sub" /></>}
+        {body}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
-import { screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { STATUS_OPEN, down, mockEngine, never, renderApp } from "./mock";
 
 describe("sample data", () => {
@@ -32,6 +32,21 @@ describe("sample data", () => {
     expect(await screen.findByText(/Engine check ho raha hai/)).toBeInTheDocument();
     expect(screen.queryByTestId("sample-banner")).toBeNull();
     expect(screen.queryByText("98XXXXXX10")).toBeNull();
+  });
+
+  it("shows the shape of the coming page while the free server wakes, and how long it has been", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      mockEngine({ "api/status": never });
+      const { container } = renderApp("/dashboard");
+      await screen.findByText(/Engine check ho raha hai/);
+      expect(container.querySelectorAll(".sk-tile").length).toBe(6);
+      expect(screen.queryByText(/^\d+ sec$/)).toBeNull();
+      act(() => { vi.advanceTimersByTime(6000); });
+      expect(await screen.findByText(/^\d+ sec$/)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("shows the made-up shop on the Sample switch even with the engine up, and the real calls when it is off", async () => {

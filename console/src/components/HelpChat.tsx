@@ -50,7 +50,7 @@ export function HelpChat() {
   return (
     <>
       <button ref={button} type="button" className="help-fab" aria-expanded={open} aria-controls="help-chat" onClick={() => (open ? close() : setOpen(true))}>
-        <span aria-hidden="true">?</span>{t("Help")}
+        <span aria-hidden="true">?</span><b className="help-label">{t("Help")}</b>
       </button>
       {open && (
         <section id="help-chat" className="help-chat" role="dialog" aria-label={t("Help assistant")} onKeyDown={(e) => { if (e.key === "Escape") close(); }}>

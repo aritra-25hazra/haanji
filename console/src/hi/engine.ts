@@ -215,6 +215,7 @@ export default {
   "The code is sent.": "Code bheja gaya.",
   "The code is wrong or has expired. Ask for a new one.": "Code galat ya expire ho gaya. Dobara mangwao.",
   "Receptionist console": "Receptionist console",
+  "The receptionist that answers your shop's phone in Hinglish.": "Aapki dukaan ka phone Hinglish mein uthane wali receptionist.",
   "Sign in": "Sign in",
   "The WhatsApp number you are owner or staff with. No password: a one-time code comes to it.": "Jis WhatsApp number se aap owner ya staff hain, wahi number. Password nahi, ek baar ka code aata hai.",
   "Send the code": "Code bhejo",

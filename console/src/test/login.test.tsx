@@ -4,6 +4,14 @@ import { describe, expect, it } from "vitest";
 import { OWNER, STATUS_AUTH, fail, mockEngine, renderApp } from "./mock";
 
 describe("sign in", () => {
+  it("carries the HaanJi name and what it does, not a bare form", async () => {
+    mockEngine({ "api/status": () => STATUS_AUTH });
+    renderApp("/calls");
+    await screen.findByRole("heading", { name: "Sign in" });
+    expect(screen.getByRole("link", { name: /HaanJi/ })).toHaveAttribute("href", "/");
+    expect(screen.getByText(/Hinglish mein uthane wali receptionist/)).toBeInTheDocument();
+  });
+
   it("asks for a code, verifies it, stores the token and opens the console", async () => {
     const { calls } = mockEngine({
       "api/status": () => ({ ...STATUS_AUTH, whatsapp: { configured: true, number: "+91 98000 00000" } }),

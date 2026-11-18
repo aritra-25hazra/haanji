@@ -34,7 +34,7 @@ export default function Customers() {
   const { data, loading, error, reload } = useData(loader, [pack, mode, debounced]);
   const [open, setOpen] = useState<Customer | null>(null);
 
-  if (!live && mode !== "demo") return <NotLive title={t("Customers")} sub={t("Each number is one customer.")} />;
+  if (!live && mode !== "demo") return <NotLive title={t("Customers")} sub={t("Each number is one customer.")} kind="table" />;
 
   const search = (
     <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Search by name or number")}

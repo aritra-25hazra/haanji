@@ -91,6 +91,20 @@
   #empty { max-width: 60ch; margin-inline: auto; text-wrap: pretty; }
   .ebody p { text-wrap: pretty; }
   .engine header a { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; }
+  /* before the call the hint sits in the middle of the empty space, not at its top */
+  .transcript:has(> #empty:only-child) { display: flex; }
+  .transcript:has(> #empty:only-child) #empty { margin-block: auto; }
+  @media (max-width: 600px) {
+    /* a phone: the label over the lines, each line wraps instead of running off the edge */
+    .suggest { flex-direction: column; align-items: stretch; gap: 4px; padding-left: 0; }
+    .suggest-label { padding-left: 16px; }
+    .suggest ul { padding-left: 16px; }
+    .suggest li { flex: none; }
+    .say { white-space: normal; width: max-content; max-width: 78vw; text-align: left; padding-block: 8px; }
+    .bar { gap: 8px; padding-inline: 12px; }
+    .bar .wave { display: none; }
+    .mic.live + .wave { display: flex; }
+  }
 </style>
 </head>
 <body>
@@ -154,7 +168,7 @@
 <footer class="bar">
   <button type="button" class="mic" id="mic" aria-label="Mic: press to speak" data-hi-aria-label="Mic: bolne ke liye dabao" aria-pressed="false"><i data-icon="mic"></i></button>
   <div class="wave" id="wave" aria-hidden="true"></div>
-  <input class="input input-pill" id="text" placeholder="…or type here and press Enter" data-hi-placeholder="…ya yahan type karke Enter" aria-label="Message">
+  <input class="input input-pill" id="text" placeholder="…or type here" data-hi-placeholder="…ya yahan type karo" aria-label="Message">
   <button type="button" class="btn btn-primary btn-icon" id="send" aria-label="Send" data-hi-aria-label="Bhejo"><i data-icon="send"></i></button>
 </footer>
 
@@ -249,18 +263,14 @@
 
   // The lines to try: the pack's own booking scenario, turn by turn, exactly as
   // its recogniser "heard" them (misspellings included, so the repair shows).
-  // A server with sign-in on does not hand packs to strangers; then a generic
-  // Hinglish booking is offered instead.
+  // An older engine without that route gets a generic Hinglish booking instead.
   const FALLBACK_LINES = ["haan ji mujhe appointment chahiye", "kal subah ka time mil jayega", "haan ji wahi theek hai",
     "mera naam Vijay Sharma hai number 9876543210", "haan confirm kar do"];
   let lines = [], said = new Set();
   async function loadSuggest() {
     let got = null;
     try {
-      const d = await api("api/packs/" + encodeURIComponent($("pack").value));
-      const sc = (d.parsed && d.parsed.scenarios) || [];
-      const pick = sc.find(function (x) { return x.expect === "BOOKED"; }) || sc[0];
-      if (pick && pick.turns) got = pick.turns.map(function (t) { return t.heard; }).filter(Boolean);
+      got = (await api("api/packs/" + encodeURIComponent($("pack").value) + "/lines")).lines;
     } catch (e) { got = null; }
     lines = got && got.length ? got : FALLBACK_LINES;
     said = new Set();

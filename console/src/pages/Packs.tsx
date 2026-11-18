@@ -14,7 +14,7 @@ export default function Packs() {
   const loader = live ? () => engine.packs().then((r) => r.packs) : mode === "demo" ? () => Promise.resolve(sample.packs()) : null;
   const { data, loading, error, reload } = useData(loader, [mode]);
 
-  if (!live && mode !== "demo") return <NotLive title="Vertical packs" sub={t(SUB)} />;
+  if (!live && mode !== "demo") return <NotLive title="Vertical packs" sub={t(SUB)} kind="table" />;
   if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (

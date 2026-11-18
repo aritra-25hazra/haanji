@@ -5,7 +5,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { HelpChat } from "./components/HelpChat";
 import { MarketingBar, SiteFooter } from "./components/Marketing";
 import { AiChip, LangSwitch } from "./components/HeaderBits";
-import { packLabel } from "./labels";
+import { packLabel, packShort } from "./labels";
 import { en, t, useLang } from "./i18n";
 import { useApp, type Mode } from "./state";
 import Calendar from "./pages/Calendar";
@@ -122,7 +122,7 @@ export default function App() {
         </div>
         <div className="tools">
           <select aria-label="Pack" value={pack} onChange={(e) => setPack(e.target.value)}>
-            {packs.map((p) => <option key={p} value={p}>{packLabel(p)}</option>)}
+            {packs.map((p) => <option key={p} value={p} title={packLabel(p)}>{packShort(p)}</option>)}
           </select>
           <button type="button" className="sample-switch" aria-pressed={sampleView} onClick={() => setSampleView(!sampleView)}
                   title={sampleView ? t("Back to real data") : t("Show a made-up shop with 100 customers (for a demo)")}>

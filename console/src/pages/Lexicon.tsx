@@ -21,7 +21,7 @@ export default function Lexicon() {
   const loader = live ? () => engine.lexicon(pack, debounced || undefined) : mode === "demo" ? () => Promise.resolve(sample.lexicon(pack)) : null;
   const { data, loading, error, reload } = useData(loader, [pack, mode, debounced]);
 
-  if (!live && mode !== "demo") return <NotLive title="Bhasha lexicon" sub={t(SUB)} />;
+  if (!live && mode !== "demo") return <NotLive title="Bhasha lexicon" sub={t(SUB)} kind="table" />;
   if (loading && !data) return <Loading kind="table" />;
   if (!data) {
     return (

@@ -223,8 +223,10 @@ async def hardening(request: Request, call_next):
                             headers={"Retry-After": "60"})
     if AUTH_ENABLED and request.method != "OPTIONS":
         need = required_role(request)
+        who = principal_of(request) if need else None
+        if need and who is None and PUBLIC_SIMULATOR and SIMULATOR_ROUTES.match(path):
+            need = None                    # an anonymous visitor: the handler narrows what they see
         if need:
-            who = principal_of(request)
             if who is None:
                 TELEMETRY.inc("auth_denied_total", status="401")
                 return JSONResponse({"detail": "sign in first"}, status_code=401,
@@ -281,6 +283,14 @@ RETENTION_DAYS = int(os.environ.get("HAANJI_RETENTION_DAYS", "180"))
 # ─────────────────────────────────────────────────────────────── auth
 AUTH_ENABLED = os.environ.get("HAANJI_AUTH", "off").lower() in ("on", "1", "true", "yes")
 AUTH_DEV = os.environ.get("HAANJI_AUTH_DEV", "0").lower() in ("1", "true", "yes", "on")
+# A demo server (HAANJI_DEMO) with sign-in on still lets a stranger, say a
+# teacher with a phone, try the WhatsApp simulator. The stranger cannot list
+# the shop's threads and reads back only the chat they started, through a
+# signed visitor pass (_visitor_pass). A real shop leaves HAANJI_DEMO unset,
+# so its simulator stays behind sign-in. HAANJI_PUBLIC_SIMULATOR=0 closes it.
+PUBLIC_SIMULATOR = AUTH_ENABLED and os.environ.get(
+    "HAANJI_PUBLIC_SIMULATOR", "1" if DEMO_DATA else "0").lower() in ("1", "true", "yes", "on")
+SIMULATOR_ROUTES = re.compile(r"^/api/wa/(incoming|threads(/\d{10})?)$")
 # A public server with sign-in off is a demo for strangers: the console's
 # destructive operations (settings, cancelling bookings, users, pack saves,
 # erasure, backups) are refused there, and so are the two reads that hand a
@@ -1006,6 +1016,25 @@ class WaIn(BaseModel):
     pack: str = Field(default=DEFAULT_PACK, max_length=64)
     phone: str = Field(max_length=20)
     text: str = Field(max_length=4096)
+    visitor: str | None = Field(default=None, max_length=200)
+
+
+def _anonymous(request: Request) -> bool:
+    """A visitor the middleware let through without signing in (PUBLIC_SIMULATOR)."""
+    return AUTH_ENABLED and getattr(request.state, "user", None) is None
+
+
+def _visitor_pass(pack: str, phone: str, since: str) -> str:
+    sig = hmac.new(auth.secret, f"wa-visitor|{pack}|{phone}|{since}".encode(), hashlib.sha256).hexdigest()[:32]
+    return f"{since}~{sig}"
+
+
+def _visitor_since(pack: str, phone: str, token: str | None) -> str | None:
+    """When the chat this pass belongs to began, or None for a missing or forged pass."""
+    since, _, sig = (token or "").rpartition("~")
+    if not since or not hmac.compare_digest(_visitor_pass(pack, phone, since), token or ""):
+        return None
+    return since
 
 
 async def _wa_turn(pack_id: str, phone: str, text: str, *, verified: bool = True) -> list[dict[str, Any]]:
@@ -1054,29 +1083,46 @@ async def _wa_turn(pack_id: str, phone: str, text: str, *, verified: bool = True
 
 
 @app.post("/api/wa/incoming")
-async def wa_incoming(body: WaIn):
+async def wa_incoming(body: WaIn, request: Request):
     """The simulator. It stands in for the real channel while no WhatsApp
     number is connected (so a typed number counts as the sender's); once a
     real number is connected, anyone could type anyone's number here, so
-    the simulator's callers are treated as unverified."""
+    the simulator's callers are treated as unverified.
+
+    An anonymous visitor (PUBLIC_SIMULATOR) is never verified, and without a
+    valid pass starts a fresh chat, so typing someone else's number never
+    continues their conversation. The reply carries the visitor's pass."""
     if not re.fullmatch(r"\d{10}", body.phone):
         raise HTTPException(400, "phone must be ten digits")
-    return {"replies": await _wa_turn(body.pack, body.phone, body.text.strip(),
-                                      verified=not wa_channel.configured())}
+    if not _anonymous(request):
+        return {"replies": await _wa_turn(body.pack, body.phone, body.text.strip(),
+                                          verified=not wa_channel.configured())}
+    since = _visitor_since(body.pack, body.phone, body.visitor)
+    if since is None:
+        key = (body.pack, body.phone)
+        if key in _wa_sessions:
+            _sessions.pop(_wa_sessions.pop(key), None)
+        since = dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds")
+    replies = await _wa_turn(body.pack, body.phone, body.text.strip(), verified=False)
+    return {"replies": replies, "visitor": _visitor_pass(body.pack, body.phone, since)}
 
 
 @app.get("/api/wa/threads")
-async def wa_threads(pack: str = DEFAULT_PACK):
+async def wa_threads(request: Request, pack: str = DEFAULT_PACK):
     # A thread is opened by its number, so a masked list would be useless; on
     # a public demo the list is withheld and each visitor opens their own.
-    if DEMO_READONLY:
+    if DEMO_READONLY or _anonymous(request):
         return {"threads": [], "hidden": True}
     return {"threads": store.wa_threads(pack)}
 
 
 @app.get("/api/wa/threads/{phone}")
-async def wa_thread(phone: str, pack: str = DEFAULT_PACK):
-    return {"messages": store.wa_thread(pack, phone)}
+async def wa_thread(request: Request, phone: str, pack: str = DEFAULT_PACK, visitor: str | None = None):
+    messages = store.wa_thread(pack, phone)
+    if _anonymous(request):                 # only the chat this visitor started
+        since = _visitor_since(pack, phone, visitor)
+        messages = [m for m in messages if since is not None and m["at"] >= since]
+    return {"messages": messages}
 
 
 # Real Meta WhatsApp Cloud API webhook — used when HAANJI_WA_TOKEN etc. are
@@ -1250,6 +1296,18 @@ async def pack_get(pack_id: str):
         raise HTTPException(404, "no such pack")
     raw = open(path, encoding="utf-8").read()
     return {"pack_id": pack_id, "yaml": raw, "parsed": yaml.safe_load(raw)}
+
+
+@app.get("/api/packs/{pack_id}/lines")
+async def pack_lines(pack_id: str):
+    """The lines /talk offers to say: the pack's booking scenario, turn by
+    turn, as its recogniser "heard" them (misspellings included, so the
+    repair shows). Public, unlike the whole pack, and only these test lines."""
+    if not re.fullmatch(r"[a-z0-9_]+", pack_id) or pack_id not in list_packs():
+        raise HTTPException(404, "no such pack")
+    scenarios = load_pack(pack_id).scenarios
+    pick = next((s for s in scenarios if s.expect == "BOOKED"), scenarios[0] if scenarios else None)
+    return {"lines": [t["heard"] for t in (pick.turns if pick else []) if t.get("heard")]}
 
 
 class PackBody(BaseModel):
