@@ -1,22 +1,17 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+/// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
 import { HI } from "../hi";
 import { getLang, setLang, t } from "../i18n";
 
 // Every English string a screen passes to t() or marks with en() has Hindi,
-// and keeps the same {placeholders}. Read straight from the source files.
-const SRC = join(__dirname, "..");
-const files = (dir: string): string[] => readdirSync(dir).flatMap((f) => {
-  const p = join(dir, f);
-  if (statSync(p).isDirectory()) return f === "test" || f === "hi" ? [] : files(p);
-  return /\.(tsx?|ts)$/.test(f) && !/\.test\./.test(f) ? [p] : [];
-});
+// and keeps the same {placeholders}. Read straight from the source files
+// (through Vite, so the type-check needs no Node types).
+const SOURCES = import.meta.glob(["../**/*.{ts,tsx}", "!../test/**", "!../hi/**", "!../**/*.test.*"],
+  { query: "?raw", import: "default", eager: true }) as Record<string, string>;
 const CALL = /\b(?:t|en)\(\s*("(?:[^"\\]|\\.)*")/g;
 const used = new Map<string, string>();
-for (const f of files(SRC)) {
-  const src = readFileSync(f, "utf8");
-  for (const m of src.matchAll(CALL)) used.set(JSON.parse(m[1]!) as string, f.slice(SRC.length + 1));
+for (const [f, src] of Object.entries(SOURCES)) {
+  for (const m of src.matchAll(CALL)) used.set(JSON.parse(m[1]!) as string, f.replace(/^\.\.\//, ""));
 }
 const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
