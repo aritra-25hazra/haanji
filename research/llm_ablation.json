@@ -305,5 +305,277 @@
     "wall_s": 7.2,
     "model": null,
     "ran_at": "2026-10-15T05:57:07+00:00"
+  },
+  "mock:dental_clinic": {
+    "scenarios": [
+      {
+        "pack": "dental_clinic",
+        "name": "booking_with_asr_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Theek hai. Kis din ka time dekhun?",
+          "Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah saade 10 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — root canal, kal subah saade 9 baje Dr Sheikh ke saath, Vijay Sharma naam se, mobile ke aakhri ank 3 2 1 0. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 5CC6-CF9F. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "price_question_then_book",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Teeth cleaning 1,200 rupaye hai, aur usme polishing shaamil hai. Aur kuch puchna tha?",
+          "Kal shaam 4 baje khaali hai, Dr Sheikh ke saath. Ya phir shaam saade 4 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — teeth cleaning, kal shaam 4 baje Dr Sheikh ke saath, Anita Rao naam se, mobile ke aakhri ank 5 6 7 8. Confirm kar dun?",
+          "Ho gaya. Kal shaam 4 baje, Dr Sheikh ke saath. Confirmation code 3866-EA2D. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "faq_only",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "FAQ_ANSWERED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Hum Monday se Saturday, subah 9:30 se raat 8 baje tak khule hain. Do se saade teen lunch break hota hai. Sunday band rehta hai. Aur kuch puchna tha?",
+          "Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "emergency_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "medical_advice_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye doctor hi dekh kar bata payenge — main aapko unka slot de deta hoon."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "no_slot_lead_capture",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "LEAD_CAPTURED",
+        "passed": true,
+        "turns": 2,
+        "receipts": 1,
+        "said": [
+          "Us din hum band rehte hain. Aap apna naam aur number de dijiye, hum call karke time set kar denge.",
+          "Aapka number note kar liya hai, humari team call karegi. Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "caller_interrupts",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal subah saade 9 baje khaali hai, Dr Sheikh ke saath. Ya phir subah 10 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — teeth cleaning, kal subah saade 9 baje Dr Sheikh ke saath, Meera Joshi naam se, mobile ke aakhri ank 2 2 5 5. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code 109D-DAF9. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "doctor_by_name",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Theek hai. Kis din ka time dekhun?",
+          "Parso dopahar saade 12 baje khaali hai, Dr Sheikh ke saath. Ya phir dopahar saade 3 baje. Chalega?",
+          "Bas aapka naam aur mobile number bata dijiye.",
+          "Ek baar dohra deta hoon — dental implant, parso dopahar saade 12 baje Dr Sheikh ke saath, Kabir Nair naam se, mobile ke aakhri ank 2 1 0 0. Confirm kar dun?",
+          "Ho gaya. Parso dopahar saade 12 baje, Dr Sheikh ke saath. Confirmation code 6238-8CC1. Aur kuch madad chahiye?"
+        ]
+      }
+    ],
+    "passed": 8,
+    "total": 8,
+    "speculation": {
+      "started": 9,
+      "hits": 5
+    },
+    "latency_p50_ms": 15.6,
+    "latency_p95_ms": 152.2,
+    "model_call_ms_p50": null,
+    "model_call_ms_p95": null,
+    "llm_calls": 37,
+    "fallbacks": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0
+    },
+    "wall_s": 3.4,
+    "model": null,
+    "ran_at": "2026-11-18T09:08:50+00:00"
+  },
+  "gemini:dental_clinic": {
+    "scenarios": [
+      {
+        "pack": "dental_clinic",
+        "name": "booking_with_asr_noise",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Root canal 6,500 rupaye ka hai. Isme do sittings lag sakti hain, aur pehli sitting mein hi shuruaat ho jaati hai. Aapko kis din ke liye slot chahiye?",
+          "Kal subah ke liye Dr Sheikh ke paas subah saade nau baje ya saade das baje ka slot khali hai. Aapko kaunsa time theek rahega?",
+          "Main aapka naam aur phone number jaan sakta hoon kya?",
+          "Ek baar dohra deta hoon — root canal, kal subah saade 9 baje Dr Sheikh ke saath, Vijay Sharma naam se, mobile ke aakhri ank 3 2 1 0. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code F92C-9E80. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "price_question_then_book",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Teeth cleaning ke 1,200 rupaye hain, aur isme polishing bhi shaamil hai. Kya main aapke liye iska slot dekhun?",
+          "Kal shaam ke liye 4 baje ya saade 4 baje ka slot khali hai, Dr Sheikh ke saath. Aapko kaun sa time theek rahega?",
+          "Kya main aapka naam aur phone number jaan sakta hoon?",
+          "Ek baar dohra deta hoon — teeth cleaning, kal shaam 4 baje Dr Sheikh ke saath, Anita Rao naam se, mobile ke aakhri ank 5 6 7 8. Confirm kar dun?",
+          "Ho gaya. Kal shaam 4 baje, Dr Sheikh ke saath. Confirmation code FD73-2FBB. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "faq_only",
+        "expect": "FAQ_ANSWERED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Hum Monday se Saturday, subah 9:30 se raat 8 baje tak khule hain. Do se saade teen lunch break hota hai aur Sunday ko clinic band rehta hai.",
+          "Theek hai, milte hain. Apna khayal rakhiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "emergency_handoff",
+        "expect": "HANDED_OFF",
+        "outcome": "HANDED_OFF",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "medical_advice_refusal",
+        "expect": "REFUSED",
+        "outcome": "REFUSED",
+        "passed": true,
+        "turns": 1,
+        "receipts": 1,
+        "said": [
+          "Ye doctor hi dekh kar bata payenge — main aapko unka slot de deta hoon."
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "no_slot_lead_capture",
+        "expect": "LEAD_CAPTURED",
+        "outcome": "ABANDONED",
+        "passed": false,
+        "turns": 2,
+        "receipts": 0,
+        "said": [
+          "Hum Sunday ko band rehte hain, Monday se Saturday khule hain. Monday ya kisi aur din ka slot dekhun?",
+          "Monday ko dental checkup ke liye subah 09:30 ka slot khali hai. Main Monday, 2026-09-08 ko subah 09:30 baje Dr Malhotra ke paas dental checkup book kar doon?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "caller_interrupts",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 4,
+        "receipts": 1,
+        "said": [
+          "Kal subah saade 9 baje ya 10 baje ka slot khaali hai Dr Sheikh ke saath, teeth cleaning ke liye 1,200 rupaye mein. Aap kaunsa waqt chahenge?",
+          "Kal subah saade nau baje Dr Sheikh ke saath teeth cleaning ka slot book karne ke liye, aap apna naam aur phone number bata dijiye.",
+          "Ek baar dohra deta hoon — teeth cleaning, kal subah saade 9 baje Dr Sheikh ke saath, Meera Joshi naam se, mobile ke aakhri ank 2 2 5 5. Confirm kar dun?",
+          "Ho gaya. Kal subah saade 9 baje, Dr Sheikh ke saath. Confirmation code C413-8A48. Aur kuch madad chahiye?"
+        ]
+      },
+      {
+        "pack": "dental_clinic",
+        "name": "doctor_by_name",
+        "expect": "BOOKED",
+        "outcome": "BOOKED",
+        "passed": true,
+        "turns": 5,
+        "receipts": 1,
+        "said": [
+          "Dental implant 28,000 rupaye ka hai, aur pehle ek consultation aur x-ray hoti hai. Dr Sheikh ke saath kal subah saade 9 baje ya 11 baje ka slot khali hai, aapko kaunsa theek lagega?",
+          "Parso dopahar saade 12 baje ya saade 3 baje ka slot khali hai Dr Sheikh ke saath, aapko kaunsa behtar rahega?",
+          "Dopahar saade 2 baje pe jagah nahi hai, parso dopahar saade 3 baje ya dopahar saade 12 baje ka slot khali hai. Aapko kaunsa time theek rahega?",
+          "Ek baar dohra deta hoon — dental implant, parso dopahar saade 3 baje Dr Sheikh ke saath, aapke naam se, mobile ke aakhri ank 2 1 0 0. Confirm kar dun?",
+          "Ho gaya. Parso dopahar saade 3 baje, Dr Sheikh ke saath. Confirmation code 8280-7653. Aur kuch madad chahiye?"
+        ]
+      }
+    ],
+    "passed": 6,
+    "total": 8,
+    "speculation": {
+      "started": 9,
+      "hits": 1
+    },
+    "latency_p50_ms": null,
+    "latency_p95_ms": null,
+    "model_call_ms_p50": 1037.9,
+    "model_call_ms_p95": 2223.8,
+    "llm_calls": 30,
+    "fallbacks": 0,
+    "tokens": {
+      "input": 79432,
+      "output": 1162
+    },
+    "wall_s": 154.6,
+    "model": "gemini-3.5-flash-lite",
+    "ran_at": "2026-11-18T09:11:31+00:00"
   }
 }

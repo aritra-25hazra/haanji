@@ -49,6 +49,7 @@ async def run_provider(provider: str, packs: list[str]) -> dict:
     os.environ["HAANJI_PROVIDER_LLM"] = provider
     rows, latencies = [], []
     spec_started = spec_hits = llm_calls = fallbacks = 0
+    call_ms: list[float] = []
     tokens = {"input": 0, "output": 0}
     t_wall = time.perf_counter()
     for pid in packs:
@@ -71,6 +72,7 @@ async def run_provider(provider: str, packs: list[str]) -> dict:
             llm = session.llm
             llm_calls += getattr(llm, "calls", 0)
             fallbacks += getattr(llm, "fallbacks", 0)
+            call_ms += getattr(llm, "call_ms", [])
             for k in tokens:
                 tokens[k] += getattr(llm, "usage", {}).get(k, 0)
             print(f"  {'PASS' if passed else 'FAIL'}  {provider:6s} {pid:18s} {sc.name:28s} "
@@ -78,8 +80,14 @@ async def run_provider(provider: str, packs: list[str]) -> dict:
     return {
         "scenarios": rows, "passed": sum(r["passed"] for r in rows), "total": len(rows),
         "speculation": {"started": spec_started, "hits": spec_hits},
-        "latency_p50_ms": round(statistics.median(latencies), 1) if latencies else 0.0,
-        "latency_p95_ms": round(sorted(latencies)[int(0.95 * (len(latencies) - 1))], 1) if latencies else 0.0,
+        # The engine-side turn latency runs on the simulated clock (--speed), which
+        # scales real waits too: meaningful for the in-process policy only. A hosted
+        # model's cost is its real round trip, measured per call.
+        "latency_p50_ms": (round(statistics.median(latencies), 1) if latencies else 0.0) if provider == "mock" else None,
+        "latency_p95_ms": (round(sorted(latencies)[int(0.95 * (len(latencies) - 1))], 1) if latencies else 0.0)
+                          if provider == "mock" else None,
+        "model_call_ms_p50": round(statistics.median(call_ms), 1) if call_ms else None,
+        "model_call_ms_p95": round(sorted(call_ms)[int(0.95 * (len(call_ms) - 1))], 1) if call_ms else None,
         "llm_calls": llm_calls, "fallbacks": fallbacks, "tokens": tokens,
         "wall_s": round(time.perf_counter() - t_wall, 1),
         "model": (os.environ.get("HAANJI_LLM_MODEL", "claude-opus-4-8") if provider == "claude" else
@@ -94,8 +102,10 @@ def table(results: dict) -> str:
         return f"| {label} | " + " | ".join(str(f(results[c])) for c in cols) + " |\n"
     body = row("scenarios reaching expected outcome", lambda r: f"{r['passed']}/{r['total']}")
     body += row("receipts written", lambda r: sum(s["receipts"] for s in r["scenarios"]))
-    body += row("turn latency p50 (engine-side, ms)", lambda r: r["latency_p50_ms"])
-    body += row("turn latency p95 (ms)", lambda r: r["latency_p95_ms"])
+    body += row("turn latency p50 (engine-side, simulated clock, ms)", lambda r: "n/a" if r.get("latency_p50_ms") is None else r["latency_p50_ms"])
+    body += row("turn latency p95 (ms)", lambda r: "n/a" if r.get("latency_p95_ms") is None else r["latency_p95_ms"])
+    body += row("model round trip p50 / p95 (real, ms)",
+                lambda r: "—" if not r.get("model_call_ms_p50") else f"{r['model_call_ms_p50']:.0f} / {r['model_call_ms_p95']:.0f}")
     body += row("speculation hits / started", lambda r: f"{r['speculation']['hits']}/{r['speculation']['started']}")
     body += row("model calls", lambda r: r["llm_calls"])
     body += row("fallbacks to the policy", lambda r: r["fallbacks"])

@@ -15,6 +15,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from typing import Any
 
 from ..models import ConversationContext, Speaker, ToolCall, ToolResult
@@ -69,6 +70,7 @@ class ClaudeLLM:
         self.calls = 0
         self.fallbacks = 0
         self.usage = {"input": 0, "output": 0}
+        self.call_ms: list[float] = []                   # each model call's real round trip
         self._in_flight: dict[str, list[Any]] = {}     # conversation_id -> assistant blocks
 
     # ------------------------------------------------------------- the client
@@ -109,6 +111,7 @@ class ClaudeLLM:
                          results: list[ToolResult] | None) -> LLMTurn:
         messages = self._messages(ctx, text, results)
         self.calls += 1
+        started = time.perf_counter()
         reply = await asyncio.wait_for(self.client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
@@ -118,6 +121,7 @@ class ClaudeLLM:
             thinking={"type": "adaptive"},
             output_config={"effort": self.effort},
         ), timeout=self.timeout)
+        self.call_ms.append((time.perf_counter() - started) * 1000)
         usage = getattr(reply, "usage", None)
         if usage is not None:
             self.usage["input"] += int(getattr(usage, "input_tokens", 0) or 0)

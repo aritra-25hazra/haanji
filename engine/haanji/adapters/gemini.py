@@ -101,8 +101,10 @@ class GeminiLLM(ClaudeLLM):
                                                         and "lite" not in self.model else "MINIMAL"}}}
         await self._pace()
         self.calls += 1
+        started = time.perf_counter()                    # after the pacing wait: only the round trip
         r = await asyncio.wait_for(self.client.post(URL.format(model=self.model), json=body,
                                                     headers={"x-goog-api-key": self.api_key}), timeout=self.timeout)
+        self.call_ms.append((time.perf_counter() - started) * 1000)
         r.raise_for_status()
         data = r.json()
         meta = data.get("usageMetadata") or {}
