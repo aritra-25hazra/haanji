@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { getLang, setLang } from "../i18n";
 import { MEASURED } from "../results";
@@ -129,5 +129,30 @@ describe("the landing is its own page", () => {
     renderApp("/");
     expect(await screen.findByRole("link", { name: /Login/ })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Sign in" })).toBeNull();
+  });
+});
+
+describe("small things owners see", () => {
+  it("folds the app nav behind a Menu button and closes it on navigation", async () => {
+    mockEngine({ "api/status": () => STATUS_OPEN, "api/conversations": () => ({ conversations: [] }), "api/customers": () => ({ customers: [] }) });
+    renderApp("/calls");
+    const menu = await screen.findByRole("button", { name: /Menu/ });
+    expect(menu).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(menu);
+    expect(menu).toHaveAttribute("aria-expanded", "true");
+    expect(document.getElementById("app-nav")).toHaveClass("open");
+    fireEvent.click(screen.getByRole("link", { name: "Customers" }));
+    await waitFor(() => expect(document.getElementById("app-nav")).not.toHaveClass("open"));
+  });
+
+  it("calls Meta's test number a demo number instead of showing +1 555", async () => {
+    mockEngine({ "api/status": () => ({ ...STATUS_OPEN, whatsapp: { configured: true, number: "+1 (555) 620-0856" } }),
+                 "api/insights": () => ({ generated_at: "2026-11-18T09:00:00+00:00", day: "2026-11-18", calls_today: 0, calls_yesterday: 0, calls_total: 0, outcomes: {}, by_hour: [], bookings_confirmed: 0, revenue_booked_inr: 0, leads_open: 0, missed_calls: { total: 0, recovered: 0 }, corrections_total: 0, speculation: { started: 0, hits: 0, hit_rate: 0 }, cost: { ai_per_call_inr: 0, receptionist_per_call_inr: 9.23 }, insights: [] }),
+                 "api/conversations": () => ({ conversations: [] }), "api/events/recent": () => ({ events: [], latest: 0, live_sessions: 0 }) });
+    // The dashboard's chart measures itself; jsdom has no ResizeObserver.
+    (globalThis as { ResizeObserver?: unknown }).ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} };
+    renderApp("/dashboard");
+    expect(await screen.findByText("Demo WhatsApp number (Meta test)")).toBeInTheDocument();
+    expect(screen.queryByText(/555/)).toBeNull();
   });
 });

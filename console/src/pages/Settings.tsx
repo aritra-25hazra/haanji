@@ -77,6 +77,11 @@ function Connections({ pack }: { pack: string }) {
 }
 
 /** GET /api/settings → form → PUT only the keys that changed. */
+const SETTINGS_DEFAULTS: SettingsShape = {
+  reminders_on: true, reminder_hour_ist: 18, reminder_day_before: true, deposit_inr: 0, waitlist_on: true,
+  digest_hour_ist: 20, language_script: "latin", owner_language: "hi", receptionist_monthly_inr: 12000, receptionist_calls_per_month: 1300,
+};
+
 function SettingsForm({ pack }: { pack: string }) {
   const { readOnly } = useApp();
   const { data, error, reload } = useData(() => engine.settings(pack), [pack]);
@@ -91,7 +96,8 @@ function SettingsForm({ pack }: { pack: string }) {
       </Panel>
     );
   }
-  const cur: SettingsShape = { ...data, ...draft };
+  // The engine's own defaults, so no field is ever empty (engine/haanji/settings.py DEFAULTS).
+  const cur: SettingsShape = { ...SETTINGS_DEFAULTS, ...data, ...draft };
   const set = <K extends keyof SettingsShape>(k: K, v: SettingsShape[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const patch = Object.fromEntries(
     (Object.keys(draft) as (keyof SettingsShape)[]).filter((k) => draft[k] !== data[k]).map((k) => [k, draft[k]]),
@@ -107,7 +113,7 @@ function SettingsForm({ pack }: { pack: string }) {
   };
   const clampHour = (v: string) => Math.min(23, Math.max(0, Number(v) || 0));
   return (
-    <Panel title="Booking settings" hint={dirty ? t("unsaved changes") : t("in sync with the engine")}>
+    <Panel title="Booking settings" hint={dirty ? t("Not saved yet") : t("Saved")}>
       <form className="body form" onSubmit={(e) => void save(e)}>
         <div className="settings-grid">
           <label className="check"><input type="checkbox" checked={cur.reminders_on} onChange={(e) => set("reminders_on", e.target.checked)} /> {t("Reminders on WhatsApp")}</label>

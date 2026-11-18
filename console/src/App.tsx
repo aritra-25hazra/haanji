@@ -59,6 +59,8 @@ export default function App() {
   const { mode, pack, packs, setPack, authRequired, user, isOwner, signOut, sampleView, setSampleView } = useApp();
   const location = useLocation();
   const lang = useLang();
+  const [menuFor, setMenuFor] = useState<string | null>(null);   // the path the phone menu was opened on
+  const menuOpen = menuFor === location.pathname;                // a navigation closes it
   // On a phone the tabs scroll sideways; keep the current one in view.
   useEffect(() => {
     document.querySelector(".nav a.active")?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
@@ -105,7 +107,11 @@ export default function App() {
     <>
       <header className="topbar">
         <Link className="wordmark" to={user ? "/dashboard" : "/"}>HaanJi <span className="dev">हाँजी</span></Link>
-        <div className="navrow">
+        <button type="button" className="menu-btn" aria-expanded={menuOpen} aria-controls="app-nav"
+                onClick={() => setMenuFor(menuOpen ? null : location.pathname)}>
+          <Icon name={menuOpen ? "x" : "chevron"} small />{t("Menu")}
+        </button>
+        <div className={"navrow" + (menuOpen ? " open" : "")} id="app-nav">
           <nav className="nav" aria-label="Main">
             {LINKS.filter((l) => !l.owner || isOwner).map((l) => (
               <NavLink key={l.to} to={l.to} className={({ isActive }) => (isActive ? "active" : undefined)}>{t(l.label)}</NavLink>

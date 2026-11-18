@@ -2,7 +2,7 @@ import { useState, type CSSProperties } from "react";
 import { engine, enginePath } from "../engine";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { en, t, useT } from "../i18n";
+import { en, t, tn, useT } from "../i18n";
 import { Chip, Confirm, Empty, Icon, Loading, NotLive, Page, Panel, Register, fmtDate, fmtInr, fmtTime, useData, type ChipKind } from "../components/Common";
 import { addDays, dayName, dayOfWeek, fmtDay, today, weekOf } from "../dates";
 import type { Booking, BookingFilter, BookingStatus, Payment, WaitlistEntry } from "../types";
@@ -80,7 +80,7 @@ export default function Calendar() {
   return (
     <Page title={t("Calendar")} sub={sub} actions={nav}>
       {note && <div className="banner" role="status"><Icon name="check" small />{note}</div>}
-      <Panel title={view === "day" ? t("Day, by staff") : t("Week")} hint={data ? t("{n} bookings", { n: data.length }) : ""}
+      <Panel title={view === "day" ? t("Day, by staff") : t("Week")} hint={data ? tn("{n} booking", "{n} bookings", data.length) : ""}
              actions={<button className="btn btn-ghost btn-sm" onClick={reload} disabled={loading}><Icon name="refresh" small />{t("Refresh")}</button>}>
         {loading && !data ? <Loading />
           : !data ? <Empty>{t("Could not load: {error}", { error: error ?? "" })}<button className="btn btn-ghost btn-sm" onClick={reload}>{t("Try again")}</button></Empty>
@@ -284,7 +284,7 @@ function PaymentsPanel({ pack, live }: { pack: string; live: boolean }) {
   const paid = rows.filter((p) => p.status === "PAID").reduce((a, p) => a + p.amount_inr, 0);
   useT();
   return (
-    <Panel title={t("Payments")} hint={data ? t("{n} links · {amount} received", { n: rows.length, amount: fmtInr(paid) }) : error ? t("could not load: {error}", { error }) : ""}>
+    <Panel title={t("Payments")} hint={data ? tn("{n} link · {amount} received", "{n} links · {amount} received", rows.length, { amount: fmtInr(paid) }) : error ? t("could not load: {error}", { error }) : ""}>
       {rows.length === 0 ? (
         <Empty><p>{t("No payment links yet. Set a deposit in Settings, and every new booking gets a link.")}</p></Empty>
       ) : (

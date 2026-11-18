@@ -6,7 +6,7 @@ import { engine, subscribeLive, enablePush } from "../engine";
 import { callbackWhy } from "../callbacks";
 import { NEEDS_CALLBACK, sample } from "../sample";
 import { useApp } from "../state";
-import { t, useLang, useT } from "../i18n";
+import { t, tn, useLang, useT } from "../i18n";
 import AnimatedList from "../components/AnimatedList";
 import { Chip, Empty, Icon, Loading, NotLive, OutcomeChip, Page, Panel, Repair, Tile, fmtInr, fmtTime, useData } from "../components/Common";
 import { OUTCOMES, type LiveEvent, type LiveSession } from "../types";
@@ -50,7 +50,7 @@ export default function Dashboard() {
     <Page title={t("Today")} sub={t("{business}: every call the agent picked up, and what came of it.", { business: businessName(pack) })}
           actions={<>
             {status?.whatsapp?.configured && (isTestNumber(status.whatsapp.number)
-              ? <Chip kind="warn" title={t("Meta's sandbox number: only the 5 numbers added to it can talk to it.")}><Icon name="phone" small />{t("Test WhatsApp (Meta sandbox)")}{status.whatsapp.number ? ` · ${status.whatsapp.number}` : ""}</Chip>
+              ? <Chip kind="warn" title={t("Meta's sandbox number: only the 5 numbers added to it can talk to it.")}><Icon name="phone" small />{t("Demo WhatsApp number (Meta test)")}</Chip>
               : <Chip kind="ok"><Icon name="phone" small />{t("WhatsApp connected")}{status.whatsapp.number ? ` · ${status.whatsapp.number}` : ""}</Chip>)}
             <Link className="btn btn-ghost btn-sm" to="/calendar"><Icon name="calendar" small />{t("Calendar")}</Link>
           </>}>
@@ -71,7 +71,7 @@ export default function Dashboard() {
       {live && data.calls_total === 0 && <FirstSteps whatsapp={!!status?.whatsapp?.configured} onPreview={() => setSampleView(true)} />}
       {data.calls_total > 0 && <Callbacks pack={pack} live={live} />}
 
-      <Panel title={t("Calls through the day")} hint={peak.calls ? t("busiest {hour}:00 · {n} calls", { hour: peak.hour, n: peak.calls }) : undefined}>
+      <Panel title={t("Calls through the day")} hint={peak.calls ? tn("busiest {hour}:00 · {n} call", "busiest {hour}:00 · {n} calls", peak.calls, { hour: peak.hour }) : undefined}>
         {peak.calls === 0 ? quiet : <div className="body" style={{ height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={hours} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
@@ -89,7 +89,7 @@ export default function Dashboard() {
         </div>}
       </Panel>
 
-      <Panel title={t("How calls ended")} hint={total ? (total === 1 ? t("1 call") : t("{n} calls", { n: total })) : undefined}>
+      <Panel title={t("How calls ended")} hint={total ? (total === 1 ? t("1 call") : tn("{n} call", "{n} calls", total)) : undefined}>
         {total === 0 ? quiet : <div className="body">
           <div className="obar" role="img" aria-label={present.map((o) => `${o.toLowerCase().replace(/_/g, " ")} ${data.outcomes[o]}`).join(", ")}>
             {present.map((o) => <i key={o} className={o} style={{ width: `${((data.outcomes[o] ?? 0) / total) * 100}%` }} />)}
@@ -173,7 +173,7 @@ function Callbacks({ pack, live }: { pack: string; live: boolean }) {
   const handoffs = all.filter(({ c }) => c.outcome === "HANDED_OFF").length;
   const urgent = all.filter(({ why }) => why.urgent).length;
   return (
-    <Panel title={t("Call these people back")} hint={all.length ? t("{n} people", { n: all.length }) + (handoffs ? " " + t("({n} passed to staff)", { n: handoffs }) : "") + (urgent ? " · " + t("{n} urgent on top", { n: urgent }) : "") + " · " + t("newest first") : t("everyone got an answer")}>
+    <Panel title={t("Call these people back")} hint={all.length ? tn("{n} person", "{n} people", all.length) + (handoffs ? " " + t("({n} passed to staff)", { n: handoffs }) : "") + (urgent ? " · " + t("{n} urgent on top", { n: urgent }) : "") + " · " + t("newest first") : t("everyone got an answer")}>
       {all.length === 0
         ? <Empty><p>{t("Callers whose job could not be done on the call show up here. Nobody right now.")}</p></Empty>
         : <ul className="body callbacks">

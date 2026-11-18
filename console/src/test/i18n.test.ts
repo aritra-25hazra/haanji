@@ -8,10 +8,12 @@ import { getLang, setLang, t } from "../i18n";
 // (through Vite, so the type-check needs no Node types).
 const SOURCES = import.meta.glob(["../**/*.{ts,tsx}", "!../test/**", "!../hi/**", "!../**/*.test.*"],
   { query: "?raw", import: "default", eager: true }) as Record<string, string>;
-const CALL = /\b(?:t|en)\(\s*("(?:[^"\\]|\\.)*")/g;
+const CALL = /\b(?:t|en|tn)\(\s*("(?:[^"\\]|\\.)*")/g;
+const PLURAL = /\btn\(\s*"(?:[^"\\]|\\.)*"\s*,\s*("(?:[^"\\]|\\.)*")/g;   // tn's second string
 const used = new Map<string, string>();
 for (const [f, src] of Object.entries(SOURCES)) {
   for (const m of src.matchAll(CALL)) used.set(JSON.parse(m[1]!) as string, f.replace(/^\.\.\//, ""));
+  for (const m of src.matchAll(PLURAL)) used.set(JSON.parse(m[1]!) as string, f.replace(/^\.\.\//, ""));
 }
 const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 

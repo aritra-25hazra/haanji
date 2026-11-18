@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Common";
 import { en, t, useT } from "../i18n";
@@ -27,6 +28,7 @@ export default function Home() {
   const h = MEASURED.headline, led = MEASURED.ledger;
   const sales = status?.sales_whatsapp?.replace(/\D/g, "");
   const demo = () => { setSampleView(true); nav("/dashboard"); };
+  useEffect(() => { document.title = t("HaanJi — AI receptionist for Indian shops"); });
   const ideas = [
     { name: "Bhasha", title: t("Hears shop words right"),
       num: `${pct(h.entity_error_rate_without_bhasha!)} → ${pct(h.entity_error_rate_with_bhasha!, 2)}`,

@@ -52,6 +52,10 @@ const fill = (s: string, vars?: Vars) => (vars ? s.replace(/\{(\w+)\}/g, (m, k: 
 export function t(en: string, vars?: Vars): string {
   return fill(current === "hi" ? HI[en] ?? en : en, vars);
 }
+/** A count with the right noun: tn("{n} call", "{n} calls", 1) is "1 call". */
+export function tn(one: string, many: string, n: number, vars?: Vars): string {
+  return t(n === 1 ? one : many, { n, ...vars });
+}
 /** Marks an English string kept in a constant; it is translated where shown, with `t()`. */
 export const en = (s: string) => s;
 

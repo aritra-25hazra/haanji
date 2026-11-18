@@ -75,4 +75,7 @@ export default {
   "Admin pages: {page}": "Admin ke pages: {page}",
   "Admin pages": "Admin ke pages",
   "Admin": "Admin",
+  "HaanJi — AI receptionist for Indian shops": "HaanJi — Indian dukaanon ka AI receptionist",
+  "Menu": "Menu",
+  "Demo WhatsApp number (Meta test)": "Demo WhatsApp number (Meta test)",
 } as Record<string, string>;

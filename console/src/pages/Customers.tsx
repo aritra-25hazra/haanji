@@ -7,7 +7,7 @@ import { useApp } from "../state";
 import { Chip, Confirm, Empty, Icon, Loading, NotLive, Page, Panel, Register, fmtDate, fmtTime, rowButton, useData, type ChipKind } from "../components/Common";
 import type { Booking, CallRow, Customer } from "../types";
 import { outcomeLabel } from "../labels";
-import { t, useT } from "../i18n";
+import { t, tn, useT } from "../i18n";
 
 /** One customer's bookings and calls, from the same lists the Calendar and
  *  Calls pages read (a public demo masks the number the same way in each). */
@@ -43,7 +43,7 @@ export default function Customers() {
 
   return (
     <Page title={t("Customers")} sub={t("Who came how often, what they had last time, and how often they did not turn up. Open a row for the full record.")} actions={search}>
-      <Panel title={t("Register")} hint={data ? t("{n} customers", { n: data.length }) + (debounced ? ` · "${debounced}"` : "") : ""}>
+      <Panel title={t("Register")} hint={data ? tn("{n} customer", "{n} customers", data.length) + (debounced ? ` · "${debounced}"` : "") : ""}>
         {loading && !data ? <Loading kind="table" />
           : !data ? <Empty>{t("Could not load: {error}", { error: error ?? "" })}<button className="btn btn-ghost btn-sm" onClick={reload}>{t("Try again")}</button></Empty>
           : data.length === 0 ? <Empty><p>{debounced ? t("No customer matches \"{q}\".", { q: debounced }) : t("No customers yet. They appear with the first booking.")}</p></Empty>

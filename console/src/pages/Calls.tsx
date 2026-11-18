@@ -4,7 +4,7 @@ import { engine } from "../engine";
 import { OUTCOME_LABEL, businessName } from "../labels";
 import { sample } from "../sample";
 import { useApp } from "../state";
-import { en, t, useT } from "../i18n";
+import { en, t, tn, useT } from "../i18n";
 import { Empty, Icon, Loading, NotLive, OutcomeChip, Page, Panel, Register, fmtDate, fmtTime, istDay, rowButton, useData } from "../components/Common";
 
 const SUB = en("Newest first. Open a row for the transcript and the receipt.");
@@ -61,7 +61,7 @@ export default function Calls() {
           <button className="btn btn-ghost btn-sm" onClick={() => { setOutcome("ALL"); setChannel("ALL"); setDay(""); setNumber(""); }}>{t("Clear")}</button>
         )}
       </div>
-      <Panel title={live ? t("All calls") : t("Sample calls")} hint={(filtered ? t("{n} of {total} calls", { n: shown.length, total: data.length }) : t("{n} calls", { n: data.length })) + " · " + businessName(pack)}>
+      <Panel title={live ? t("All calls") : t("Sample calls")} hint={(filtered ? tn("{n} of {total} call", "{n} of {total} calls", data.length, { n: shown.length, total: data.length }) : tn("{n} call", "{n} calls", data.length)) + " · " + businessName(pack)}>
         {data.length === 0 ? (
           <Empty>
             <p>{t("No calls yet.")}</p>

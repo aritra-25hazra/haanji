@@ -43,6 +43,7 @@ export function Page({ title, sub, actions, children }:
   { title: string; sub?: string; actions?: ReactNode; children: ReactNode }) {
   const { mode, refresh, sampleView, setSampleView } = useApp();
   useT();
+  useEffect(() => { document.title = `${title} · HaanJi`; }, [title]);
   return (
     <>
       <div className="page-head">

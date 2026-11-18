@@ -2,7 +2,7 @@ import { useCallback, useState, type CSSProperties } from "react";
 import DecryptedText from "../components/DecryptedText";
 import { engine, tamper, verifyExport } from "../engine";
 import { sample } from "../sample";
-import { en, t, useT } from "../i18n";
+import { en, t, tn, useT } from "../i18n";
 import { useApp } from "../state";
 import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register, Stamp, Tile, useData } from "../components/Common";
 import type { Export, Verdict } from "../types";
@@ -68,7 +68,7 @@ export default function Ledger() {
                 ? (shown.ok ? <Stamp tone="leaf"><Icon name="check" small />VALID</Stamp> : <Stamp><Icon name="x" small />BROKEN</Stamp>)
                 : <span className="muted" style={{ fontSize: 16 }}>{live ? t("checking…") : t("needs the live engine")}</span>}
               foot={shown
-                ? (shown.ok ? t("{n} receipts, every hash and signature rebuilt", { n: shown.checked }) : `seq ${shown.firstBrokenSeq}: ${shown.reason}`)
+                ? (shown.ok ? tn("{n} receipt, its hash and signature rebuilt", "{n} receipts, every hash and signature rebuilt", shown.checked) : `seq ${shown.firstBrokenSeq}: ${shown.reason}`)
                 : (live ? "" : t("sample receipts cannot be verified"))} />
         <Tile index={2} label={t("Writes without a confirmation")}
               value={refused ?? "—"}
