@@ -15,6 +15,19 @@ describe("role gating", () => {
     expect(screen.getByRole("link", { name: "Customers" })).toBeInTheDocument();
   });
 
+  it("shows the Admin menu to the owner and never to staff", async () => {
+    localStorage.setItem("haanji.token", "tok");
+    mockEngine({ "api/status": () => STATUS_AUTH, "api/auth/me": () => ({ enabled: true, user: STAFF }), "api/conversations": () => ({ conversations: [] }) });
+    const staff = renderApp("/calls");
+    await screen.findByRole("link", { name: "Calendar" });
+    expect(screen.queryByRole("button", { name: "Admin ke pages" })).toBeNull();
+    staff.unmount();
+    localStorage.setItem("haanji.token", "tok");
+    mockEngine({ "api/status": () => STATUS_AUTH, "api/auth/me": () => ({ enabled: true, user: OWNER }), "api/conversations": () => ({ conversations: [] }) });
+    renderApp("/calls");
+    expect(await screen.findByRole("button", { name: "Admin ke pages" })).toBeInTheDocument();
+  });
+
   it("hides the pack save from staff in the studio", async () => {
     localStorage.setItem("haanji.token", "tok");
     mockEngine({

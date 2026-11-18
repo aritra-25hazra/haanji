@@ -111,7 +111,7 @@ export default function App() {
               <NavLink key={l.to} to={l.to} className={({ isActive }) => (isActive ? "active" : undefined)}>{t(l.label)}</NavLink>
             ))}
           </nav>
-          <EngineMenu key={location.pathname + lang} />
+          {isOwner && <EngineMenu key={location.pathname + lang} />}
         </div>
         <div className="tools">
           <select aria-label="Pack" value={pack} onChange={(e) => setPack(e.target.value)}>
@@ -156,12 +156,12 @@ function EngineMenu() {
   return (
     <div className="engine-menu" ref={box}>
       <button type="button" className={current ? "active" : undefined} aria-expanded={open} aria-controls="engine-pages"
-              aria-label={current ? t("Engine pages: {page}", { page: t(current.label) }) : undefined}
+              aria-label={current ? t("Admin pages: {page}", { page: t(current.label) }) : t("Admin pages")}
               onClick={() => setOpen((o) => !o)}>
-        {current ? t(current.label) : "Engine"}<Icon name="chevron" small />
+        {current ? t(current.label) : t("Admin")}<Icon name="chevron" small />
       </button>
       {open && (
-        <ul id="engine-pages" aria-label={t("Engine pages")}>
+        <ul id="engine-pages" aria-label={t("Admin pages")}>
           {ENGINE.map((l) => (
             <li key={l.to}>
               <NavLink to={l.to} className={({ isActive }) => (isActive ? "active" : undefined)}>

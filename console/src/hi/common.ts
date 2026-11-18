@@ -72,4 +72,7 @@ export default {
   "Who answers calls": "Calls kaun uthata hai",
   "Built-in rules": "Apne rules",
   "speech: {stt} · voice: {tts}": "awaaz pehchaan: {stt} · bolna: {tts}",
+  "Admin pages: {page}": "Admin ke pages: {page}",
+  "Admin pages": "Admin ke pages",
+  "Admin": "Admin",
 } as Record<string, string>;
