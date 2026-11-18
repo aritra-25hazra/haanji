@@ -1499,24 +1499,47 @@ async def anchors_seal(pack: str = DEFAULT_PACK):
     return {"sealed": seal_pending_days(rt), "anchors": rt.ledger.anchors(pack)}
 
 
+DIGEST_WORDS = {
+    "hi": {"calls": "Aaj {calls} · {booked} booking hui (lagbhag ₹{worth}).", "callback": "Callback chahiye: {n}.",
+           "missed": "Missed calls wapas aayi: {recovered}/{total}.", "fixed": "Galat suna, theek kiya: {n}.",
+           "busy": "Sabse busy ghanta: {hour}:00 ({n}).", "link": "Receipts aur poora hisaab: {url}",
+           "quiet": "Aaj koi call nahi aayi."},
+    "en": {"calls": "Today {calls} · {booked} booked (about ₹{worth}).", "callback": "Needs a callback: {n}.",
+           "missed": "Missed calls recovered: {recovered}/{total}.", "fixed": "Misheard, then fixed: {n}.",
+           "busy": "Busiest hour: {hour}:00 ({n}).", "link": "Receipts and records: {url}",
+           "quiet": "No calls today."},
+}
+
+
+def _n_calls(n: int) -> str:
+    return f"{n} call" if n == 1 else f"{n} calls"
+
+
 def digest_text(pack_id: str) -> str:
-    """The owner's evening message: what the desk did today, in six lines."""
+    """The owner's evening message: the "Today" screen in a few lines. Every
+    number is the dashboard's own (insights.compute, India's day), under the
+    dashboard's names, in the owner's language (settings: owner_language)."""
     rt = runtime(pack_id)
-    ins = compute_insights(pack_id, store, rt.backend, settings.get(pack_id))
-    name = rt.pack.persona.business_name
-    today = dt.datetime.now(IST).strftime("%d %b")
-    booked = ins["outcomes"].get("BOOKED", 0)
-    lines = [f"HaanJi · {name} · {today}",
-             f"Aaj {ins['calls_today']} calls uthayi (kul {ins['calls_total']}).",
-             f"{ins['bookings_confirmed']} bookings calendar pe, lagbhag ₹{ins['revenue_booked_inr']:,} ki.",
-             f"{booked} calls booking bani; {ins['leads_open']} log callback chahte hain."]
+    prefs = settings.get(pack_id)
+    ins = compute_insights(pack_id, store, rt.backend, prefs)
+    w = DIGEST_WORDS.get(prefs.get("owner_language", "hi"), DIGEST_WORDS["hi"])
+    day = dt.date.fromisoformat(ins["day"]).strftime("%d %b")
+    lines = [f"HaanJi · {rt.pack.persona.business_name} · {day}"]
+    if ins["calls_today"]:
+        lines.append(w["calls"].format(calls=_n_calls(ins["calls_today"]), booked=ins["bookings_confirmed"],
+                                       worth=f"{ins['revenue_booked_inr']:,}"))
+    else:
+        lines.append(w["quiet"])
+    lines.append(w["callback"].format(n=ins["leads_open"]))
     m = ins["missed_calls"]
     if m.get("total"):
-        lines.append(f"{m['recovered']} of {m['total']} missed calls WhatsApp pe wapas aayi.")
+        lines.append(w["missed"].format(recovered=m["recovered"], total=m["total"]))
+    if ins["corrections_total"]:
+        lines.append(w["fixed"].format(n=ins["corrections_total"]))
     if ins["by_hour"]:
         busiest = max(ins["by_hour"], key=lambda h: h["calls"])
-        lines.append(f"Sabse busy ghanta: {busiest['hour']}:00 ({busiest['calls']} calls).")
-    lines.append(f"Receipts aur poora hisaab: {PUBLIC_URL}/verify?pack={pack_id}")
+        lines.append(w["busy"].format(hour=busiest["hour"], n=_n_calls(busiest["calls"])))
+    lines.append(w["link"].format(url=f"{PUBLIC_URL}/verify?pack={pack_id}"))
     return "\n".join(lines)
 
 

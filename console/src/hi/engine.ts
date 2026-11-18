@@ -255,4 +255,5 @@ export default {
   // Crash screen
   "Something broke": "Kuch toot gaya",
   "This page could not be drawn. The rest of the console is fine. Open another page or try again.": "Yeh page render nahi ho paya. Baaki console theek hai. Doosra page kholo ya dobara try karo.",
+  "Evening summary language": "Shaam ki summary ki bhasha",
 } as Record<string, string>;

@@ -108,6 +108,10 @@ function SettingsForm({ pack }: { pack: string }) {
             <select className="input" value={cur.language_script} onChange={(e) => set("language_script", e.target.value)}>
               <option value="latin">Roman (Hinglish)</option><option value="devanagari">Devanagari</option>
             </select></label>
+          <label className="field"><span>{t("Evening summary language")}</span>
+            <select className="input" value={cur.owner_language ?? "hi"} onChange={(e) => set("owner_language", e.target.value)}>
+              <option value="hi">Hinglish</option><option value="en">English</option>
+            </select></label>
           <label className="field"><span>{t("Receptionist salary ₹/month")}</span>
             <input className="input" type="number" min={0} step={500} value={cur.receptionist_monthly_inr ?? 12000}
                    onChange={(e) => set("receptionist_monthly_inr", Math.max(0, Number(e.target.value) || 0))} /></label>

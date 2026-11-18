@@ -303,6 +303,8 @@ export interface Settings {
   waitlist_on: boolean;
   digest_hour_ist: number;
   language_script: "latin" | "devanagari" | string;
+  /** The language of the owner's evening digest. */
+  owner_language?: "hi" | "en" | string;
   receptionist_monthly_inr?: number;
   receptionist_calls_per_month?: number;
 }

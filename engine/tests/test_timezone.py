@@ -3,7 +3,7 @@
 import datetime as dt
 
 from haanji import insights
-from haanji.store import DemoStore, _now, to_ist
+from haanji.store import IST, DemoStore, _now, to_ist
 
 
 def test_a_stored_time_carries_its_offset():
@@ -19,17 +19,23 @@ def test_a_call_at_15_45_utc_is_21_15_in_india():
 def test_the_hourly_chart_and_today_count_in_india_s_time(tmp_path, backend):
     store = DemoStore(str(tmp_path / "calls.sqlite"))
     now_utc = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
-    rows = [("c1", now_utc.isoformat(), "BOOKED"), ("c2", "2026-01-05T15:45:00+00:00", "FAQ_ANSWERED")]
+    rows = [("c1", now_utc.isoformat(), "BOOKED"), ("c2", "2026-01-05T15:45:00+00:00", "FAQ_ANSWERED"),
+            ("c3", "2026-01-05T19:00:00+00:00", "FAQ_ANSWERED")]
     for call_id, at, outcome in rows:
         store.conn.execute("INSERT INTO calls (call_id, tenant_id, channel, started_at, outcome) VALUES (?,?,?,?,?)",
                            (call_id, "t_test", "WEB", at, outcome))
     store.conn.commit()
     out = insights.compute("t_test", store, backend)
     hours = {h["hour"]: h["calls"] for h in out["by_hour"]}
-    assert hours.get("21", 0) >= 1, "the 15:45 UTC call sits in India's 21:00 hour"
-    assert f"{to_ist(now_utc.isoformat()).hour:02d}" in hours
+    assert hours == {f"{to_ist(now_utc.isoformat()).hour:02d}": 1}, "the chart is today's, in India's hours"
     assert out["calls_today"] == 1, "only the call made today in India counts as today's"
     assert dt.datetime.fromisoformat(out["generated_at"]).utcoffset() is not None
+    # Late on 5 January in India, the 15:45 UTC call sits in the 21:00 hour; the
+    # 19:00 UTC one is already 00:30 on the 6th there, so it is tomorrow's.
+    late = insights.compute("t_test", store, backend, now=dt.datetime(2026, 1, 5, 23, 0, tzinfo=IST))
+    assert {h["hour"]: h["calls"] for h in late["by_hour"]} == {"21": 1} and late["calls_today"] == 1
+    early = insights.compute("t_test", store, backend, now=dt.datetime(2026, 1, 6, 0, 40, tzinfo=IST))
+    assert {h["hour"]: h["calls"] for h in early["by_hour"]} == {"00": 1} and early["day"] == "2026-01-06"
 
 
 def test_the_cost_comparison_and_yesterday_s_calls_follow_the_shop(tmp_path, backend):
