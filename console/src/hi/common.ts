@@ -78,4 +78,5 @@ export default {
   "HaanJi — AI receptionist for Indian shops": "HaanJi — Indian dukaanon ka AI receptionist",
   "Menu": "Menu",
   "Demo WhatsApp number (Meta test)": "Demo WhatsApp number (Meta test)",
+  "AI: rules": "AI: rules",
 } as Record<string, string>;

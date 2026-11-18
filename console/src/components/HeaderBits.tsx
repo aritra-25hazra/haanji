@@ -7,11 +7,11 @@ export function AiChip() {
   const { status, sampleView } = useApp();
   useLang();
   const d = sampleView || !status ? { provider: "rules" } : status.dialogue ?? { provider: "rules" };
-  const label = d.provider === "gemini" ? t("AI: Gemini") : d.provider === "claude" ? t("AI: Claude") : t("AI: built-in rules");
+  const label = d.provider === "gemini" ? t("AI: Gemini") : d.provider === "claude" ? t("AI: Claude") : t("AI: rules");
   const title = d.provider === "rules"
     ? t("Calls are answered by HaanJi's own rules for this kind of shop: speech recognition, then rules that ask, check and book. No outside AI service is used.")
     : t("Calls are answered by a hosted AI model; every booking still needs the caller's yes, checked by HaanJi's own rules.");
-  return <span className="ai-chip" title={title}>{label}{sampleView ? ` · ${t("sample")}` : ""}</span>;
+  return <span className="ai-chip" title={title} aria-label={`${label}. ${title}`}>{label}</span>;
 }
 
 /** English or Hindi for every screen; remembered per browser, `?lang=hi` in a link. */

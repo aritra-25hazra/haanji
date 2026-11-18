@@ -58,7 +58,7 @@ p { margin: 0; }
 .engine-menu ul a.active { background: rgba(245, 185, 30, .18); }
 .engine-menu ul a:focus-visible { outline-color: var(--cobalt); }
 .tools { display: flex; gap: 10px; align-items: center; margin-left: auto; flex: none; }
-.tools select { min-height: 40px; padding: 0 10px; border-radius: var(--r-ctl); border: 1.5px solid rgba(255, 247, 230, .35); background: var(--cobalt-deep); color: var(--chalk); max-width: 180px; }
+.tools select { min-height: 40px; padding: 0 10px; border-radius: var(--r-ctl); border: 1.5px solid rgba(255, 247, 230, .35); background: var(--cobalt-deep); color: var(--chalk); max-width: 160px; }
 .tools a { color: var(--chalk); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 10px; border-radius: var(--r-ctl); font-weight: 500; opacity: .9; }
 .tools a:hover { background: rgba(255, 247, 230, .08); }
 .live { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .06em; background: rgba(255, 247, 230, .12); color: var(--chalk); }
@@ -512,7 +512,7 @@ dl.kv dd { margin: 0; }
 .devices li b { margin-right: 8px; }
 
 .ai-chip { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border-radius: 999px; border: 1.5px solid rgba(255, 247, 230, .35); color: var(--chalk); font-size: 12px; font-weight: 600; white-space: nowrap; }
-@media (max-width: 760px) { .ai-chip { display: none; } }
+@media (max-width: 1100px) { .ai-chip { display: none; } }
 
 .conn-list { list-style: none; margin: 0; padding: 4px 18px 8px; display: grid; gap: 10px; }
 .conn-list li { display: grid; grid-template-columns: 18px 150px 1fr; gap: 10px; align-items: center; font-size: 15px; }
@@ -555,13 +555,14 @@ details.tech summary { cursor: pointer; color: var(--ink-2); font-size: 14px; mi
   .site-foot { grid-template-columns: 1fr; }
 }
 
-/* ── phone: the app nav folds into a Menu button ──────────────────────── */
+/* ── phone and small laptop: the app nav folds into a Menu button ─────── */
 .menu-btn { display: none; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: var(--r-ctl); border: 1.5px solid rgba(255, 247, 230, .35); background: transparent; color: var(--chalk); font: inherit; font-weight: 600; cursor: pointer; }
 .menu-btn:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; }
-@media (max-width: 640px) {
+@media (max-width: 1100px) {
   .menu-btn { display: inline-flex; }
-  .navrow { display: none; }
+  .navrow { display: none; order: 3; flex-basis: 100%; }
   .navrow.open { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 6px 0 4px; }
   .navrow.open .nav { flex-direction: column; overflow: visible; }
   .navrow.open .nav a, .navrow.open .engine-menu > button { width: 100%; justify-content: flex-start; }
 }
+.mbar .btn-primary, .mbar .btn-primary:visited { color: var(--cobalt-deep); }
