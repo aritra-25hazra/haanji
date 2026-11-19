@@ -18,13 +18,15 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "engine"))
 
 from haanji.bhasha.lexicon import TenantLexicon       # noqa: E402
-from haanji.vertical import list_packs, load_pack     # noqa: E402
+from haanji.vertical import PACK_DIR, list_packs, load_pack     # noqa: E402
+
+PRODUCT_DIR = Path(PACK_DIR) / "product"
 
 OUT = ROOT / "console" / "src" / "packs.json"
 
 
-def pack_record(pid: str) -> dict:
-    p = load_pack(pid)
+def pack_record(pid: str, product: bool = False) -> dict:
+    p = load_pack(str(PRODUCT_DIR / f"{pid}.yaml") if product else pid)
     lex = TenantLexicon.build(version=p.version, **p.lexicon_seed())
     return {
         "pack_id": pid, "display_name": p.display_name, "version": p.version, "language": p.language,
@@ -39,14 +41,18 @@ def pack_record(pid: str) -> dict:
         "after_hours_line": p.guardrails.after_hours_line, "emergency_contact": p.guardrails.emergency_contact,
         "closing": p.persona.closing,
         "scenarios": len(p.scenarios), "issues": p.validate(),
+        # the product ships the packs in packs/product/; the others are the research corpus
+        "product": product,
+        "departments": [{"name": d.name, "code": d.code, "staff": list(d.staff)} for d in p.departments],
         "lexicon": [{"surface": e.surface, "entry_type": e.entry_type.value, "variants": list(e.variants),
                      "keys": sorted(e.keys()), "weight": round(e.weight, 2)} for e in lex.entries],
     }
 
 
 def render() -> str:
-    return json.dumps({"generated_from": "packs/*.yaml by research/harness/console_packs.py",
-                       "packs": [pack_record(pid) for pid in list_packs()]},
+    return json.dumps({"generated_from": "packs/product/*.yaml and packs/*.yaml by research/harness/console_packs.py",
+                       "packs": [pack_record(pid, product=True) for pid in list_packs(str(PRODUCT_DIR))] +
+                                [pack_record(pid) for pid in list_packs()]},
                       ensure_ascii=False, indent=1) + "\n"
 
 

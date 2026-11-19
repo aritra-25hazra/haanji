@@ -1,6 +1,1745 @@
 {
- "generated_from": "packs/*.yaml by research/harness/console_packs.py",
+ "generated_from": "packs/product/*.yaml and packs/*.yaml by research/harness/console_packs.py",
  "packs": [
+  {
+   "pack_id": "pragati_classes",
+   "display_name": "Coaching institute",
+   "version": 1,
+   "language": "hinglish",
+   "business_name": "Pragati Classes",
+   "agent_name": "Haanji",
+   "greeting": "Haanji, Pragati Classes. Boards, JEE ya NEET — kis course ke baare mein jaanna hai?",
+   "staff": [
+    "Ms Sharma",
+    "Mr Iqbal",
+    "Mr Deshmukh",
+    "Ms Fernandes",
+    "Mr Bansal",
+    "Ms Gupta",
+    "Ms Pillai",
+    "Mr Arora"
+   ],
+   "staff_role": "counsellor",
+   "services": [
+    {
+     "name": "class 10 demo class",
+     "price_inr": 0,
+     "duration_min": 60,
+     "staff": [
+      "Ms Sharma",
+      "Mr Iqbal"
+     ],
+     "aliases": [
+      "10th demo",
+      "class 10 demo",
+      "dasvi",
+      "10th ki class",
+      "10th board",
+      "cbse 10th",
+      "icse 10th"
+     ]
+    },
+    {
+     "name": "class 12 demo class",
+     "price_inr": 0,
+     "duration_min": 60,
+     "staff": [
+      "Mr Deshmukh",
+      "Ms Fernandes"
+     ],
+     "aliases": [
+      "11th demo",
+      "12th demo",
+      "class 12 demo",
+      "class 11 demo",
+      "barhvi",
+      "cbse 12th",
+      "icse 12th",
+      "ib board",
+      "ib",
+      "12th board"
+     ]
+    },
+    {
+     "name": "jee demo class",
+     "price_inr": 0,
+     "duration_min": 90,
+     "staff": [
+      "Mr Bansal",
+      "Ms Gupta"
+     ],
+     "aliases": [
+      "jee",
+      "iit",
+      "jee mains",
+      "jee advanced",
+      "engineering coaching"
+     ]
+    },
+    {
+     "name": "neet demo class",
+     "price_inr": 0,
+     "duration_min": 90,
+     "staff": [
+      "Ms Pillai",
+      "Mr Arora"
+     ],
+     "aliases": [
+      "neet",
+      "medical coaching",
+      "mbbs coaching",
+      "neet ki taiyari"
+     ]
+    },
+    {
+     "name": "counselling session",
+     "price_inr": 0,
+     "duration_min": 30,
+     "staff": [
+      "Ms Sharma",
+      "Mr Bansal",
+      "Ms Pillai"
+     ],
+     "aliases": [
+      "counselling",
+      "counseling",
+      "guidance",
+      "career guidance",
+      "salah",
+      "admission"
+     ]
+    },
+    {
+     "name": "scholarship test",
+     "price_inr": 0,
+     "duration_min": 90,
+     "staff": [
+      "Mr Deshmukh",
+      "Ms Pillai"
+     ],
+     "aliases": [
+      "scholarship",
+      "entrance test",
+      "admission test"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "1": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "2": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "3": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "4": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "5": [
+     "10:00",
+     "19:00",
+     "13:30",
+     "14:30"
+    ],
+    "6": [
+     "10:00",
+     "14:00"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Kaunse course hain?",
+     "a": "Class 10 boards, Class 11-12 boards (CBSE, ICSE aur IB), JEE aur NEET ke batch hain. Har course ki pehli demo class free hai."
+    },
+    {
+     "q": "Fees kitni hai?",
+     "a": "Fees course aur batch ke hisaab se hai. Counselling session mein poora structure, installment aur scholarship batate hain; wo session free hai."
+    },
+    {
+     "q": "Timings kya hain?",
+     "a": "Monday se Saturday subah 10 se shaam 7, aur Sunday subah 10 se dopahar 2 baje tak. Batch ke time counsellor batayenge."
+    },
+    {
+     "q": "Institute kahan hai?",
+     "a": "Hum Vijay Nagar mein hain, C21 Mall ke saamne, doosri manzil par."
+    },
+    {
+     "q": "Study material milta hai?",
+     "a": "Haan, har batch ke saath printed notes aur weekly test series milti hai."
+    },
+    {
+     "q": "Online class hai?",
+     "a": "Regular batch offline hain; doubts ke liye online session hota hai."
+    }
+   ],
+   "refusal_line": "Ye counsellor hi bata payenge, main aapka counselling ya demo class ka slot laga deta hoon.",
+   "escalation_line": "Main abhi aapko senior counsellor se jodta hoon, line par rahiye.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "",
+   "closing": "Theek hai, milte hain. All the best!",
+   "scenarios": 6,
+   "issues": [],
+   "product": true,
+   "departments": [
+    {
+     "name": "Class 10 Boards",
+     "code": "B10",
+     "staff": [
+      "Ms Sharma",
+      "Mr Iqbal"
+     ]
+    },
+    {
+     "name": "Class 11-12 Boards",
+     "code": "B12",
+     "staff": [
+      "Mr Deshmukh",
+      "Ms Fernandes"
+     ]
+    },
+    {
+     "name": "JEE",
+     "code": "JEE",
+     "staff": [
+      "Mr Bansal",
+      "Ms Gupta"
+     ]
+    },
+    {
+     "name": "NEET",
+     "code": "NT",
+     "staff": [
+      "Ms Pillai",
+      "Mr Arora"
+     ]
+    }
+   ],
+   "lexicon": [
+    {
+     "surface": "class 10 demo class",
+     "entry_type": "SERVICE",
+     "variants": [
+      "10th demo",
+      "class 10 demo",
+      "dasvi",
+      "10th ki class",
+      "10th board",
+      "cbse 10th",
+      "icse 10th"
+     ],
+     "keys": [
+      "AKST",
+      "KPST",
+      "KRSTN",
+      "KRSTNKRS",
+      "TKKRS",
+      "TPRT",
+      "TSV",
+      "TTN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "class 12 demo class",
+     "entry_type": "SERVICE",
+     "variants": [
+      "11th demo",
+      "12th demo",
+      "class 12 demo",
+      "class 11 demo",
+      "barhvi",
+      "cbse 12th",
+      "icse 12th",
+      "ib board",
+      "ib",
+      "12th board"
+     ],
+     "keys": [
+      "AKST",
+      "AP",
+      "APPRT",
+      "KPST",
+      "KRSTN",
+      "KRSTNKRS",
+      "PRV",
+      "TPRT",
+      "TTN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "jee demo class",
+     "entry_type": "SERVICE",
+     "variants": [
+      "jee",
+      "iit",
+      "jee mains",
+      "jee advanced",
+      "engineering coaching"
+     ],
+     "keys": [
+      "ANGNRNKCNG",
+      "AT",
+      "J",
+      "JATVNCT",
+      "JNNS",
+      "JTNKRS"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "neet demo class",
+     "entry_type": "SERVICE",
+     "variants": [
+      "neet",
+      "medical coaching",
+      "mbbs coaching",
+      "neet ki taiyari"
+     ],
+     "keys": [
+      "NPSKCNG",
+      "NT",
+      "NTKRKCNG",
+      "NTKTR",
+      "NTTNKRS"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "counselling session",
+     "entry_type": "SERVICE",
+     "variants": [
+      "counselling",
+      "counseling",
+      "guidance",
+      "career guidance",
+      "salah",
+      "admission"
+     ],
+     "keys": [
+      "ATNSN",
+      "GTNC",
+      "KNSRNG",
+      "KNSRNGSSN",
+      "KRRGTNC",
+      "SR"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "scholarship test",
+     "entry_type": "SERVICE",
+     "variants": [
+      "scholarship",
+      "entrance test",
+      "admission test"
+     ],
+     "keys": [
+      "ANTRNCTST",
+      "ATNSNTST",
+      "SCRRSP",
+      "SCRRSPTST"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Ms Sharma",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NSSRN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Sharma",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "SRN"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Mr Iqbal",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NRAKPR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Iqbal",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "AKPR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Mr Deshmukh",
+     "entry_type": "STAFF",
+     "variants": [
+      "Deshmuk"
+     ],
+     "keys": [
+      "NRTSNK",
+      "TSNK"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Deshmukh",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TSNK"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Ms Fernandes",
+     "entry_type": "STAFF",
+     "variants": [
+      "Fernandis"
+     ],
+     "keys": [
+      "NSfRNNTS",
+      "fRNNTS"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Fernandes",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "fRNNTS"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Mr Bansal",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NRPNSR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Bansal",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "PNSR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Ms Gupta",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NSGPT"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Gupta",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "GPT"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Ms Pillai",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NSPR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Pillai",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "PR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Mr Arora",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NRARR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Arora",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "ARR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Vijay Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Vijay",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJ"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Bhawarkuan",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PVRKN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Geeta Bhawan",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "GTPVN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Geeta",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "GT"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Bhawan",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PVN"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Rau",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "R"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Palasia",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PRS"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Pragati Classes",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "PRGTKRSS"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "JEE",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "J"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "NEET",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "NT"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "CBSE",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "KPS"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "ICSE",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "AKS"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "IB",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "AP"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "demo class",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "TNKRS"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "study material",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "STTNTRR"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "test series",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "TSTSRS"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
+  {
+   "pack_id": "smile_care_clinic",
+   "display_name": "Multispeciality clinic",
+   "version": 1,
+   "language": "hinglish",
+   "business_name": "Smile Care Clinic",
+   "agent_name": "Haanji",
+   "greeting": "Haanji, Smile Care Clinic. Kis doctor ya kis takleef ke liye call kiya?",
+   "staff": [
+    "Dr Sheikh",
+    "Dr Iyer",
+    "Dr Kapoor",
+    "Dr Rao",
+    "Dr Mehta",
+    "Dr Verma",
+    "Dr Nair",
+    "Dr Joshi",
+    "Dr Saxena",
+    "Dr Malhotra",
+    "Dr Reddy",
+    "Dr Banerjee",
+    "Dr Kulkarni"
+   ],
+   "staff_role": "doctor",
+   "services": [
+    {
+     "name": "dental checkup",
+     "price_inr": 300,
+     "duration_min": 20,
+     "staff": [
+      "Dr Sheikh",
+      "Dr Iyer"
+     ],
+     "aliases": [
+      "daant ka checkup",
+      "daant dikhana",
+      "daant mein dard",
+      "daant me dard",
+      "keeda",
+      "cavity",
+      "filling"
+     ]
+    },
+    {
+     "name": "teeth cleaning",
+     "price_inr": 800,
+     "duration_min": 30,
+     "staff": [
+      "Dr Sheikh",
+      "Dr Iyer"
+     ],
+     "aliases": [
+      "cleaning",
+      "scaling",
+      "safai",
+      "daant ki safai",
+      "daant saaf karwane"
+     ]
+    },
+    {
+     "name": "root canal",
+     "price_inr": 6500,
+     "duration_min": 60,
+     "staff": [
+      "Dr Sheikh"
+     ],
+     "aliases": [
+      "rct",
+      "root canal treatment"
+     ]
+    },
+    {
+     "name": "tooth extraction",
+     "price_inr": 1500,
+     "duration_min": 30,
+     "staff": [
+      "Dr Iyer"
+     ],
+     "aliases": [
+      "daant nikalna",
+      "daant nikalwana",
+      "akal daad",
+      "wisdom tooth"
+     ]
+    },
+    {
+     "name": "surgery consultation",
+     "price_inr": 600,
+     "duration_min": 20,
+     "staff": [
+      "Dr Kapoor",
+      "Dr Rao"
+     ],
+     "aliases": [
+      "surgeon",
+      "operation ki salah",
+      "hernia",
+      "piles",
+      "appendix",
+      "gallbladder",
+      "pathri",
+      "gaanth",
+      "lump"
+     ]
+    },
+    {
+     "name": "dressing",
+     "price_inr": 300,
+     "duration_min": 15,
+     "staff": [
+      "Dr Kapoor",
+      "Dr Rao"
+     ],
+     "aliases": [
+      "patti",
+      "patti badalni",
+      "taanke",
+      "stitches",
+      "ghaav",
+      "wound"
+     ]
+    },
+    {
+     "name": "general consultation",
+     "price_inr": 400,
+     "duration_min": 15,
+     "staff": [
+      "Dr Mehta",
+      "Dr Verma",
+      "Dr Nair"
+     ],
+     "aliases": [
+      "doctor dikhana",
+      "physician",
+      "general physician",
+      "bukhar",
+      "khansi",
+      "sardi",
+      "zukaam",
+      "kamzori",
+      "bp check"
+     ]
+    },
+    {
+     "name": "health checkup",
+     "price_inr": 1500,
+     "duration_min": 45,
+     "staff": [
+      "Dr Mehta",
+      "Dr Nair"
+     ],
+     "aliases": [
+      "full body checkup",
+      "body checkup",
+      "routine checkup"
+     ]
+    },
+    {
+     "name": "child consultation",
+     "price_inr": 500,
+     "duration_min": 20,
+     "staff": [
+      "Dr Joshi",
+      "Dr Saxena"
+     ],
+     "aliases": [
+      "bachche ka doctor",
+      "bachchon ke doctor",
+      "paediatrician",
+      "pediatrician",
+      "baby doctor"
+     ]
+    },
+    {
+     "name": "vaccination",
+     "price_inr": 200,
+     "duration_min": 15,
+     "staff": [
+      "Dr Joshi",
+      "Dr Saxena"
+     ],
+     "aliases": [
+      "teeka",
+      "tika",
+      "vaccine",
+      "tikakaran",
+      "teeka lagwana"
+     ]
+    },
+    {
+     "name": "ortho consultation",
+     "price_inr": 600,
+     "duration_min": 20,
+     "staff": [
+      "Dr Malhotra",
+      "Dr Reddy"
+     ],
+     "aliases": [
+      "haddi ka doctor",
+      "orthopaedic",
+      "ortho",
+      "jodon ka dard",
+      "ghutne ka dard",
+      "kamar dard",
+      "joint pain",
+      "back pain"
+     ]
+    },
+    {
+     "name": "plaster check",
+     "price_inr": 400,
+     "duration_min": 20,
+     "staff": [
+      "Dr Malhotra",
+      "Dr Reddy"
+     ],
+     "aliases": [
+      "plaster",
+      "plaster khulwana",
+      "haddi follow up"
+     ]
+    },
+    {
+     "name": "gynae consultation",
+     "price_inr": 600,
+     "duration_min": 20,
+     "staff": [
+      "Dr Banerjee",
+      "Dr Kulkarni"
+     ],
+     "aliases": [
+      "gynaecologist",
+      "gynecologist",
+      "lady doctor",
+      "mahila doctor",
+      "periods"
+     ]
+    },
+    {
+     "name": "pregnancy checkup",
+     "price_inr": 700,
+     "duration_min": 30,
+     "staff": [
+      "Dr Banerjee",
+      "Dr Kulkarni"
+     ],
+     "aliases": [
+      "pregnancy",
+      "antenatal",
+      "garbhavastha",
+      "pregnancy ka checkup"
+     ]
+    }
+   ],
+   "hours": {
+    "0": [
+     "09:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "1": [
+     "09:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "2": [
+     "09:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "3": [
+     "09:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "4": [
+     "09:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ],
+    "5": [
+     "09:00",
+     "20:00",
+     "13:30",
+     "15:00"
+    ]
+   },
+   "knowledge": [
+    {
+     "q": "Clinic ke timings kya hain?",
+     "a": "Hum Monday se Saturday, subah 9 se raat 8 baje tak khule hain. Dedh se teen baje lunch break hota hai. Sunday band rehta hai."
+    },
+    {
+     "q": "Kaunse doctor hain?",
+     "a": "Chhe vibhaag hain: dant, surgery, general physician, bachchon ke doctor, haddi ke doctor aur gynaecology. Kis takleef ke liye dikhana hai, bataiye, main sahi doctor ka slot dekh leta hoon."
+    },
+    {
+     "q": "Fees kitni hai?",
+     "a": "General physician ki fees 400 rupaye hai; specialist ki 500 se 600. Kis doctor ke liye puchh rahe hain?"
+    },
+    {
+     "q": "Kya insurance chalta hai?",
+     "a": "Haan, Star Health aur HDFC Ergo ka cashless hota hai. Card aur ID saath laaiye."
+    },
+    {
+     "q": "Clinic kahan hai?",
+     "a": "Hum Vijay Nagar mein hain, Satya Sai square se sau meter aage, pehli manzil par. Basement mein parking hai."
+    },
+    {
+     "q": "Token kaise milta hai?",
+     "a": "Clinic pahunch kar reception par check-in kijiye, wahin token milta hai. Phone par 'mera number kab aayega' puchhenge to main line ki position bata dunga."
+    },
+    {
+     "q": "Emergency hai kya?",
+     "a": "Hamare yahan 24 ghante emergency nahi hai. Emergency mein turant 108 par call kijiye ya nazdeeki hospital jaiye."
+    }
+   ],
+   "refusal_line": "Ye doctor hi dekh kar bata payenge — main aapka slot laga deta hoon.",
+   "escalation_line": "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye.",
+   "after_hours_line": "Abhi hum band hain, isliye main kisi ko jod nahi sakta. {contact}Maine aapki baat urgent callback ke liye note kar li hai; khulte hi sabse pehle aapko call aayega.",
+   "emergency_contact": "turant 108 par call kijiye ya nazdeeki hospital jaiye.",
+   "closing": "Theek hai, milte hain. Apna khayal rakhiye.",
+   "scenarios": 7,
+   "issues": [],
+   "product": true,
+   "departments": [
+    {
+     "name": "Dental",
+     "code": "DN",
+     "staff": [
+      "Dr Sheikh",
+      "Dr Iyer"
+     ]
+    },
+    {
+     "name": "General Surgery",
+     "code": "GS",
+     "staff": [
+      "Dr Kapoor",
+      "Dr Rao"
+     ]
+    },
+    {
+     "name": "General Physician",
+     "code": "GP",
+     "staff": [
+      "Dr Mehta",
+      "Dr Verma",
+      "Dr Nair"
+     ]
+    },
+    {
+     "name": "Paediatrics",
+     "code": "PD",
+     "staff": [
+      "Dr Joshi",
+      "Dr Saxena"
+     ]
+    },
+    {
+     "name": "Orthopaedics",
+     "code": "OR",
+     "staff": [
+      "Dr Malhotra",
+      "Dr Reddy"
+     ]
+    },
+    {
+     "name": "Gynaecology",
+     "code": "GY",
+     "staff": [
+      "Dr Banerjee",
+      "Dr Kulkarni"
+     ]
+    }
+   ],
+   "lexicon": [
+    {
+     "surface": "dental checkup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "daant ka checkup",
+      "daant dikhana",
+      "daant mein dard",
+      "daant me dard",
+      "keeda",
+      "cavity",
+      "filling"
+     ],
+     "keys": [
+      "KT",
+      "KVT",
+      "TNTKCKP",
+      "TNTNNTRT",
+      "TNTNTRT",
+      "TNTRCKP",
+      "TNTTKN",
+      "fRNG"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "teeth cleaning",
+     "entry_type": "SERVICE",
+     "variants": [
+      "cleaning",
+      "scaling",
+      "safai",
+      "daant ki safai",
+      "daant saaf karwane"
+     ],
+     "keys": [
+      "KRNNG",
+      "SKRNG",
+      "Sf",
+      "TNTKSf",
+      "TNTSfKRVN",
+      "TTKRNNG"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "root canal",
+     "entry_type": "SERVICE",
+     "variants": [
+      "rct",
+      "root canal treatment"
+     ],
+     "keys": [
+      "RKT",
+      "RTKNR",
+      "RTKNRTRTNNT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "tooth extraction",
+     "entry_type": "SERVICE",
+     "variants": [
+      "daant nikalna",
+      "daant nikalwana",
+      "akal daad",
+      "wisdom tooth"
+     ],
+     "keys": [
+      "AKRTT",
+      "TNTNKRN",
+      "TNTNKRVN",
+      "TTAKTRKT",
+      "VSTNTT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "surgery consultation",
+     "entry_type": "SERVICE",
+     "variants": [
+      "surgeon",
+      "operation ki salah",
+      "hernia",
+      "piles",
+      "appendix",
+      "gallbladder",
+      "pathri",
+      "gaanth",
+      "lump"
+     ],
+     "keys": [
+      "APNTK",
+      "APRTNKSR",
+      "ARN",
+      "GNT",
+      "GRPRTR",
+      "PRS",
+      "PTR",
+      "RNP",
+      "SRGN",
+      "SRGRKNSRTT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "dressing",
+     "entry_type": "SERVICE",
+     "variants": [
+      "patti",
+      "patti badalni",
+      "taanke",
+      "stitches",
+      "ghaav",
+      "wound"
+     ],
+     "keys": [
+      "GV",
+      "PT",
+      "PTPTRN",
+      "STTCS",
+      "TNK",
+      "TRSNG",
+      "VNT"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "general consultation",
+     "entry_type": "SERVICE",
+     "variants": [
+      "doctor dikhana",
+      "physician",
+      "general physician",
+      "bukhar",
+      "khansi",
+      "sardi",
+      "zukaam",
+      "kamzori",
+      "bp check"
+     ],
+     "keys": [
+      "GNRRKNSRTT",
+      "GNRRfSCN",
+      "KNS",
+      "KNSR",
+      "PCK",
+      "PKR",
+      "SKN",
+      "SRT",
+      "TKTRTKN",
+      "fSCN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "health checkup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "full body checkup",
+      "body checkup",
+      "routine checkup"
+     ],
+     "keys": [
+      "ARTCKP",
+      "PTCKP",
+      "RTNCKP",
+      "fRPTCKP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "child consultation",
+     "entry_type": "SERVICE",
+     "variants": [
+      "bachche ka doctor",
+      "bachchon ke doctor",
+      "paediatrician",
+      "pediatrician",
+      "baby doctor"
+     ],
+     "keys": [
+      "CRTKNSRTT",
+      "PCKTKTR",
+      "PCNKTKTR",
+      "PPTKTR",
+      "PTTRCN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "vaccination",
+     "entry_type": "SERVICE",
+     "variants": [
+      "teeka",
+      "tika",
+      "vaccine",
+      "tikakaran",
+      "teeka lagwana"
+     ],
+     "keys": [
+      "TK",
+      "TKKRN",
+      "TKRGVN",
+      "VKCN",
+      "VKCNTN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "ortho consultation",
+     "entry_type": "SERVICE",
+     "variants": [
+      "haddi ka doctor",
+      "orthopaedic",
+      "ortho",
+      "jodon ka dard",
+      "ghutne ka dard",
+      "kamar dard",
+      "joint pain",
+      "back pain"
+     ],
+     "keys": [
+      "ART",
+      "ARTKNSRTT",
+      "ARTPTK",
+      "ATKTKTR",
+      "GTNKTRT",
+      "JNTPN",
+      "JTNKTRT",
+      "KNRTRT",
+      "PKPN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "plaster check",
+     "entry_type": "SERVICE",
+     "variants": [
+      "plaster",
+      "plaster khulwana",
+      "haddi follow up"
+     ],
+     "keys": [
+      "ATfRVAP",
+      "PRSTR",
+      "PRSTRCK",
+      "PRSTRKRVN"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "gynae consultation",
+     "entry_type": "SERVICE",
+     "variants": [
+      "gynaecologist",
+      "gynecologist",
+      "lady doctor",
+      "mahila doctor",
+      "periods"
+     ],
+     "keys": [
+      "GNKNSRTT",
+      "GNKRGST",
+      "NRTKTR",
+      "PRTS",
+      "RTTKTR"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "pregnancy checkup",
+     "entry_type": "SERVICE",
+     "variants": [
+      "pregnancy",
+      "antenatal",
+      "garbhavastha",
+      "pregnancy ka checkup"
+     ],
+     "keys": [
+      "ANTNTR",
+      "GRPVST",
+      "PRGNNC",
+      "PRGNNCCKP",
+      "PRGNNCKCKP"
+     ],
+     "weight": 1.25
+    },
+    {
+     "surface": "Dr Sheikh",
+     "entry_type": "STAFF",
+     "variants": [
+      "Doctor Shaik"
+     ],
+     "keys": [
+      "TKTRSK",
+      "TRSK"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Sheikh",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "SK"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Iyer",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRAR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Iyer",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "AR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Kapoor",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRKPR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Kapoor",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "KPR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Rao",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Dr Mehta",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRNT"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Mehta",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NT"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Verma",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRVRN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Verma",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "VRN"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Nair",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRNR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Nair",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Joshi",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRJS"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Joshi",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "JS"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Saxena",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRSKN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Saxena",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "SKN"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Malhotra",
+     "entry_type": "STAFF",
+     "variants": [
+      "Malhotara"
+     ],
+     "keys": [
+      "NRTR",
+      "TRNRTR"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Malhotra",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "NRTR"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Reddy",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRRT"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Reddy",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "RT"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Banerjee",
+     "entry_type": "STAFF",
+     "variants": [
+      "Banarji",
+      "Banerji"
+     ],
+     "keys": [
+      "PNRJ",
+      "TRPNRJ"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Banerjee",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "PNRJ"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Dr Kulkarni",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "TRKRKRN"
+     ],
+     "weight": 1.1
+    },
+    {
+     "surface": "Kulkarni",
+     "entry_type": "STAFF",
+     "variants": [],
+     "keys": [
+      "KRKRN"
+     ],
+     "weight": 0.99
+    },
+    {
+     "surface": "Vijay Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Vijay",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "VJ"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Palasia",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "PRS"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Bhawarkuan",
+     "entry_type": "PLACE",
+     "variants": [
+      "Bhavarkua",
+      "Bhanwarkuan"
+     ],
+     "keys": [
+      "PNVRKN",
+      "PVRK",
+      "PVRKN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Rau",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "R"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Scheme 78",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SCN"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Scheme",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "SCN"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Sudama Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "STNNGR"
+     ],
+     "weight": 1.0
+    },
+    {
+     "surface": "Sudama",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "STN"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Nagar",
+     "entry_type": "PLACE",
+     "variants": [],
+     "keys": [
+      "NGR"
+     ],
+     "weight": 0.9
+    },
+    {
+     "surface": "Smile Care Clinic",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "SNRKRKRNK"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "Star Health",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "STRART"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "HDFC Ergo",
+     "entry_type": "BRAND",
+     "variants": [],
+     "keys": [
+      "TfKARG"
+     ],
+     "weight": 0.95
+    },
+    {
+     "surface": "insurance cashless",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "ANSRNCKSRS"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "follow up",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "fRVAP"
+     ],
+     "weight": 0.85
+    },
+    {
+     "surface": "token number",
+     "entry_type": "PHRASE",
+     "variants": [],
+     "keys": [
+      "TKNNNPR"
+     ],
+     "weight": 0.85
+    }
+   ]
+  },
   {
    "pack_id": "clinic_chennai",
    "display_name": "Dental clinic (Chennai, Tanglish)",
@@ -154,6 +1893,8 @@
    "closing": "Nandri, paathukalaam. Nalla irunga.",
    "scenarios": 5,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "teeth cleaning",
@@ -549,6 +2290,8 @@
    "closing": "Achha, dekha hobe. Bhalo thakben.",
    "scenarios": 3,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "teeth cleaning",
@@ -881,6 +2624,8 @@
    "closing": "Dhanyavad, tumcha divas chhan jao.",
    "scenarios": 3,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "root canal",
@@ -1250,6 +2995,8 @@
    "closing": "Barabar, counsellor tamne call karse. Aabhar.",
    "scenarios": 5,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "demo class",
@@ -1696,6 +3443,8 @@
    "closing": "Theek hai, counsellor aapse baat karenge.",
    "scenarios": 3,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "demo class",
@@ -2193,6 +3942,8 @@
    "closing": "Theek hai, milte hain. Apna khayal rakhiye.",
    "scenarios": 8,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "root canal",
@@ -2728,6 +4479,8 @@
    "closing": "Ho gaya. Report time par mil jayegi.",
    "scenarios": 3,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "complete blood count",
@@ -3175,6 +4928,8 @@
    "closing": "Ayipoyindi. Report time ki vastundi. Dhanyavadalu.",
    "scenarios": 5,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "complete blood count",
@@ -3607,6 +5362,8 @@
    "closing": "Perfect ji, tuhada slot lag gaya. Milde haan!",
    "scenarios": 5,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "haircut",
@@ -4091,6 +5848,8 @@
    "closing": "Perfect, aapka slot lag gaya. Milte hain!",
    "scenarios": 4,
    "issues": [],
+   "product": false,
+   "departments": [],
    "lexicon": [
     {
      "surface": "hair spa",

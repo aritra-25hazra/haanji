@@ -2,6 +2,32 @@
 
 All notable changes to HaanJi. Dates are when the work reached `main`.
 
+## Unreleased — clinics and coaching
+
+* **The product is for clinics and coaching institutes.** Two product packs in
+  `packs/product/`: Smile Care Clinic (dental, general surgery, general
+  physician, paediatrics, orthopaedics, gynaecology; 13 doctors) and Pragati
+  Classes (Class 10 and 11–12 boards — CBSE, ICSE, IB — JEE, NEET). Packs gain
+  optional `departments`. `HAANJI_PRODUCT=on` offers only these; the ten packs
+  in `packs/` stay the research corpus (every REPORT number unchanged).
+* **Demo copies.** On a demo server with sign-in on, visitors book into a
+  "(Demo)" copy of each shop; the shop's own calendar stays clean.
+* **Token queue.** Check-in, walk-ins (to the shortest line), Next patient,
+  no-show; tokens like `GP-07`; a waiting-room screen at `/queue` (no names);
+  "mera number kab aayega" answered with the token, people ahead and a rough
+  wait. Console: a Queue page and Check in on today's calendar bookings.
+* **Doctors on /talk.** Today's doctors by department before the call; the
+  offered slots with each doctor's department; a booking card with the doctor,
+  time and appointments before it.
+* **Audit fixes.** Sealed days are explicitly UTC days (today was resealed by
+  India's date, so between midnight and 05:30 IST a booking stayed out of the
+  anchor); a Content-Security-Policy on the engine's pages and the console; a
+  visible no-mic note and a better Indian voice on /talk; Google sign-in
+  offered for a forgotten password; no side stripes, no bounce, a quieter
+  sample mark; REPORT cover 1.2, class diagram matching the code, the trust
+  model and what the latency figures include; the unused Java control plane
+  removed (CI and CodeQL jobs too).
+
 ## 1.2.0 — 2026-11-19 (phase 1, phase 2, step D and the owner-ready audit)
 
 ### Owner-ready audit (branch audit/owner-ready, 2026-11-18)

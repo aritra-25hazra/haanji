@@ -2,7 +2,7 @@
 
 <p class="byline">Aritra Hazra · Prabhav Upadhayay · Anuj Uniyal<br>
 B.Tech Information Technology (Artificial Intelligence), Medi-Caps University<br>
-Evaluation report, version 1.0 · 15 October 2026 · code and data: <a href="https://github.com/aritra-25hazra/haanji">github.com/aritra-25hazra/haanji</a></p>
+Evaluation report, version 1.2 · 19 November 2026 · code and data: <a href="https://github.com/aritra-25hazra/haanji">github.com/aritra-25hazra/haanji</a></p>
 
 ## Abstract
 
@@ -86,6 +86,8 @@ A pack is one YAML file describing a kind of business: catalogue with durations 
 | salon_spa | Hinglish | 6 | 4 | 4 |
 
 The Kolkata and Pune packs are the test of the claim that the engine knows nothing about any particular language: supporting Benglish, and then Marathinglish, took a phrase-table row and one YAML file each, with no engine code forked. (The Pune pack was added after the evaluation runs below, which cover the first five packs and 21 scenarios; the selftest covers all 24.)
+
+**The product and the corpus are separate.** Since version 1.2 the shipped product offers two further packs in `packs/product/`: a multispeciality clinic (six departments — dental, general surgery, general physician, paediatrics, orthopaedics, gynaecology — and 13 doctors) and a coaching institute (Class 10 and 11–12 boards, JEE, NEET). They add an optional `departments` field, which the token queue uses for its token codes (`GP-07`). They are not part of the evaluation: every number in this report was measured on the ten packs above, and their own scenarios (7 and 6) are run by the test suite (`test_product.py`) rather than by the benchmark.
 
 ### 3.3 The dialogue policy and guardrails
 
@@ -353,6 +355,8 @@ On the authored scenarios with clean transcripts, every configuration with the b
 
 Three things in the table are reported rather than averaged away. First, write turns are never speculated, so the booking turn itself is not faster: its p90 is 194 ms with speculation and without it, and it still waits for the caller's confirmation and the ledger. The p90 over *all* tool turns does fall (297 → 220 ms) only because most tool turns in a booking call are reads. Second, the hit rate is well under 100%: the predictor fires on partials that turn out to want a different date or no tool at all. Third, the two runtime contributions interact: with the bridge off, the hit rate drops to 19.2%, because the predictor derives its arguments from the same mangled entities the policy does, and the real turn then asks for something else. The second and third are the expected shape of a correct speculation scheme, and the second is the quantity a learned predictor trained on real calls would improve.
 
+**What these milliseconds are.** The latencies in Table 4 are nominal engine-side milliseconds under the simulated clock of §3.4: the tool calls sleep for the documented latency of the system they stand in for. The wall-clock time of a turn over HTTP on one machine is measured in §5.3 (Table 7: p50 3.9–6.9 ms, p95 183.8–188.5 ms, the p95 being the booking write and seal). Neither figure includes speech recognition, speech synthesis or the network between a caller and the server; those are the quantities to measure once a real line is connected (§9).
+
 ### 5.3 Concurrency
 
 Speculation and the policy are measured per call above; a receptionist also has to answer several callers at once. `research/harness/load_test.py` starts one engine process (mock providers, rate limiting off) and drives scripted callers through the web-call API with a short random pause between turns, for a ladder of concurrency levels, measuring the HTTP round-trip of each turn — what a browser or a telephony bridge would wait for.
@@ -490,6 +494,7 @@ Two of these changes touch the measurements above. Speculation's arguments are m
 **External.** All latencies are engine-side, under simulated time, on one machine: they measure what HaanJi adds and what speculation removes, not vendor round-trip time, which in a deployment will dominate. No real audio was recognised and no real caller was involved in any number above; the browser demo and the WhatsApp channel have handled real text and speech, but informally. Five packs and 21 scenarios are a small, author-written sample of Indian small businesses.
 
 **Statistical.** Confidence intervals are over 5 seeds with 3 repetitions each, using the t-distribution; with so few seeds the intervals are honest but wide, and a difference whose intervals overlap should be read as "not separated by this experiment". Several quantities (harmful corrections, unconfirmed writes, ledger detections) have zero variance because they never moved; that is the design working, not a statistical artefact, and it is why they are also covered by tests that fail if they change.
+**Trust in the operator.** Receipts are signed with a key the operator's server holds, so whoever holds that key could rewrite the chain and sign it again. What prevents a silent rewrite is the daily Merkle anchor (§6), committed to the repository's public `transparency` branch, whose history the operator cannot change without it showing; a verifier should compare a day's root with the anchor published at the time, not only with the server's current answer.
 
 ## 9. Limitations and future work
 
@@ -841,10 +846,12 @@ classDiagram
     +hints()
   }
   class TenantLexicon {
-    +build(seed)
+    +add(word)
     +candidates(key)
+    +hints()
     +reinforce(surface, delta)
   }
+
   class SpeculationEngine {
     +on_partial(text, ctx)
     +claim(tool, args)
@@ -864,6 +871,7 @@ classDiagram
   }
   class MockLLM
   class ClaudeLLM
+  class GeminiLLM
   class Guard {
     +check(text) Verdict
   }
@@ -886,10 +894,12 @@ classDiagram
   CallSession --> LLMAdapter
   CallSession --> Guard
   CallSession --> ToolRegistry
+  CallSession --> DialoguePolicy
   BhashaBridge --> TenantLexicon
   SpeculationEngine --> IntentPredictor
   LLMAdapter <|.. MockLLM
   LLMAdapter <|.. ClaudeLLM
+  ClaudeLLM <|-- GeminiLLM
   MockLLM --> DialoguePolicy
   ClaudeLLM --> DialoguePolicy
   ToolRegistry --> Ledger

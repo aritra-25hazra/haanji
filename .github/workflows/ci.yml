@@ -58,17 +58,6 @@ jobs:
         working-directory: engine
         run: pytest -q
 
-  core-api:
-    name: core api (experimental, not deployed)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: "21", cache: maven }
-      - name: build, unit tests and architecture rules
-        working-directory: experimental/core-api
-        run: mvn -B verify
-
   console:
     name: console
     runs-on: ubuntu-latest

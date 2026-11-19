@@ -44,8 +44,14 @@ services:
         value: "100"
       - key: HAANJI_PROVIDER_TTS
         value: mock
+      # The product: a multispeciality clinic and a coaching institute
+      # (packs/product/). The ten packs in packs/ are the research corpus and
+      # are not offered as shops. On this demo server, visitors book into the
+      # "(Demo)" copy of each shop.
+      - key: HAANJI_PRODUCT
+        value: "on"
       - key: HAANJI_PACK
-        value: dental_clinic
+        value: smile_care_clinic
       # Writable on the instance's ephemeral disk; the demo data is meant to be
       # disposable, and a redeploy starts it clean.
       - key: HAANJI_VAR_DIR
@@ -134,7 +140,7 @@ services:
       - key: HAANJI_SALES_WHATSAPP
         sync: false
       - key: HAANJI_WA_PACK
-        value: dental_clinic
+        value: smile_care_clinic
       # The owner's number: receives the evening digest and, with
       # HAANJI_AUTH=on, becomes the first console owner (sign-in by WhatsApp
       # code). Keep auth off for a public demo; turn it on for a real shop.

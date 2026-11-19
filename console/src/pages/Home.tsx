@@ -5,16 +5,16 @@ import { en, t, useT } from "../i18n";
 import { MEASURED, measuredOn, ms, pct } from "../results";
 import { useApp } from "../state";
 
-// The kinds of shop the packs cover, once each (two salon packs are one kind).
+// HaanJi is built for two kinds of business: clinics and coaching institutes.
 const KINDS = [
-  { icon: "tooth", name: en("Dental clinics"), text: en("Appointments, cleanings, root canals; emergencies go to the doctor.") },
-  { icon: "scissors", name: en("Salons and spas"), text: en("Haircuts and treatments with the stylist the caller asks for.") },
-  { icon: "flask", name: en("Diagnostic labs"), text: en("Test bookings, fasting instructions, home collection slots.") },
-  { icon: "book", name: en("Coaching institutes"), text: en("Counselling sessions, batch timings and fees.") },
+  { icon: "tooth", name: en("Clinics"), text: en("Dental, general surgery, general physician, paediatrics, orthopaedics and gynaecology: the caller is booked with the right doctor, and emergencies go straight to a person.") },
+  { icon: "bell", name: en("A token queue at reception"), text: en("Booked patients check in and walk-ins get a token; reception calls the next one, a waiting-room screen shows who is being seen, and a caller can ask how long the wait is.") },
+  { icon: "book", name: en("Coaching institutes"), text: en("Class 10 and 11–12 boards (CBSE, ICSE, IB), JEE and NEET: demo classes, counselling and scholarship tests, and never a promised rank.") },
 ];
 const FAQ = [
   { q: en("Is it really AI?"), a: en("Yes, in the plain sense: it listens with speech recognition, works out what the caller wants and answers in their language. What to ask and what to book is decided by HaanJi's own rules for each kind of shop, which is why every booking can be checked; a hosted model (Google Gemini) can be switched on. It tells every caller that it is an AI.") },
-  { q: en("Does it speak Hindi?"), a: en("Yes, Hinglish, the way people mix Hindi and English on the phone. Packs also cover Bengali, Marathi, Tamil, Telugu, Gujarati and Punjabi mixed with English: seven languages.") },
+  { q: en("Does it speak Hindi?"), a: en("Yes, Hinglish, the way people mix Hindi and English on the phone. The engine has also been tested with Bengali, Marathi, Tamil, Telugu, Gujarati and Punjabi mixed with English.") },
+  { q: en("How does the token queue work?"), a: en("When a booked patient arrives, reception checks them in and they get a token such as GP-07; a walk-in gets one at the desk. Reception presses Next patient for each doctor, the waiting-room screen shows the token being seen (never a name), and a patient can call or message to ask how many are ahead.") },
   { q: en("What if it gets it wrong?"), a: en("It reads every booking back (service, day, time and the last digits of the number) and books only after the caller says yes. If it cannot finish, it takes a callback note, and the call shows up under 'Needs a callback'. Emergencies and complaints go to your staff.") },
   { q: en("Is my data safe?"), a: en("Customers' names and numbers in each receipt are encrypted with a key per customer. A customer can download their data or ask for it to be erased on the My data page, and call records are deleted after 180 days by default. The public demo shows made-up data only.") },
 ];
@@ -28,7 +28,7 @@ export default function Home() {
   const h = MEASURED.headline, led = MEASURED.ledger;
   const sales = status?.sales_whatsapp?.replace(/\D/g, "");
   const demo = () => { setSampleView(true); nav("/dashboard"); };
-  useEffect(() => { document.title = t("HaanJi — AI receptionist for Indian shops"); });
+  useEffect(() => { document.title = t("HaanJi — AI receptionist for clinics and coaching institutes"); });
   const ideas = [
     { name: "Bhasha", title: t("Hears shop words right"),
       num: `${pct(h.entity_error_rate_without_bhasha!)} → ${pct(h.entity_error_rate_with_bhasha!, 2)}`,
@@ -44,7 +44,7 @@ export default function Home() {
     <div className="home">
       <section className="home-hero">
         <h1>{t("A receptionist that answers every call, in Hinglish.")}</h1>
-        <p className="home-lede">{t("HaanJi picks up your shop's phone and WhatsApp, books the appointment in your calendar, and keeps a signed receipt of what the caller agreed to.")}</p>
+        <p className="home-lede">{t("For clinics and coaching institutes: HaanJi picks up the phone and WhatsApp, books the right doctor or class, runs the token queue at reception, and keeps a signed receipt of what the caller agreed to.")}</p>
         <div className="row">
           <button className="btn btn-primary" onClick={demo}>{t("See the demo dashboard")} <Icon name="arrow" small /></button>
           <a className="btn btn-ghost" href="/engine/talk" target="_blank" rel="noopener noreferrer">{t("Talk to HaanJi")} <Icon name="external" small /></a>
@@ -70,6 +70,7 @@ export default function Home() {
       </section>
       <p className="muted small home-note">
         {t("Measured on {date} by the project's benchmark: {scenarios} scripted calls across {packs} shops, {reps} runs each, with speech-recognition errors added on purpose. These are simulated calls, not live customers.", { date: measuredOn(), scenarios: MEASURED.scenarios, packs: MEASURED.packs, reps: MEASURED.reps })}{" "}
+        {t("On errors learned from real speech recognisers the reduction is smaller, 28–33%.")}{" "}
         <Link to="/how">{t("See every number")}</Link>
       </p>
 
@@ -90,11 +91,11 @@ export default function Home() {
         <h2 id="plans-h">{t("Plans")}</h2>
         <div className="plans">
           {[
-            { name: t("Pilot"), text: t("One shop, set up together with you, to see it work on your own calls."),
+            { name: t("Pilot"), text: t("One clinic or institute, set up together with you, to see it work on your own calls."),
               points: [en("Your services, prices, hours and staff set up for you"), en("Calls in the browser and the WhatsApp simulator"), en("The owner's console and signed receipts")] },
-            { name: t("Shop"), text: t("Phone and WhatsApp, the calendar, reminders, and the owner's evening summary."),
-              points: [en("Bookings straight into the calendar"), en("WhatsApp reminders the day before"), en("The evening summary on the owner's WhatsApp"), en("Callback list for calls it could not finish")] },
-            { name: t("Chain"), text: t("Several branches in one dashboard, with sign-in for each person on the staff."),
+            { name: t("Clinic"), text: t("Phone and WhatsApp, the calendar, the token queue, reminders, and the owner's evening summary."),
+              points: [en("Bookings straight into each doctor's calendar"), en("A token queue with a waiting-room screen"), en("WhatsApp reminders the day before"), en("Callback list for calls it could not finish")] },
+            { name: t("Group"), text: t("Several branches in one dashboard, with sign-in for each person on the staff."),
               points: [en("One console for every branch"), en("Owner and staff sign-in, each device listed"), en("An activity log of every change"), en("Customers' data requests handled in Settings")] },
           ].map((p) => (
             <article key={p.name} className="plan">

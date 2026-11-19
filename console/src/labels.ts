@@ -21,13 +21,21 @@ export const outcomeLabel = (o: string | null) => {
 const NAMES = new Map((PACKS as { packs: { pack_id: string; business_name: string; display_name: string }[] }).packs
   .map((p) => [p.pack_id, p] as const));
 /** "Smile Care Dental", not "dental_clinic". A pack made in Nayi dukaan is not in the file: its id, spaced. */
-export const businessName = (pack: string) => NAMES.get(pack)?.business_name ?? pack.replace(/_/g, " ");
-export const packLabel = (pack: string) => {
+/** A demo copy (`<pack>_demo`, where visitors book on a demo server) reads as
+ *  its shop with "(Demo)". */
+const named = (pack: string) => {
   const p = NAMES.get(pack);
+  if (p) return p;
+  const base = pack.endsWith("_demo") ? NAMES.get(pack.slice(0, -5)) : undefined;
+  return base ? { ...base, business_name: `${base.business_name} (Demo)` } : undefined;
+};
+export const businessName = (pack: string) => named(pack)?.business_name ?? pack.replace(/_/g, " ");
+export const packLabel = (pack: string) => {
+  const p = named(pack);
   return p ? `${p.business_name} · ${p.display_name}` : pack.replace(/_/g, " ");
 };
 /** The shop's own name alone, for the narrow switcher in the top bar. */
-export const packShort = (pack: string) => NAMES.get(pack)?.business_name ?? pack.replace(/_/g, " ");
+export const packShort = (pack: string) => named(pack)?.business_name ?? pack.replace(/_/g, " ");
 
 /** Meta's sandbox numbers are +1 555 …; never call one "asli". */
 export const isTestNumber = (n?: string | null) => !!n && /^\+?1[\s(]*555/.test(n.replace(/[^\d+(]/g, "").replace(/\(/g, ""));

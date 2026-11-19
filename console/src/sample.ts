@@ -25,12 +25,17 @@ interface PackInfo {
   hours: Record<string, string[]>; knowledge: { q: string; a: string }[]; refusal_line: string; escalation_line: string;
   after_hours_line: string; emergency_contact: string;
   scenarios: number; issues: string[]; lexicon: Lexicon["entries"];
+  product: boolean; departments: { name: string; code: string; staff: string[] }[];
 }
 const ALL = (PACKS as { packs: PackInfo[] }).packs;
 export function packInfo(pack: string): PackInfo { return ALL.find((p) => p.pack_id === pack) ?? ALL.find((p) => p.pack_id === "dental_clinic")!; }
 
+// The product is a multispeciality clinic and a coaching institute; the other
+// packs are the research corpus and are not offered as shops.
+const PRODUCT = ALL.filter((p) => p.product);
 export const SAMPLE_STATUS: Status = {
-  name: "HaanJi demo server", version: "1.2.0", default_pack: "dental_clinic", packs: ALL.map((p) => p.pack_id),
+  name: "HaanJi demo server", version: "1.2.0", default_pack: PRODUCT[0]?.pack_id ?? "dental_clinic",
+  packs: (PRODUCT.length ? PRODUCT : ALL).map((p) => p.pack_id),
   dialogue: { provider: "rules", model: null },
 };
 

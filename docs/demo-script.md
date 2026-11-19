@@ -62,8 +62,11 @@ left out. Say so plainly if asked.
 4. Leave `main` alone on demo day. Render redeploys on every push and the
    engine goes down for a minute or two. Bookings are kept (they live in the
    Postgres database), but a call in progress is cut.
-5. The dental pack is closed on Sundays. On a Friday, "kal" means Saturday and
-   books fine.
+5. The demo shop is **Smile Care Clinic** (six departments, 13 doctors); the
+   coaching shop is **Pragati Classes** (boards, JEE, NEET). The clinic is
+   closed on Sundays: on a Saturday, "kal" has no slot and becomes a lead.
+   Visitors book into the "(Demo)" copy of each shop; in the console, pick
+   "Smile Care Clinic (Demo)" to see a teacher's booking.
 
 ### The WhatsApp part (2 minutes)
 
@@ -97,6 +100,19 @@ Show the QR code (`docs/media/qr-talk.png` for the call, `docs/media/qr-whatsapp
 Neither page needs an account, even with sign-in on: a visitor can chat and read back only their own conversation, never anyone else's or the list of chats.
 
 While they do it, keep the console on the laptop signed in and open on Calls or the Calendar: their booking appears there within a second. The confirmation code opens the signed receipt on `/verify`. No real WhatsApp is sent to the number they typed.
+
+### The token queue (2 minutes)
+
+1. In the console, open **Queue** (pick "Smile Care Clinic (Demo)" if the
+   booking was made by a visitor). Today's booked patients are listed under
+   "To check in".
+2. Press **Check in**: the patient gets a token such as `GP-01`. Add a
+   **Walk-in** for another doctor.
+3. Open the waiting-room screen (the button on the Queue page, or
+   `/engine/queue`) on a second screen or phone: it shows the token, never a name.
+4. Press **Next patient**: the screen flashes the new token.
+5. In `/whatsapp`, from the patient's number, type `mera number kab aayega`:
+   HaanJi answers with the token, how many are ahead and a rough wait.
 
 ### If something breaks
 

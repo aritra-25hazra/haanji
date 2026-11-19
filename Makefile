@@ -63,4 +63,4 @@ report:
 
 clean:
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +
-	rm -rf engine/.pytest_cache console/dist core-api/target engine/dist site docs/research engine/haanji/packs
+	rm -rf engine/.pytest_cache console/dist engine/dist site docs/research engine/haanji/packs

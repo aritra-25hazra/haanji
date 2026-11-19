@@ -5,8 +5,8 @@
 # ./var. The console is a static site that proxies /engine/ to it. Prometheus
 # and Grafana watch the engine's /metrics.
 #
-# The Java control plane that used to sit here is in experimental/ (see
-# experimental/README.md): nothing in the running system called it.
+# The Java control plane that used to sit here was removed in 1.2
+# (nothing in the running system ever called it; it is in the git history).
 
 name: haanji
 
