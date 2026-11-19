@@ -135,6 +135,9 @@ app.add_middleware(CORSMiddleware, allow_origin_regex=CORS_ORIGIN_REGEX,
 # retries in bursts.
 RATE_LIMIT_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_PER_MIN", "120"))
 RATE_LIMIT_GET_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_GET_PER_MIN", "600"))
+# Sign-in, codes and resets per client per minute, on top of the per-account
+# locks: guessing across many accounts from one address is slowed too.
+RATE_LIMIT_AUTH_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_AUTH_PER_MIN", "20"))
 RATE_LIMIT_EXEMPT = ("/wa/webhook", "/api/status", "/telephony/", "/payments/")
 # X-Forwarded-For is only meaningful behind a proxy we trust; it is then the
 # *last* hop that the proxy appended, never the first value a client can set.
@@ -219,6 +222,10 @@ async def hardening(request: Request, call_next):
         if not path.startswith(RATE_LIMIT_EXEMPT) and rate_limited(_client_of(request)):
             TELEMETRY.inc("http_rate_limited_total")
             return JSONResponse({"detail": "too many requests; try again in a minute"}, status_code=429,
+                                headers={"Retry-After": "60"})
+        if path.startswith("/api/auth/") and rate_limited("AUTH " + _client_of(request), limit=RATE_LIMIT_AUTH_PER_MIN):
+            TELEMETRY.inc("http_rate_limited_total")
+            return JSONResponse({"detail": "too many sign-in attempts; try again in a minute"}, status_code=429,
                                 headers={"Retry-After": "60"})
         try:
             length = int(request.headers.get("content-length") or 0)
@@ -491,11 +498,29 @@ def required_role(request: Request) -> str | None:
     return None
 
 
+# EventSource cannot send headers, so the live feed is opened with a ticket:
+# single use, 60 seconds, handed out to a signed-in user. The token itself
+# used to ride in the query string, which the server's access log recorded.
+STREAM_TICKET_S = 60
+_stream_tickets: dict[str, tuple[str, float]] = {}
+
+
+def stream_ticket(token: str) -> str:
+    now = time.monotonic()
+    for k in [k for k, (_, exp) in _stream_tickets.items() if exp < now]:
+        _stream_tickets.pop(k, None)
+    ticket = secrets.token_urlsafe(24)
+    _stream_tickets[ticket] = (token, now + STREAM_TICKET_S)
+    return ticket
+
+
 def principal_of(request: Request) -> Principal | None:
     header = request.headers.get("authorization", "")
     token = header[7:] if header.lower().startswith("bearer ") else None
     if token is None and request.url.path == "/api/events":
-        token = request.query_params.get("token")       # EventSource cannot send headers
+        held = _stream_tickets.pop(request.query_params.get("ticket", ""), None)
+        if held and held[1] >= time.monotonic():
+            token = held[0]
     return auth.verify_token(token)
 
 
@@ -666,6 +691,15 @@ async def session_events(sid: str):
         raise HTTPException(404, "no such session")
     return StreamingResponse(_session_stream(sid, asyncio.Queue(maxsize=64)), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.post("/api/events/ticket")
+async def events_ticket(request: Request):
+    """A one-use, 60-second ticket to open the live feed with."""
+    token = _bearer(request)
+    if AUTH_ENABLED and auth.verify_token(token) is None:
+        raise HTTPException(401, "sign in first")
+    return {"ticket": stream_ticket(token or ""), "expires_in": STREAM_TICKET_S}
 
 
 @app.get("/api/events")
@@ -2922,7 +2956,8 @@ async def status():
             "product": PRODUCT, "public_demo_packs": list(demo_twins()), "pack_names": pack_names(),
             "public_url": PUBLIC_URL,
             "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
-            "auth": {"enabled": AUTH_ENABLED, "google": AUTH_ENABLED and google_login.configured()},
+            "auth": {"enabled": AUTH_ENABLED, "google": AUTH_ENABLED and google_login.configured(),
+                     "secret_source": auth.secret_source},
             "demo_readonly": DEMO_READONLY,
             "google": {"configured": gcal.configured, "connected": gcal.connected()},
             "phone": phone_status(),

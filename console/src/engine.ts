@@ -329,17 +329,24 @@ export function subscribeLive(pack: string, onEvent: (e: LiveEvent) => void): ()
     }, 2000);
   };
   let es: EventSource | null = null;
-  if (typeof EventSource !== "undefined") {
-    const token = getToken();
-    es = new EventSource(enginePath(`api/events?${q(pack)}${token ? `&token=${encodeURIComponent(token)}` : ""}`));
+  // The feed opens with a one-use, 60-second ticket rather than the token, so
+  // the token never sits in a URL (which access logs keep).
+  const open = async () => {
+    let ticket = "";
+    if (getToken()) {
+      try { ticket = (await request<{ ticket: string }>("api/events/ticket", { method: "POST" })).ticket; }
+      catch { startPolling(); return; }
+    }
+    if (closed) return;
+    es = new EventSource(enginePath(`api/events?${q(pack)}${ticket ? `&ticket=${encodeURIComponent(ticket)}` : ""}`));
     const handle = (ev: MessageEvent) => {
       try { const e = JSON.parse(ev.data as string) as LiveEvent; since = Math.max(since, e.seq); onEvent(e); } catch { /* ignore */ }
     };
     for (const kind of ["session.started", "partial", "turn", "session.ended", "session.takeover", "session.handback", "privacy.erased"]) es.addEventListener(kind, handle as EventListener);
     es.onerror = () => { es?.close(); es = null; startPolling(); };
-  } else {
-    startPolling();
-  }
+  };
+  if (typeof EventSource !== "undefined") void open();
+  else startPolling();
   return () => { closed = true; es?.close(); if (poll) clearInterval(poll); };
 }
 

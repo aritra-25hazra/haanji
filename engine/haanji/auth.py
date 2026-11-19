@@ -35,7 +35,7 @@ IDLE_TTL_S = 14 * 24 * 3600
 LOGIN_MAX_FAILURES = 10        # wrong passwords per email in LOGIN_WINDOW_S before a lock
 LOGIN_WINDOW_S = 15 * 60
 LOGIN_LOCK_S = 15 * 60
-MIN_PASSWORD = 8
+MIN_PASSWORD = 10             # for a new or reset password; existing ones still sign in
 _SCRYPT = (2 ** 14, 8, 1)      # n, r, p    # a device unused this long is signed out
 TOUCH_EVERY_S = 300            # last_seen is written at most this often
 REFRESH_AFTER_S = 7 * 24 * 3600
@@ -90,6 +90,10 @@ CREATE TABLE IF NOT EXISTS login_history (
   window_start REAL NOT NULL DEFAULT 0,
   locked_until REAL NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS auth_meta ( -- the token-signing secret when HAANJI_AUTH_SECRET is not set
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit (     -- who changed what, for the owner
   id     INTEGER PRIMARY KEY AUTOINCREMENT,
   at     REAL NOT NULL,
@@ -137,22 +141,24 @@ class AuthStore:
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
         self.conn.commit()
-        self.secret = (secret or self._secret_from_file(path)).encode()
+        self.secret_source = "env" if secret else "database"
+        self.secret = (secret or self._stored_secret(path)).encode()
 
-    @staticmethod
-    def _secret_from_file(db_path: str) -> str:
-        """A deployment without HAANJI_AUTH_SECRET gets one generated next to
-        the database, so restarts keep every token valid."""
-        path = db_path + ".secret"
-        if os.path.exists(path):
-            return open(path, encoding="utf-8").read().strip()
-        value = secrets.token_hex(32)
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write(value)
-        try:
-            os.chmod(path, 0o600)
-        except OSError:
-            pass
+    def _stored_secret(self, db_path: str) -> str:
+        """Without HAANJI_AUTH_SECRET the signing secret is kept in the auth
+        database itself. It used to be a file beside the database, which on a
+        host with a throwaway disk (Render) and the records in Postgres was
+        lost at every deploy, signing every user out. A file left by an older
+        version is adopted once. HAANJI_AUTH_SECRET in the environment is
+        still the better place: whoever reads the database cannot then also
+        mint tokens."""
+        row = self.conn.execute("SELECT value FROM auth_meta WHERE key='token_secret'").fetchone()
+        if row:
+            return row["value"] if hasattr(row, "keys") else row[0]
+        legacy = db_path + ".secret"
+        value = open(legacy, encoding="utf-8").read().strip() if os.path.exists(legacy) else secrets.token_hex(32)
+        with self.conn:
+            self.conn.execute("INSERT INTO auth_meta (key, value) VALUES ('token_secret', ?)", (value,))
         return value
 
     # ------------------------------------------------------------------ users
@@ -218,6 +224,8 @@ class AuthStore:
             raise ValueError("a valid email address")
         if len(password) < MIN_PASSWORD:
             raise ValueError(f"a password of at least {MIN_PASSWORD} characters")
+        if password.strip().lower() in (email, email.split("@")[0]):
+            raise ValueError("a password that is not the email address")
         phone = normalise_phone(phone)
         if self.user(phone) is None:
             raise ValueError("no such user")
