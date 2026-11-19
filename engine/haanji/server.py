@@ -67,12 +67,17 @@ from .models import Speaker, Turn
 from .pramaan.ledger import Ledger
 from .store import DemoStore
 from .tools.builtin import build_registry
-from .vertical import PACK_DIR, PackError, from_dict, list_packs, load_pack
+from .vertical import PACK_DIR, PackError, from_dict, list_packs as research_packs, load_pack as load_pack_file
 from . import db
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 VAR_DIR = os.path.abspath(os.environ.get("HAANJI_VAR_DIR", "var"))
-DEFAULT_PACK = os.environ.get("HAANJI_PACK", "dental_clinic")
+# Product mode (HAANJI_PRODUCT=on): the server offers only the product's own
+# packs in packs/product/ (a multispeciality clinic and a coaching institute).
+# The ten packs in packs/ stay the research corpus every REPORT number was
+# measured on; without the flag the server offers them, as the tests expect.
+PRODUCT = os.environ.get("HAANJI_PRODUCT", "").lower() in ("1", "true", "yes", "on")
+DEFAULT_PACK = os.environ.get("HAANJI_PACK") or ("smile_care_clinic" if PRODUCT else "dental_clinic")
 # Where this server is reachable from a customer's phone: the receipt link in a
 # WhatsApp message has to be absolute. Render sets RENDER_EXTERNAL_URL itself.
 PUBLIC_URL = (os.environ.get("HAANJI_PUBLIC_URL") or os.environ.get("RENDER_EXTERNAL_URL")
@@ -301,6 +306,75 @@ AUTH_DEV = os.environ.get("HAANJI_AUTH_DEV", "0").lower() in ("1", "true", "yes"
 PUBLIC_SIMULATOR = AUTH_ENABLED and os.environ.get(
     "HAANJI_PUBLIC_SIMULATOR", "1" if DEMO_DATA else "0").lower() in ("1", "true", "yes", "on")
 SIMULATOR_ROUTES = re.compile(r"^/api/wa/(incoming|missed|threads(/\d{10})?)$")
+PRODUCT_DIR = os.path.join(PACK_DIR, "product")
+DEMO_SUFFIX = "_demo"
+
+
+def product_packs() -> list[str]:
+    return research_packs(PRODUCT_DIR)
+
+
+def demo_twins() -> dict[str, str]:
+    """On a product demo server whose public simulator is open, every product
+    pack has a demo twin: the same pack file under '<id>_demo', with its own
+    calendar, customers and ledger. Visitors (a teacher with a phone) book
+    into the twin, so the shop's own calendar only ever holds its own
+    bookings; the owner opens the "(Demo)" shop to watch a visitor's booking."""
+    if not (PRODUCT and PUBLIC_SIMULATOR):
+        return {}
+    return {pid + DEMO_SUFFIX: pid for pid in product_packs()}
+
+
+def list_packs() -> list[str]:
+    """The packs this server offers: the research corpus, or in product mode
+    the product packs and their demo twins."""
+    if not PRODUCT:
+        return research_packs()
+    return product_packs() + list(demo_twins())
+
+
+def pack_path(pack_id: str) -> str:
+    """The yaml file a pack id reads from (a twin reads its shop's file)."""
+    base = demo_twins().get(pack_id, pack_id)
+    folder = PRODUCT_DIR if PRODUCT and base in product_packs() else PACK_DIR
+    return os.path.join(folder, f"{base}.yaml")
+
+
+def load_pack(pack_id: str):
+    twins = demo_twins()
+    pack = load_pack_file(pack_path(pack_id)) if re.fullmatch(r"[a-z0-9_]+", pack_id or "") else load_pack_file(pack_id)
+    if pack_id in twins:
+        pack.pack_id = pack_id
+        pack.persona.business_name += " (Demo)"
+        pack.display_name += " (demo)"
+    return pack
+
+
+_names: dict[str, str] = {}
+
+
+def pack_names() -> dict[str, str]:
+    """Each offered pack's business name, for the pages' pickers (cached;
+    a pack save clears it)."""
+    for pid in list_packs():
+        if pid not in _names:
+            try:
+                _names[pid] = load_pack(pid).persona.business_name
+            except PackError:
+                _names[pid] = pid
+    return {pid: _names[pid] for pid in list_packs()}
+
+
+def public_pack(request: Request, pack: str) -> str:
+    """Where an anonymous visitor's call or chat goes: the twin of the shop
+    they picked (or the first twin), never the shop itself."""
+    twins = demo_twins()
+    if not twins or not _anonymous(request):
+        return pack
+    if pack in twins:
+        return pack
+    twin = pack + DEMO_SUFFIX
+    return twin if twin in twins else next(iter(twins))
 # A public server with sign-in off is a demo for strangers: the console's
 # destructive operations (settings, cancelling bookings, users, pack saves,
 # erasure, backups) are refused there, and so are the two reads that hand a
@@ -438,6 +512,8 @@ _runtimes: dict[str, TenantRuntime] = {}
 DEMO_CUSTOMERS = {
     "dental_clinic": ("9876543210", "Vijay Sharma", "root canal"),
     "clinic_kolkata": ("9830012345", "Rohan Sen", "teeth cleaning"),
+    "smile_care_clinic": ("9876543210", "Vijay Sharma", "general consultation"),
+    "pragati_classes": ("9876543210", "Vijay Sharma", "jee demo class"),
 }
 
 
@@ -450,7 +526,7 @@ def runtime(pack_id: str) -> TenantRuntime:
     conn = db.connect(os.path.join(VAR_DIR, f"backend-{pack_id}.sqlite"))
     backend = LocalBackend(conn)
     backend.load_pack(pack_id, pack)
-    demo = DEMO_CUSTOMERS.get(pack_id)
+    demo = DEMO_CUSTOMERS.get(demo_twins().get(pack_id, pack_id))
     if demo and (DEMO_DATA or not AUTH_ENABLED):
         # "Vijay ji, wapas swagat hai" is for the public demo; a real shop's
         # customer table starts empty.
@@ -968,10 +1044,11 @@ class TextIn(BaseModel):
 
 
 @app.post("/api/sessions")
-async def create_session(body: NewSession):
+async def create_session(body: NewSession, request: Request):
     phone = _norm_phone(body.phone) if body.phone else None
     if body.phone and len(phone or "") != 10:
         raise HTTPException(422, "phone must be ten digits")
+    body.pack = public_pack(request, body.pack)
     # The browser says who is calling; nothing proved it.
     sid, holder = await _new_session(body.pack, body.channel, phone, verified=False)
     return {"session_id": sid, "greeting": holder.session.ctx.last_agent_utterance,
@@ -1104,6 +1181,7 @@ async def wa_incoming(body: WaIn, request: Request):
     continues their conversation. The reply carries the visitor's pass."""
     if not re.fullmatch(r"\d{10}", body.phone):
         raise HTTPException(400, "phone must be ten digits")
+    body.pack = public_pack(request, body.pack)
     if not _anonymous(request):
         return {"replies": await _wa_turn(body.pack, body.phone, body.text.strip(),
                                           verified=not wa_channel.configured())}
@@ -1128,6 +1206,7 @@ async def wa_threads(request: Request, pack: str = DEFAULT_PACK):
 
 @app.get("/api/wa/threads/{phone}")
 async def wa_thread(request: Request, phone: str, pack: str = DEFAULT_PACK, visitor: str | None = None):
+    pack = public_pack(request, pack)
     messages = store.wa_thread(pack, phone)
     if _anonymous(request):                 # only the chat this visitor started
         since = _visitor_since(pack, phone, visitor)
@@ -1239,6 +1318,7 @@ async def wa_missed(body: MissedIn, request: Request):
     phone = _norm_phone(body.phone)
     if len(phone) != 10:
         raise HTTPException(422, "phone must be ten digits")
+    body.pack = public_pack(request, body.pack)
     since = dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds")
     anonymous = _anonymous(request)
     out = await _open_missed(body.pack, phone, send=False,
@@ -1323,7 +1403,7 @@ async def packs():
 
 @app.get("/api/packs/{pack_id}")
 async def pack_get(pack_id: str):
-    path = os.path.join(PACK_DIR, f"{pack_id}.yaml")
+    path = pack_path(pack_id)
     if not os.path.exists(path):
         raise HTTPException(404, "no such pack")
     raw = open(path, encoding="utf-8").read()
@@ -1396,11 +1476,14 @@ async def pack_put(pack_id: str, body: PackBody):
     data, problems = _validate_yaml(body.yaml)
     if data.get("pack") != pack_id:
         raise HTTPException(422, f"yaml says pack '{data.get('pack')}', URL says '{pack_id}'")
-    path = os.path.join(PACK_DIR, f"{pack_id}.yaml")
+    if pack_id in demo_twins():
+        raise HTTPException(409, "a demo copy follows its shop's pack: edit the shop instead")
+    path = pack_path(pack_id)
     if os.path.exists(path):
         open(path + ".bak", "w", encoding="utf-8").write(open(path, encoding="utf-8").read())
     open(path, "w", encoding="utf-8").write(body.yaml)
     _runtimes.pop(pack_id, None)                   # next session sees the new pack
+    _names.pop(pack_id, None)
     return {"ok": True, "problems": problems, "backup": os.path.basename(path + ".bak")}
 
 
@@ -1411,7 +1494,7 @@ async def pack_selftest(pack_id: str):
     if pack_id not in list_packs():
         raise HTTPException(404, "no such pack")
     proc = await asyncio.create_subprocess_exec(
-        sys.executable, "-m", "haanji.cli", "selftest", "--pack", pack_id, "--speed", "150",
+        sys.executable, "-m", "haanji.cli", "selftest", "--pack", pack_path(pack_id), "--speed", "150",
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     try:
@@ -2727,6 +2810,7 @@ async def help_chat(body: HelpIn, request: Request):
 async def status():
     return {"name": "HaanJi demo server", "version": app.version,
             "default_pack": DEFAULT_PACK, "packs": list_packs(),
+            "product": PRODUCT, "public_demo_packs": list(demo_twins()), "pack_names": pack_names(),
             "public_url": PUBLIC_URL,
             "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
             "auth": {"enabled": AUTH_ENABLED, "google": AUTH_ENABLED and google_login.configured()},

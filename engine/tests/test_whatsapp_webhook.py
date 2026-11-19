@@ -167,7 +167,7 @@ def test_the_reply_goes_from_the_number_the_customer_wrote_to(sent, monkeypatch)
                                               "messages": [{"id": "wamid.pid1", "from": "919811101499", "type": "text",
                                                             "text": {"body": "clinic kab khulta hai"}}]}}]}]}
     r = TestClient(server.app).post("/wa/webhook", json=body)
-    assert r.json()["handled"] == 1 and sent and set(sent.froms) == {"555000222"}
+    assert r.json().get("handled") == 1 and sent and set(sent.froms) == {"555000222"}, r.json()
     assert sent[0][0] == "919811101499", "to the number exactly as Meta gave it, country code included"
     assert wa.LAST_SEND["incoming_on"] == "…0222" and wa.LAST_SEND["incoming_matches_config"] is False
 

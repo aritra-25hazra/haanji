@@ -149,7 +149,7 @@
 
   S.status().then(function (s) {
     if (!s) return;
-    $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+    $("pack").innerHTML = S.packOptions(s, null, true);
   
     const q = new URLSearchParams(location.search);
     if (q.get("pack") && s.packs.indexOf(q.get("pack")) >= 0) $("pack").value = q.get("pack");

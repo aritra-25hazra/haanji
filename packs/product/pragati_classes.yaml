@@ -1,0 +1,191 @@
+# Product pack — a coaching institute (made up, Indore): boards, JEE, NEET.
+#
+# One of the product's two packs (with smile_care_clinic.yaml); the research
+# packs in packs/ are untouched. Fees are not quoted: they depend on the batch,
+# and the counselling session gives the full structure.
+pack: pragati_classes
+display_name: Coaching institute
+version: 1
+language: hinglish
+
+persona:
+  agent_name: Haanji
+  business_name: Pragati Classes
+  greeting: "Haanji, Pragati Classes. Boards, JEE ya NEET — kis course ke baare mein jaanna hai?"
+  closing: "Theek hai, milte hain. All the best!"
+  style: >
+    Respectful, patient, short Hinglish. Talks to parents as often as to
+    students. Never promises a rank, a score or a selection.
+
+guardrails:
+  never_quote_outside_catalogue: true
+  max_discount_pct: 0
+  refuse:
+    - promising a rank, a selection or a score
+    - commenting on another institute
+    - giving a scholarship without counsellor approval
+  escalate_on:
+    - fee dispute or refund
+    - student in distress
+    - complaint about a teacher
+  refusal_line: "Ye counsellor hi bata payenge, main aapka counselling ya demo class ka slot laga deta hoon."
+  escalation_line: "Main abhi aapko senior counsellor se jodta hoon, line par rahiye."
+  rules:
+    - id: coaching.distress
+      action: escalate
+      match: "(depress|bahut tension|tension bahut|bahut stress|stress bahut|pressure nahi jhel|jeena nahi|ro raha|ro rahi)"
+
+staff_role: counsellor
+staff:
+  - Ms Sharma
+  - Mr Iqbal
+  - Mr Deshmukh
+  - Ms Fernandes
+  - Mr Bansal
+  - Ms Gupta
+  - Ms Pillai
+  - Mr Arora
+
+departments:
+  - name: Class 10 Boards
+    code: B10
+    staff: [Ms Sharma, Mr Iqbal]
+  - name: Class 11-12 Boards
+    code: B12
+    staff: [Mr Deshmukh, Ms Fernandes]
+  - name: JEE
+    code: JEE
+    staff: [Mr Bansal, Ms Gupta]
+  - name: NEET
+    code: NT
+    staff: [Ms Pillai, Mr Arora]
+
+hours:
+  mon-sat: ["10:00", "19:00", "13:30", "14:30"]
+  sun: ["10:00", "14:00"]
+
+services:
+  - name: class 10 demo class
+    duration_min: 60
+    price_inr: 0
+    staff: [Ms Sharma, Mr Iqbal]
+    aliases: [10th demo, class 10 demo, dasvi, 10th ki class, 10th board, cbse 10th, icse 10th]
+  - name: class 12 demo class
+    duration_min: 60
+    price_inr: 0
+    staff: [Mr Deshmukh, Ms Fernandes]
+    aliases: [11th demo, 12th demo, class 12 demo, class 11 demo, barhvi, cbse 12th, icse 12th, ib board, ib, 12th board]
+  - name: jee demo class
+    duration_min: 90
+    price_inr: 0
+    staff: [Mr Bansal, Ms Gupta]
+    aliases: [jee, iit, jee mains, jee advanced, engineering coaching]
+  - name: neet demo class
+    duration_min: 90
+    price_inr: 0
+    staff: [Ms Pillai, Mr Arora]
+    aliases: [neet, medical coaching, mbbs coaching, neet ki taiyari]
+  - name: counselling session
+    duration_min: 30
+    price_inr: 0
+    staff: [Ms Sharma, Mr Bansal, Ms Pillai]
+    aliases: [counselling, counseling, guidance, career guidance, salah, admission]
+  - name: scholarship test
+    duration_min: 90
+    price_inr: 0
+    staff: [Mr Deshmukh, Ms Pillai]
+    prep_note: "Pichhli marksheet saath laaiye."
+    aliases: [scholarship, entrance test, admission test]
+
+lexicon:
+  places: [Vijay Nagar, Bhawarkuan, Geeta Bhawan, Rau, Palasia]
+  brands: [Pragati Classes, JEE, NEET, CBSE, ICSE, IB]
+  phrases:
+    - demo class
+    - study material
+    - test series
+  variants:
+    Mr Deshmukh: [Deshmuk]
+    Ms Fernandes: [Fernandis]
+
+knowledge:
+  - q: "Kaunse course hain?"
+    a: "Class 10 boards, Class 11-12 boards (CBSE, ICSE aur IB), JEE aur NEET ke batch hain. Har course ki pehli demo class free hai."
+    tags: [course, courses, batch, kaunse, program]
+  - q: "Fees kitni hai?"
+    a: "Fees course aur batch ke hisaab se hai. Counselling session mein poora structure, installment aur scholarship batate hain; wo session free hai."
+    tags: [fees, fee, kitni, charges, installment, kist]
+  - q: "Timings kya hain?"
+    a: "Monday se Saturday subah 10 se shaam 7, aur Sunday subah 10 se dopahar 2 baje tak. Batch ke time counsellor batayenge."
+    tags: [timing, timings, kab, khulta, band, hours]
+  - q: "Institute kahan hai?"
+    a: "Hum Vijay Nagar mein hain, C21 Mall ke saamne, doosri manzil par."
+    tags: [kahan, address, location, pata, jagah]
+  - q: "Study material milta hai?"
+    a: "Haan, har batch ke saath printed notes aur weekly test series milti hai."
+    tags: [material, notes, test series, books]
+  - q: "Online class hai?"
+    a: "Regular batch offline hain; doubts ke liye online session hota hai."
+    tags: [online, live, recorded]
+
+scenarios:
+  - name: jee_demo_booked
+    expect: BOOKED
+    turns:
+      - heard: "beti ke liye JEE ki demo class chahiye"
+        truth: "beti ke liye JEE ki demo class chahiye"
+      - heard: "kal shaam ka time mil jayega"
+        truth: "kal shaam ka time mil jayega"
+      - heard: "haan theek hai"
+        truth: "haan theek hai"
+      - heard: "Sunil Verma 9876511122"
+        truth: "Sunil Verma 9876511122"
+      - heard: "haan confirm kar do"
+        truth: "haan confirm kar do"
+  - name: neet_with_asr_noise
+    expect: BOOKED
+    note: "'NEET' is heard as 'neat'; the pack's vocabulary repairs it."
+    turns:
+      - heard: "neat ki taiyari ke liye demo class dekhni hai"
+        truth: "neet ki taiyari ke liye demo class dekhni hai"
+        low_conf: [neat]
+      - heard: "parso subah"
+        truth: "parso subah"
+      - heard: "haan ji"
+        truth: "haan ji"
+      - heard: "Kavya Iyer 9812300456"
+        truth: "Kavya Iyer 9812300456"
+      - heard: "haan pakka"
+        truth: "haan pakka"
+  - name: ib_board_demo
+    expect: BOOKED
+    turns:
+      - heard: "IB board 12th ka demo chahiye"
+        truth: "IB board 12th ka demo chahiye"
+      - heard: "kal dopahar"
+        truth: "kal dopahar"
+      - heard: "haan wahi"
+        truth: "haan wahi"
+      - heard: "Rhea Mathur 9700123456"
+        truth: "Rhea Mathur 9700123456"
+      - heard: "ji confirm"
+        truth: "ji confirm"
+  - name: fees_faq
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "fees kitni hai"
+        truth: "fees kitni hai"
+      - heard: "theek hai dhanyavaad bas itna hi"
+        truth: "theek hai dhanyavaad bas itna hi"
+  - name: rank_promise_refusal
+    expect: REFUSED
+    note: "Guardrail: never promise a selection."
+    turns:
+      - heard: "guarantee do ki selection ho jayega"
+        truth: "guarantee do ki selection ho jayega"
+  - name: distress_handoff
+    expect: HANDED_OFF
+    note: "Guardrail: a student in distress goes to a person."
+    turns:
+      - heard: "mera beta bahut tension mein hai pressure nahi jhel pa raha"
+        truth: "mera beta bahut tension mein hai pressure nahi jhel pa raha"

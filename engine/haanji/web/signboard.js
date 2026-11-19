@@ -155,6 +155,20 @@
     return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
   }
 
+  // The pack picker every page shares. On a demo server whose public pages
+  // are open, visitors only ever see the demo copies of the shops; options
+  // show the shop's name, not its id. `all` lists every pack (the verifier).
+  function packOptions(s, wanted, all) {
+    const list = !all && s.public_demo_packs && s.public_demo_packs.length ? s.public_demo_packs : s.packs;
+    const names = s.pack_names || {};
+    const pick = list.indexOf(wanted) >= 0 ? wanted
+      : list.indexOf(s.default_pack + "_demo") >= 0 ? s.default_pack + "_demo"
+      : list.indexOf(s.default_pack) >= 0 ? s.default_pack : list[0];
+    return list.map(function (p) {
+      return '<option value="' + esc(p) + '"' + (p === pick ? " selected" : "") + ">" + esc(names[p] || p) + "</option>";
+    }).join("");
+  }
+
   function repairNode(c) {
     const el = document.createElement("span");
     el.className = "repair";
@@ -166,7 +180,7 @@
 
   global.Signboard = { REDUCED: REDUCED, icon: icon, mountIcons: mountIcons, reveal: reveal,
     paintRepair: paintRepair, stamp: stamp, typingDots: typingDots, timer: timer,
-    waveform: waveform, status: status, esc: esc, repairNode: repairNode };
+    waveform: waveform, status: status, esc: esc, repairNode: repairNode, packOptions: packOptions };
 
   document.addEventListener("DOMContentLoaded", function () { mountIcons(); reveal(); });
 })(window);

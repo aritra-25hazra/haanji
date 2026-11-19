@@ -326,7 +326,7 @@
   S.status().then(function (s) {
     if (!s) { notice(L("Cannot connect to the server. Please try again in a little while.", "Server se connect nahi ho pa raha. Thodi der mein dobara try kijiye.")); $("pack").disabled = true; $("start").disabled = true; return; }
     const q = new URLSearchParams(location.search), wanted = q.get("pack");
-    $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === (s.packs.indexOf(wanted) >= 0 ? wanted : s.default_pack) ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+    $("pack").innerHTML = S.packOptions(s, wanted);
     if (q.get("study")) notice("Study task " + q.get("study") + L(". When the task is done, go back to the study tab.", ". Kaam poora hone pe study tab mein wapas jaiye."));
     loadSuggest();
   });

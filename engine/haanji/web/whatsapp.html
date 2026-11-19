@@ -125,7 +125,7 @@
   }
   S.status().then(function (s) {
     if (!s) return;
-    $("pack").innerHTML = s.packs.map(function (p) { return "<option" + (p === s.default_pack ? " selected" : "") + ">" + S.esc(p) + "</option>"; }).join("");
+    $("pack").innerHTML = S.packOptions(s, new URLSearchParams(location.search).get("pack"));
     if (s.whatsapp && s.whatsapp.configured) {
       // A number is connected: say which, above the simulator. Meta's test
       // numbers (+1 555 …) answer only a few numbers added in Meta, and only
@@ -185,7 +185,7 @@
     phone = p; $("phone").value = p;
     $("who").textContent = "+91 " + p;
     $("av").textContent = p.slice(-2);
-    $("biz").textContent = "HaanJi · " + $("pack").value;
+    $("biz").textContent = "HaanJi · " + ($("pack").selectedOptions[0] ? $("pack").selectedOptions[0].textContent : $("pack").value);
     $("text").disabled = $("send").disabled = false;
     const pass = passes[passKey(p)];
     const t = await api("api/wa/threads/" + encodeURIComponent(p) + "?pack=" + encodeURIComponent($("pack").value) +

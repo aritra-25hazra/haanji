@@ -72,6 +72,15 @@ class Guardrails:
 
 
 @dataclass
+class Department:
+    """A clinic's department or a coaching institute's programme: who works
+    in it, and the short code its queue tokens carry (GP-07)."""
+    name: str
+    code: str
+    staff: list[str] = field(default_factory=list)
+
+
+@dataclass
 class ScenarioSpec:
     name: str
     turns: list[dict[str, Any]]
@@ -97,8 +106,16 @@ class Pack:
     variants: dict[str, list[str]] = field(default_factory=dict)
     knowledge: list[tuple[str, str, list[str]]] = field(default_factory=list)
     scenarios: list[ScenarioSpec] = field(default_factory=list)
+    departments: list[Department] = field(default_factory=list)
 
     # ------------------------------------------------------------------ views
+    def department_of(self, person: str | None) -> Department | None:
+        """The department a staff member works in, if the pack has departments."""
+        for d in self.departments:
+            if person in d.staff:
+                return d
+        return None
+
     @property
     def service_names(self) -> list[str]:
         return [s.name for s in self.services]
@@ -164,6 +181,18 @@ class Pack:
         for sc in self.scenarios:
             if not sc.turns:
                 problems.append(f"scenario '{sc.name}' has no turns")
+        codes: set[str] = set()
+        for d in self.departments:
+            if not d.staff:
+                problems.append(f"department '{d.name}' has no staff")
+            for person in d.staff:
+                if person not in known:
+                    problems.append(f"department '{d.name}' names unknown staff '{person}'")
+            if not re.fullmatch(r"[A-Z][A-Z0-9]{0,3}", d.code):
+                problems.append(f"department '{d.name}' needs a code like GP or B10 (a capital letter, then up to 3 more)")
+            if d.code in codes:
+                problems.append(f"department code '{d.code}' is used twice")
+            codes.add(d.code)
         return problems
 
 
@@ -250,6 +279,11 @@ def from_dict(data: dict[str, Any]) -> Pack:
         pack.scenarios.append(ScenarioSpec(name=sc["name"], turns=list(sc.get("turns", [])),
                                            expect=sc.get("expect", "BOOKED"),
                                            note=sc.get("note", "")))
+    for i, d in enumerate(data.get("departments") or []):
+        if not isinstance(d, dict) or not d.get("name"):
+            raise PackError(f"departments[{i}] needs a name")
+        pack.departments.append(Department(name=str(d["name"]), code=str(d.get("code", "")).upper(),
+                                           staff=[str(x) for x in (d.get("staff") or [])]))
     return pack
 
 

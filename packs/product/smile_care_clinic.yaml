@@ -1,0 +1,272 @@
+# Product pack — a multispeciality clinic (made up, Indore).
+#
+# The product ships two packs (this one and pragati_classes.yaml). They live
+# in packs/product/ so the research packs in packs/ — on which every number in
+# research/REPORT.md was measured — stay exactly as they were.
+pack: smile_care_clinic
+display_name: Multispeciality clinic
+version: 1
+language: hinglish
+
+persona:
+  agent_name: Haanji
+  business_name: Smile Care Clinic
+  greeting: "Haanji, Smile Care Clinic. Kis doctor ya kis takleef ke liye call kiya?"
+  closing: "Theek hai, milte hain. Apna khayal rakhiye."
+  style: >
+    Warm, short sentences, Hinglish in Roman script. Uses 'aap', never 'tum'.
+    Repeats the date, the time and the doctor's name once before asking for
+    confirmation. Never diagnoses and never names a medicine.
+
+guardrails:
+  never_quote_outside_catalogue: true
+  max_discount_pct: 0
+  refuse:
+    - medical diagnosis or advice
+    - prescribing or naming medicines
+    - interpreting a report, an x-ray or a scan
+    - promising a treatment outcome
+  escalate_on:
+    - bleeding that will not stop
+    - chest pain or breathlessness
+    - high fever in a child
+    - accident, fracture or fainting
+  refusal_line: "Ye doctor hi dekh kar bata payenge — main aapka slot laga deta hoon."
+  escalation_line: "Ye emergency lag rahi hai. Main abhi aapko clinic par jod raha hoon, line par rahiye."
+  emergency_contact: "turant 108 par call kijiye ya nazdeeki hospital jaiye."
+  rules:
+    - id: clinic.chest
+      action: escalate
+      match: "(seene|chest|chhati|chaati)\\W+(\\w+\\W+){0,3}(dard|pain|bhaari|jakdan)"
+    - id: clinic.child_fever
+      action: escalate
+      match: "(tez|bahut tez|103|104|105|high)\\s+(bukhar|fever)"
+
+staff_role: doctor
+staff:
+  - Dr Sheikh
+  - Dr Iyer
+  - Dr Kapoor
+  - Dr Rao
+  - Dr Mehta
+  - Dr Verma
+  - Dr Nair
+  - Dr Joshi
+  - Dr Saxena
+  - Dr Malhotra
+  - Dr Reddy
+  - Dr Banerjee
+  - Dr Kulkarni
+
+departments:
+  - name: Dental
+    code: DN
+    staff: [Dr Sheikh, Dr Iyer]
+  - name: General Surgery
+    code: GS
+    staff: [Dr Kapoor, Dr Rao]
+  - name: General Physician
+    code: GP
+    staff: [Dr Mehta, Dr Verma, Dr Nair]
+  - name: Paediatrics
+    code: PD
+    staff: [Dr Joshi, Dr Saxena]
+  - name: Orthopaedics
+    code: OR
+    staff: [Dr Malhotra, Dr Reddy]
+  - name: Gynaecology
+    code: GY
+    staff: [Dr Banerjee, Dr Kulkarni]
+
+hours:
+  mon-sat: ["09:00", "20:00", "13:30", "15:00"]
+  sun: null
+
+services:
+  # Dental
+  - name: dental checkup
+    duration_min: 20
+    price_inr: 300
+    staff: [Dr Sheikh, Dr Iyer]
+    aliases: [daant ka checkup, daant dikhana, daant mein dard, daant me dard, keeda, cavity, filling]
+  - name: teeth cleaning
+    duration_min: 30
+    price_inr: 800
+    staff: [Dr Sheikh, Dr Iyer]
+    aliases: [cleaning, scaling, safai, daant ki safai, daant saaf karwane]
+  - name: root canal
+    duration_min: 60
+    price_inr: 6500
+    staff: [Dr Sheikh]
+    prep_note: "Do sittings lag sakti hain."
+    aliases: [rct, root canal treatment]
+  - name: tooth extraction
+    duration_min: 30
+    price_inr: 1500
+    staff: [Dr Iyer]
+    aliases: [daant nikalna, daant nikalwana, akal daad, wisdom tooth]
+  # General Surgery
+  - name: surgery consultation
+    duration_min: 20
+    price_inr: 600
+    staff: [Dr Kapoor, Dr Rao]
+    aliases: [surgeon, operation ki salah, hernia, piles, appendix, gallbladder, pathri, gaanth, lump]
+  - name: dressing
+    duration_min: 15
+    price_inr: 300
+    staff: [Dr Kapoor, Dr Rao]
+    aliases: [patti, patti badalni, taanke, stitches, ghaav, wound]
+  # General Physician
+  - name: general consultation
+    duration_min: 15
+    price_inr: 400
+    staff: [Dr Mehta, Dr Verma, Dr Nair]
+    aliases: [doctor dikhana, physician, general physician, bukhar, khansi, sardi, zukaam, kamzori, bp check]
+  - name: health checkup
+    duration_min: 45
+    price_inr: 1500
+    staff: [Dr Mehta, Dr Nair]
+    prep_note: "Subah khaali pet aaiye."
+    aliases: [full body checkup, body checkup, routine checkup]
+  # Paediatrics
+  - name: child consultation
+    duration_min: 20
+    price_inr: 500
+    staff: [Dr Joshi, Dr Saxena]
+    aliases: [bachche ka doctor, bachchon ke doctor, paediatrician, pediatrician, baby doctor]
+  - name: vaccination
+    duration_min: 15
+    price_inr: 200
+    staff: [Dr Joshi, Dr Saxena]
+    prep_note: "Teeke ka card saath laiye."
+    aliases: [teeka, tika, vaccine, tikakaran, teeka lagwana]
+  # Orthopaedics
+  - name: ortho consultation
+    duration_min: 20
+    price_inr: 600
+    staff: [Dr Malhotra, Dr Reddy]
+    aliases: [haddi ka doctor, orthopaedic, ortho, jodon ka dard, ghutne ka dard, kamar dard, joint pain, back pain]
+  - name: plaster check
+    duration_min: 20
+    price_inr: 400
+    staff: [Dr Malhotra, Dr Reddy]
+    aliases: [plaster, plaster khulwana, haddi follow up]
+  # Gynaecology
+  - name: gynae consultation
+    duration_min: 20
+    price_inr: 600
+    staff: [Dr Banerjee, Dr Kulkarni]
+    aliases: [gynaecologist, gynecologist, lady doctor, mahila doctor, periods]
+  - name: pregnancy checkup
+    duration_min: 30
+    price_inr: 700
+    staff: [Dr Banerjee, Dr Kulkarni]
+    aliases: [pregnancy, antenatal, garbhavastha, pregnancy ka checkup]
+
+lexicon:
+  places: [Vijay Nagar, Palasia, Bhawarkuan, Rau, Scheme 78, Sudama Nagar]
+  brands: [Smile Care Clinic, Star Health, HDFC Ergo]
+  phrases:
+    - insurance cashless
+    - follow up
+    - token number
+  variants:
+    Dr Sheikh: [Doctor Shaik]
+    Dr Banerjee: [Banarji, Banerji]
+    Dr Malhotra: [Malhotara]
+    Bhawarkuan: [Bhavarkua, Bhanwarkuan]
+
+knowledge:
+  - q: "Clinic ke timings kya hain?"
+    a: "Hum Monday se Saturday, subah 9 se raat 8 baje tak khule hain. Dedh se teen baje lunch break hota hai. Sunday band rehta hai."
+    tags: [timing, timings, khulta, band, hours, kab, open]
+  - q: "Kaunse doctor hain?"
+    a: "Chhe vibhaag hain: dant, surgery, general physician, bachchon ke doctor, haddi ke doctor aur gynaecology. Kis takleef ke liye dikhana hai, bataiye, main sahi doctor ka slot dekh leta hoon."
+    tags: [kaunse, department, vibhaag, specialist, doctor kaun]
+  - q: "Fees kitni hai?"
+    a: "General physician ki fees 400 rupaye hai; specialist ki 500 se 600. Kis doctor ke liye puchh rahe hain?"
+    tags: [fees, fee, charge, charges, kitna, kitne, price]
+  - q: "Kya insurance chalta hai?"
+    a: "Haan, Star Health aur HDFC Ergo ka cashless hota hai. Card aur ID saath laaiye."
+    tags: [insurance, cashless, claim, card, star, hdfc]
+  - q: "Clinic kahan hai?"
+    a: "Hum Vijay Nagar mein hain, Satya Sai square se sau meter aage, pehli manzil par. Basement mein parking hai."
+    tags: [kahan, address, location, pata, reach, jagah, parking]
+  - q: "Token kaise milta hai?"
+    a: "Clinic pahunch kar reception par check-in kijiye, wahin token milta hai. Phone par 'mera number kab aayega' puchhenge to main line ki position bata dunga."
+    tags: [token, line, queue, baari, check in]
+  - q: "Emergency hai kya?"
+    a: "Hamare yahan 24 ghante emergency nahi hai. Emergency mein turant 108 par call kijiye ya nazdeeki hospital jaiye."
+    tags: [emergency, "24", raat, ambulance]
+
+scenarios:
+  - name: fever_book_physician
+    expect: BOOKED
+    turns:
+      - heard: "mujhe bukhar ke liye doctor dikhana hai"
+        truth: "mujhe bukhar ke liye doctor dikhana hai"
+      - heard: "kal subah ka time mil jayega"
+        truth: "kal subah ka time mil jayega"
+      - heard: "haan ji wahi theek hai"
+        truth: "haan ji wahi theek hai"
+      - heard: "mera naam Ravi Kumar hai number 9876501234"
+        truth: "mera naam Ravi Kumar hai number 9876501234"
+      - heard: "haan confirm kar do"
+        truth: "haan confirm kar do"
+  - name: ortho_with_asr_noise
+    expect: BOOKED
+    note: "The recogniser hears 'artho'; the pack's own vocabulary repairs it."
+    turns:
+      - heard: "artho consultation chahiye ghutne ke liye"
+        truth: "ortho consultation chahiye ghutne ke liye"
+        low_conf: [artho]
+      - heard: "parso shaam ka slot chahiye"
+        truth: "parso shaam ka slot chahiye"
+      - heard: "haan ji"
+        truth: "haan ji"
+      - heard: "Anita Rao 9812345678"
+        truth: "Anita Rao 9812345678"
+      - heard: "haan pakka"
+        truth: "haan pakka"
+  - name: doctor_by_name
+    expect: BOOKED
+    note: "'Dr Banerjee' is heard as 'Banarji'; the staff list repairs it."
+    turns:
+      - heard: "doctor Banarji se pregnancy checkup karwana hai"
+        truth: "doctor Banerjee se pregnancy checkup karwana hai"
+        low_conf: [Banarji]
+      - heard: "kal dopahar chalega"
+        truth: "kal dopahar chalega"
+      - heard: "haan theek hai"
+        truth: "haan theek hai"
+      - heard: "Meera Joshi 9700112255"
+        truth: "Meera Joshi 9700112255"
+      - heard: "ji confirm"
+        truth: "ji confirm"
+  - name: faq_only
+    expect: FAQ_ANSWERED
+    turns:
+      - heard: "clinic ke timings kya hain"
+        truth: "clinic ke timings kya hain"
+      - heard: "nahi bas itna hi tha dhanyavaad"
+        truth: "nahi bas itna hi tha dhanyavaad"
+  - name: chest_pain_handoff
+    expect: HANDED_OFF
+    note: "Guardrail: chest pain must leave the automation immediately."
+    turns:
+      - heard: "papa ke seene mein bahut dard ho raha hai"
+        truth: "papa ke seene mein bahut dard ho raha hai"
+  - name: medicine_refusal
+    expect: REFUSED
+    note: "Guardrail: the agent must not prescribe."
+    turns:
+      - heard: "bukhar mein kaunsi dawai lun batao"
+        truth: "bukhar mein kaunsi dawai lun batao"
+  - name: sunday_lead
+    expect: LEAD_CAPTURED
+    note: "Sunday is closed; a missed booking must still become a lead."
+    turns:
+      - heard: "sunday ko bachche ka teeka lagwana hai"
+        truth: "sunday ko bachche ka teeka lagwana hai"
+      - heard: "mera naam Rohit hai 9900112233"
+        truth: "mera naam Rohit hai 9900112233"
