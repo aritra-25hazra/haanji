@@ -312,7 +312,8 @@ DEMO_SUFFIX = "_demo"
 
 
 def product_packs() -> list[str]:
-    return research_packs(PRODUCT_DIR)
+    """The product's packs, the default shop first (pickers open on it)."""
+    return sorted(research_packs(PRODUCT_DIR), key=lambda p: p != DEFAULT_PACK)
 
 
 def demo_twins() -> dict[str, str]:
@@ -621,6 +622,50 @@ async def _scoped_stream(pack: str | None, allowed: set[str] | None, queue: asyn
             continue
         if _visible(event, pack, allowed):
             yield chunk
+
+
+SESSION_EVENT_KINDS = ("turn", "session.takeover", "session.handback")
+
+
+def _for_caller(event: dict[str, Any], sid: str) -> dict[str, Any] | None:
+    """What a caller's own page may see: a person at the console taking their
+    call, that person's replies, and the hand-back. Nothing about any other
+    call, and none of the engine's internals."""
+    if event.get("sid") != sid or event.get("kind") not in SESSION_EVENT_KINDS:
+        return None
+    if event["kind"] == "turn" and not event.get("human"):
+        return None
+    return {k: event.get(k) for k in ("seq", "kind", "at", "sid", "human", "reply")}
+
+
+async def _session_stream(sid: str, queue: asyncio.Queue):
+    _subscribers.add(queue)
+    try:
+        yield ": connected\n\n"
+        while sid in _sessions:
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=KEEPALIVE_S)
+            except asyncio.TimeoutError:
+                yield ": keepalive\n\n"
+                continue
+            shown = _for_caller(event, sid)
+            if shown:
+                yield _sse(shown)
+    finally:
+        _subscribers.discard(queue)
+
+
+@app.get("/api/sessions/{sid}/events")
+async def session_events(sid: str):
+    """The caller's page listens here for a person taking over its call. The
+    session id is the capability: only the page that started the call has it.
+    (The call page used to read the whole shop's stream, which showed a
+    visitor every other caller's turns on a server with sign-in off, and
+    refused them on one with sign-in on.)"""
+    if sid not in _sessions:
+        raise HTTPException(404, "no such session")
+    return StreamingResponse(_session_stream(sid, asyncio.Queue(maxsize=64)), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.get("/api/events")
@@ -1452,7 +1497,9 @@ _doctors_cache: dict[str, tuple[float, dict[str, Any]]] = {}
 @app.get("/api/packs/{pack_id}/doctors")
 async def pack_doctors(pack_id: str):
     """Public: the shop's doctors (or counsellors) by department, what each
-    one does and their next free time today. Cached for 30 s."""
+    one does and when they are next free: today, or else the next open day
+    within a week (after closing time "full today" was simply untrue).
+    Cached for 30 s."""
     if not re.fullmatch(r"[a-z0-9_]+", pack_id) or pack_id not in list_packs():
         raise HTTPException(404, "no such pack")
     hit = _doctors_cache.get(pack_id)
@@ -1462,12 +1509,17 @@ async def pack_doctors(pack_id: str):
     pack = rt.pack
     groups = pack.departments or [Department(name=pack.staff_role.title(), code="", staff=list(pack.staff))]
 
-    async def next_free(person: str) -> str | None:
+    async def next_free(person: str) -> dict[str, str] | None:
         svc = next((s.name for s in pack.services if person in s.staff), None)
         if svc is None:
             return None
-        got = await rt.backend.availability(pack_id, svc, "today", staff=person, limit=1)
-        return got["slots"][0]["time"] if got.get("slots") else None
+        start = rt.backend.today
+        for ahead in range(8):
+            day = (start + dt.timedelta(days=ahead)).isoformat()
+            got = await rt.backend.availability(pack_id, svc, day, staff=person, limit=1)
+            if got.get("slots"):
+                return {"date": got["slots"][0]["date"], "time": got["slots"][0]["time"]}
+        return None
 
     people = [p for g in groups for p in g.staff]
     frees = dict(zip(people, await asyncio.gather(*(next_free(p) for p in people)), strict=True))

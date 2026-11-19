@@ -65,6 +65,13 @@ p { margin: 0; }
 .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--leaf); box-shadow: 0 0 0 3px rgba(143, 214, 148, .25); }
 .live.off { opacity: .8; }
 .live.off i { background: var(--haze); box-shadow: none; }
+/* Between the phone menu and a wide screen the app's links (six, plus Admin)
+   and its tools (shop, Sample, LIVE, AI, language, Talk, the signed-in user)
+   do not share one row: the links take a row of their own, never clipped. */
+@media (min-width: 1101px) and (max-width: 1599px) {
+  .topbar { flex-wrap: wrap; row-gap: 2px; padding-bottom: 4px; }
+  .navrow { order: 3; flex-basis: 100%; margin-left: -12px; }
+}
 @media (max-width: 720px) {
   .topbar { gap: 8px; padding: 8px 10px; flex-wrap: wrap; }
   .navrow { order: 3; flex-basis: 100%; }

@@ -34,7 +34,7 @@ export function SiteFooter() {
     <footer className="site-foot">
       <div>
         <b>HaanJi <span className="dev">हाँजी</span></b>
-        <p className="muted">{t("An AI receptionist for Indian shops: phone and WhatsApp, in the caller's language.")}</p>
+        <p className="muted">{t("An AI receptionist for clinics and coaching institutes: phone and WhatsApp, in the caller's language.")}</p>
       </div>
       <nav aria-label={t("Footer")}>
         <a href="/engine/privacy">{t("Privacy")}</a>

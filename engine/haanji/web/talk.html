@@ -92,7 +92,7 @@
   .ebody p { text-wrap: pretty; }
   .engine header a { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; }
   /* today's doctors, by department, in the space before the call */
-  .doctors { max-width: 760px; margin: 18px auto 0; }
+  .doctors { width: 100%; max-width: 760px; margin: 18px auto 0; align-self: center; }
   .doctors h2 { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--marigold); margin: 0 0 10px; }
   .doctors h2 .closed { color: var(--haze); text-transform: none; letter-spacing: 0; }
   .doctors .depts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
@@ -102,6 +102,7 @@
   .doctors li { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
   .doctors li span { font-size: 12.5px; color: var(--haze); white-space: nowrap; }
   .doctors li span.free { color: var(--leaf); }
+  .doctors li span.later { color: var(--chalk); opacity: .8; }
   /* the booking card under the agent's reply */
   .bkcard { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; padding: 12px 14px; border-radius: 12px;
             border: 1.5px solid var(--marigold); background: rgba(245, 185, 30, .1); width: 100%; }
@@ -207,7 +208,7 @@
   function listenForHuman() {
     if (!("EventSource" in window) || humanSource) return;
     try {
-      humanSource = new EventSource("api/events?pack=" + encodeURIComponent($("pack").value));
+      humanSource = new EventSource("api/sessions/" + encodeURIComponent(sid) + "/events");
       humanSource.addEventListener("turn", function (ev) {
         try {
           const e = JSON.parse(ev.data);
@@ -315,11 +316,15 @@
     try { d = await api("api/packs/" + encodeURIComponent($("pack").value) + "/doctors"); } catch (e) { d = null; }
     if (!d || !d.departments || !d.departments.length) { box.hidden = true; return; }
     const head = d.role === "doctor" ? L("Today's doctors", "Aaj ke doctors") : L("Today's counsellors", "Aaj ke counsellors");
-    box.innerHTML = "<h2>" + S.esc(head) + (d.open_today ? "" : ' <span class="closed">' + S.esc(L("closed today", "aaj band")) + "</span>") + "</h2>" +
+    const anyToday = d.departments.some(function (g) { return g.staff.some(function (p) { return p.next_free && p.next_free.date === todayIso(); }); });
+    const note = anyToday ? "" : d.open_today ? L("no more slots today", "aaj aur slot nahi") : L("closed today", "aaj band");
+    box.innerHTML = "<h2>" + S.esc(head) + (note ? ' <span class="closed">' + S.esc(note) + "</span>" : "") + "</h2>" +
       '<div class="depts">' + d.departments.map(function (g) {
         return '<div class="dept"><h3>' + S.esc(g.name) + "</h3><ul>" + g.staff.map(function (p) {
-          const when = p.next_free ? L("free at ", "khaali ") + p.next_free : (d.open_today ? L("full today", "aaj full") : "—");
-          return "<li><b>" + S.esc(p.name) + '</b><span class="' + (p.next_free ? "free" : "full") + '">' + S.esc(when) + "</span></li>";
+          const nf = p.next_free;
+          const today = nf && nf.date === todayIso();
+          const when = !nf ? L("no slot this week", "is hafte slot nahi") : today ? L("free at ", "khaali ") + nf.time : dayLabel(nf.date) + " " + nf.time;
+          return "<li><b>" + S.esc(p.name) + '</b><span class="' + (today ? "free" : "later") + '">' + S.esc(when) + "</span></li>";
         }).join("") + "</ul></div>";
       }).join("") + "</div>";
     box.hidden = false;

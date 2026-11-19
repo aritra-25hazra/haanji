@@ -111,6 +111,9 @@ def test_the_call_page_lists_today_s_doctors_by_department(client):
     assert len(names) == 13 and all(p["services"] for g in d["departments"] for p in g["staff"])
     gp = next(g for g in d["departments"] if g["code"] == "GP")
     assert {p["name"] for p in gp["staff"]} == {"Dr Mehta", "Dr Verma", "Dr Nair"}
+    # each doctor's next free time is real: today, or the next open day (never "full" after closing)
+    for p in (p for g in d["departments"] for p in g["staff"]):
+        assert p["next_free"] and set(p["next_free"]) == {"date", "time"}
     assert client.get("/api/packs/no_such/doctors").status_code == 404
 
 
@@ -127,3 +130,20 @@ def test_a_web_call_shows_the_offered_doctors_then_a_booking_card(client):
     booked = cards[-1]["booked"]
     assert booked["department"] == "General Physician" and booked["service"] == "general consultation"
     assert booked["receipt"] and isinstance(booked["ahead"], int)
+
+
+def test_a_call_page_hears_only_a_person_taking_its_own_call(client):
+    """The call page used to read the shop's whole event stream: every other
+    caller's turns with sign-in off, a 401 (and no human replies) with it on."""
+    mine, other = "a" * 16, "b" * 16
+    human = {"seq": 1, "kind": "turn", "sid": mine, "human": True, "reply": "Main Priya, reception se.",
+             "heard": "", "spans": [{"name": "x"}], "pack": CLINIC}
+    assert server._for_caller(human, mine) == {"seq": 1, "kind": "turn", "at": None, "sid": mine,
+                                               "human": True, "reply": "Main Priya, reception se."}
+    assert server._for_caller({**human, "sid": other}, mine) is None                  # someone else's call
+    assert server._for_caller({**human, "human": False}, mine) is None                # the agent's own turns
+    assert server._for_caller({"kind": "session.takeover", "sid": mine, "seq": 2}, mine)["kind"] == "session.takeover"
+    assert server._for_caller({"kind": "booking", "sid": mine, "seq": 3}, mine) is None
+    assert client.get("/api/sessions/" + "c" * 16 + "/events").status_code == 404
+    talk = client.get("/talk").text
+    assert "api/events?pack" not in talk and '"/events"' in talk

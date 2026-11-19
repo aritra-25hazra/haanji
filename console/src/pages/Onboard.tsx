@@ -6,7 +6,8 @@ import { useApp } from "../state";
 import { Chip, Icon, NotLive, Page, Panel } from "../components/Common";
 import type { Draft, DraftRequest } from "../types";
 
-const TYPES: [string, string][] = [["clinic", "Clinic / doctor"], ["salon", "Salon / spa"], ["lab", "Diagnostic lab"], ["coaching", "Coaching institute"], ["other", en("Something else")]];
+// HaanJi is built for clinics and coaching institutes.
+const TYPES: [string, string][] = [["clinic", "Clinic / doctor"], ["coaching", "Coaching institute"]];
 const DAYS: [string, string][] = [["mon", en("Mon")], ["tue", en("Tue")], ["wed", en("Wed")], ["thu", en("Thu")], ["fri", en("Fri")], ["sat", en("Sat")], ["sun", en("Sun")]];
 const STEPS = [en("Shop"), en("People"), en("Hours"), "Services", en("Ready")];
 

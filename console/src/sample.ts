@@ -32,7 +32,8 @@ export function packInfo(pack: string): PackInfo { return ALL.find((p) => p.pack
 
 // The product is a multispeciality clinic and a coaching institute; the other
 // packs are the research corpus and are not offered as shops.
-const PRODUCT = ALL.filter((p) => p.product);
+// The clinic first: it is the shop the demo opens on.
+const PRODUCT = ALL.filter((p) => p.product).sort((a, b) => Number(b.staff_role === "doctor") - Number(a.staff_role === "doctor"));
 export const SAMPLE_STATUS: Status = {
   name: "HaanJi demo server", version: "1.2.0", default_pack: PRODUCT[0]?.pack_id ?? "dental_clinic",
   packs: (PRODUCT.length ? PRODUCT : ALL).map((p) => p.pack_id),
@@ -268,6 +269,13 @@ function build(p: PackInfo, now: Date): Shop {
       turns = [turn(ask, `${why} Aapka number note kar leta hoon, team aapko call karegi.`),
                turn(`haan theek hai, naam ${person.name || "Ravi"} hai`, "Theek hai, team aapko call karegi.", { tools: ["capture_lead"] })];
     } else if (outcome === "HANDED_OFF") {
+      if (r() < .45 && !/doctor|dentist/i.test(p.staff_role)) {
+        // a coaching institute has no medical emergencies: its urgent handoff is a student in distress
+        turns = [turn("mera beta bahut tension mein hai, pressure nahi jhel pa raha", p.escalation_line,
+                      { tools: ["handoff"], guard: "coaching.distress" })];
+        calls.push(finish(`sample-${p.pack_id}-o${i}`, channelOf(), person.phone, atToday(), "HANDED_OFF", turns, []));
+        continue;
+      }
       if (r() < .45) {
         // an emergency: the engine's guardrail hands it off; out of hours it promises no transfer
         const at = atToday();
