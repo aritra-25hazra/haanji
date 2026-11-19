@@ -227,6 +227,14 @@ class DialoguePolicy:
                 args.update({"date": ctx.date, "service": ctx.service, "period": ctx.period})
             return LLMTurn(tool_calls=[ToolCall("capture_lead", args)])
 
+        # 3b. "Mera number kab aayega?": today's token queue.
+        if nlu.asks_queue(text) or ctx.flags.get("await_queue"):
+            if not ctx.customer_phone:
+                ctx.flags["await_queue"] = True
+                return LLMTurn(say=self._p("ask_queue_number", "Zaroor. Jis number se token ya booking hai, wo bata dijiye."))
+            ctx.flags.pop("await_queue", None)
+            return LLMTurn(tool_calls=[ToolCall("queue_status", {"phone": ctx.customer_phone})])
+
         # 4. Cancellation.
         if nlu.words(text) & nlu.CANCEL_WORDS and not ctx.flags.get("await_details"):
             if not ctx.customer_phone:
@@ -321,6 +329,10 @@ class DialoguePolicy:
             ctx.time = None
             ctx.last_offered_slots = []
             return LLMTurn(say=r.spoken or "Wo slot abhi nahi ho paya, doosra dekh lete hain.")
+
+        if "queue_status" in by_name:
+            ctx.answered_questions += 1
+            return LLMTurn(say=f"{by_name['queue_status'].spoken} {self._p('anything_else', 'Aur kuch madad chahiye?')}")
 
         if "reschedule_appointment" in by_name:
             r = by_name["reschedule_appointment"]

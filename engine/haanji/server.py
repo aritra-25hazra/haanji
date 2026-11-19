@@ -54,6 +54,7 @@ from .telephony import twilio as twilio_mod
 from .pramaan.vault import Vault, normalise_phone as _norm_phone
 from .push import PushStore
 from . import admin as admin_mod
+from . import token_queue as queue_mod
 from . import backup as backup_mod
 from . import reminders as rem_mod
 from .payments import PaymentStore
@@ -67,7 +68,7 @@ from .models import Speaker, Turn
 from .pramaan.ledger import Ledger
 from .store import DemoStore
 from .tools.builtin import build_registry
-from .vertical import PACK_DIR, PackError, from_dict, list_packs as research_packs, load_pack as load_pack_file
+from .vertical import PACK_DIR, Department, PackError, from_dict, list_packs as research_packs, load_pack as load_pack_file
 from . import db
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
@@ -813,7 +814,30 @@ def _turn_payload(record, holder: Holder) -> dict[str, Any]:
         "receipts": new_receipts,
         "end_call": bool(session.ctx.flags.get("ended")),
         "outcome": _provisional_outcome(session),
+        "card": _card(holder, new_receipts),
     }
+
+
+def _card(holder: Holder, new_receipts: list[str]) -> dict[str, Any] | None:
+    """What the call page shows beside the words: the slots on offer (with
+    each doctor's department), and once a booking is sealed, the doctor, the
+    time and how many appointments that doctor has before it."""
+    ctx, pack, pid = holder.session.ctx, holder.rt.pack, holder.rt.pack_id
+
+    def dept(person: str | None) -> str | None:
+        d = pack.department_of(person) if person else None
+        return d.name if d else None
+
+    offered = [{"date": s.get("date"), "time": s.get("time"), "staff": s.get("staff"),
+                "department": dept(s.get("staff"))} for s in ctx.last_offered_slots[:3]]
+    booked = None
+    if new_receipts and ctx.outcome and ctx.outcome.value in ("BOOKED", "RESCHEDULED") \
+            and ctx.staff and ctx.date and ctx.time:
+        day = holder.rt.backend.resolve_date(ctx.date)
+        booked = {"service": ctx.service, "staff": ctx.staff, "department": dept(ctx.staff), "date": day,
+                  "time": ctx.time, "receipt": new_receipts[-1],
+                  "ahead": queue_for(pid).ahead_of_booking(ctx.staff, day, ctx.time)}
+    return {"offered": offered, "booked": booked} if offered or booked else None
 
 
 def _provisional_outcome(session: CallSession) -> str | None:
@@ -1420,6 +1444,39 @@ async def pack_lines(pack_id: str):
     scenarios = load_pack(pack_id).scenarios
     pick = next((s for s in scenarios if s.expect == "BOOKED"), scenarios[0] if scenarios else None)
     return {"lines": [t["heard"] for t in (pick.turns if pick else []) if t.get("heard")]}
+
+
+_doctors_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+
+
+@app.get("/api/packs/{pack_id}/doctors")
+async def pack_doctors(pack_id: str):
+    """Public: the shop's doctors (or counsellors) by department, what each
+    one does and their next free time today. Cached for 30 s."""
+    if not re.fullmatch(r"[a-z0-9_]+", pack_id) or pack_id not in list_packs():
+        raise HTTPException(404, "no such pack")
+    hit = _doctors_cache.get(pack_id)
+    if hit and time.monotonic() - hit[0] < 30:
+        return hit[1]
+    rt = runtime(pack_id)
+    pack = rt.pack
+    groups = pack.departments or [Department(name=pack.staff_role.title(), code="", staff=list(pack.staff))]
+
+    async def next_free(person: str) -> str | None:
+        svc = next((s.name for s in pack.services if person in s.staff), None)
+        if svc is None:
+            return None
+        got = await rt.backend.availability(pack_id, svc, "today", staff=person, limit=1)
+        return got["slots"][0]["time"] if got.get("slots") else None
+
+    people = [p for g in groups for p in g.staff]
+    frees = dict(zip(people, await asyncio.gather(*(next_free(p) for p in people)), strict=True))
+    out = {"pack": pack_id, "role": pack.staff_role, "open_today": rt.backend.today.weekday() in pack.hours,
+           "departments": [{"name": g.name, "code": g.code, "staff": [
+               {"name": p, "services": [s.name for s in pack.services if p in s.staff], "next_free": frees[p]}
+               for p in g.staff]} for g in groups]}
+    _doctors_cache[pack_id] = (time.monotonic(), out)
+    return out
 
 
 class PackBody(BaseModel):
@@ -2865,6 +2922,12 @@ async def whatsapp():
     return _page("whatsapp.html")
 
 
+@app.get("/queue")
+async def queue_screen():
+    """The waiting-room TV: who is being seen, by token (no names)."""
+    return _page("queue.html")
+
+
 @app.get("/verify")
 async def verify():
     return _page("verify.html")
@@ -2933,6 +2996,23 @@ async def notify_customer(pack_id: str, phone: str, text: str, *, meta: dict[str
         log.warning("customer notice to …%s failed: %s", phone[-4:], exc)
         return False
 
+
+_queues: dict[str, Any] = {}
+
+
+def queue_for(pack: str) -> "queue_mod.TokenQueue":
+    """The pack's token queue, kept as long as its runtime is."""
+    rt = runtime(pack)
+    q = _queues.get(pack)
+    if q is None or q.b is not rt.backend:
+        q = _queues[pack] = queue_mod.TokenQueue(rt.backend, rt.pack, pack)
+    return q
+
+
+# Reception works the queue signed in; the waiting-room screen is public.
+PROTECTED.append(("GET", re.compile(r"^/api/queue$"), "staff"))
+PROTECTED.append(("POST", re.compile(r"^/api/queue/(checkin|walkin|next|[^/]+/status)$"), "staff"))
+app.include_router(queue_mod.make_router(queue_for=queue_for, publish=publish, default_pack=DEFAULT_PACK))
 
 app.include_router(admin_mod.build_router(admin_mod.Deps(
     runtime=runtime, list_packs=list_packs, default_pack=DEFAULT_PACK, store=store, settings=settings,

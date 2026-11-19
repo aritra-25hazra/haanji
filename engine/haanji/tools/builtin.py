@@ -15,6 +15,7 @@ from ..pramaan.ledger import Ledger, LedgerError
 from ..pramaan.receipt import ConfirmationProof
 from ..speak import phrase, spoken_date, spoken_time
 from ..speak import rupees as _rupees
+from ..token_queue import TokenQueue, spoken_position
 from ..vertical import Pack
 from . import Tool, ToolRegistry
 
@@ -76,6 +77,11 @@ def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
         c = data["customer"]
         return ToolResult("lookup_customer", ok=True, data=data,
                           spoken=f"Haanji {c['name']}, aapka record mil gaya.")
+
+    async def queue_status(phone: str) -> ToolResult:
+        """Where the caller stands in today's token queue."""
+        pos = TokenQueue(backend, pack, tenant_id).position(phone)
+        return ToolResult("queue_status", ok=True, data={"position": pos}, spoken=spoken_position(pos))
 
     async def quote_price(service: str) -> ToolResult:
         svc = backend.service(tenant_id, service)
@@ -304,6 +310,10 @@ def build_registry(tenant_id: str, backend: LocalBackend, pack: Pack,
                       "Find a returning caller by phone number.",
                       {"phone": "ten digit phone number"},
                       lookup_customer, read_only=True, nominal_ms=90, required=["phone"]))
+    reg.register(Tool("queue_status",
+                      "Where a caller stands in today's token queue: their token, how many are ahead, a rough wait.",
+                      {"phone": "ten digit phone number"},
+                      queue_status, read_only=True, nominal_ms=60, required=["phone"]))
     reg.register(Tool("quote_price",
                       "State the catalogue price of a service. Never invents one.",
                       {"service": "service name"},

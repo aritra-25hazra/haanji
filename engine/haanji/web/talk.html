@@ -91,6 +91,26 @@
   #empty { max-width: 60ch; margin-inline: auto; text-wrap: pretty; }
   .ebody p { text-wrap: pretty; }
   .engine header a { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; }
+  /* today's doctors, by department, in the space before the call */
+  .doctors { max-width: 760px; margin: 18px auto 0; }
+  .doctors h2 { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--marigold); margin: 0 0 10px; }
+  .doctors h2 .closed { color: var(--haze); text-transform: none; letter-spacing: 0; }
+  .doctors .depts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .doctors .dept { border: 1px solid rgba(255, 247, 230, .16); border-radius: 10px; padding: 10px 12px; }
+  .doctors h3 { font-size: 13px; color: var(--haze); margin: 0 0 6px; font-weight: 600; }
+  .doctors ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .doctors li { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+  .doctors li span { font-size: 12.5px; color: var(--haze); white-space: nowrap; }
+  .doctors li span.free { color: var(--leaf); }
+  /* the booking card under the agent's reply */
+  .bkcard { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; padding: 12px 14px; border-radius: 12px;
+            border: 1.5px solid var(--marigold); background: rgba(245, 185, 30, .1); width: 100%; }
+  .bkcard .bk-kicker { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--marigold); font-weight: 700; }
+  .bkcard .bk-doc { font-size: 19px; }
+  .bkcard .bk-dept { font-size: 13px; color: var(--haze); }
+  .bkcard .bk-when { font-size: 15px; font-weight: 600; }
+  .bkcard .bk-ahead { font-size: 13px; color: var(--haze); }
+  .chip-slot { background: rgba(255, 247, 230, .1); }
   /* before the call the hint sits in the middle of the empty space, not at its top */
   .transcript:has(> #empty:only-child) { display: flex; }
   .transcript:has(> #empty:only-child) #empty { margin-block: auto; }
@@ -129,6 +149,7 @@
   <section class="call" aria-label="Call">
     <div class="transcript" id="log" aria-live="polite" tabindex="0" aria-label="Conversation" data-hi-aria-label="Baatcheet">
       <p class="sys" id="empty" data-hi-html="Neeche ki koi line dabaiye, call apne aap shuru ho jayegi. Ya &quot;Start call&quot; dabakar mic se boliye ya type kijiye.&lt;br&gt;Kuch lines mein jaan-boojh kar galat spelling hai: Bhasha Bridge unhe sudhaarta dikhega. Phone 9876543210 daaloge to returning-caller greeting milega.">Tap any line below and the call starts on its own. Or press "Start call" and speak into the mic or type.<br>Some lines are misspelt on purpose, so you can watch the Bhasha Bridge fix them. Enter the phone 9876543210 to hear the returning-caller greeting.</p>
+      <section class="doctors" id="doctors" hidden aria-live="polite"></section>
     </div>
     <p class="interim" id="interim"></p>
     <div class="suggest" id="suggest" hidden>
@@ -275,6 +296,48 @@
     lines = got && got.length ? got : FALLBACK_LINES;
     said = new Set();
     renderSuggest();
+    loadDoctors();
+  }
+
+  // ── today's doctors (or counsellors), by department, before the call ──
+  function todayIso() { return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }); }
+  function dayLabel(iso) {
+    const today = todayIso(), tomorrow = new Date(Date.parse(today + "T12:00:00Z") + 864e5).toISOString().slice(0, 10);
+    if (iso === today) return L("today", "aaj");
+    if (iso === tomorrow) return L("tomorrow", "kal");
+    const d = new Date(iso + "T12:00:00Z");
+    return isNaN(d) ? iso : d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  }
+  async function loadDoctors() {
+    const box = $("doctors");
+    if (!box) return;
+    let d = null;
+    try { d = await api("api/packs/" + encodeURIComponent($("pack").value) + "/doctors"); } catch (e) { d = null; }
+    if (!d || !d.departments || !d.departments.length) { box.hidden = true; return; }
+    const head = d.role === "doctor" ? L("Today's doctors", "Aaj ke doctors") : L("Today's counsellors", "Aaj ke counsellors");
+    box.innerHTML = "<h2>" + S.esc(head) + (d.open_today ? "" : ' <span class="closed">' + S.esc(L("closed today", "aaj band")) + "</span>") + "</h2>" +
+      '<div class="depts">' + d.departments.map(function (g) {
+        return '<div class="dept"><h3>' + S.esc(g.name) + "</h3><ul>" + g.staff.map(function (p) {
+          const when = p.next_free ? L("free at ", "khaali ") + p.next_free : (d.open_today ? L("full today", "aaj full") : "—");
+          return "<li><b>" + S.esc(p.name) + '</b><span class="' + (p.next_free ? "free" : "full") + '">' + S.esc(when) + "</span></li>";
+        }).join("") + "</ul></div>";
+      }).join("") + "</div>";
+    box.hidden = false;
+  }
+
+  // The booking card: the doctor, their department, the time, and how many
+  // appointments that doctor has before this one.
+  function bookingCard(b) {
+    const el = document.createElement("div");
+    el.className = "bkcard";
+    const ahead = b.ahead === 0 ? L("No appointment before yours with this doctor.", "Is doctor ke saath aapse pehle koi appointment nahi.")
+      : L(b.ahead + " appointment(s) before yours with this doctor.", "Aapse pehle " + b.ahead + " appointment hain.");
+    el.innerHTML = '<span class="bk-kicker">' + S.esc(L("Booked", "Booking pakki")) + "</span>" +
+      '<b class="bk-doc">' + S.esc(b.staff) + "</b>" +
+      (b.department ? '<span class="bk-dept">' + S.esc(b.department) + "</span>" : "") +
+      '<span class="bk-when">' + S.esc(dayLabel(b.date) + " · " + b.time + (b.service ? " · " + b.service : "")) + "</span>" +
+      '<span class="bk-ahead">' + S.esc(ahead) + " " + S.esc(L("Take your token at reception when you arrive.", "Pahunch kar reception par token lijiye.")) + "</span>";
+    return el;
   }
   function renderSuggest() {
     const ul = $("suggest-row");
@@ -334,6 +397,7 @@
 
   function row(who, text) {
     if ($("empty")) $("empty").remove();
+    if ($("doctors")) $("doctors").remove();
     const b = document.createElement("div");
     b.className = "bubble " + who;
     b.textContent = text;
@@ -377,6 +441,14 @@
       c.innerHTML = (hit ? S.icon("bolt") : "") + S.esc(tool) + (hit ? " · speculated" : "");
       meta.appendChild(c);
     });
+    if (t.card && t.card.booked) meta.appendChild(bookingCard(t.card.booked));
+    else if (t.card && t.card.offered && t.card.offered.length) {
+      t.card.offered.forEach(function (s) {
+        const c = document.createElement("span"); c.className = "chip chip-slot";
+        c.textContent = s.staff + (s.department ? " · " + s.department : "") + " · " + dayLabel(s.date) + " " + s.time;
+        meta.appendChild(c);
+      });
+    }
     if (t.guard) { const g = document.createElement("span"); g.className = "chip chip-guard"; g.innerHTML = S.icon("shield") + "guardrail: " + S.esc(t.guard); meta.appendChild(g); }
     (t.receipts || []).forEach(function (code) {
       const st = document.createElement("a"); st.className = "stamp"; st.href = "verify?code=" + encodeURIComponent(code) + "&pack=" + encodeURIComponent($("pack").value); st.target = "_blank"; st.rel = "noopener"; st.title = L("Verify this receipt", "Is receipt ko verify karo"); st.innerHTML = S.icon("lock") + "RECEIPT " + S.esc(code); st.style.opacity = "0"; meta.appendChild(st);

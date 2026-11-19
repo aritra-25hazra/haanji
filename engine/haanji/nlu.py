@@ -113,6 +113,14 @@ QUESTION_WORDS = {"kitna", "kitne", "kitni", "kya", "kaunsa", "kaun", "kab", "ka
 IDENTITY_WORDS = {"mera", "meri", "naam", "number", "purani", "pehle", "last", "previous",
                   "my", "name", "registered"}
 CANCEL_WORDS = {"cancel", "hata", "hatao", "cancle", "radd"}
+# "mera number kab aayega", "token kitne pe hai", "line mein kitne log hain":
+# a question about today's queue, not about a booking.
+QUEUE_RX = re.compile(r"\b(token|queue|baari|bari|number kab|kab aayega|kab ayega|kab bulayenge|"
+                      r"kitne log|line me|line mein|line main|kitna wait|kitni der)\b", re.IGNORECASE)
+
+
+def asks_queue(text: str) -> bool:
+    return bool(QUEUE_RX.search(text or ""))
 RESCHEDULE_WORDS = {"reschedule", "postpone", "aage", "badalna", "badalni", "badalo", "badal", "badlo", "badli",
                     "badle", "badlna", "change", "shift", "move", "prepone", "peeche", "dusre", "doosre", "alag",
                     "bodlate", "bodlao", "badla", "badlun"}

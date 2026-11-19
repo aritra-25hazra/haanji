@@ -102,3 +102,28 @@ def test_a_demo_copy_follows_its_shop_and_cannot_be_edited(client):
     r = client.put(f"/api/packs/{CLINIC}_demo", json={"yaml": got["yaml"].replace(f"pack: {CLINIC}", f"pack: {CLINIC}_demo")},
                    headers=hdr)
     assert r.status_code == 409
+
+
+def test_the_call_page_lists_today_s_doctors_by_department(client):
+    d = client.get(f"/api/packs/{CLINIC}/doctors").json()
+    assert d["role"] == "doctor" and len(d["departments"]) == 6
+    names = [p["name"] for g in d["departments"] for p in g["staff"]]
+    assert len(names) == 13 and all(p["services"] for g in d["departments"] for p in g["staff"])
+    gp = next(g for g in d["departments"] if g["code"] == "GP")
+    assert {p["name"] for p in gp["staff"]} == {"Dr Mehta", "Dr Verma", "Dr Nair"}
+    assert client.get("/api/packs/no_such/doctors").status_code == 404
+
+
+def test_a_web_call_shows_the_offered_doctors_then_a_booking_card(client):
+    s = client.post("/api/sessions", json={"pack": CLINIC}).json()
+    sid, cards = s["session_id"], []
+    for line in ["mujhe bukhar ke liye doctor dikhana hai", "kal subah ka time mil jayega", "haan ji wahi theek hai",
+                 "mera naam Ravi Kumar hai number 9876501299", "haan confirm kar do"]:
+        r = client.post(f"/api/sessions/{sid}/utterance", json={"text": line})
+        assert r.status_code == 200, r.text
+        cards.append(r.json().get("card"))
+    offered = next(c["offered"] for c in cards if c and c["offered"])
+    assert offered[0]["department"] == "General Physician" and offered[0]["staff"].startswith("Dr ")
+    booked = cards[-1]["booked"]
+    assert booked["department"] == "General Physician" and booked["service"] == "general consultation"
+    assert booked["receipt"] and isinstance(booked["ahead"], int)

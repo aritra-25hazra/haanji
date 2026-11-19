@@ -561,7 +561,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 717 tests, about 6 s
+pytest -q                                   # 728 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -609,14 +609,14 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (717 tests)
+## Appendix C. Test inventory (728 tests)
 
 | file | tests | what it guards |
 |---|---|---|
 | test_adversarial.py | 89 | prompt injection against the model adapter still meets the read-back gate; the guardrail corpus (research/benchmark/guardrail_corpus.yaml) in every pack; random Latin, Devanagari and digit text never crashes, books or silences the agent |
 | test_numeric_repair.py | 48 | the closed-vocabulary date/time/number pass: what it restores, what it must never turn into a different number, the benchmark's date_time score |
 | test_pipeline.py | 54 | the turn controller, barge-in, confirmation flow, receipts per call, speculation on/off identity, a Devanagari turn |
-| test_web.py | 44 | the demo server, design tokens, relative URLs, no emoji (every page, including the research pages); status names who answers calls and where records live |
+| test_web.py | 46 | the demo server, design tokens, relative URLs, no emoji (every page, including the research pages); status names who answers calls and where records live |
 | test_packs.py | 45 | every pack validates and every scenario reaches its outcome |
 | test_agent_behaviour.py | 19 | AI disclosure, everyday dental words, a name kept out of order, a bad number explained then handed off, a named time confirmed free, the number's last digits read back, "aur kuch?" once (never on WhatsApp), no transfer promised after hours or in the lunch break; identity questions told apart from party sizes, dates in digits not taken for a phone, the new lines in every pack language, an outcome counted once |
 | test_bhasha.py | 36 | the two-condition rule, name protection, harmful-correction detection, the pilot's guards, the merged-token rule and its ordering |
@@ -649,7 +649,8 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_auth_password.py | 6 | email + password sign-in: only a salted scrypt hash is kept, ten wrong tries lock the email, the owner gets the same token and device session, staff sign in by email, no password login with sign-in off, the owner comes from HAANJI_OWNER_EMAIL / _PASSWORD at boot |
 | test_google_login.py | 5 | Sign in with Google: an allowed email signs in and the token rides in the URL fragment, an unknown email is turned away, a forged or old state is refused, the ID token's audience, issuer, expiry and verified email are checked, no button without a Google client |
 | test_public_simulator.py | 10 | a demo server with sign-in on: a stranger can chat in the WhatsApp simulator and read back only the chat they started (a signed visitor pass), cannot list threads or read without a pass, typing someone else's number starts a fresh chat, the owner still sees every thread, a real shop keeps it behind sign-in, /talk's lines are public and only lines, the simulator's missed-call button works for a stranger and never sends a real WhatsApp |
-| test_product.py | 7 | product mode: the clinic and coaching packs (packs/product/) are valid, keep their departments and pass their own scenarios, stay out of the research corpus; the server offers only them and their demo copies; a visitor books into the demo copy and the shop stays clean; the owner signed in writes to the shop; a demo copy cannot be edited |
+| test_product.py | 9 | product mode: the clinic and coaching packs (packs/product/) are valid, keep their departments and pass their own scenarios, stay out of the research corpus; the server offers only them and their demo copies; a visitor books into the demo copy and the shop stays clean; the owner signed in writes to the shop; a demo copy cannot be edited; the call page lists today's doctors by department and shows the offered doctors, then a booking card |
+| test_token_queue.py | 7 | the token queue: check-in gives a department token once, a booking for another day cannot check in, walk-ins go to the shortest line and Next calls in order, a place in line with a rough wait, a caller asking 'mera number kab aayega' in a chat hears their token, the waiting-room screen is public and shows no names or numbers, the TV page is served |
 | test_telephony.py | 4 | the Twilio media-stream bridge with fake recogniser and synthesiser |
 | test_telephony_exotel.py | 5 | the same bridge on Exotel's wire: G.711 conversion matches the standard, outgoing audio in valid Exotel chunks, a call greeted, answered and recorded, the recogniser always hears μ-law, a public server needs the applet's key |
 | test_db.py | 11 | SQLite's dialect on Postgres: placeholders outside literals, comment-safe schema scripts, upserts, case-blind LIKE, table_info, serial keys, a failed statement undone alone; SQLite stays the default; with Postgres the backup download points at the database host; a SQLite data directory moves to Postgres whole and its chain still verifies; a lone read leaves no transaction open; a dropped connection is reopened; a failure is recorded by kind only |
