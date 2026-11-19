@@ -198,6 +198,14 @@ class BodyLimitMiddleware:
 app.add_middleware(BodyLimitMiddleware)
 
 
+# The engine's pages load everything from this server (fonts, three.js, the
+# verifier) and keep their scripts inline, so 'self' plus inline is the whole
+# policy; nothing may frame them, and no plugin or foreign form target runs.
+PAGE_CSP = ("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' data:; "
+            "connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'")
+
+
 @app.middleware("http")
 async def hardening(request: Request, call_next):
     path = request.url.path
@@ -251,6 +259,8 @@ async def hardening(request: Request, call_next):
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Permissions-Policy", "microphone=(self), camera=(), geolocation=()")
+    if response.headers.get("content-type", "").startswith("text/html"):
+        response.headers.setdefault("Content-Security-Policy", PAGE_CSP)
     if request.headers.get("x-forwarded-proto", request.url.scheme) == "https":
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     return response
@@ -1606,10 +1616,15 @@ def _public_key_hex(rt: TenantRuntime) -> str:
 
 def seal_pending_days(rt: TenantRuntime) -> list[str]:
     """Anchor every day that has receipts and no anchor yet, plus today again
-    if it gained receipts since it was last sealed (INSERT OR REPLACE)."""
+    if it gained receipts since it was last sealed (INSERT OR REPLACE).
+
+    A sealed day is a UTC day, like the receipts' own timestamps. "Today"
+    must be the UTC today too: with India's date, between midnight and
+    05:30 IST the current UTC day was never resealed and its later receipts
+    stayed out of the anchor."""
     have = {a["day"]: a for a in rt.ledger.anchors(rt.pack_id)}
     sealed: list[str] = []
-    today = dt.datetime.now(IST).date().isoformat()
+    today = dt.datetime.now(dt.timezone.utc).date().isoformat()
     for day in rt.ledger.days_with_receipts(rt.pack_id):
         if day not in have or day == today:
             rt.ledger.anchor_day(rt.pack_id, day)

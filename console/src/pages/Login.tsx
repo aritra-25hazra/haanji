@@ -67,7 +67,9 @@ export default function Login() {
             <label className="field"><span>{t("Email")}</span><input className="input" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus /></label>
             <label className="field"><span>{t("Password")}</span><input className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
             <button className="btn btn-primary" type="submit" disabled={busy || !email.includes("@") || password.length < 1}>{t("Enter the console")} <Icon name="arrow" small /></button>
-            <p className="muted small">{t("Forgot the password? The person who set up your HaanJi can set a new one.")}</p>
+            <p className="muted small">{status?.auth?.google
+              ? t("Forgot the password? Use Continue with Google with the same email, or ask the person who set up your HaanJi for a new one.")
+              : t("Forgot the password? The person who set up your HaanJi can set a new one.")}</p>
           </form>
         ) : stage === "phone" ? (
           <form className="form" onSubmit={(e) => { e.preventDefault(); void sendCode(); }}>

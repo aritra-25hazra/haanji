@@ -88,7 +88,7 @@ p { margin: 0; }
 
 /* ── tiles ───────────────────────────────────────────────────────────── */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
-.tile { background: var(--paper); border-left: 3px solid var(--marigold); border-radius: 10px; padding: 16px 18px; box-shadow: 0 1px 0 rgba(27, 59, 140, .08); }
+.tile { background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; box-shadow: 0 1px 0 rgba(27, 59, 140, .08); }
 .tile .label { margin: 0; font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 8px; }
 .tile .value { font-family: var(--font-display); font-weight: 800; font-size: 30px; letter-spacing: -.02em; color: var(--cobalt); line-height: 1; }
 .tile .value.mono { font-family: var(--font-mono); font-weight: 500; font-size: 24px; }
@@ -102,7 +102,7 @@ p { margin: 0; }
 .panel .body { padding: 18px; }
 
 /* ── register: the signature ─────────────────────────────────────────── */
-.register-wrap { overflow-x: auto; border-left: 2px solid rgba(226, 85, 58, .45); margin-left: 10px; }
+.register-wrap { overflow-x: auto; }
 .register { width: 100%; border-collapse: collapse; font-size: 14px; }
 .register th { text-align: left; font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); padding: 10px 14px; border-bottom: 2px solid var(--cobalt); white-space: nowrap; }
 .register td { padding: 0 14px; height: 44px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
@@ -161,7 +161,7 @@ p { margin: 0; }
 .btn .icon { width: 18px; height: 18px; }
 .input { min-height: 44px; padding: 0 12px; border-radius: var(--r-ctl); border: 1.5px solid var(--rule); background: var(--paper); color: var(--ink); width: 100%; }
 .input::placeholder { color: var(--ink-2); }
-textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertical; border-left: 3px solid var(--cobalt); }
+textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertical; }
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink-2); }
 
 /* ── outcomes bar ────────────────────────────────────────────────────── */
@@ -296,7 +296,8 @@ textarea.input { padding: 12px; font: 13px/1.55 var(--font-mono); resize: vertic
 
 /* sample numbers are stamped so a screenshot cannot pass them off as real */
 .tile { position: relative; overflow: hidden; }
-.tile .watermark { position: absolute; right: 10px; bottom: 10px; transform: rotate(-4deg); font: 700 11px/1 var(--font-mono); letter-spacing: .14em; color: var(--sindoor-ink); border: 1.5px solid currentColor; padding: 3px 9px; border-radius: 4px; opacity: .9; pointer-events: none; background: var(--chalk); }
+/* sample figures stay marked in any screenshot, quietly: the page banner says the rest */
+.tile .watermark { position: absolute; right: 12px; bottom: 10px; font: 600 10px/1 var(--font-mono); letter-spacing: .1em; color: var(--ink-2); pointer-events: none; }
 
 /* the repair's "read as" word fades in once the strike is drawn */
 .repair b { opacity: 1; transform: none; transition: none; animation: reveal var(--t-base) var(--ease-out) 80ms both; }

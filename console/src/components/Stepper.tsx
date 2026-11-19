@@ -124,8 +124,8 @@ const THEMES: Record<string, Record<string, string>> = {
   }
 };
 
-const SPRING =
-  'linear(0, 0.0603, 0.2033, 0.3821, 0.5633, 0.7258, 0.8584, 0.9574, 1.0242, 1.0634, 1.0809, 1.0828, 1.0747, 1.0613, 1.046, 1.0313, 1.0186, 1.0085, 1.0012, 0.9965, 0.994, 0.9931, 0.9933, 0.9941, 0.9953, 0.9966, 0.9978, 0.9988, 1)';
+// A settling ease with no overshoot: things arrive, they do not bounce.
+const SPRING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const SETTLE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -147,7 +147,7 @@ const readableOn = (color: string) => {
 const ease = () =>
   typeof CSS !== 'undefined' && CSS.supports?.('transition-timing-function', 'linear(0, 1)')
     ? SPRING
-    : 'cubic-bezier(0.34, 1.4, 0.64, 1)';
+    : 'cubic-bezier(0.22, 1, 0.36, 1)';
 
 function Check() {
   const ref = useRef<HTMLSpanElement>(null);

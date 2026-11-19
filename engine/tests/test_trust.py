@@ -59,7 +59,7 @@ def test_the_verify_page_opens_a_receipt_from_its_link(client):
 
 def test_days_are_sealed_and_the_anchor_signature_verifies(client):
     book_over_whatsapp(client, phone="9811100013")
-    today = dt.datetime.now(server.IST).date().isoformat()
+    today = dt.datetime.now(dt.timezone.utc).date().isoformat()     # sealed days are UTC days
     sealed = client.post("/api/anchors/seal", params={"pack": "dental_clinic"}).json()
     assert today in sealed["sealed"] and sealed["anchors"], "today is (re)sealed every time"
     after = client.get("/api/anchors", params={"pack": "dental_clinic"}).json()
@@ -127,3 +127,26 @@ def test_on_the_public_demo_a_typed_number_is_never_sent_a_whatsapp(client, monk
         codes += r.get("receipts", [])
     assert codes, "the booking itself still happens"
     assert not [m for m in sent if m[0].endswith("9811100015")]
+
+
+def test_a_receipt_after_todays_seal_is_in_the_next_seal_at_any_hour(client):
+    """Sealed days are UTC days. Resealing "today" used India's date, so between
+    midnight and 05:30 IST the current UTC day was never resealed and a booking
+    made then stayed out of every anchor."""
+    book_over_whatsapp(client, phone="9811100031")
+    client.post("/api/anchors/seal", params={"pack": "dental_clinic"})
+    book_over_whatsapp(client, phone="9811100032")
+    client.post("/api/anchors/seal", params={"pack": "dental_clinic"})
+    exp = client.get("/api/receipts/export", params={"pack": "dental_clinic"}).json()["receipts"]
+    last = max(r["seq"] for r in exp)
+    day = next(r["occurred_at"][:10] for r in exp if r["seq"] == last)
+    anchor = next(a for a in client.get("/api/anchors", params={"pack": "dental_clinic"}).json()["anchors"]
+                  if a["day"] == day)
+    assert anchor["last_seq"] == last
+
+
+def test_pages_carry_a_content_security_policy_and_the_api_does_not_need_one(client):
+    page = client.get("/talk")
+    csp = page.headers.get("content-security-policy", "")
+    assert "default-src 'self'" in csp and "frame-ancestors 'none'" in csp and "object-src 'none'" in csp
+    assert "content-security-policy" not in client.get("/api/status").headers

@@ -215,9 +215,10 @@ class Ledger:
         return [r["d"] for r in rows]
 
     def anchor_day(self, tenant_id: str, day: str | None = None) -> str:
-        """Publish a signed Merkle root over one day of receipts."""
+        """Publish a signed Merkle root over one UTC day of receipts (the
+        receipts' occurred_at is UTC, so the day must be too)."""
         import hashlib
-        day = day or dt.date.today().isoformat()
+        day = day or dt.datetime.now(dt.timezone.utc).date().isoformat()
         rows = [Receipt.from_row({k: v for k, v in dict(r).items() if k != "short_code"}) for r in self.conn.execute(
             "SELECT * FROM receipts WHERE tenant_id=? AND occurred_at >= ? AND occurred_at < ? ORDER BY seq",
             (tenant_id, day, day + "T99")).fetchall()]

@@ -144,8 +144,8 @@ const HIDDEN: Record<Animation, Record<'above' | 'below', string>> = {
   fade: { above: 'translate3d(0, -4px, 0)', below: 'translate3d(0, 4px, 0)' }
 };
 
-const SPRING =
-  'linear(0, 0.0603, 0.2033, 0.3821, 0.5633, 0.7258, 0.8584, 0.9574, 1.0242, 1.0634, 1.0809, 1.0828, 1.0747, 1.0613, 1.046, 1.0313, 1.0186, 1.0085, 1.0012, 0.9965, 0.994, 0.9931, 0.9933, 0.9941, 0.9953, 0.9966, 0.9978, 0.9988, 1)';
+// A settling ease with no overshoot: things arrive, they do not bounce.
+const SPRING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
 const smootherstep = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
 
@@ -226,7 +226,7 @@ const AnimatedList = ({
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const springEase = CSS.supports?.('transition-timing-function', 'linear(0, 1)')
       ? SPRING
-      : 'cubic-bezier(0.34, 1.4, 0.64, 1)';
+      : 'cubic-bezier(0.22, 1, 0.36, 1)';
     const transition = `transform 620ms ${springEase}, opacity 300ms cubic-bezier(0.22, 1, 0.36, 1), filter 200ms ease`;
     const motion = { y: 0, h: 0, vy: 0, vh: 0, ty: 0, th: 0, ready: false };
     const fades = { top: '', bottom: '' };

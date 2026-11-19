@@ -347,12 +347,24 @@
     $("log").appendChild(p); $("log").scrollTop = $("log").scrollHeight;
   }
 
+  // The best Indian voice the device has: Hindi first, then Indian English
+  // (both read Roman Hinglish), and within each a network/neural voice
+  // before the robotic offline one.
+  function pickVoice() {
+    const all = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    const good = function (v) { return /google|natural|neural|online|premium|enhanced/i.test(v.name) ? 0 : 1; };
+    for (const lang of [/^hi[-_]IN/i, /^en[-_]IN/i]) {
+      const m = all.filter(function (v) { return lang.test(v.lang); }).sort(function (a, b) { return good(a) - good(b); });
+      if (m.length) return m[0];
+    }
+    return null;
+  }
   function speak(text) {
     if (muted || !window.speechSynthesis) return;
     const u = new SpeechSynthesisUtterance(text);
-    const v = speechSynthesis.getVoices().find(function (v) { return /hi[-_]IN/i.test(v.lang); });
+    const v = pickVoice();
     if (v) u.voice = v;
-    u.lang = "hi-IN"; u.rate = 1.02;
+    u.lang = v ? v.lang : "hi-IN"; u.rate = 1.02;
     speechSynthesis.speak(u);
   }
 
@@ -544,6 +556,9 @@
   } else {
     $("mic").disabled = true;
     $("mic").title = L("No mic in this browser. Please type (Chrome works best)", "Is browser mein mic nahi. Type kijiye (Chrome best)");
+    // Said on the page, not only in a tooltip a phone never shows (Safari on iPhone).
+    notice(L("This browser cannot listen to the mic. Tap a line below or type; for speaking, open this page in Chrome.",
+             "Is browser me mic se sunna nahi chalta. Neeche ki line dabaiye ya type kijiye; bolne ke liye ye page Chrome me kholiye."));
   }
 
   function setMic(on) {

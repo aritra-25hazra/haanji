@@ -72,7 +72,7 @@ print("anchor valid")</pre>
     }).join("");
     const pending = a.pending_days.length ? '<p class="pending">' + a.pending_days.length + L(" day(s) still to be sealed (this evening at ", " din abhi seal hone baaki (aaj shaam ") + S.esc(String(window.__digestHour || 20)) + L(":00 IST)", ":00 IST pe)") + "</p>" : "";
     return '<section class="frame pk"><h2>' + S.esc(pack) + '</h2><p class="key">public key · ' + S.esc(a.public_key) + "</p>" +
-      (rows ? '<table><thead><tr><th>' + L("Day", "Din") + '</th><th>Receipts</th><th>Merkle root</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">' + L("No day sealed yet; the first one is sealed on the evening after the first booking.", "Abhi koi din seal nahi hua — pehli booking ke baad shaam ko hoga.") + '</p>') + pending + "</section>";
+      (rows ? '<table><thead><tr><th>' + L("Day (UTC)", "Din (UTC)") + '</th><th>Receipts</th><th>Merkle root</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">' + L("No day sealed yet; the first one is sealed on the evening after the first booking.", "Abhi koi din seal nahi hua — pehli booking ke baad shaam ko hoga.") + '</p>') + pending + "</section>";
   }
   S.status().then(async function (s) {
     if (!s) return;

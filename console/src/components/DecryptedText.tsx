@@ -532,7 +532,7 @@ export default function DecryptedText({
       } else if (previous.revealed[index] === false) {
         node.animate(flipFrames(90, 0), {
           duration: Math.min(Math.max(step * 7, 360), 760),
-          easing: 'cubic-bezier(0.34, 1.45, 0.64, 1)'
+          easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
         });
       }
     });

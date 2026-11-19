@@ -312,6 +312,7 @@ export default {
   "Email": "Email",
   "Password": "Password",
   "Forgot the password? The person who set up your HaanJi can set a new one.": "Password bhool gaye? Jinhone aapka HaanJi set up kiya, wo naya set kar sakte hain.",
+  "Forgot the password? Use Continue with Google with the same email, or ask the person who set up your HaanJi for a new one.": "Password bhool gaye? Usi email se 'Continue with Google' dabaiye, ya jinhone HaanJi set up kiya unse naya password lijiye.",
   "Use a WhatsApp code instead": "Iske bajaye WhatsApp code se",
   "Use email and password": "Email aur password se",
   "Try the demo (no account)": "Demo dekho (bina account)",
