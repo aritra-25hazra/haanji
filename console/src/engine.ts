@@ -5,7 +5,7 @@ export type HelpProvider = "claude" | "gemini" | "faq";
  * /engine/, which Vite proxies in development, Vercel rewrites in production
  * and nginx proxies in the compose stack. The contract is docs/console-api.md.
  */
-import type { PrivacyRequest,
+import type { PrivacyRequest, QueueToken, QueueView,
   CallRow, Export, Insights, Lexicon, PackSummary, Status, Turn, Verdict,
   Digest,
   Anchors,
@@ -182,6 +182,17 @@ export const engine = {
   selftest: (id: string) =>
     request<{ ok: boolean; results: { passed: boolean; line: string }[]; summary: string }>(
       `api/packs/${encodeURIComponent(id)}/selftest`, { method: "POST" }),
+
+  // ── the token queue (engine/haanji/token_queue.py) ────────────────────────
+  queue: (pack: string) => request<QueueView>(`api/queue?${q(pack)}`),
+  queueCheckIn: (pack: string, bookingId: string) =>
+    request<QueueToken>(`api/queue/checkin?${q(pack)}`, { method: "POST", body: JSON.stringify({ booking_id: bookingId }) }),
+  queueWalkIn: (pack: string, body: { staff?: string; service?: string; name?: string; phone?: string }) =>
+    request<QueueToken>(`api/queue/walkin?${q(pack)}`, { method: "POST", body: JSON.stringify(body) }),
+  queueNext: (pack: string, staff: string) =>
+    request<{ staff: string; serving: QueueToken | null }>(`api/queue/next?${q(pack)}`, { method: "POST", body: JSON.stringify({ staff }) }),
+  queueMark: (pack: string, tokenId: string, status: QueueToken["status"]) =>
+    request<QueueToken>(`api/queue/${encodeURIComponent(tokenId)}/status?${q(pack)}`, { method: "POST", body: JSON.stringify({ status }) }),
 
   // ── the receptionist's desk (docs/console-api.md) ────────────────────────
   /** Bookings in [from, to] inclusive, oldest first. `status` defaults to CONFIRMED on the engine. */

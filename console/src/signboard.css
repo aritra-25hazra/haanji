@@ -595,3 +595,16 @@ details.tech summary { cursor: pointer; color: var(--ink-2); font-size: 14px; mi
 .google-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 46px; margin-top: 8px; background: #fff; color: #1f1f1f; border: 1px solid #dadce0; font-weight: 600; }
 .google-btn:hover { background: #f8f9fa; }
 .or-line { text-align: center; margin: 6px 0 0; }
+
+/* ── the token queue ─────────────────────────────────────────────────── */
+.q-dept { padding: 12px 18px 4px; }
+.q-dept-name { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
+.q-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.q-line { border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; background: var(--paper); }
+.q-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.q-now { font-family: var(--font-mono); font-size: 32px; font-weight: 600; color: var(--cobalt); line-height: 1.1; }
+.q-now.idle { color: var(--ink-2); font-size: 22px; }
+.q-waiting { margin: 0; padding-left: 18px; font-size: 14px; display: flex; flex-direction: column; gap: 3px; }
+.q-line .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.q-walkin { display: grid; grid-template-columns: 2fr 1.4fr 1.2fr auto; gap: 12px; align-items: end; padding: 14px 18px; }
+@media (max-width: 720px) { .q-walkin { grid-template-columns: 1fr; } }

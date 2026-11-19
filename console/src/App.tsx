@@ -9,6 +9,7 @@ import { packLabel, packShort } from "./labels";
 import { en, t, useLang } from "./i18n";
 import { useApp, type Mode } from "./state";
 import Calendar from "./pages/Calendar";
+import Queue from "./pages/Queue";
 import Customers from "./pages/Customers";
 import Settings from "./pages/Settings";
 import Calls from "./pages/Calls";
@@ -34,6 +35,7 @@ interface NavItem { to: string; label: string; owner?: boolean; hint?: string }
 const LINKS: NavItem[] = [
   { to: "/dashboard", label: en("Today") },
   { to: "/calendar", label: en("Calendar") },
+  { to: "/queue", label: en("Queue") },
   { to: "/customers", label: en("Customers") },
   { to: "/calls", label: en("Calls") },
   { to: "/settings", label: en("Settings"), owner: true },
@@ -79,6 +81,7 @@ export default function App() {
           <Route path="/login" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/calendar" element={<Calendar />} />
+          <Route path="/queue" element={<Queue />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/calls" element={<Calls />} />
           <Route path="/calls/:id" element={<CallDetail />} />

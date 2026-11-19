@@ -8,7 +8,7 @@ import { addDays, dayName, dayOfWeek, fmtDay, today, weekOf } from "../dates";
 import type { Booking, BookingFilter, BookingStatus, Payment, WaitlistEntry } from "../types";
 
 type View = "day" | "week";
-type Action = "cancel" | Exclude<BookingStatus, "CANCELLED">;
+type Action = "cancel" | "checkin" | Exclude<BookingStatus, "CANCELLED">;
 
 const STATUS_LABEL: Record<BookingStatus, string> = { CONFIRMED: en("confirmed"), CANCELLED: en("cancelled"), NO_SHOW: en("no-show"), COMPLETED: en("completed") };
 const STATUS_KIND: Record<BookingStatus, ChipKind | undefined> = { CONFIRMED: undefined, CANCELLED: "bad", NO_SHOW: "warn", COMPLETED: "ok" };
@@ -47,7 +47,10 @@ export default function Calendar() {
     if (!live) { setNote(t("This is a sample calendar; nothing changes here.")); return; }
     setBusy(b.booking_id); setNote(null);
     try {
-      if (what === "cancel") {
+      if (what === "checkin") {
+        const tok = await engine.queueCheckIn(pack, b.booking_id);
+        setNote(t("Checked in · {name} has token {label}.", { name: b.customer_name ?? "—", label: tok.label }));
+      } else if (what === "cancel") {
         await engine.cancelBooking(pack, b.booking_id);
         setNote(t("Cancelled · {name}, {time}. If someone is on the waitlist, they will be offered the slot.", { name: b.customer_name, time: b.time }));
       } else {
@@ -218,6 +221,7 @@ function BookingCard({ b, showStaff = false, busy, onAct, readOnly = false }: { 
         <div className="acts">
           {b.status === "CONFIRMED" && (
             <>
+              {b.date === today() && <button className="btn btn-primary" onClick={() => onAct("checkin")} disabled={busy}>{t("Check in")}</button>}
               <button className="btn btn-ghost" onClick={() => onAct("COMPLETED")} disabled={busy}><Icon name="check" small />{t("Completed")}</button>
               <button className="btn btn-ghost" onClick={() => onAct("NO_SHOW")} disabled={busy}>{t("No-show")}</button>
               <button className="btn btn-ghost" style={{ color: "var(--sindoor-ink)" }} onClick={() => setConfirm(true)} disabled={busy}>{t("Cancel")}</button>

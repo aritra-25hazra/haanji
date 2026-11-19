@@ -353,3 +353,16 @@ export interface Payment {
   phone?: string | null;
   receipt_code?: string | null;
 }
+
+// ── the token queue (engine/haanji/token_queue.py) ─────────────────────────
+export interface QueueToken {
+  token_id: string; label: string; staff: string; department: string | null; number: number;
+  kind: "booked" | "walkin"; booking_id: string | null; service: string | null;
+  name: string | null; phone: string | null; status: "waiting" | "serving" | "done" | "no_show";
+  created_at: string; called_at: string | null; done_at: string | null;
+}
+export interface QueueLine {
+  staff: string; department: string | null; code: string; serving: QueueToken | null;
+  waiting: QueueToken[]; done: number; no_show: number; avg_minutes: number;
+}
+export interface QueueView { day: string; lines: QueueLine[]; to_check_in: Booking[] }
