@@ -137,3 +137,17 @@ describe("the sample day follows the clock", () => {
     expect(hours.size).toBeGreaterThanOrEqual(4);
   });
 });
+
+describe.each(SAMPLE_STATUS.packs)("the sample queue for %s", (pack) => {
+  it("agrees with today's calendar: every booking is either holding a token or still to check in, once", () => {
+    const q = sample.queue(pack);
+    const todays = sample.bookings(pack, q.day, q.day).filter((b) => b.status !== "CANCELLED").map((b) => b.booking_id).sort();
+    const tokens = q.lines.flatMap((l) => [...(l.serving ? [l.serving] : []), ...l.waiting]);
+    const counted = q.lines.reduce((n, l) => n + l.done + l.no_show, 0) + tokens.filter((t) => t.booking_id).length + q.to_check_in.length;
+    expect(counted).toBe(todays.length);                                     // every booking once
+    for (const b of q.to_check_in) expect(todays).toContain(b.booking_id);
+    for (const t of tokens.filter((x) => x.booking_id)) expect(todays).toContain(t.booking_id);
+    expect(new Set(tokens.map((t) => t.label)).size).toBe(tokens.length);
+    for (const l of q.lines) expect(l.serving === null || l.serving.status === "serving").toBe(true);
+  });
+});

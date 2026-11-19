@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { engine, enginePath } from "../engine";
+import { sample } from "../sample";
 import { useApp } from "../state";
 import { t, tn, useT } from "../i18n";
-import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register, useData } from "../components/Common";
+import { Chip, Empty, Icon, Loading, NotLive, Page, Panel, Register, fmtDate, useData } from "../components/Common";
 import type { QueueLine, QueueToken, QueueView } from "../types";
 
 /**
@@ -15,7 +16,9 @@ export default function Queue() {
   const { pack, mode, readOnly } = useApp();
   useT();
   const live = mode === "live";
-  const { data, loading, error, reload } = useData<QueueView>(live ? () => engine.queue(pack) : null, [pack, mode]);
+  const demo = mode === "demo";
+  const { data, loading, error, reload } = useData<QueueView>(
+    live ? () => engine.queue(pack) : demo ? () => Promise.resolve(sample.queue(pack)) : null, [pack, mode]);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -26,14 +29,10 @@ export default function Queue() {
   }, [live, reload]);
 
   const screen = enginePath(`queue?pack=${encodeURIComponent(pack)}`);
-  if (!live) {
-    return (
-      <NotLive title={t("Queue")} sub={t("Today's tokens, doctor by doctor.")} kind="staff"
-               demo={<p>{t("The queue runs on the live engine: sign in to check patients in and call the next token.")}</p>} />
-    );
-  }
+  if (!live && !demo) return <NotLive title={t("Queue")} sub={t("Today's tokens, doctor by doctor.")} kind="staff" />;
 
   const run = async (key: string, fn: () => Promise<string>) => {
+    if (!live) { setNote(t("This is a sample queue; nothing changes here. Sign in to the live console to call real tokens.")); return; }
     setBusy(key); setNote(null);
     try { setNote(await fn()); reload(); }
     catch (e) { setNote(e instanceof Error ? e.message : String(e)); }
@@ -61,6 +60,7 @@ export default function Queue() {
     <Page title={t("Queue")} sub={t("Today's tokens, doctor by doctor.")}
           actions={<a className="btn btn-ghost" href={screen} target="_blank" rel="noopener noreferrer"><Icon name="external" small />{t("Waiting-room screen")}</a>}>
       {note && <div className="banner" role="status"><Icon name="check" small />{note}</div>}
+      {data?.as_of && <p className="muted">{t("It is closed now, so the sample shows the queue at {time} on {day}.", { time: data.as_of.time, day: fmtDate(data.as_of.day) })}</p>}
       {loading && !data ? <Loading kind="staff" /> : error && !data ? (
         <Empty>{t("Could not load: {error}", { error })}<button className="btn btn-ghost btn-sm" onClick={reload}>{t("Try again")}</button></Empty>
       ) : (

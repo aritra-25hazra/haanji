@@ -365,4 +365,4 @@ export interface QueueLine {
   staff: string; department: string | null; code: string; serving: QueueToken | null;
   waiting: QueueToken[]; done: number; no_show: number; avg_minutes: number;
 }
-export interface QueueView { day: string; lines: QueueLine[]; to_check_in: Booking[] }
+export interface QueueView { day: string; lines: QueueLine[]; to_check_in: Booking[]; as_of?: { day: string; time: string } }

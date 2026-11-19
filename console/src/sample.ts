@@ -13,9 +13,11 @@ import { t } from "./i18n";
  * booking, and the dashboard's numbers. Nothing is generated on its own, so
  * no page can contradict another (src/test/sample-invariants.test.ts).
  */
-import { addDays, eachDay, today } from "./dates";
+import { addDays, eachDay, isoDay, today } from "./dates";
+
+const addDaysTo = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 import PACKS from "./packs.json";
-import type { Booking, BookingStatus, CallRow, Correction, Customer, Export, Insights, Lexicon, PackSummary, Payment, Status, Turn, WaitlistEntry } from "./types";
+import type { Booking, BookingStatus, CallRow, Correction, Customer, Export, Insights, Lexicon, PackSummary, Payment, QueueLine, QueueToken, QueueView, Status, Turn, WaitlistEntry } from "./types";
 
 // ── the packs, as the engine reads them ───────────────────────────────────
 interface PackService { name: string; price_inr: number | null; duration_min: number; staff: string[]; aliases: string[] }
@@ -403,6 +405,62 @@ export const sample = {
       entry_id: `wl-sample-${pack}-${i}`, phone: p.phone, name: p.name, service: s.pack.services[i % s.pack.services.length]!.name,
       date: busiest, period: i ? "morning" : "evening", created_at: `${today()}T09:1${i}:00`, offered_at: null, status: "WAITING",
     }));
+  },
+
+  /** The token queue, made from the sample bookings so it agrees with the
+   *  calendar: done for appointments that are over, a token for those due
+   *  within half an hour (they have arrived), the rest still to check in; the
+   *  first waiting patient of each doctor is being seen; two walk-ins join
+   *  the shortest lines. While the shop is open it is now; when it is closed
+   *  it is the last open day at 11:00, and `as_of` says so. Read-only. */
+  queue(pack: string): QueueView {
+    const s = shop(pack), p = s.pack, now = new Date();
+    const mins = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+    const hoursOn = (d: Date) => p.hours[String((d.getDay() + 6) % 7)];
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const h = hoursOn(now);
+    const openNow = !!h && nowMin >= mins(h[0]!) && nowMin < mins(h[1]!);
+    let ref = new Date(now), refMin = nowMin;
+    if (!openNow) {
+      if (!(h && nowMin >= mins(h[1]!))) ref = addDaysTo(ref, -1);      // before opening, or a closed day: go back
+      for (let i = 0; i < 7 && !hoursOn(ref); i++) ref = addDaysTo(ref, -1);
+      refMin = 11 * 60;
+    }
+    const day = isoDay(ref);
+    const deptOf = (person: string) => p.departments.find((d) => d.staff.includes(person));
+    const code = (person: string) => deptOf(person)?.code ?? (person.split(" ").map((w) => w[0]).join("").slice(-2).toUpperCase() || "T");
+    const todays = s.bookings.filter((b) => b.date === day && b.status !== "CANCELLED").sort((a, b) => a.time.localeCompare(b.time));
+    const numbers = new Map<string, number>();
+    const token = (person: string, over: Partial<QueueToken>): QueueToken => {
+      const c = code(person), n = (numbers.get(c) ?? 0) + 1;
+      numbers.set(c, n);
+      return { token_id: `tk-sample-${pack}-${c}-${n}`, label: `${c}-${String(n).padStart(2, "0")}`, staff: person,
+               department: deptOf(person)?.name ?? null, number: n, kind: "booked", booking_id: null, service: null,
+               name: null, phone: null, status: "waiting", created_at: `${day}T09:00:00`, called_at: null, done_at: null, ...over };
+    };
+    const tokens: QueueToken[] = [], due: Booking[] = [];
+    for (const b of todays) {
+      const at = mins(b.time), who = { booking_id: b.booking_id, service: b.service, name: b.customer_name, phone: b.phone };
+      if (at < refMin - 20) tokens.push(token(b.staff, { ...who, status: b.status === "NO_SHOW" ? "no_show" : "done" }));
+      else if (at <= refMin + 30) tokens.push(token(b.staff, who));
+      else due.push({ ...b, status: "CONFIRMED" });
+    }
+    const lineSize = (person: string) => tokens.filter((x) => x.staff === person && x.status === "waiting").length;
+    ["Asha", "Kiran"].forEach((name, i) => {
+      const person = [...p.staff].sort((a, b) => lineSize(a) - lineSize(b))[0]!;
+      tokens.push(token(person, { kind: "walkin", name, created_at: `${day}T${String(Math.floor(refMin / 60)).padStart(2, "0")}:0${i}:00` }));
+    });
+    const avg = (person: string) => p.services.find((x) => x.staff.includes(person))?.duration_min ?? 15;
+    const lines: QueueLine[] = p.staff.map((person) => {
+      const mine = tokens.filter((x) => x.staff === person);
+      const waiting = mine.filter((x) => x.status === "waiting");
+      const serving = waiting.shift() ?? null;
+      return { staff: person, department: deptOf(person)?.name ?? null, code: code(person),
+               serving: serving ? { ...serving, status: "serving" } : null, waiting,
+               done: mine.filter((x) => x.status === "done").length, no_show: mine.filter((x) => x.status === "no_show").length,
+               avg_minutes: avg(person) };
+    });
+    return { day, lines, to_check_in: due, ...(openNow ? {} : { as_of: { day, time: "11:00" } }) };
   },
 
   /** Deposit links for the bookings that ask for one. */

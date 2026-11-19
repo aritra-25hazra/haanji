@@ -256,7 +256,6 @@ export default {
   "Now seeing": "Abhi dekh rahe hain",
   "Phone (optional)": "Phone (zaroori nahi)",
   "Queue": "Queue",
-  "The queue runs on the live engine: sign in to check patients in and call the next token.": "Queue live engine par chalti hai: sign in karke patient ka check-in karo aur agla token bulao.",
   "Time": "Time",
   "To check in": "Check-in baaki",
   "Today's tokens, doctor by doctor.": "Aaj ke token, har doctor ke hisaab se.",
@@ -271,4 +270,6 @@ export default {
   "{label} marked as a no-show.": "{label} ko no-show maana.",
   "{n} booked patient not here yet": "{n} booked patient abhi nahi aaya",
   "{n} booked patients not here yet": "{n} booked patient abhi nahi aaye",
+  "This is a sample queue; nothing changes here. Sign in to the live console to call real tokens.": "Ye sample queue hai; yahan kuch nahi badalta. Asli token bulane ke liye live console mein sign in kijiye.",
+  "It is closed now, so the sample shows the queue at {time} on {day}.": "Abhi band hai, isliye sample {day} ko {time} baje ki queue dikha raha hai.",
 } as Record<string, string>;

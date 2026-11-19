@@ -44,10 +44,13 @@ describe("queue", () => {
     expect(await screen.findByText(/ab GP-01 ki baari/)).toBeInTheDocument();
   });
 
-  it("does not pretend in sample mode", async () => {
+  it("shows a made-up queue in sample mode, by department, that cannot be changed", async () => {
     localStorage.setItem("haanji.sample", "1");
-    mockEngine({ "api/status": () => STATUS_OPEN });
+    mockEngine({ "api/status": () => ({ ...STATUS_OPEN, default_pack: "smile_care_clinic", packs: ["smile_care_clinic", "pragati_classes"] }) });
     renderApp("/queue");
-    expect(await screen.findByText(/Queue live engine par chalti hai/)).toBeInTheDocument();
+    expect(await screen.findByTestId("sample-banner")).toBeInTheDocument();
+    expect(await screen.findByText("General Physician")).toBeInTheDocument();
+    expect(screen.getByText("Orthopaedics")).toBeInTheDocument();
+    for (const b of screen.getAllByRole("button", { name: "Agla patient" })) expect(b).toBeDisabled();
   });
 });
