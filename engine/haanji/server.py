@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import yaml
-from fastapi import FastAPI, HTTPException, Request, WebSocket
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
@@ -54,6 +54,8 @@ from .telephony import twilio as twilio_mod
 from .pramaan.vault import Vault, normalise_phone as _norm_phone
 from .push import PushStore
 from . import admin as admin_mod
+from . import mailer
+from . import totp
 from . import token_queue as queue_mod
 from . import backup as backup_mod
 from . import reminders as rem_mod
@@ -2105,8 +2107,7 @@ async def auth_login(body: LoginIn, request: Request):
         raise HTTPException(429, str(exc), headers={"Retry-After": "900"})
     if user is None:
         raise HTTPException(401, "wrong email or password")
-    return {"token": auth.token_for(user, agent=request.headers.get("user-agent", "")),
-            "user": {**user.as_dict(), "email": auth.email_of(user.phone)}}
+    return _signed_in(user, request)
 
 
 @app.post("/api/auth/verify")
@@ -2117,7 +2118,171 @@ async def auth_verify(body: VerifyIn, request: Request):
     user = auth.user(phone)
     if user is None or not auth.check_otp(phone, body.code):
         raise HTTPException(401, "wrong or expired code")
-    return {"token": auth.token_for(user, agent=request.headers.get("user-agent", "")), "user": user.as_dict()}
+    return _signed_in(user, request)
+
+
+def _signed_in(user: Principal, request: Request) -> dict[str, Any]:
+    """The answer to a first sign-in step that passed: a token, or, with
+    two-step sign-in on, a five-minute single-use ticket for the second."""
+    if auth.twofa_enabled(user.phone):
+        return {"needs_2fa": True, "ticket": auth.twofa_ticket(user.phone)}
+    return {"token": auth.token_for(user, agent=request.headers.get("user-agent", "")),
+            "user": {**user.as_dict(), "email": auth.email_of(user.phone)}}
+
+
+class EmailCodeIn(BaseModel):
+    email: str = Field(max_length=200)
+    purpose: Literal["login", "reset"] = "login"
+
+
+class EmailVerifyIn(BaseModel):
+    email: str = Field(max_length=200)
+    code: str = Field(max_length=12)
+
+
+class ResetIn(BaseModel):
+    email: str = Field(max_length=200)
+    code: str = Field(max_length=12)
+    password: str = Field(max_length=200)
+
+
+async def _mail_code(email: str, code: str, purpose: str) -> None:
+    subject, text = mailer.code_mail(code, purpose)
+    if not await mailer.send(email, subject, text):
+        log.warning("email code to %s not sent: %s", mailer._mask(email), (mailer.LAST_SEND or {}).get("error"))
+
+
+@app.post("/api/auth/email-code")
+async def auth_email_code(body: EmailCodeIn, background: BackgroundTasks):
+    """A sign-in or password-reset code by email. The answer is the same,
+    and as quick, whether or not the email has an account and whether or
+    not it is throttled: the mail goes out after the answer, so neither the
+    words nor the timing reveal an account."""
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off (HAANJI_AUTH=on to enable)")
+    if not mailer.configured() and not AUTH_DEV:
+        raise HTTPException(409, "email codes are not set up on this server (HAANJI_SMTP_*)")
+    email = body.email.strip().lower()
+    phone = auth.phone_for_email(email)
+    if phone is None or auth.user(phone) is None:
+        return {"sent": True}
+    try:
+        code = auth.issue_code(f"{body.purpose}:{email}")
+    except OtpThrottled:
+        return {"sent": True}                                    # a 429 here would say the account exists
+    if mailer.configured():
+        background.add_task(_mail_code, email, code, body.purpose)
+        return {"sent": True}
+    return {"sent": True, "dev_code": code}                      # HAANJI_AUTH_DEV only
+
+
+@app.post("/api/auth/email-verify")
+async def auth_email_verify(body: EmailVerifyIn, request: Request):
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off")
+    email = body.email.strip().lower()
+    phone = auth.phone_for_email(email)
+    user = auth.user(phone) if phone else None
+    if user is None or not auth.check_code(f"login:{email}", body.code):
+        raise HTTPException(401, "wrong or expired code")
+    return _signed_in(user, request)
+
+
+@app.post("/api/auth/reset")
+async def auth_reset(body: ResetIn, request: Request):
+    """A new password with an emailed reset code. Every device signs out."""
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off")
+    email = body.email.strip().lower()
+    problem = auth.password_problem(email, body.password)
+    if problem:
+        raise HTTPException(422, f"choose {problem}")
+    phone = auth.phone_for_email(email)
+    user = auth.user(phone) if phone else None
+    if user is None or not auth.check_code(f"reset:{email}", body.code):
+        raise HTTPException(401, "wrong or expired code")
+    auth.set_password(user.phone, email, body.password)
+    auth.unlock_login(email)
+    auth.revoke(user.phone)
+    auth.record(user, "POST", "/api/auth/reset", None, 200)
+    return {"ok": True}
+
+
+class TwoFaCode(BaseModel):
+    code: str = Field(max_length=20)
+
+
+class TwoFaVerify(BaseModel):
+    ticket: str = Field(max_length=400)
+    code: str = Field(max_length=20)
+
+
+def _me(request: Request) -> Principal:
+    who = principal_of(request)
+    if not AUTH_ENABLED or who is None:
+        raise HTTPException(401, "sign in first")
+    return who
+
+
+@app.get("/api/auth/2fa")
+async def twofa_status(request: Request):
+    who = _me(request)
+    return {"enabled": auth.twofa_enabled(who.phone), "recovery_codes_left": auth.twofa_backup_left(who.phone)}
+
+
+@app.post("/api/auth/2fa/setup")
+async def twofa_setup(request: Request):
+    """A new authenticator secret, as a QR code and as text. It turns on only
+    after a first code is confirmed."""
+    who = _me(request)
+    try:
+        secret = auth.twofa_begin(who.phone)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc))
+    account = auth.email_of(who.phone) or who.name or who.phone
+    link = totp.uri(secret, account)
+    import qrcode
+    import qrcode.image.svg
+    svg = qrcode.make(link, image_factory=qrcode.image.svg.SvgPathImage, box_size=8, border=2).to_string().decode()
+    return {"secret": secret, "uri": link, "qr_svg": svg}
+
+
+@app.post("/api/auth/2fa/enable")
+async def twofa_enable(body: TwoFaCode, request: Request):
+    who = _me(request)
+    try:
+        codes = auth.twofa_enable(who.phone, body.code)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    auth.record(who, "POST", "/api/auth/2fa/enable", None, 200)
+    return {"enabled": True, "recovery_codes": codes}
+
+
+@app.post("/api/auth/2fa/disable")
+async def twofa_disable(body: TwoFaCode, request: Request):
+    who = _me(request)
+    if not auth.twofa_disable(who.phone, body.code):
+        raise HTTPException(401, "that code is not right")
+    auth.record(who, "POST", "/api/auth/2fa/disable", None, 200)
+    return {"enabled": False}
+
+
+@app.post("/api/auth/2fa/verify")
+async def twofa_verify(body: TwoFaVerify, request: Request):
+    """The second step: the ticket from the first, and a code from the app
+    (or a recovery code). The ticket works once, for five minutes."""
+    if not AUTH_ENABLED:
+        raise HTTPException(409, "auth is off")
+    phone = auth.twofa_redeem(body.ticket, consume=False)
+    user = auth.user(phone) if phone else None
+    if user is None:
+        raise HTTPException(401, "this sign-in has expired; start again")
+    if not auth.twofa_check(user.phone, body.code):
+        raise HTTPException(401, "that code is not right; try the next one from the app")
+    if auth.twofa_redeem(body.ticket) is None:                 # spent by a parallel request
+        raise HTTPException(401, "this sign-in has expired; start again")
+    return {"token": auth.token_for(user, agent=request.headers.get("user-agent", "")),
+            "user": {**user.as_dict(), "email": auth.email_of(user.phone)}}
 
 
 @app.post("/api/auth/logout")
@@ -2221,6 +2386,8 @@ async def google_login_callback(request: Request, code: str = "", state: str = "
     user = auth.user(phone) if phone else None
     if user is None:
         return _console_back("error=not-allowed")
+    if auth.twofa_enabled(user.phone):
+        return _console_back("twofa=" + auth.twofa_ticket(user.phone))
     return _console_back("token=" + auth.token_for(user, agent=request.headers.get("user-agent", "")))
 
 
@@ -2957,7 +3124,9 @@ async def status():
             "public_url": PUBLIC_URL,
             "digest": {"owner_configured": bool(OWNER_PHONE), "hour_ist": DIGEST_HOUR},
             "auth": {"enabled": AUTH_ENABLED, "google": AUTH_ENABLED and google_login.configured(),
-                     "secret_source": auth.secret_source},
+                     "secret_source": auth.secret_source,
+                     "email_codes": AUTH_ENABLED and (mailer.configured() or AUTH_DEV)},
+            "mail": mailer.status(),
             "demo_readonly": DEMO_READONLY,
             "google": {"configured": gcal.configured, "connected": gcal.connected()},
             "phone": phone_status(),

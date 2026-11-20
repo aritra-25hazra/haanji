@@ -23,6 +23,7 @@ export default function Settings() {
           <p>{t("This page is for the owner only.")}</p>
           <p className="muted small">{t("The owner sets reminders, deposit and users. Ask the owner to change anything.")}</p>
         </Empty>
+        {status?.auth?.enabled && <TwoStepPanel />}
       </Page>
     );
   }
@@ -37,6 +38,7 @@ export default function Settings() {
       {authOn
         ? <UsersPanel />
         : <Panel title={t("Users")}><Empty><p>{t("Sign-in is off on this server, so there is no user list. Once sign-in is on, the owner adds staff here.")}</p></Empty></Panel>}
+      {authOn && <TwoStepPanel />}
       {authOn && <SessionPanel />}
       {authOn && <ActivityPanel />}
     </Page>
@@ -400,6 +402,66 @@ function Devices() {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Two-step sign-in with an authenticator app: a QR to scan, a first code to
+ *  confirm, eight recovery codes shown once, and a current code to turn it off. */
+function TwoStepPanel() {
+  useT();
+  const { data, error, reload } = useData(() => engine.twofa(), []);
+  const [setup, setSetup] = useState<{ secret: string; qr_svg: string } | null>(null);
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  async function act(work: () => Promise<void>) {
+    setBusy(true); setNote(null);
+    try { await work(); setCode(""); } catch (e) { setNote(msg(e)); } finally { setBusy(false); }
+  }
+  const start = () => act(async () => { const r = await engine.twofaSetup(); setSetup({ secret: r.secret, qr_svg: r.qr_svg }); });
+  const confirm = () => act(async () => { const r = await engine.twofaEnable(code); setSetup(null); setCodes(r.recovery_codes); });
+  const turnOff = () => act(async () => { await engine.twofaDisable(code); reload(); setNote(t("Two-step sign-in is off.")); });
+  const on = !!data?.enabled;
+  const codeInput = (
+    <label className="field"><span>{t("Code from the app")}</span>
+      <input className="input" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} maxLength={20} /></label>
+  );
+  return (
+    <Panel title={t("Two-step sign-in")} hint={on ? t("on · {n} recovery codes left", { n: data!.recovery_codes_left }) : ""}>
+      <div className="body form">
+        {error ? <p className="muted">{error}</p> : !data ? <Loading /> : codes ? (
+          <>
+            <p><b>{t("Two-step sign-in is on.")}</b> {t("These recovery codes each work once, if you lose the phone. Save them now; they are not shown again.")}</p>
+            <ul className="recovery-codes">{codes.map((c) => <li key={c}><code>{c}</code></li>)}</ul>
+            <div><button className="btn btn-primary" onClick={() => { setCodes(null); reload(); }}>{t("I have saved them")}</button></div>
+          </>
+        ) : setup ? (
+          <form className="form" onSubmit={(e) => { e.preventDefault(); void confirm(); }}>
+            <p className="muted">{t("Scan this with an authenticator app (Google Authenticator, Microsoft Authenticator, Authy), then type the code it shows.")}</p>
+            <img className="qr" alt={t("QR code for the authenticator app")} src={"data:image/svg+xml;utf8," + encodeURIComponent(setup.qr_svg)} width={180} height={180} />
+            <p className="muted small">{t("Cannot scan? Type this key in the app: {key}", { key: setup.secret.replace(/(.{4})/g, "$1 ").trim() })}</p>
+            {codeInput}
+            <div className="row">
+              <button className="btn btn-primary" type="submit" disabled={busy || code.replace(/\D/g, "").length !== 6}>{t("Confirm")}</button>
+              <button className="btn btn-ghost" type="button" onClick={() => { setSetup(null); setCode(""); }}>{t("Cancel")}</button>
+            </div>
+          </form>
+        ) : on ? (
+          <form className="form" onSubmit={(e) => { e.preventDefault(); void turnOff(); }}>
+            <p className="muted">{t("Every sign-in asks for a code from your authenticator app. To turn it off, type a current code (or a recovery code).")}</p>
+            {codeInput}
+            <div><button className="btn btn-danger" type="submit" disabled={busy || code.replace(/\W/g, "").length < 6}>{t("Turn off two-step sign-in")}</button></div>
+          </form>
+        ) : (
+          <>
+            <p className="muted">{t("Add a code from an authenticator app to every sign-in. Someone who learns your password still cannot get in.")}</p>
+            <div><button className="btn btn-primary" onClick={() => void start()} disabled={busy}><Icon name="lock" small />{t("Turn on two-step sign-in")}</button></div>
+          </>
+        )}
+        {note && <p className="muted" role="status">{note}</p>}
+      </div>
+    </Panel>
   );
 }
 

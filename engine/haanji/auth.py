@@ -17,12 +17,13 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import sqlite3
 import time
 from dataclasses import dataclass, field
 
-from . import db
+from . import db, totp
 
 OTP_TTL_S = 300
 OTP_MAX_ATTEMPTS = 5
@@ -89,6 +90,14 @@ CREATE TABLE IF NOT EXISTS login_history (
   failures     INTEGER NOT NULL DEFAULT 0,
   window_start REAL NOT NULL DEFAULT 0,
   locked_until REAL NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS twofactor ( -- an authenticator app as a second step at sign-in
+  phone     TEXT PRIMARY KEY,
+  secret    TEXT NOT NULL,             -- AES-GCM under a key derived from the token secret
+  enabled   INTEGER NOT NULL DEFAULT 0,
+  last_step INTEGER NOT NULL DEFAULT -1, -- the last code's time step: a code is never accepted twice
+  backup    TEXT NOT NULL DEFAULT '',  -- comma-separated sha256 of unused recovery codes
+  created   REAL NOT NULL
 );
 CREATE TABLE IF NOT EXISTS auth_meta ( -- the token-signing secret when HAANJI_AUTH_SECRET is not set
   key   TEXT PRIMARY KEY,
@@ -217,15 +226,24 @@ class AuthStore:
         except (ValueError, TypeError):
             return False
 
+    @staticmethod
+    def password_problem(email: str, password: str) -> str | None:
+        """Why a new password is refused, or None."""
+        email = email.strip().lower()
+        if "@" not in email or len(email) > 200:
+            return "a valid email address"
+        if len(password) < MIN_PASSWORD:
+            return f"a password of at least {MIN_PASSWORD} characters"
+        if password.strip().lower() in (email, email.split("@")[0]):
+            return "a password that is not the email address"
+        return None
+
     def set_password(self, phone: str, email: str, password: str) -> None:
         """Email + password for an existing user. Only a salted scrypt hash is kept."""
         email = email.strip().lower()
-        if "@" not in email or len(email) > 200:
-            raise ValueError("a valid email address")
-        if len(password) < MIN_PASSWORD:
-            raise ValueError(f"a password of at least {MIN_PASSWORD} characters")
-        if password.strip().lower() in (email, email.split("@")[0]):
-            raise ValueError("a password that is not the email address")
+        problem = self.password_problem(email, password)
+        if problem:
+            raise ValueError(problem)
         phone = normalise_phone(phone)
         if self.user(phone) is None:
             raise ValueError("no such user")
@@ -272,6 +290,12 @@ class AuthStore:
                               (email, failures, start, locked))
         return None
 
+    def unlock_login(self, email: str) -> None:
+        """Clear the wrong-password lock: the owner of the email proved it
+        with a reset code."""
+        with self.conn:
+            self.conn.execute("DELETE FROM login_history WHERE email=?", (email.strip().lower(),))
+
     # -------------------------------------------------------------------- otp
     def _history(self, phone: str) -> sqlite3.Row | None:
         return self.conn.execute("SELECT * FROM otp_history WHERE phone=?", (phone,)).fetchone()
@@ -283,11 +307,19 @@ class AuthStore:
         return float(h["locked_until"]) if h and h["locked_until"] > now else 0.0
 
     def issue_otp(self, phone: str, now: float | None = None) -> str:
-        """A fresh code. At most OTP_ISSUE_LIMIT codes per window per number,
-        and none while the number is locked for wrong guesses: re-issuing
-        used to reset the attempt counter, which made the five-try limit
-        meaningless."""
-        phone = normalise_phone(phone)
+        """A fresh code for a WhatsApp number (see issue_code)."""
+        return self.issue_code(normalise_phone(phone), now)
+
+    def check_otp(self, phone: str, code: str, now: float | None = None) -> bool:
+        return self.check_code(normalise_phone(phone), code, now)
+
+    def issue_code(self, key: str, now: float | None = None) -> str:
+        """A fresh one-time code for a key: a phone number, or a purpose and an
+        email ("login:a@b.in", "reset:a@b.in"). At most OTP_ISSUE_LIMIT codes
+        per window per key, and none while the key is locked for wrong
+        guesses: re-issuing used to reset the attempt counter, which made the
+        five-try limit meaningless. Only a hash of the code is kept."""
+        phone = key
         now = now or time.time()
         h = self._history(phone)
         if h and h["locked_until"] > now:
@@ -307,8 +339,8 @@ class AuthStore:
                                h["locked_until"] if h else 0))
         return code
 
-    def check_otp(self, phone: str, code: str, now: float | None = None) -> bool:
-        phone = normalise_phone(phone)
+    def check_code(self, key: str, code: str, now: float | None = None) -> bool:
+        phone = key
         now = now or time.time()
         h = self._history(phone)
         if h and h["locked_until"] > now:
@@ -425,3 +457,137 @@ class AuthStore:
     def audit(self, limit: int = 200) -> list[dict]:
         rows = self.conn.execute("SELECT * FROM audit ORDER BY id DESC LIMIT ?", (limit,))
         return [dict(r) for r in rows]
+
+    # ------------------------------------------------------------ two-step
+    TWOFA_LOCK_FAILURES = 10
+    TICKET_TTL_S = 300
+
+    def _aead(self):
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+        key = HKDF(algorithm=hashes.SHA256(), length=32, salt=b"haanji-2fa", info=b"totp-secret").derive(self.secret)
+        return AESGCM(key)
+
+    def _seal(self, plain: str) -> str:
+        nonce = secrets.token_bytes(12)
+        return base64.b64encode(nonce + self._aead().encrypt(nonce, plain.encode(), b"totp")).decode()
+
+    def _open(self, sealed: str) -> str:
+        raw = base64.b64decode(sealed)
+        return self._aead().decrypt(raw[:12], raw[12:], b"totp").decode()
+
+    def twofa_enabled(self, phone: str) -> bool:
+        r = self.conn.execute("SELECT enabled FROM twofactor WHERE phone=?", (normalise_phone(phone),)).fetchone()
+        return bool(r and r["enabled"])
+
+    def twofa_begin(self, phone: str) -> str:
+        """A new secret, stored but not yet on: it turns on only once a code
+        from the app has been checked (twofa_enable)."""
+        phone = normalise_phone(phone)
+        if self.twofa_enabled(phone):
+            raise ValueError("two-step sign-in is already on; turn it off first")
+        secret = totp.new_secret()
+        with self.conn:
+            self.conn.execute("INSERT OR REPLACE INTO twofactor (phone, secret, enabled, last_step, backup, created)"
+                              " VALUES (?,?,0,-1,'',?)", (phone, self._seal(secret), time.time()))
+        return secret
+
+    def twofa_enable(self, phone: str, code: str, now: float | None = None) -> list[str]:
+        """Turn two-step on with a first code from the app. Returns eight
+        one-time recovery codes, shown once; only their hashes are kept."""
+        phone = normalise_phone(phone)
+        r = self.conn.execute("SELECT * FROM twofactor WHERE phone=?", (phone,)).fetchone()
+        if r is None or r["enabled"]:
+            raise ValueError("start the setup first")
+        step = totp.verify(self._open(r["secret"]), code, now)
+        if step is None:
+            raise ValueError("that code is not right; check the time on the phone and try the next one")
+        backup = [f"{secrets.token_hex(2)}-{secrets.token_hex(2)}" for _ in range(8)]
+        with self.conn:
+            self.conn.execute("UPDATE twofactor SET enabled=1, last_step=?, backup=? WHERE phone=?",
+                              (step, ",".join(self._backup_hash(b) for b in backup), phone))
+        return backup
+
+    def twofa_check(self, phone: str, code: str, now: float | None = None) -> bool:
+        """A code from the app (never the same one twice) or an unused recovery
+        code. Ten wrong codes lock two-step for fifteen minutes."""
+        phone = normalise_phone(phone)
+        now = now or time.time()
+        key = "2fa:" + phone
+        h = self._history(key)
+        if h and h["locked_until"] > now:
+            return False
+        r = self.conn.execute("SELECT * FROM twofactor WHERE phone=? AND enabled=1", (phone,)).fetchone()
+        if r is None:
+            return False
+        ok = False
+        step = totp.verify(self._open(r["secret"]), code, now, last_step=int(r["last_step"]))
+        with self.conn:
+            if step is not None:
+                self.conn.execute("UPDATE twofactor SET last_step=? WHERE phone=?", (step, phone))
+                ok = True
+            else:
+                digest = self._backup_hash(code)
+                left = [x for x in r["backup"].split(",") if x]
+                if digest in left:
+                    left.remove(digest)
+                    self.conn.execute("UPDATE twofactor SET backup=? WHERE phone=?", (",".join(left), phone))
+                    ok = True
+            failures = 0 if ok else (h["failures"] if h else 0) + 1
+            locked = now + OTP_LOCK_S if failures >= self.TWOFA_LOCK_FAILURES else 0
+            self.conn.execute("INSERT INTO otp_history (phone, issued, failures, locked_until) VALUES (?,?,?,?)"
+                              " ON CONFLICT(phone) DO UPDATE SET failures=excluded.failures, locked_until=excluded.locked_until",
+                              (key, "", failures, locked))
+        return ok
+
+    @staticmethod
+    def _backup_hash(code: str) -> str:
+        """Recovery codes match however they are typed: "ab12-cd34",
+        "AB12 CD34" and "ab12cd34" are the same code."""
+        return hashlib.sha256(re.sub(r"[^0-9a-f]", "", (code or "").lower()).encode()).hexdigest()
+
+    def twofa_backup_left(self, phone: str) -> int:
+        r = self.conn.execute("SELECT backup FROM twofactor WHERE phone=? AND enabled=1", (normalise_phone(phone),)).fetchone()
+        return len([x for x in r["backup"].split(",") if x]) if r else 0
+
+    def twofa_disable(self, phone: str, code: str, now: float | None = None) -> bool:
+        if not self.twofa_check(phone, code, now):
+            return False
+        with self.conn:
+            self.conn.execute("DELETE FROM twofactor WHERE phone=?", (normalise_phone(phone),))
+        return True
+
+    def twofa_ticket(self, phone: str, now: float | None = None) -> str:
+        """Proof that the first step (password, code or Google) passed, good
+        for five minutes and once: the second step trades it for a token."""
+        body = json.dumps({"phone": normalise_phone(phone), "exp": (now or time.time()) + self.TICKET_TTL_S,
+                           "n": secrets.token_hex(8)}, separators=(",", ":"))
+        payload = base64.urlsafe_b64encode(body.encode()).rstrip(b"=").decode()
+        sig = hmac.new(self.secret, b"2fa|" + payload.encode(), hashlib.sha256).hexdigest()
+        return f"{payload}.{sig}"
+
+    def twofa_redeem(self, ticket: str, now: float | None = None, *, consume: bool = True) -> str | None:
+        """The phone a ticket was issued for, once, while it is fresh. With
+        consume=False it is only checked, so a mistyped code can be retried
+        (wrong codes are limited by twofa_check's lock)."""
+        payload, _, sig = (ticket or "").partition(".")
+        want = hmac.new(self.secret, b"2fa|" + payload.encode(), hashlib.sha256).hexdigest()
+        if not payload or not hmac.compare_digest(want, sig):
+            return None
+        try:
+            body = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+        except (ValueError, TypeError):
+            return None
+        now = now or time.time()
+        if float(body.get("exp", 0)) < now:
+            return None
+        used = "ticket:" + str(body.get("n"))
+        with self.conn:
+            if self.conn.execute("SELECT 1 FROM otps WHERE phone=?", (used,)).fetchone():
+                return None
+            if consume:
+                self.conn.execute("INSERT INTO otps (phone, code, expires, attempts) VALUES (?,?,?,0)",
+                                  (used, "used", float(body["exp"])))
+        return body.get("phone")
+

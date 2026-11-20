@@ -14,21 +14,26 @@ export type Mode = "checking" | "live" | "demo" | "offline";
 
 /** Coming back from Google: the engine put a token (or an error) in the URL
  *  fragment, which no server ever sees. Keep the token, drop the fragment. */
-function takeLoginFragment(): string | null {
+function takeLoginFragment(): { error: string | null; twofa: string | null } {
   try {
     const h = new URLSearchParams(window.location.hash.slice(1));
-    const token = h.get("token"), error = h.get("error");
-    if (!token && !error) return null;
+    const token = h.get("token"), error = h.get("error"), twofa = h.get("twofa");
+    if (!token && !error && !twofa) return { error: null, twofa: null };
     if (token) setToken(token);
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    return error;
-  } catch { return null; }
+    return { error, twofa };
+  } catch { return { error: null, twofa: null }; }
 }
-const LOGIN_ERROR = typeof window === "undefined" ? null : takeLoginFragment();
+const FRAGMENT = typeof window === "undefined" ? { error: null, twofa: null } : takeLoginFragment();
+const LOGIN_ERROR = FRAGMENT.error;
+/** Google passed, two-step sign-in is on: the ticket for the authenticator code. */
+const LOGIN_TWOFA = FRAGMENT.twofa;
 
 interface AppState {
   /** Why a Google sign-in was turned away ("not-allowed", "google-failed"…), once. */
   loginError: string | null;
+  /** Google passed and two-step sign-in is on: the ticket for the second step, once. */
+  loginTicket: string | null;
   status: Status | null;
   online: boolean;
   checked: boolean;
@@ -136,6 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       authRequired: authOn && authChecked && !user,
       user, isOwner, readOnly, signIn, signOut, signOutEverywhere, sampleView, setSampleView,
       loginError: LOGIN_ERROR,
+      loginTicket: LOGIN_TWOFA,
     };
   }, [status, checked, pack, setPack, refresh, allowed, authChecked, hasToken, user, signIn, signOut, signOutEverywhere, sampleView, setSampleView]);
 

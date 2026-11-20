@@ -112,6 +112,10 @@ function list<T>(r: unknown, ...keys: string[]): T[] {
 
 const statusTimeout = () => (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(4000) : undefined);
 
+/** A first sign-in step that passed: a token, or (two-step sign-in on) a
+ *  five-minute ticket for the authenticator code. */
+export type SignedIn = { token: string; user: User; needs_2fa?: undefined } | { needs_2fa: true; ticket: string; token?: undefined };
+
 export const engine = {
   /** null means the engine could not be reached; the pages decide what that means. */
   status: async (): Promise<Status | null> => {
@@ -135,8 +139,20 @@ export const engine = {
   anchors: (pack: string) => request<Anchors>(`api/anchors?${q(pack)}`),
   requestOtp: (phone: string) => request<{ sent: boolean; channel: string; dev_code?: string }>("api/auth/otp", { method: "POST", body: JSON.stringify({ phone }) }),
   login: (email: string, password: string) =>
-    request<{ token: string; user: User }>("api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
-  verifyOtp: (phone: string, code: string) => request<{ token: string; user: User }>("api/auth/verify", { method: "POST", body: JSON.stringify({ phone, code }) }),
+    request<SignedIn>("api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  verifyOtp: (phone: string, code: string) => request<SignedIn>("api/auth/verify", { method: "POST", body: JSON.stringify({ phone, code }) }),
+  /** A sign-in or reset code by email. The answer is the same for any email. */
+  emailCode: (email: string, purpose: "login" | "reset") =>
+    request<{ sent: boolean; dev_code?: string }>("api/auth/email-code", { method: "POST", body: JSON.stringify({ email, purpose }) }),
+  emailVerify: (email: string, code: string) => request<SignedIn>("api/auth/email-verify", { method: "POST", body: JSON.stringify({ email, code }) }),
+  resetPassword: (email: string, code: string, password: string) =>
+    request<{ ok: boolean }>("api/auth/reset", { method: "POST", body: JSON.stringify({ email, code, password }) }),
+  /** The second step: the ticket from the first, and a code from the authenticator app (or a recovery code). */
+  twofaVerify: (ticket: string, code: string) => request<{ token: string; user: User }>("api/auth/2fa/verify", { method: "POST", body: JSON.stringify({ ticket, code }) }),
+  twofa: () => request<{ enabled: boolean; recovery_codes_left: number }>("api/auth/2fa"),
+  twofaSetup: () => request<{ secret: string; uri: string; qr_svg: string }>("api/auth/2fa/setup", { method: "POST" }),
+  twofaEnable: (code: string) => request<{ enabled: boolean; recovery_codes: string[] }>("api/auth/2fa/enable", { method: "POST", body: JSON.stringify({ code }) }),
+  twofaDisable: (code: string) => request<{ enabled: boolean }>("api/auth/2fa/disable", { method: "POST", body: JSON.stringify({ code }) }),
   me: () => request<{ enabled: boolean; user: User | null }>("api/auth/me"),
   /** Sign out everywhere: the engine revokes every token this number holds. */
   logout: () => request<{ ok: boolean }>("api/auth/logout", { method: "POST" }),
