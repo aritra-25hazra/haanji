@@ -54,3 +54,10 @@ def test_the_demo_payment_page_escapes_the_shop_name(client, monkeypatch):
     assert r.status_code == 200
     assert "<script>" not in r.text and "&lt;script&gt;" in r.text
     assert 'action="/pay/pay_x/mock-pay"' in r.text
+
+
+@pytest.mark.parametrize("route", ["/api/lexicon", "/api/record/prompts"])
+@pytest.mark.parametrize("bad", ["/etc/hosts", "../render.yaml", "../packs/dental_clinic.yaml"])
+def test_a_pack_query_parameter_is_never_opened_as_a_path(client, route, bad):
+    assert client.get(route, params={"pack": bad}).status_code == 404
+    assert client.get(route, params={"pack": PACK}).status_code == 200

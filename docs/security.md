@@ -112,7 +112,7 @@ Run them again with:
 | Every commit on every branch | `gitleaks git --log-opts=--all` | 1 finding: RFC 6238's published test key in a test (not a secret), listed in `.gitleaksignore`. No API key, token, password or private key. |
 | Key formats gitleaks may miss | `git log -p --all`, searched for Claude, Google, Twilio, GitHub, Slack, Razorpay, AWS keys, private keys and database URLs with passwords | Only test fakes (`sk-ant-api03-abcde…`, 25 characters) and the CI database's throwaway password. |
 | Files that should never be committed | every path in the history | No `.env`, key, certificate or database file was ever committed. |
-| Code | GitHub code scanning (CodeQL) | 21 alerts. 4 led to changes *(test_code_scanning)*: pack ids from URLs, a length limit on static names, no internals in the Google Calendar error, an escaped payment page. The rest were reviewed and dismissed with reasons: inputs already restricted to `[a-z0-9_]`, schema names built only from the server's own file names, and one alert on Java code deleted in 1.2. |
+| Code | GitHub code scanning (CodeQL) | 21 alerts. 5 changes came from them *(test_code_scanning)*: pack ids from URLs; a `pack` query parameter that two routes (`/api/lexicon`, `/api/record/prompts`) used to open as a file path, so a request could make the server read a YAML file outside the packs; a length limit on static names; no internals in the Google Calendar error; an escaped payment page. The rest were reviewed and dismissed with reasons: inputs already restricted to `[a-z0-9_]`, schema names built only from the server's own file names, and one alert on Java code deleted in 1.2. |
 
 GitHub secret scanning and push protection are on, so a push that contains a
 known key format is refused before it lands.

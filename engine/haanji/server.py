@@ -381,8 +381,11 @@ def pack_path(pack_id: str) -> str:
 
 
 def load_pack(pack_id: str):
+    """A pack by its id. Only an id is accepted, never a path: some routes pass
+    a query parameter straight here, and a path would let a request open any
+    YAML file on the server."""
     twins = demo_twins()
-    pack = load_pack_file(pack_path(pack_id)) if re.fullmatch(r"[a-z0-9_]+", pack_id or "") else load_pack_file(pack_id)
+    pack = load_pack_file(pack_path(pack_id))
     if pack_id in twins:
         pack.pack_id = pack_id
         pack.persona.business_name += " (Demo)"

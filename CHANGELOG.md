@@ -62,8 +62,9 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
   * A security policy, issue and pull-request templates, and a code of conduct.
   * The full Apache-2.0 text, so GitHub names the licence.
   * Team names are spelled as the team writes them, and no university or personal details appear.
-  * A full-history secret scan found no key. Code scanning led to four fixes:
+  * A full-history secret scan found no key. Code scanning led to five fixes:
     * pack ids from URLs;
+    * a `pack` query parameter is never opened as a file path;
     * a length limit on static file names;
     * no internals in the Google Calendar error;
     * an escaped payment page.
