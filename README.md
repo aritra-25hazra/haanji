@@ -739,7 +739,7 @@ A project report should say what was verified and what was not.
 
 ## Team
 
-Aritra Hazra · Prabhav Upadhyay · Anuj Uniyal
+Aritra Hazra · [Prabhav Upadhyay](https://github.com/PRABHAV535) · Anuj Uniyal
 B.Tech Information Technology (Artificial Intelligence)
 
 ## Licence
