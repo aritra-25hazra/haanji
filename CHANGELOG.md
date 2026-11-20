@@ -28,7 +28,7 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
   model and what the latency figures include; the unused Java control plane
   removed (CI and CodeQL jobs too).
 
-### Sign-in, WhatsApp and security (branch clinics-coaching, not yet on main)
+### Sign-in, WhatsApp and security (on main 2026-11-20)
 
 * **Sign-in codes by email and a password reset** over SMTP (a Gmail App
   Password). The answer is the same, and as quick, for any email; a reset
@@ -57,6 +57,18 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
 * **Exotel readiness.** A runbook and test-call checklist,
   [docs/phone-exotel.md](docs/phone-exotel.md); phone docs name the product
   packs.
+* **Repository and scan (2026-11-20).**
+  * The front page has a banner, an at-a-glance table, the tech it is built with, and a contents line.
+  * A security policy, issue and pull-request templates, and a code of conduct.
+  * The full Apache-2.0 text, so GitHub names the licence.
+  * Team names are spelled as the team writes them, and no university or personal details appear.
+  * A full-history secret scan found no key. Code scanning led to four fixes:
+    * pack ids from URLs;
+    * a length limit on static file names;
+    * no internals in the Google Calendar error;
+    * an escaped payment page.
+
+    See [docs/security.md](docs/security.md).
 
 ## 1.2.0 — 2026-11-19 (phase 1, phase 2, step D and the owner-ready audit)
 

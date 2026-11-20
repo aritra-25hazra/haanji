@@ -1,0 +1,3 @@
+# RFC 6238's published TOTP test key (base32 of "12345678901234567890"), not a secret.
+# It sat in this test file at 4407389; a291071 builds it in code instead.
+4407389bb0e7b649a0de175f045878424ff7878f:engine/tests/test_two_step.py:generic-api-key:15

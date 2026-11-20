@@ -370,7 +370,11 @@ def list_packs() -> list[str]:
 
 
 def pack_path(pack_id: str) -> str:
-    """The yaml file a pack id reads from (a twin reads its shop's file)."""
+    """The yaml file a pack id reads from (a twin reads its shop's file). A
+    pack id is lower-case letters, digits and underscores, so one taken from a
+    URL can never name a file outside the packs folder."""
+    if not re.fullmatch(r"[a-z0-9_]{1,64}", pack_id or ""):
+        raise HTTPException(404, "no such pack")
     base = demo_twins().get(pack_id, pack_id)
     folder = PRODUCT_DIR if PRODUCT and base in product_packs() else PACK_DIR
     return os.path.join(folder, f"{base}.yaml")
@@ -2630,7 +2634,9 @@ async def google_callback(code: str = "", state: str = "", error: str = ""):
     try:
         await gcal.finish(pack, code)
     except Exception as exc:                          # noqa: BLE001
-        return PlainTextResponse(f"Could not connect: {exc}", status_code=502)
+        # The reason goes to the server log; the browser gets no internals.
+        log.warning("google calendar connect for %s failed: %s", pack, type(exc).__name__)
+        return PlainTextResponse("Could not connect to Google Calendar. Start again from the console.", status_code=502)
     console = os.environ.get("HAANJI_CONSOLE_URL") or "/"
     return PlainTextResponse(f"Google Calendar connected for {pack}. You can close this tab and go back to the console: {console}")
 
@@ -3356,7 +3362,7 @@ async def design_page():
 
 @app.get("/static/{name}")
 async def static_file(name: str):
-    if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or ".." in name:
+    if len(name) > 80 or not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or ".." in name:
         raise HTTPException(404)
     path = os.path.join(WEB_DIR, name)
     if not os.path.exists(path):

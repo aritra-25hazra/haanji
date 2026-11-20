@@ -7,6 +7,7 @@ here is sealed in the Pramaan ledger like the agent's own writes — a staff
 cancellation is as much a fact about the booking as the caller's was."""
 from __future__ import annotations
 import datetime as dt
+import html
 import json
 import logging
 import os
@@ -264,7 +265,7 @@ def build_router(deps: Deps) -> APIRouter:
         if pay is None:
             raise HTTPException(404, "no such payment")
         rt = deps.runtime(pay["tenant_id"])
-        business = rt.pack.persona.business_name
+        business = html.escape(rt.pack.persona.business_name)
         if pay["provider"] != "mock":
             return RedirectResponse(pay["link"])
         paid = pay["status"] == "PAID"
@@ -276,7 +277,7 @@ button{{font:inherit;padding:.8rem 1.4rem;border:0;border-radius:.6rem;backgroun
 <h1>{business}</h1>
 <p>Booking deposit: <strong>₹{pay['amount_inr']:,}</strong></p>
 {'<p class="ok">Paid. Shukriya!</p>' if paid else
- f'<form method="post" action="/pay/{payment_id}/mock-pay"><button>Pay ₹{pay["amount_inr"]:,} (demo)</button></form>'}
+ f'<form method="post" action="/pay/{html.escape(payment_id, quote=True)}/mock-pay"><button>Pay ₹{pay["amount_inr"]:,} (demo)</button></form>'}
 <p><small>Demo payment page: koi asli paisa nahi jaata. Razorpay keys lagte hi yahi link UPI/card par le jaata hai.</small></p>
 </html>"""
         return HTMLResponse(body)

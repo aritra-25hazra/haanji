@@ -566,7 +566,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 781 tests, about 6 s
+pytest -q                                   # 790 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -614,7 +614,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (781 tests)
+## Appendix C. Test inventory (790 tests)
 
 | file | tests | what it guards |
 |---|---|---|
@@ -656,6 +656,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_google_login.py | 5 | Sign in with Google: an allowed email signs in and the token rides in the URL fragment, an unknown email is turned away, a forged or old state is refused, the ID token's audience, issuer, expiry and verified email are checked, no button without a Google client |
 | test_login_codes.py | 10 | sign-in and reset codes by email (SMTP, e.g. a Gmail App Password): a code arrives and signs in once; an unknown email gets the same answer and no mail; requests past the limit get the same answer (a 429 would reveal the account) and ten wrong guesses lock; a reset code sets a new password, lifts the wrong-password lock and signs every device out; a sign-in code cannot reset a password; with no mail set up the server says so; a failed send is reported in status with the recipient masked and no password |
 | test_two_step.py | 18 | two-step sign-in with an authenticator app: the codes match the six RFC 6238 test vectors; a code works in its window and never twice; turning it on needs a signed-in user and a code from the app, and the secret is kept encrypted; the password then the app code signs in and the ticket works once; recovery codes work once however they are typed; a forged or old ticket is refused; ten wrong codes lock the second step; password, email code, WhatsApp code and Google all stop at the second step; turning it off needs a current code; after the auth secret changes, recovery codes still work and nothing crashes |
+| test_code_scanning.py | 9 | the places GitHub's code scanning (CodeQL) pointed at: a pack id from a URL names only a pack file; a static file name has a length limit; a failed Google Calendar connect shows the browser no internals and logs only the error type; the demo payment page escapes the shop's name |
 | test_public_simulator.py | 10 | a demo server with sign-in on: a stranger can chat in the WhatsApp simulator and read back only the chat they started (a signed visitor pass), cannot list threads or read without a pass, typing someone else's number starts a fresh chat, the owner still sees every thread, a real shop keeps it behind sign-in, /talk's lines are public and only lines, the simulator's missed-call button works for a stranger and never sends a real WhatsApp |
 | test_product.py | 10 | product mode: the clinic and coaching packs (packs/product/) are valid, keep their departments and pass their own scenarios, stay out of the research corpus; the server offers only them and their demo copies; a visitor books into the demo copy and the shop stays clean; the owner signed in writes to the shop; a demo copy cannot be edited; the call page lists today's doctors by department and shows the offered doctors, then a booking card; each doctor's next free time is real (today or the next open day); a call page hears only a person taking its own call |
 | test_token_queue.py | 7 | the token queue: check-in gives a department token once, a booking for another day cannot check in, walk-ins go to the shortest line and Next calls in order, a place in line with a rough wait, a caller asking 'mera number kab aayega' in a chat hears their token, the waiting-room screen is public and shows no names or numbers, the TV page is served |
