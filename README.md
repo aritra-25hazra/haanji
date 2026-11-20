@@ -740,7 +740,7 @@ A project report should say what was verified and what was not.
 ## Team
 
 Aritra Hazra · Prabhav Upadhyay · Anuj Uniyal
-B.Tech Information Technology (Artificial Intelligence), Medi-Caps University
+B.Tech Information Technology (Artificial Intelligence)
 
 ## Licence
 
