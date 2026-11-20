@@ -88,6 +88,22 @@ PUBLIC_URL = (os.environ.get("HAANJI_PUBLIC_URL") or os.environ.get("RENDER_EXTE
               or "http://localhost:8090").rstrip("/")
 OWNER_PHONE = os.environ.get("HAANJI_OWNER_PHONE") or None
 log = logging.getLogger("haanji.server")
+
+
+class _HideSecretsInUrls(logging.Filter):
+    """The server's access log records each URL with its query. Some URLs
+    carry a secret there because the caller cannot send a header: Exotel's
+    applet key, the live feed's one-use ticket. Keep the URL, drop the value."""
+    SECRET = re.compile(r"((?:^|[?&])(?:key|ticket|token|code|state)=)[^&\s\"]*", re.I)
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.args, tuple):
+            record.args = tuple(self.SECRET.sub(r"\1…", a) if isinstance(a, str) else a for a in record.args)
+        return True
+
+
+for _name in ("uvicorn.access", "uvicorn.error"):
+    logging.getLogger(_name).addFilter(_HideSecretsInUrls())
 ENGINE_CFG = EngineConfig()
 # A server with a public address is a deployment: vendor webhooks must be
 # signed there, and a missing secret is a misconfiguration, not a dev shortcut.
@@ -1332,16 +1348,20 @@ async def wa_verify(request: Request):
     raise HTTPException(403, "bad verify token")
 
 
-def _wa_pack() -> str:
-    """The shop that answers real WhatsApp (HAANJI_WA_PACK). On a product
-    demo server the messages come from visitors, so the shop's demo twin
+def _channel_pack(pack: str | None) -> str:
+    """The shop that answers a real WhatsApp message or phone call. On a
+    product demo server these come from visitors, so the shop's demo twin
     answers, as in the simulator; a pack this server does not offer falls
     back to the default."""
-    pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
+    pack = pack or DEFAULT_PACK
     if pack not in list_packs():
         pack = DEFAULT_PACK
     twin = pack + DEMO_SUFFIX
     return twin if twin in demo_twins() else pack
+
+
+def _wa_pack() -> str:
+    return _channel_pack(os.environ.get("HAANJI_WA_PACK"))
 
 
 # Message ids Meta has already delivered; it retries anything it did not get a
@@ -2629,8 +2649,7 @@ async def twilio_voice(request: Request, pack: str = DEFAULT_PACK):
     if token and not twilio_mod.verify_signature(token, signed_url, {k: str(v) for k, v in form.items()},
                                                  request.headers.get("X-Twilio-Signature")):
         raise HTTPException(403, "bad Twilio signature")
-    if pack not in list_packs():
-        pack = DEFAULT_PACK
+    pack = _channel_pack(pack)
     if not phone_configured():
         rt = runtime(pack)
         return Response(twilio_mod.twiml_say(f"{rt.pack.persona.business_name}. The voice bridge is not configured yet."),
@@ -2711,8 +2730,7 @@ async def _exotel_open(pack: str, caller: str | None, params: dict[str, Any] | N
         TELEMETRY.inc("telephony_rejected_total")
         log.warning("exotel stream without the right key was refused")
         return None
-    if pack not in list_packs():
-        pack = DEFAULT_PACK
+    pack = _channel_pack(pack)
     phone = "".join(ch for ch in (caller or "") if ch.isdigit())[-10:] or None
     return await _new_session(pack, "PHONE", phone, verified=phone is not None)   # network caller-id
 

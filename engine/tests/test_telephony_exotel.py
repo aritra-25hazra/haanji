@@ -86,3 +86,25 @@ def test_a_public_server_needs_the_applet_s_key(client, monkeypatch):
     opened = asyncio.run(server._exotel_open("dental_clinic", "+919876543210", {"key": "k3y"}))
     assert opened is not None and opened[1].channel == "PHONE"
     server._finish(*opened)
+
+
+def test_on_a_demo_server_a_phone_call_lands_in_the_demo_twin(monkeypatch):
+    twin = server.DEFAULT_PACK + server.DEMO_SUFFIX
+    monkeypatch.setattr(server, "demo_twins", lambda: {twin: server.DEFAULT_PACK})
+    monkeypatch.setattr(server, "list_packs", lambda: [server.DEFAULT_PACK, twin])
+    assert server._channel_pack("no_such_shop") == twin
+    assert server._channel_pack(server.DEFAULT_PACK) == twin
+
+
+def test_secrets_in_urls_never_reach_the_access_log():
+    import logging
+    f = server._HideSecretsInUrls()
+    rec = logging.LogRecord("uvicorn.access", logging.INFO, "", 0, '%s - "%s %s HTTP/%s" %d',
+                            ("1.2.3.4:5", "GET", "/telephony/exotel/stream?pack=smile_care_clinic&key=k3y", "1.1", 101), None)
+    f.filter(rec)
+    assert rec.getMessage() == '1.2.3.4:5 - "GET /telephony/exotel/stream?pack=smile_care_clinic&key=… HTTP/1.1" 101'
+    ws = logging.LogRecord("uvicorn.error", logging.INFO, "", 0, '%s - "WebSocket %s" [accepted]',
+                           ("1.2.3.4:5", "/api/events?ticket=abc123&pack=x"), None)
+    f.filter(ws)
+    assert "abc123" not in ws.getMessage() and "pack=x" in ws.getMessage()
+    assert any(isinstance(x, server._HideSecretsInUrls) for x in logging.getLogger("uvicorn.access").filters)

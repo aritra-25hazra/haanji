@@ -566,7 +566,7 @@ Zhao, D., Sainath, T. N., Rybach, D., Rondon, P., Bhatia, D., Li, B., and Pang, 
 git clone https://github.com/aritra-25hazra/haanji && cd haanji/engine
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,web,llm,research]"
-pytest -q                                   # 774 tests, about 6 s
+pytest -q                                   # 776 tests, about 6 s
 python -m haanji.cli selftest               # 44 scenarios reach their expected outcome
 python -m haanji.bench --reps 5 --speed 90  # research/results.json, about 3 min
 cd .. && python research/harness/report_data.py --seeds 5 --reps 3 --speed 90
@@ -614,7 +614,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | clinic_pune | marathi_price_faq | FAQ_ANSWERED | 2 | Marathinglish knowledge base |
 | clinic_pune | marathi_emergency | HANDED_OFF | 1 | Marathinglish guardrail |
 
-## Appendix C. Test inventory (774 tests)
+## Appendix C. Test inventory (776 tests)
 
 | file | tests | what it guards |
 |---|---|---|
@@ -661,7 +661,7 @@ python research/harness/report_pdf.py       # this document as PDF; --paper for 
 | test_token_queue.py | 7 | the token queue: check-in gives a department token once, a booking for another day cannot check in, walk-ins go to the shortest line and Next calls in order, a place in line with a rough wait, a caller asking 'mera number kab aayega' in a chat hears their token, the waiting-room screen is public and shows no names or numbers, the TV page is served |
 | test_security.py | 7 | the security review as tests: every public write route is listed with its reason; the token secret survives a new server without a file (kept in the auth database) and an old file is adopted once; a new password is at least 10 characters and not the email; unknown and known emails get the same answer; the live feed opens with a one-use ticket and never takes the token in the URL; sign-in attempts from one address are slowed |
 | test_telephony.py | 4 | the Twilio media-stream bridge with fake recogniser and synthesiser |
-| test_telephony_exotel.py | 5 | the same bridge on Exotel's wire: G.711 conversion matches the standard, outgoing audio in valid Exotel chunks, a call greeted, answered and recorded, the recogniser always hears μ-law, a public server needs the applet's key |
+| test_telephony_exotel.py | 7 | the same bridge on Exotel's wire: G.711 conversion matches the standard, outgoing audio in valid Exotel chunks, a call greeted, answered and recorded, the recogniser always hears μ-law, a public server needs the applet's key; on a demo server a call lands in the demo twin; secrets in URLs never reach the access log |
 | test_db.py | 11 | SQLite's dialect on Postgres: placeholders outside literals, comment-safe schema scripts, upserts, case-blind LIKE, table_info, serial keys, a failed statement undone alone; SQLite stays the default; with Postgres the backup download points at the database host; a SQLite data directory moves to Postgres whole and its chain still verifies; a lone read leaves no transaction open; a dropped connection is reopened; a failure is recorded by kind only |
 | test_timezone.py | 4 | timestamps stored in UTC with an offset; the hourly chart and "today" counted in India's time; the cost comparison from Settings; yesterday's calls |
 | test_reschedule.py | 4 | a booking moved through the ordinary confirmation flow and sealed with its previous receipt |

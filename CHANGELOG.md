@@ -28,6 +28,30 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
   model and what the latency figures include; the unused Java control plane
   removed (CI and CodeQL jobs too).
 
+### Sign-in, WhatsApp and security (branch clinics-coaching, not yet on main)
+
+* **Sign-in codes by email and a password reset** over SMTP (a Gmail App
+  Password). The answer is the same, and as quick, for any email; a reset
+  signs every device out.
+* **Two-step sign-in** with an authenticator app (RFC 6238): a QR in
+  Settings, eight one-time recovery codes, and every first step (password,
+  email code, WhatsApp code, Google) stops at a five-minute single-use ticket.
+* **Real WhatsApp through the Twilio Sandbox** until Meta verifies the
+  business: `/wa/twilio` (Twilio's signature required), every send through
+  Twilio while Meta is not set up, the join phrase, button and QR on
+  `/whatsapp`; on a demo server real messages and calls land in the "(Demo)"
+  shop.
+* **Security review.** The token secret survives deploys (kept in the auth
+  database); the live feed opens with a one-use ticket instead of the token in
+  its URL; a tighter rate limit on sign-in; a 10-character password policy;
+  a test that lists every public write route with its reason; the Meta webhook
+  refuses unsigned deliveries on any public server; secrets in URLs are hidden
+  in the access log. [docs/security.md](docs/security.md) has the threat model,
+  the controls and the dependency audit.
+* **Exotel readiness.** A runbook and test-call checklist,
+  [docs/phone-exotel.md](docs/phone-exotel.md); phone docs name the product
+  packs.
+
 ## 1.2.0 — 2026-11-19 (phase 1, phase 2, step D and the owner-ready audit)
 
 ### Owner-ready audit (branch audit/owner-ready, 2026-11-18)

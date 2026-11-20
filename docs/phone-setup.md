@@ -25,7 +25,7 @@ Ek 2-minute call ≈ ₹2–3. Yahi number README ke cost model mein hai.
 2. **ElevenLabs**: elevenlabs.io → Profile → API key → `HAANJI_ELEVENLABS_KEY`. Voices mein koi Hindi-capable voice chuno (multilingual v2 model Hindi bolta hai) → uska Voice ID → `HAANJI_ELEVENLABS_VOICE`.
 3. **Twilio**: twilio.com → trial → ek number lo (Voice capable). Console → Phone Numbers → us number → Voice & Fax → "A call comes in" = **Webhook**, URL:
    ```
-   https://haanji-engine.onrender.com/telephony/twilio/voice?pack=dental_clinic
+   https://haanji-engine.onrender.com/telephony/twilio/voice?pack=smile_care_clinic
    ```
    Method POST. Account → Auth Token copy → `HAANJI_TWILIO_AUTH_TOKEN` (isse engine har webhook ka signature check karta hai).
 4. `HAANJI_PHONE_DISPLAY` = number jaise `+1 415 555 0100` (landing/console pe dikhane ke liye).
@@ -41,6 +41,8 @@ Ek 2-minute call ≈ ₹2–3. Yahi number README ke cost model mein hai.
 
 ## Exotel (Indian numbers)
 
+Kadam-dar-kadam runbook aur test-call checklist: [phone-exotel.md](phone-exotel.md).
+
 Engine mein Exotel ka adapter hai: `haanji/telephony/exotel.py`. Wahi call
 bridge jo Twilio chalata hai, sirf "wire" alag hai. Exotel raw 16-bit PCM
 (8 kHz) bhejta aur leta hai; engine use μ-law mein badal ke Deepgram ko deta
@@ -50,7 +52,7 @@ multiple, kam se kam 100 ms).
 1. Exotel par number lo (KYC lagta hai; kharcha Exotel ki current price list
    dekh ke, number ka mahina-wari kiraya + per-minute).
 2. Call flow banao: **Voicebot applet** → URL
-   `wss://haanji-engine.onrender.com/telephony/exotel/stream?pack=dental_clinic&key=<secret>`
+   `wss://haanji-engine.onrender.com/telephony/exotel/stream?pack=smile_care_clinic&key=<secret>`
    (bidirectional). Iske baad ek **Hangup** applet.
 3. Render mein `HAANJI_EXOTEL_STREAM_KEY=<wahi secret>` daalo. Public server
    bina key ke stream mana kar deta hai.

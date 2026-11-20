@@ -53,12 +53,14 @@ nav:
   - Running it:
       - WhatsApp: whatsapp-setup.md
       - A phone number: phone-setup.md
+      - Exotel call runbook: phone-exotel.md
       - Console sign-in: console-auth.md
       - Reminders, deposits, waitlist, backup: operations.md
       - The console's API: console-api.md
       - Your own domain: custom-domain.md
       - Demo script: demo-script.md
   - Trust:
+      - Security: security.md
       - Pramaan ledger, formally: pramaan-security.md
       - Privacy and the DPDP Act: privacy-dpdp.md
   - Research:
