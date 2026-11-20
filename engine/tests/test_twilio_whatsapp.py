@@ -189,3 +189,25 @@ def test_on_a_demo_server_real_whatsapp_lands_in_the_demo_twin(env, monkeypatch)
     assert server._wa_pack() == server.DEFAULT_PACK + server.DEMO_SUFFIX
     monkeypatch.setattr(server, "demo_twins", lambda: {})
     assert server._wa_pack() == server.DEFAULT_PACK
+
+
+def test_a_demo_copy_never_messages_a_typed_number(env, monkeypatch):
+    from types import SimpleNamespace
+    twin = server.DEFAULT_PACK + server.DEMO_SUFFIX
+    monkeypatch.setattr(server, "demo_twins", lambda: {twin: server.DEFAULT_PACK})
+    out = []
+
+    async def spy(to, kind, params, *, fallback_text=None, language=None):
+        out.append(to)
+        return True
+    monkeypatch.setattr(wa, "send_template", spy)
+    assert server.may_message(server.DEFAULT_PACK) and not server.may_message(twin) and server.may_message(twin, True)
+    assert asyncio.run(server.notify_customer(twin, "9876500009", "receipt")) is None and out == []
+    typed = SimpleNamespace(phone="9876500010", channel="WEB", rt=SimpleNamespace(pack_id=twin),
+                            session=SimpleNamespace(ctx=SimpleNamespace(phone_verified=False)))
+    monkeypatch.setattr(server, "PUBLIC_SIMULATOR", True)
+    asyncio.run(server._notify_customer(typed, ["2504-7863"]))
+    assert out == []
+    typed.session.ctx.phone_verified = True
+    asyncio.run(server._notify_customer(typed, ["2504-7863"]))
+    assert out == ["9876500010"]

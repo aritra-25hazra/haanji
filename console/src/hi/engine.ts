@@ -354,4 +354,5 @@ export default {
   "Twilio's test number: a phone joins by sending {join} once, and joins again after three days.": "Twilio ka test number: phone ek baar {join} bhejkar judta hai, aur teen din baad dobara judna padta hai.",
   "WhatsApp test number (Twilio Sandbox)": "WhatsApp test number (Twilio Sandbox)",
   "connected · test number (Twilio Sandbox): phones join with {join}": "juda hai · test number (Twilio Sandbox): phone {join} bhejkar judte hain",
+  "The code comes from Twilio's test number. It reaches you only if your number has joined it and written to it in the last 24 hours.": "Code Twilio ke test number se aata hai. Ye tabhi pahunchega jab aapka number usse juda ho aur pichhle 24 ghante mein aapne use message kiya ho.",
 } as Record<string, string>;

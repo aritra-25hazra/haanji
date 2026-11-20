@@ -39,7 +39,10 @@ Out of scope:
   - 10 wrong codes lock the second step for 15 minutes.
   - There are 8 one-time recovery codes. Only their hashes are kept.
   - The app's secret is encrypted with AES-GCM, under a key derived (HKDF) from the auth secret.
-  - If that secret changes, two-step fails closed and recovery codes still work. *(test_two_step)*
+  - If that secret changes, two-step fails closed and recovery codes still work.
+  - Removing a user clears their two-step, so the owner can add back a staff member who lost both the phone and the recovery codes.
+  - An owner in the same position is let back in by whoever controls the server: `HAANJI_2FA_RESET=<email>` turns that user's two-step off at the next boot, and the variable is removed afterwards. *(test_two_step)*
+- **The owner's password from the environment** (`HAANJI_OWNER_PASSWORD`) is applied only when it is new: on the first boot, or after it is changed on purpose. A password reset by email survives restarts. *(test_login_codes)*
 - **Tokens** are HMAC-signed and expire. They can be revoked per device or everywhere.
   The signing secret is `HAANJI_AUTH_SECRET` or, without it, a value kept in the auth database, so a deploy does not sign everyone out. *(test_security)*
 - **The live feed** (`EventSource` cannot send headers) opens with a 60-second, single-use ticket. A long-lived token never goes in a URL. *(test_security)*
@@ -70,7 +73,13 @@ read back only their own conversation, never the list of chats.
 | `/telephony/exotel/stream` | `?key=HAANJI_EXOTEL_STREAM_KEY`, compared in constant time. |
 | `/api/telephony/missed-call` | `X-HaanJi-Secret`. |
 
-A redelivered WhatsApp message is answered once. *(test_whatsapp_webhook, test_twilio_whatsapp, test_telephony_exotel)*
+A redelivered WhatsApp message is answered once.
+
+**Messages to customers.** A demo copy's bookings carry whatever number a
+visitor typed. Receipts, reminders, waitlist offers and a staff member's reply
+go to real WhatsApp only from the real shop, or to a number the channel
+itself proved (caller ID, or WhatsApp's own sender). On a public demo, a
+number typed into /talk is never written to. *(test_whatsapp_webhook, test_twilio_whatsapp, test_telephony_exotel)*
 
 ## Secrets
 

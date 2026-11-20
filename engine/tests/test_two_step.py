@@ -152,3 +152,19 @@ def test_after_the_auth_secret_changes_recovery_codes_still_work_and_nothing_cra
     ticket = server.auth.twofa_ticket(OWNER)
     assert client.post("/api/auth/2fa/verify", json={"ticket": ticket, "code": app_code(secret)}).status_code == 401
     assert client.post("/api/auth/2fa/verify", json={"ticket": ticket, "code": backup[1]}).status_code == 200
+
+
+def test_removing_a_user_clears_their_two_step_so_the_owner_can_add_them_back(client):
+    turn_on(client)
+    assert server.auth.twofa_enabled(OWNER)
+    server.auth.remove_user(OWNER)
+    server.auth.upsert_user(OWNER, "owner", ["*"], name="Owner")
+    assert not server.auth.twofa_enabled(OWNER)
+
+
+def test_the_operator_can_turn_off_a_lost_owner_s_two_step_at_boot(client, monkeypatch):
+    turn_on(client)
+    monkeypatch.setenv("HAANJI_2FA_RESET", EMAIL.upper())
+    server.seed_owner()
+    assert not server.auth.twofa_enabled(OWNER)
+    assert "token" in login(client)

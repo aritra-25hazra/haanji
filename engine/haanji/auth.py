@@ -197,6 +197,9 @@ class AuthStore:
         phone = normalise_phone(phone)
         with self.conn:
             self.conn.execute("DELETE FROM credentials WHERE phone=?", (phone,))
+            # Removing and adding a user back is how the owner resets a staff
+            # member's two-step sign-in when their phone and recovery codes are lost.
+            self.conn.execute("DELETE FROM twofactor WHERE phone=?", (phone,))
             cur = self.conn.execute("DELETE FROM users WHERE phone=?", (phone,))
             if cur.rowcount:
                 self.revoke(phone, now)
@@ -260,6 +263,29 @@ class AuthStore:
         """Whether this email's stored password is this one (no lockout bookkeeping)."""
         r = self.conn.execute("SELECT pw_hash FROM credentials WHERE email=?", (email.strip().lower(),)).fetchone()
         return bool(r) and self._matches(password, r["pw_hash"])
+
+    def seed_password(self, phone: str, email: str, password: str) -> bool:
+        """The operator's password from the environment (HAANJI_OWNER_PASSWORD),
+        applied only when it is new to this database: on the first boot, or
+        after the operator changed it. A password set since then (a reset by
+        email) is kept: the server restarts often, and re-applying the
+        environment's password at every boot undid every reset. A salted
+        scrypt hash of the last applied value is kept to tell. True when the
+        password was set."""
+        email = email.strip().lower()
+        key = "env_password:" + email
+        row = self.conn.execute("SELECT value FROM auth_meta WHERE key=?", (key,)).fetchone()
+        seen = row is not None and self._matches(password, row["value"])
+        if seen and self.phone_for_email(email) is not None:
+            return False
+        applied = False
+        if row is not None or not self.has_password(email, password):
+            self.set_password(phone, email, password)
+            applied = True
+        with self.conn:
+            self.conn.execute("INSERT INTO auth_meta (key, value) VALUES (?, ?)"
+                              " ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, self._hash(password)))
+        return applied
 
     def phone_for_email(self, email: str) -> str | None:
         """The user an email belongs to (set with an email login), if any."""
@@ -379,7 +405,9 @@ class AuthStore:
                 self.conn.execute("INSERT INTO sessions (sid, phone, created, last_seen, agent) VALUES (?,?,?,?,?)",
                                   (sid, p.phone, now, now, agent[:160]))
         body = json.dumps({"phone": p.phone, "role": p.role, "packs": p.packs, "name": p.name, "sid": sid,
-                           "iat": int(now), "exp": int(now + TOKEN_TTL_S)}, separators=(",", ":"))
+                           # iat to the millisecond: a whole second let a token minted just
+                           # after a revoke (a reset, then signing in at once) count as revoked.
+                           "iat": round(now, 3), "exp": int(now + TOKEN_TTL_S)}, separators=(",", ":"))
         payload = base64.urlsafe_b64encode(body.encode()).rstrip(b"=")
         sig = hmac.new(self.secret, payload, hashlib.sha256).digest()
         return payload.decode() + "." + base64.urlsafe_b64encode(sig).rstrip(b"=").decode()
@@ -570,6 +598,12 @@ class AuthStore:
         with self.conn:
             self.conn.execute("DELETE FROM twofactor WHERE phone=?", (normalise_phone(phone),))
         return True
+
+    def twofa_reset(self, phone: str) -> bool:
+        """Turn two-step off without a code (the operator's way back in)."""
+        with self.conn:
+            cur = self.conn.execute("DELETE FROM twofactor WHERE phone=?", (normalise_phone(phone),))
+        return cur.rowcount > 0
 
     def twofa_ticket(self, phone: str, now: float | None = None) -> str:
         """Proof that the first step (password, code or Google) passed, good

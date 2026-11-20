@@ -48,6 +48,12 @@ All notable changes to HaanJi. Dates are when the work reached `main`.
   refuses unsigned deliveries on any public server; secrets in URLs are hidden
   in the access log. [docs/security.md](docs/security.md) has the threat model,
   the controls and the dependency audit.
+* **Re-audit fixes.**
+  * The owner's password from the environment no longer overwrites a reset at every restart.
+  * Removing a user clears their two-step, and `HAANJI_2FA_RESET` lets a locked-out owner back in.
+  * A demo copy never sends real WhatsApp to a typed number; this covers receipts, reminders, waitlist offers and staff replies.
+  * The WhatsApp-code sign-in explains the Sandbox's 24-hour rule.
+  * A token issued in the same second as a sign-out-everywhere (a reset, then signing in at once) no longer counts as revoked: `iat` is kept to the millisecond. The browser check found this.
 * **Exotel readiness.** A runbook and test-call checklist,
   [docs/phone-exotel.md](docs/phone-exotel.md); phone docs name the product
   packs.

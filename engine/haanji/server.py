@@ -353,6 +353,14 @@ def demo_twins() -> dict[str, str]:
     return {pid + DEMO_SUFFIX: pid for pid in product_packs()}
 
 
+def may_message(pack_id: str, proven: bool = False) -> bool:
+    """Whether real WhatsApp may go to a customer of this pack. A demo copy's
+    numbers were typed by visitors, so only a number the channel itself
+    proved (caller ID, WhatsApp's sender) is written to; the rest stays in
+    the record."""
+    return wa_channel.configured() and (proven or pack_id not in demo_twins())
+
+
 def list_packs() -> list[str]:
     """The packs this server offers: the research corpus, or in product mode
     the product packs and their demo twins."""
@@ -466,7 +474,9 @@ def seed_owner() -> None:
     """A fresh deployment with auth on and no users makes HAANJI_OWNER_PHONE
     the owner of every pack, so nobody is locked out of their own console.
     HAANJI_OWNER_EMAIL + HAANJI_OWNER_PASSWORD give that owner an email login;
-    the password is hashed at boot and never logged."""
+    the password is hashed at boot and never logged, and applied only when it
+    is new (first boot, or changed in the environment), so a reset by email
+    survives the next restart."""
     if AUTH_ENABLED and OWNER_PHONE and auth.count() == 0:
         auth.upsert_user(OWNER_PHONE, "owner", ["*"], name="Owner")
     email, password = os.environ.get("HAANJI_OWNER_EMAIL"), os.environ.get("HAANJI_OWNER_PASSWORD")
@@ -474,11 +484,19 @@ def seed_owner() -> None:
         phone = _owner_login_phone(email)
         if auth.user(phone) is None:
             auth.upsert_user(phone, "owner", ["*"], name="Owner")
-        if not auth.has_password(email, password):
-            try:
-                auth.set_password(phone, email, password)
-            except ValueError as exc:
-                log.warning("owner email login not set: %s", exc)
+        try:
+            auth.seed_password(phone, email, password)          # only a new value; a reset survives restarts
+        except ValueError as exc:
+            log.warning("owner email login not set: %s", exc)
+    # The way back in for an owner who lost both the authenticator phone and
+    # the recovery codes: whoever controls the server's environment names the
+    # email, the next boot turns that user's two-step sign-in off. Remove the
+    # variable once signed in.
+    lost = (os.environ.get("HAANJI_2FA_RESET") or "").strip().lower()
+    if AUTH_ENABLED and lost:
+        who = auth.phone_for_email(lost)
+        if who and auth.twofa_reset(who):
+            log.warning("two-step sign-in turned off for %s by HAANJI_2FA_RESET; remove the variable now", mailer._mask(lost))
 
 
 def _pack_in(request: Request):
@@ -998,11 +1016,12 @@ def payment_note(links: list[dict[str, Any]]) -> str:
 async def _notify_customer(holder: Holder, codes: list[str], links: list[dict[str, Any]] | None = None) -> None:
     """A web or phone caller who gave a number gets the receipt link (and the
     deposit link) on WhatsApp, if a real number is connected. Never blocks."""
-    # On the public demo anyone can type anyone's number into /talk: only a number
-    # the channel proved (PSTN caller-id) is written to there.
-    if DEMO_READONLY and not holder.session.ctx.phone_verified:
+    # On a public demo (sign-in off, or the visitors' simulator open) anyone can
+    # type anyone's number into /talk: only a number the channel proved (caller
+    # ID, WhatsApp's sender) is written to there.
+    if (DEMO_READONLY or PUBLIC_SIMULATOR) and not holder.session.ctx.phone_verified:
         return
-    if codes and holder.phone and holder.channel != "WHATSAPP" and wa_channel.configured():
+    if codes and holder.phone and holder.channel != "WHATSAPP" and may_message(holder.rt.pack_id, holder.session.ctx.phone_verified):
         try:
             text = receipt_note(holder.rt.pack_id, codes)
             if links:
@@ -1049,7 +1068,7 @@ async def offer_waitlist(rt: TenantRuntime, date: str, service: str | None) -> d
     rt.backend.waitlist_mark(rt.pack_id, entry["entry_id"], "OFFERED", f"{slot['date']} {slot['time']}")
     store.add_wa(rt.pack_id, phone, "out", text, meta={"waitlist_offer": entry["entry_id"]})
     delivered = None
-    if wa_channel.configured():
+    if may_message(rt.pack_id):
         delivered = await wa_channel.send_template(phone, "outreach", [business], fallback_text=text)
     publish("waitlist.offered", pack=rt.pack_id, phone=_mask(phone), slot=f"{slot['date']} {slot['time']}")
     TELEMETRY.inc("waitlist_offers_total", pack=rt.pack_id)
@@ -2072,7 +2091,7 @@ async def send_due_reminders(now: dt.datetime | None = None) -> int:
             text = rem_mod.reminder_text(b, rt.pack.persona.business_name, rt.backend.today,
                                          rt.backend.resolve_date, rt.pack.language, PUBLIC_URL)
             delivered = None
-            if wa_channel.configured():
+            if may_message(pid):                     # a demo copy: in the record only
                 delivered = await wa_channel.send_template(b.phone, "reminder", [b.service, f"{b.date} {b.time}"],
                                                           fallback_text=text)
             rt.backend.mark_reminded(pid, b.booking_id)
@@ -2776,7 +2795,7 @@ async def _human_reply(sid: str, holder: Holder, text: str) -> dict[str, Any]:
     session.turns[-1].guard = "human"
     if holder.channel == "WHATSAPP" and holder.phone:
         store.add_wa(holder.rt.pack_id, holder.phone, "out", text, meta={"human": True})
-        if wa_channel.configured():
+        if may_message(holder.rt.pack_id, holder.session.ctx.phone_verified):
             try:
                 await wa_channel.send_text(holder.phone, text)
             except Exception as exc:                      # noqa: BLE001
@@ -3360,7 +3379,7 @@ async def notify_customer(pack_id: str, phone: str, text: str, *, meta: dict[str
     """A message from the shop to a customer, recorded in their WhatsApp thread
     and sent when a real number is connected (None = nothing to send with)."""
     store.add_wa(pack_id, phone, "out", text, meta=meta or {})
-    if not wa_channel.configured():
+    if not may_message(pack_id):
         return None
     try:
         return await wa_channel.send_template(phone, template, params or [], fallback_text=text)

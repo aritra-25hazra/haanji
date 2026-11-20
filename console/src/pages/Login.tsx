@@ -147,6 +147,7 @@ export default function Login() {
     form = stage === "ask" ? (
       <form className="form" onSubmit={(e) => { e.preventDefault(); void sendWhatsApp(); }}>
         <p className="muted">{t("The WhatsApp number you are owner or staff with. No password: a one-time code comes to it.")}</p>
+        {status?.whatsapp?.sandbox && <p className="muted small">{t("The code comes from Twilio's test number. It reaches you only if your number has joined it and written to it in the last 24 hours.")}</p>}
         <label className="field"><span>WhatsApp number</span><input className="input" inputMode="numeric" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" autoFocus /></label>
         <button className="btn btn-primary" type="submit" disabled={busy || phone.replace(/\D/g, "").length < 10}>{t("Send the code")} <Icon name="arrow" small /></button>
       </form>

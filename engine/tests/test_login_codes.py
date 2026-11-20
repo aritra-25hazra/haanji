@@ -127,3 +127,36 @@ def test_a_failed_send_is_reported_without_the_password(client, monkeypatch):
     assert "SMTPAuthenticationError" in st["last_send"]["error"] and "app-password-wrong" not in str(st)
     assert st["last_send"]["to"] == "o…@clinic.test"
     assert mailer.status()["last_send"]["ok"] is False
+
+
+def test_a_reset_survives_a_restart_and_a_changed_environment_password_applies(tmp_path, monkeypatch):
+    db = str(tmp_path / "boot.sqlite")
+    monkeypatch.setattr(server, "AUTH_ENABLED", True)
+    monkeypatch.setenv("HAANJI_OWNER_EMAIL", "boss@clinic.test")
+    monkeypatch.setenv("HAANJI_OWNER_PASSWORD", "from-the-environment")
+
+    def boot():                                       # what each restart does
+        monkeypatch.setattr(server, "auth", AuthStore(db, "test-secret"))
+        server.seed_owner()
+        return server.auth
+
+    a = boot()
+    assert a.check_password("boss@clinic.test", "from-the-environment") is not None
+    a.set_password(a.phone_for_email("boss@clinic.test"), "boss@clinic.test", "chosen-after-a-reset")
+    a = boot()
+    assert a.check_password("boss@clinic.test", "chosen-after-a-reset") is not None, "the restart undid the reset"
+    assert a.check_password("boss@clinic.test", "from-the-environment") is None
+    monkeypatch.setenv("HAANJI_OWNER_PASSWORD", "changed-in-render-on-purpose")
+    a = boot()
+    assert a.check_password("boss@clinic.test", "changed-in-render-on-purpose") is not None
+
+
+def test_signing_in_right_after_a_reset_gives_a_token_that_works(tmp_path):
+    a = AuthStore(str(tmp_path / "auth.sqlite"), "test-secret")
+    a.upsert_user(OWNER, "owner", ["*"], name="Owner")
+    t0 = 1_800_000_000.2
+    a.revoke(OWNER, now=t0)                           # what a reset does
+    old = a.token_for(a.user(OWNER), now=t0 - 0.1)
+    new = a.token_for(a.user(OWNER), now=t0 + 0.5)    # the same second, just after
+    assert a.verify_token(old, now=t0 + 1) is None
+    assert a.verify_token(new, now=t0 + 1) is not None

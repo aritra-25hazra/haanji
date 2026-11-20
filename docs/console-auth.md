@@ -80,3 +80,8 @@ Pehle step ke baad 5 minute ka ek-baar wala ticket milta hai; token sirf dusre s
 Ek code dobara nahi chalta. 10 galat code → 15 minute lock. Band karne ke liye abhi ka code (ya recovery code) chahiye.
 App ka secret database mein encrypted rehta hai (`HAANJI_AUTH_SECRET` se bani key). Is wajah se
 `HAANJI_AUTH_SECRET` kabhi mat badlo: badla to sabke 2-step secret khul nahi payenge aur 2-step dobara set karna padega.
+
+**Phone aur recovery codes dono kho gaye?**
+- Staff ke liye: owner Settings → Users mein unhe hatao aur dobara jodo. Isse unka 2-step band ho jata hai.
+- Owner ke liye: Render → Environment mein `HAANJI_2FA_RESET` = apna email daalo. Restart ke baad 2-step band ho jayega.
+  Sign in karke ye variable **turant hata do**, aur Settings se 2-step dobara chalu karo.
