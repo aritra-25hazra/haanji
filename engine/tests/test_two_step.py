@@ -2,6 +2,7 @@
 the RFC's own test vectors, a code works once, recovery codes work once,
 the ticket between the steps is signed, short-lived and single-use, and
 every first step (password, email code, WhatsApp code, Google) stops at it."""
+import base64
 import time
 import urllib.parse
 
@@ -12,7 +13,7 @@ from haanji import google_login, server, totp
 from haanji.auth import AuthStore
 
 OWNER, EMAIL, PASSWORD = "9800000001", "owner@clinic.test", "a-long-passphrase"
-RFC_SECRET = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"          # base32 of ASCII "12345678901234567890"
+RFC_SECRET = base64.b32encode(b"12345678901234567890").decode()   # RFC 6238 Appendix B's published test key
 
 
 @pytest.mark.parametrize("t,code", [(59, "94287082"), (1111111109, "07081804"), (1111111111, "14050471"),
