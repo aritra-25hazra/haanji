@@ -17,13 +17,13 @@ Nothing in HaanJi needs a shared server, an API key, or anyone else's machine
 to be switched on. Setup on a fresh Mac/Windows/Linux laptop:
 
 ```bash
-git clone <repo-url> haanji && cd haanji/code
+git clone https://github.com/aritra-25hazra/haanji.git && cd haanji
 
 # Python engine (3.11+)
 cd engine
 python3 -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -e ".[dev,web]"
-pytest -q                    # 161 tests — your clone is healthy
+pytest -q                    # every test passes — your clone is healthy
 python -m haanji.cli serve   # your own http://localhost:8090
 
 # Console (Node 18+), separate terminal

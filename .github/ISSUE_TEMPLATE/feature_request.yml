@@ -1,0 +1,21 @@
+name: Feature request
+description: Something a clinic, a coaching institute or its caller needs.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: who
+    attributes:
+      label: Who needs it, and why
+      placeholder: "A clinic's receptionist needs … because …"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What it should do
+    validations:
+      required: true
+  - type: textarea
+    id: else
+    attributes:
+      label: What people do today instead

@@ -1,12 +1,31 @@
-# HaanJi
+<h1 align="center">
+  <a href="https://haanji-engine.onrender.com"><img src="docs/media/banner.png" width="100%" alt="HaanJi (हाँजी): the AI receptionist for clinics and coaching institutes in India. Phone, WhatsApp and Hinglish; it books the right doctor or class and proves what the caller agreed to. Three ideas: Bhasha Bridge, speculative turns, Pramaan ledger."></a>
+</h1>
 
-[![ci](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml)
-[![engine](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-engine.onrender.com%2Fapi%2Fstatus&label=engine&up_message=live&down_message=waking)](https://haanji-engine.onrender.com)
-[![console](https://img.shields.io/website?url=https%3A%2F%2Fhaanji-kappa.vercel.app&label=console&up_message=live)](https://haanji-kappa.vercel.app)
-![tests](https://img.shields.io/badge/tests-781%20passing-1F6B45)
-[![security](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml/badge.svg)](https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/aritra-25hazra/haanji?quickstart=1)
-![licence](https://img.shields.io/badge/licence-Apache--2.0-1B3B8C)
+<p align="center">
+  <a href="https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml"><img src="https://github.com/aritra-25hazra/haanji/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <a href="https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml"><img src="https://github.com/aritra-25hazra/haanji/actions/workflows/security.yml/badge.svg" alt="security"></a>
+  <img src="https://img.shields.io/badge/tests-781%20passing-1F6B45" alt="tests">
+  <a href="https://haanji-engine.onrender.com"><img src="https://img.shields.io/website?url=https%3A%2F%2Fhaanji-engine.onrender.com%2Fapi%2Fstatus&label=engine&up_message=live&down_message=waking" alt="engine"></a>
+  <a href="https://haanji-kappa.vercel.app"><img src="https://img.shields.io/website?url=https%3A%2F%2Fhaanji-kappa.vercel.app&label=console&up_message=live" alt="console"></a>
+  <a href="https://github.com/aritra-25hazra/haanji/releases"><img src="https://img.shields.io/github/v/release/aritra-25hazra/haanji?color=1B3B8C&label=release" alt="release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-Apache--2.0-1B3B8C" alt="licence"></a>
+  <br>
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python 3.11">
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/React_18-TypeScript-3178C6?logo=react&logoColor=white" alt="React 18 with TypeScript">
+  <a href="https://codespaces.new/aritra-25hazra/haanji?quickstart=1"><img src="https://github.com/codespaces/badge.svg" height="20" alt="Open in GitHub Codespaces"></a>
+</p>
+
+<p align="center">
+  <a href="https://haanji-engine.onrender.com/talk"><b>Talk to it</b></a> ·
+  <a href="https://haanji-engine.onrender.com/whatsapp"><b>WhatsApp demo</b></a> ·
+  <a href="https://haanji-kappa.vercel.app"><b>Owner console</b></a> ·
+  <a href="https://haanji-engine.onrender.com/verify"><b>Receipt verifier</b></a> ·
+  <a href="#try-it-in-one-minute"><b>Run it</b></a> ·
+  <a href="research/REPORT.pdf"><b>Report (PDF)</b></a> ·
+  <a href="https://aritra-25hazra.github.io/haanji/"><b>Docs</b></a>
+</p>
 
 <p align="center">
   <a href="https://haanji-engine.onrender.com/talk"><img src="docs/media/talk.gif" width="960" alt="A call on /talk: the misheard 'rut kanal' is painted over as 'root canal', the booking is confirmed, and a signed receipt lands as a stamp while the engine panel shows the sound-key match, the speculated tool and the growing chain."></a>
@@ -50,6 +69,37 @@ condensed paper draft is [`research/PAPER.md`](research/PAPER.md). For a viva:
 [docs/viva.md](docs/viva.md) (fifty questions, three-line answers, where the
 evidence is), [docs/competitors.md](docs/competitors.md),
 [docs/diagrams.md](docs/diagrams.md), [docs/failure-gallery.md](docs/failure-gallery.md).
+
+## At a glance
+
+| Area | What ships |
+|---|---|
+| **Channels** | Browser call (`/talk`), phone (Twilio voice; an Exotel bridge with its [runbook](docs/phone-exotel.md)), WhatsApp (Meta Cloud API, or the Twilio Sandbox until Meta verifies the business), missed-call recovery |
+| **At reception** | Token queue with check-in and walk-ins, a waiting-room screen (`/queue`), and callers who ask "mera number kab aayega" get their place in line |
+| **For the owner** | React console in English and हिंदी: calendar, customers, waitlist, deposit links, day-before reminders, insights, Pack Studio |
+| **Sign-in and security** | Passwords (scrypt), Google, one-time codes by email or WhatsApp, optional two-step with an authenticator app, devices and sign-out everywhere, an activity log, signed webhooks ([threat model](docs/security.md)) |
+| **Privacy** | Following India's DPDP Act, a customer's data can be exported or erased; erasure crypto-shreds the name and number and the receipt chain still verifies ([privacy-dpdp.md](docs/privacy-dpdp.md)) |
+| **Engineering** | Tests for every feature (count on the badge), CI with a secret scan, SQLite or Postgres, Docker, Prometheus and Grafana |
+
+### Built with
+
+<p>
+  <img src="https://skillicons.dev/icons?i=python,fastapi,react,ts,vite,threejs,sqlite,postgres,docker,githubactions,prometheus,grafana,vercel&perline=13" alt="Python, FastAPI, React, TypeScript, Vite, Three.js, SQLite, PostgreSQL, Docker, GitHub Actions, Prometheus, Grafana, Vercel">
+</p>
+
+### Contents
+
+[See it live](#see-it-live) ·
+[Try it in one minute](#try-it-in-one-minute) ·
+[What a call looks like](#what-a-call-looks-like) ·
+[Repository layout](#repository-layout) ·
+[The three contributions](#the-three-contributions-in-more-detail) ·
+[The platform](#the-platform-around-the-engine-v04) ·
+[Architecture](#architecture) ·
+[Running the whole system](#running-the-whole-system) ·
+[Honest notes](#honest-notes) ·
+[Install, cite, read](#install-cite-read) ·
+[Team](#team)
 
 ## See it live
 
@@ -185,20 +235,22 @@ PRAMAAN LEDGER
 │   │   ├── adapters/        STT / LLM / TTS boundaries + offline mock providers
 │   │   ├── backend/         the business system the agent acts on (SQLite)
 │   │   ├── tools/           the eight actions, with purity and confirmation flags
-│   │   ├── channels/        WhatsApp (Meta Cloud API) + telephony webhook adapters
+│   │   ├── channels/        WhatsApp: Meta Cloud API, or the Twilio Sandbox
+│   │   ├── telephony/       phone calls: Twilio voice, the Exotel stream, Deepgram and ElevenLabs
 │   │   ├── web/             landing · Talk · WhatsApp sim · verifier — the Signboard design system, vanilla JS
 │   │   ├── policy.py        the deterministic dialogue policy
 │   │   ├── pipeline.py      the turn controller — where the three ideas meet
 │   │   ├── guardrails.py    what the agent must never do
 │   │   ├── server.py        FastAPI demo server — every channel on one port
 │   │   ├── insights.py      outcome/revenue/cost analytics behind /api/insights
-│   │   ├── bench.py         the evaluation harness that produces every number
-│   │   └── cli.py           demo · selftest · bench · verify · serve · packs
-│   └── tests/               781 tests, including the safety properties and the demo pages
 │   │   ├── admin.py         the console's operations: calendar, customers, settings, waitlist, payments, backup
 │   │   ├── reminders.py     the day-before WhatsApp reminder and the "1 / 2" replies
 │   │   ├── payments.py      deposit links (Razorpay, or this server's mock), the signed webhook
-│   │   └── backup.py        consistent SQLite backups, nightly to S3, restore on boot
+│   │   ├── backup.py        consistent SQLite backups, nightly to S3, restore on boot
+│   │   ├── auth.py          sign-in: passwords, one-time codes, sessions, two-step (totp.py), mail (mailer.py)
+│   │   ├── bench.py         the evaluation harness that produces every number
+│   │   └── cli.py           demo · selftest · bench · verify · serve · packs
+│   └── tests/               781 tests, including the safety properties and the demo pages
 ├── console/         React 18 + TypeScript operator console (Vite): calendar, customers, settings, Pack Studio
 ├── packs/           ten research Vertical Packs as YAML; packs/product/ holds the clinic and the coaching institute the product ships
 ├── research/        results.json, regenerated by the harness
@@ -593,9 +645,11 @@ proxies `/engine/*` to the engine, so the console stays same-origin). The engine
 needs no database server. The free instance's disk is ephemeral: a redeploy
 starts the demo clean, which is intended for the demo and is why a real shop
 sets `HAANJI_BACKUP_S3_BUCKET` and `HAANJI_RESTORE_FROM`
-([docs/operations.md](docs/operations.md)). A ten-minute GitHub Actions ping
-keeps the free instance warm; delete
-[`.github/workflows/keep-awake.yml`](.github/workflows/keep-awake.yml) to stop it.
+([docs/operations.md](docs/operations.md)). A GitHub Actions ping
+([`.github/workflows/keep-awake.yml`](.github/workflows/keep-awake.yml)) is
+scheduled every ten minutes, but GitHub ran it only every five to nine hours
+(18–20 Nov 2026), so the free instance still sleeps between visits; open
+`/api/status` a minute before a demo.
 
 ---
 
@@ -609,7 +663,10 @@ A project report should say what was verified and what was not.
     - HaanJi answers it;
     - Meta accepts the reply.
   - Meta's delivery report is 131031 "Business account locked": the business portfolio is not verified. A verified Indian WhatsApp Business number is a manual Meta step (business verification with a registered business's documents), and no code changes when it is done.
-  - Until then the demo uses the WhatsApp simulator (`/whatsapp`).
+  - Until then, real WhatsApp can run through the Twilio Sandbox (each tester
+    sends a join phrase once; [docs/whatsapp-setup.md](docs/whatsapp-setup.md)).
+    The code is in; the live server turns it on once the Twilio keys are set.
+  - Without either, the demo uses the WhatsApp simulator (`/whatsapp`).
   - `/api/status` → `whatsapp.last_send` shows Meta's latest answer.
 
 * **The Python engine is fully executed here.** 781 tests, 44 scenarios across

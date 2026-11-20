@@ -1,0 +1,53 @@
+<!doctype html>
+<!-- Source of docs/media/banner.png (the README's header). Rebuild with:
+     python docs/media/brand/render.py -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../../engine/haanji/web/fonts.css">
+<style>
+  :root {
+    --cobalt: #1B3B8C; --cobalt-deep: #102A66; --marigold: #F5B91E; --chalk: #FFF7E6;
+    --haze: #9FB3E8; --leaf: #8FD694; --sindoor: #E2553A;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 400px; }
+  body {
+    background: radial-gradient(120% 140% at 0% 0%, var(--cobalt) 0%, var(--cobalt-deep) 70%);
+    color: var(--chalk); font-family: "Instrument Sans", system-ui, sans-serif;
+    display: grid; grid-template-columns: 1fr 470px; align-items: center; gap: 48px;
+    padding: 0 72px; position: relative; overflow: hidden;
+  }
+  body::after {            /* the Signboard's painted frame */
+    content: ""; position: absolute; inset: 14px; border-radius: 18px; pointer-events: none;
+    box-shadow: inset 0 0 0 3px var(--marigold), inset 0 0 0 6px var(--cobalt), inset 0 0 0 7px var(--marigold);
+  }
+  .mark { display: flex; align-items: baseline; gap: 18px; }
+  .mark .en { font: 800 92px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -.03em; color: var(--marigold); }
+  .mark .dev { font: 400 60px/1 "Yatra One", serif; color: var(--chalk); }
+  .tag { margin-top: 18px; font: 800 30px/1.15 "Bricolage Grotesque", sans-serif; letter-spacing: -.01em; }
+  .sub { margin-top: 12px; font-size: 19px; color: var(--haze); letter-spacing: .01em; }
+  .sub b { color: var(--chalk); font-weight: 600; }
+  .cards { display: grid; gap: 12px; }
+  .card {
+    background: rgba(255, 247, 230, .07); border: 1.5px solid rgba(245, 185, 30, .55);
+    border-radius: 14px; padding: 14px 18px; display: grid; grid-template-columns: 34px 1fr; gap: 4px 12px;
+  }
+  .card .n { grid-row: span 2; font: 800 26px/1.2 "Bricolage Grotesque", sans-serif; color: var(--marigold); }
+  .card h3 { font: 800 19px/1.2 "Bricolage Grotesque", sans-serif; }
+  .card p { font-size: 15px; color: var(--haze); line-height: 1.3; }
+</style>
+</head>
+<body>
+  <div>
+    <div class="mark"><span class="en">HaanJi</span><span class="dev">हाँजी</span></div>
+    <p class="tag">The AI receptionist for clinics and<br>coaching institutes in India</p>
+    <p class="sub"><b>Phone</b> · <b>WhatsApp</b> · <b>Hinglish</b> · books the right doctor or class · proves what the caller agreed to</p>
+  </div>
+  <div class="cards">
+    <div class="card"><span class="n">1</span><h3>Bhasha Bridge</h3><p>repairs misheard names by how they sound</p></div>
+    <div class="card"><span class="n">2</span><h3>Speculative turns</h3><p>looks up the answer while the caller is still speaking</p></div>
+    <div class="card"><span class="n">3</span><h3>Pramaan ledger</h3><p>every booking sealed in a signed, hash-chained receipt</p></div>
+  </div>
+</body>
+</html>
