@@ -117,11 +117,12 @@ def test_the_answering_pack_comes_from_the_environment(client, monkeypatch, sent
 def test_status_reports_whether_a_real_number_is_connected(client, monkeypatch):
     monkeypatch.delenv("HAANJI_WA_TOKEN", raising=False)
     monkeypatch.delenv("HAANJI_WA_PHONE_ID", raising=False)
-    assert client.get("/api/status").json()["whatsapp"] == {"configured": False, "number": None}
+    monkeypatch.delenv("HAANJI_TWILIO_WA_FROM", raising=False)
+    assert client.get("/api/status").json()["whatsapp"] == {"configured": False, "number": None, "provider": "none"}
     monkeypatch.setenv("HAANJI_WA_TOKEN", "t")
     monkeypatch.setenv("HAANJI_WA_PHONE_ID", "111222333")
     s = client.get("/api/status").json()["whatsapp"]
-    assert s["configured"] is True and s["number"].endswith("2333")
+    assert s["configured"] is True and s["number"].endswith("2333") and s["provider"] == "meta"
     monkeypatch.setenv("HAANJI_WA_DISPLAY_NUMBER", "+91 98765 43210")
     assert client.get("/api/status").json()["whatsapp"]["number"] == "+91 98765 43210"
 

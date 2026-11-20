@@ -21,6 +21,8 @@
   .wa-live { padding: 10px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
   .wa-live p { font-size: 12.5px; }
   .wa-live .chip { max-width: 100%; white-space: normal; }
+  .wa-join { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .wa-join img { background: #fff; border-radius: 8px; padding: 4px; }
   .missed { padding: 12px 14px; border-bottom: 1px solid rgba(245, 185, 30, .18); display: flex; flex-direction: column; gap: 8px; }
   .missed .btn { width: 100%; }
   .missed p, #threads-note { color: var(--haze); font-size: 13px; }
@@ -133,7 +135,17 @@
       const test = /^1555/.test(String(s.whatsapp.number || "").replace(/\D/g, ""));
       const live = document.createElement("div");
       live.className = "wa-live";
-      live.innerHTML = test
+      const sandbox = s.whatsapp.provider === "twilio" && s.whatsapp.join_code;
+      live.innerHTML = sandbox
+        ? '<span class="chip chip-spec">' + S.icon("phone") + S.esc(L("Real WhatsApp (Twilio Sandbox)", "Asli WhatsApp (Twilio Sandbox)")) +
+          " · " + S.esc(s.whatsapp.number || "") + "</span>" +
+          '<p class="muted">' + S.esc(L("To try it on your phone: send", "Apne phone pe try karne ke liye: WhatsApp pe")) + " <b>" + S.esc(s.whatsapp.join_code) + "</b> " +
+          S.esc(L("to this number once, then write \"Namaste\". It is a test number: after three days, send the join message again.",
+                  "is number pe ek baar bhejiye, phir \"Namaste\" likhiye. Ye test number hai: teen din baad join message dobara bhejna hoga.")) + "</p>" +
+          (s.whatsapp.join_link ? '<p class="wa-join"><a class="btn btn-primary btn-sm" href="' + S.esc(s.whatsapp.join_link) + '" target="_blank" rel="noopener">' +
+            S.esc(L("Open WhatsApp with the join message", "Join message ke saath WhatsApp kholo")) + "</a>" +
+            '<img src="api/whatsapp/join-qr" alt="' + S.esc(L("QR code: scan to join", "QR code: join karne ke liye scan karo")) + '" width="132" height="132"></p>' : "")
+        : test
         ? '<span class="chip">' + S.icon("phone") + S.esc(L("Meta test number: not for the public yet", "Meta ka test number: abhi sabke liye nahi")) + "</span>" +
           '<p class="muted">' + S.esc(L("Real WhatsApp replies start once Meta verifies the business. Until then, book in the simulator below: it is the same engine and the same receipts.", "Asli WhatsApp jawab tab shuru honge jab Meta business verify karega. Tab tak neeche simulator mein booking karo: engine aur receipts wahi hain.")) + "</p>"
         : '<span class="chip chip-spec">' + S.icon("phone") + S.esc(L("A real number is connected", "Asli number juda hai")) +

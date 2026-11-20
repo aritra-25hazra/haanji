@@ -12,6 +12,11 @@ docs/whatsapp-setup.md: a Meta app with the WhatsApp product, then
 in the environment, and https://<engine>/wa/webhook registered as the webhook.
 The handler in server.py then feeds real messages through the exact code path
 the simulator uses.
+
+Until Meta verifies the business, the Twilio Sandbox (twilio_whatsapp.py)
+carries the same messages: with Meta not set up and Twilio set up, every
+send below goes through Twilio, and a template becomes its fallback text
+(the Sandbox has no custom templates).
 """
 from __future__ import annotations
 import hashlib
@@ -22,12 +27,24 @@ import os
 import time
 from typing import Any, Iterator
 
+from . import twilio_whatsapp as twilio
+
 GRAPH = "https://graph.facebook.com/v20.0"
 log = logging.getLogger(__name__)
 
 
-def configured() -> bool:
+def meta_configured() -> bool:
     return bool(os.environ.get("HAANJI_WA_TOKEN") and os.environ.get("HAANJI_WA_PHONE_ID"))
+
+
+def provider() -> str:
+    """meta, twilio, or none: Meta's own API when it is set up, else Twilio."""
+    return "meta" if meta_configured() else "twilio" if twilio.configured() else "none"
+
+
+def configured() -> bool:
+    """A real WhatsApp number is connected, through either provider."""
+    return provider() != "none"
 
 
 # The last time Meta refused a send, for the operator: when, to whom (last
@@ -53,12 +70,14 @@ def _remember(to: str, ok: bool, status_code: int | None = None, body: str = "")
 def status() -> dict:
     """What the UI shows: whether a real number is connected, and which, and
     (for the operator) the last send that Meta refused."""
-    if not configured():
-        return {"configured": False, "number": None}
+    if provider() == "twilio":
+        return twilio.status()
+    if not meta_configured():
+        return {"configured": False, "number": None, "provider": "none"}
     shown = os.environ.get("HAANJI_WA_DISPLAY_NUMBER")
     if not shown:
         shown = "…" + os.environ.get("HAANJI_WA_PHONE_ID", "")[-4:]
-    out: dict[str, Any] = {"configured": True, "number": shown}
+    out: dict[str, Any] = {"configured": True, "provider": "meta", "number": shown}
     if LAST_SEND:
         out["last_send"] = dict(LAST_SEND)
     return out
@@ -150,7 +169,9 @@ async def send_text(to: str, text: str, phone_id: str | None = None) -> bool:
     Meta accepts free text only inside the 24-hour window after the
     customer's last message. Outside it (a login code, a reminder, the
     evening digest) use :func:`send_template`."""
-    if not configured():
+    if provider() == "twilio":
+        return await twilio.send_text(to, text, status_callback=_twilio_status_url())
+    if not meta_configured():
         return False
     return await _post({"to": to, "type": "text", "text": {"body": text}}, phone_id)
 
@@ -165,8 +186,11 @@ async def send_template(to: str, kind: str, params: list[str], *, fallback_text:
                         language: str | None = None) -> bool:
     """Send an approved template message (works outside the 24-hour window).
     Without a template configured for ``kind``, falls back to free text,
-    which Meta will accept only if the customer wrote recently."""
-    if not configured():
+    which Meta will accept only if the customer wrote recently. Through
+    Twilio it is always the fallback text."""
+    if provider() == "twilio":
+        return await send_text(to, fallback_text) if fallback_text else False
+    if not meta_configured():
         return False
     name = template_name(kind)
     if not name:
@@ -177,3 +201,9 @@ async def send_template(to: str, kind: str, params: list[str], *, fallback_text:
     return await _post({"to": to, "type": "template",
                         "template": {"name": name, "language": {"code": language or os.environ.get("HAANJI_WA_TEMPLATE_LANG", "en")},
                                      "components": components}})
+
+
+def _twilio_status_url() -> str | None:
+    """Where Twilio reports what became of a message, on a public server."""
+    base = (os.environ.get("HAANJI_PUBLIC_URL") or os.environ.get("RENDER_EXTERNAL_URL") or "").rstrip("/")
+    return f"{base}/wa/twilio/status" if base.startswith("https://") else None

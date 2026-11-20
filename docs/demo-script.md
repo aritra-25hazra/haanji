@@ -86,6 +86,22 @@ left out. Say so plainly if asked.
 The simulator's top note says "Meta test number: not for the public yet". If
 asked, that is the business-verification lock described above.
 
+### Real WhatsApp through the Twilio Sandbox (once it is set up)
+
+When `/api/status` shows `whatsapp.provider: "twilio"`, a teacher can use
+their own WhatsApp:
+
+1. Open `/whatsapp` on the projector: the top note shows the Sandbox number,
+   the join phrase, an "Open WhatsApp" button and a QR.
+2. The teacher scans the QR (WhatsApp opens with the join phrase typed in)
+   and sends it, then writes "Namaste".
+3. They book as in the simulator. The booking lands in "Smile Care Clinic
+   (Demo)"; open that shop in the console to show it.
+
+Say plainly that it is Twilio's test number: a phone joins once and must join
+again after three days, and replies work within 24 hours of the person's last
+message. Set this up a day before and test it from your own phone.
+
 ### When a teacher wants to book from their own phone
 
 Show the QR code (`docs/media/qr-talk.png` for the call, `docs/media/qr-whatsapp-simulator.png` for the chat) or say the link.
@@ -121,6 +137,7 @@ While they do it, keep the console on the laptop signed in and open on Calls or 
 
 ### Real WhatsApp later
 
-When a registered business can be verified (Business Settings → Security
+Until then the Twilio Sandbox (above, and docs/whatsapp-setup.md) carries
+real messages for testing. When a registered business can be verified (Business Settings → Security
 Center → Business verification), the same token, number and webhook start
 delivering, with no code change.

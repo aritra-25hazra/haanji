@@ -141,6 +141,30 @@ services:
         sync: false
       - key: HAANJI_WA_PACK
         value: smile_care_clinic
+      # WhatsApp through the Twilio Sandbox, until Meta verifies the business.
+      # Twilio console: Messaging > Try it out > WhatsApp > Sandbox settings,
+      # "When a message comes in" = https://haanji-engine.onrender.com/wa/twilio
+      # (POST). Values in the dashboard only; Meta wins once it is set up.
+      - key: HAANJI_TWILIO_ACCOUNT_SID
+        sync: false
+      - key: HAANJI_TWILIO_AUTH_TOKEN
+        sync: false
+      - key: HAANJI_TWILIO_WA_FROM
+        sync: false
+      - key: HAANJI_TWILIO_WA_JOIN
+        sync: false
+      # Sign-in and password-reset codes by email (a Gmail App Password:
+      # host smtp.gmail.com, port 465). Values in the dashboard only.
+      - key: HAANJI_SMTP_HOST
+        sync: false
+      - key: HAANJI_SMTP_PORT
+        sync: false
+      - key: HAANJI_SMTP_USER
+        sync: false
+      - key: HAANJI_SMTP_PASSWORD
+        sync: false
+      - key: HAANJI_MAIL_FROM
+        sync: false
       # The owner's number: receives the evening digest and, with
       # HAANJI_AUTH=on, becomes the first console owner (sign-in by WhatsApp
       # code). Keep auth off for a public demo; turn it on for a real shop.

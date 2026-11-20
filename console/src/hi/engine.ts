@@ -301,7 +301,7 @@ export default {
   "on": "on",
   "off — anyone with the link can look (demo)": "band — link wala koi bhi dekh sakta hai (demo)",
   "Technical details": "Technical details",
-  "For whoever runs the server. Sign-in: HAANJI_AUTH=on. Records that survive restarts: HAANJI_DATABASE_URL (Postgres) with HAANJI_VAULT_SECRET, or a nightly backup with HAANJI_BACKUP_S3_BUCKET. Google Calendar: HAANJI_GOOGLE_CLIENT_ID and HAANJI_GOOGLE_CLIENT_SECRET. WhatsApp: HAANJI_WA_TOKEN and HAANJI_WA_PHONE_ID. See docs/operations.md.": "Server chalane wale ke liye. Sign-in: HAANJI_AUTH=on. Restart ke baad bhi bacha data: HAANJI_DATABASE_URL (Postgres) aur HAANJI_VAULT_SECRET, ya raat ka backup HAANJI_BACKUP_S3_BUCKET se. Google Calendar: HAANJI_GOOGLE_CLIENT_ID aur HAANJI_GOOGLE_CLIENT_SECRET. WhatsApp: HAANJI_WA_TOKEN aur HAANJI_WA_PHONE_ID. Dekho docs/operations.md.",
+  "For whoever runs the server. Sign-in: HAANJI_AUTH=on. Records that survive restarts: HAANJI_DATABASE_URL (Postgres) with HAANJI_VAULT_SECRET, or a nightly backup with HAANJI_BACKUP_S3_BUCKET. Google Calendar: HAANJI_GOOGLE_CLIENT_ID and HAANJI_GOOGLE_CLIENT_SECRET. WhatsApp: HAANJI_WA_TOKEN and HAANJI_WA_PHONE_ID (Meta), or HAANJI_TWILIO_ACCOUNT_SID, HAANJI_TWILIO_AUTH_TOKEN, HAANJI_TWILIO_WA_FROM and HAANJI_TWILIO_WA_JOIN (the Twilio Sandbox). Email codes: HAANJI_SMTP_HOST, HAANJI_SMTP_USER, HAANJI_SMTP_PASSWORD. See docs/operations.md.": "Server chalane wale ke liye. Sign-in: HAANJI_AUTH=on. Restart ke baad bhi bacha data: HAANJI_DATABASE_URL (Postgres) aur HAANJI_VAULT_SECRET, ya raat ka backup HAANJI_BACKUP_S3_BUCKET se. Google Calendar: HAANJI_GOOGLE_CLIENT_ID aur HAANJI_GOOGLE_CLIENT_SECRET. WhatsApp: HAANJI_WA_TOKEN aur HAANJI_WA_PHONE_ID (Meta), ya HAANJI_TWILIO_ACCOUNT_SID, HAANJI_TWILIO_AUTH_TOKEN, HAANJI_TWILIO_WA_FROM aur HAANJI_TWILIO_WA_JOIN (Twilio Sandbox). Email codes: HAANJI_SMTP_HOST, HAANJI_SMTP_USER, HAANJI_SMTP_PASSWORD. Dekho docs/operations.md.",
   "This is the public demo, so bookings cannot be changed here. A shop's own console, with sign-in, can.": "Ye public demo hai, isliye yahan bookings badal nahi sakte. Dukaan ke apne console mein (sign-in ke saath) badal sakte hain.",
   "Demo: changes are switched off": "Demo: badlaav band hain",
   "how sure the speech recogniser was (0 to 1)": "awaaz pehchaanne wala kitna pakka tha (0 se 1)",
@@ -351,4 +351,7 @@ export default {
   "Two-step sign-in is on.": "Two-step sign-in chalu hai.",
   "Two-step sign-in": "Two-step sign-in",
   "on · {n} recovery codes left": "chalu · {n} recovery codes bache",
+  "Twilio's test number: a phone joins by sending {join} once, and joins again after three days.": "Twilio ka test number: phone ek baar {join} bhejkar judta hai, aur teen din baad dobara judna padta hai.",
+  "WhatsApp test number (Twilio Sandbox)": "WhatsApp test number (Twilio Sandbox)",
+  "connected · test number (Twilio Sandbox): phones join with {join}": "juda hai · test number (Twilio Sandbox): phone {join} bhejkar judte hain",
 } as Record<string, string>;

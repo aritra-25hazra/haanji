@@ -42,6 +42,7 @@ PUBLIC_WRITES = {
     ("POST", "/telephony/twilio/voice"): "needs Twilio's signature on a public server",
     ("POST", "/wa/webhook"): "needs Meta's signature on a public server",
     ("POST", "/wa/twilio"): "needs Twilio's signature on a public server",
+    ("POST", "/wa/twilio/status"): "needs Twilio's signature on a public server",
 }
 
 

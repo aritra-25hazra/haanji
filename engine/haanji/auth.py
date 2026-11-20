@@ -16,6 +16,7 @@ import datetime as dt
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
@@ -24,6 +25,8 @@ import time
 from dataclasses import dataclass, field
 
 from . import db, totp
+
+log = logging.getLogger("haanji.auth")
 
 OTP_TTL_S = 300
 OTP_MAX_ATTEMPTS = 5
@@ -473,9 +476,17 @@ class AuthStore:
         nonce = secrets.token_bytes(12)
         return base64.b64encode(nonce + self._aead().encrypt(nonce, plain.encode(), b"totp")).decode()
 
-    def _open(self, sealed: str) -> str:
-        raw = base64.b64decode(sealed)
-        return self._aead().decrypt(raw[:12], raw[12:], b"totp").decode()
+    def _open(self, sealed: str) -> str | None:
+        """The app's secret, or None when it cannot be read: the auth secret
+        it was sealed with has changed. Recovery codes (hashes, not sealed)
+        still work then; the app has to be set up again."""
+        from cryptography.exceptions import InvalidTag
+        try:
+            raw = base64.b64decode(sealed)
+            return self._aead().decrypt(raw[:12], raw[12:], b"totp").decode()
+        except (InvalidTag, ValueError):
+            log.warning("a two-step secret cannot be read: HAANJI_AUTH_SECRET changed since it was set up")
+            return None
 
     def twofa_enabled(self, phone: str) -> bool:
         r = self.conn.execute("SELECT enabled FROM twofactor WHERE phone=?", (normalise_phone(phone),)).fetchone()
@@ -500,7 +511,8 @@ class AuthStore:
         r = self.conn.execute("SELECT * FROM twofactor WHERE phone=?", (phone,)).fetchone()
         if r is None or r["enabled"]:
             raise ValueError("start the setup first")
-        step = totp.verify(self._open(r["secret"]), code, now)
+        secret = self._open(r["secret"])
+        step = totp.verify(secret, code, now) if secret else None
         if step is None:
             raise ValueError("that code is not right; check the time on the phone and try the next one")
         backup = [f"{secrets.token_hex(2)}-{secrets.token_hex(2)}" for _ in range(8)]
@@ -522,7 +534,8 @@ class AuthStore:
         if r is None:
             return False
         ok = False
-        step = totp.verify(self._open(r["secret"]), code, now, last_step=int(r["last_step"]))
+        secret = self._open(r["secret"])
+        step = totp.verify(secret, code, now, last_step=int(r["last_step"])) if secret else None
         with self.conn:
             if step is not None:
                 self.conn.execute("UPDATE twofactor SET last_step=? WHERE phone=?", (step, phone))

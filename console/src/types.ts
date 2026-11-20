@@ -7,7 +7,11 @@ export interface Status {
   packs: string[];
   console_url?: string;
   public_url?: string;
-  whatsapp?: { configured: boolean; number: string | null; last_send?: { delivery?: { status?: string; code?: number } } };
+  whatsapp?: {
+    configured: boolean; number: string | null; last_send?: { delivery?: { status?: string; code?: number | string } };
+    /** meta (WhatsApp Cloud API) or twilio (the Sandbox until Meta verifies the business). */
+    provider?: "meta" | "twilio" | "none"; join_code?: string | null; join_link?: string | null; sandbox?: boolean;
+  };
   digest?: { owner_configured: boolean; hour_ist: number };
   /** Sign-in: whether it is on, and whether 'Continue with Google' is offered. */
   auth?: { enabled: boolean; google?: boolean; email_codes?: boolean };

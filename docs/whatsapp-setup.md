@@ -7,6 +7,44 @@ Jab ho jayega: koi bhi aapke test number pe WhatsApp message karega, HaanJi
 jawab dega, booking karega, receipt banayega — aur console ke *Calls* mein
 `whatsapp` channel ke saath dikhega.
 
+## Jab tak Meta business verify nahi karta: Twilio Sandbox (free, ~10 min)
+
+Meta ka account business verification tak band hai (131031). Tab tak asli
+WhatsApp **Twilio Sandbox** se chal sakta hai. Code pehle se ready hai; Meta set
+ho jayega to engine apne aap Meta use karega.
+
+1. twilio.com pe free account banao (email aur phone verify).
+2. Console mein: **Messaging → Try it out → Send a WhatsApp message**.
+   Wahan Sandbox ka number (`+1 415 523 8886`) aur **join phrase** dikhega,
+   jaise `join able-tiger`.
+3. **Sandbox settings** mein "When a message comes in" mein ye daalo, method **POST**:
+   `https://haanji-engine.onrender.com/wa/twilio`
+   Save karo.
+4. Twilio console ke home pe **Account SID** aur **Auth Token** milenge.
+5. Render → haanji-engine → **Environment** mein 4 values daalo:
+   - `HAANJI_TWILIO_ACCOUNT_SID` = Account SID (AC… se shuru)
+   - `HAANJI_TWILIO_AUTH_TOKEN` = Auth Token
+   - `HAANJI_TWILIO_WA_FROM` = `whatsapp:+14155238886`
+   - `HAANJI_TWILIO_WA_JOIN` = jo join phrase dikha, jaise `join able-tiger`
+   Save → engine restart hoga.
+6. Test: apne phone se `+1 415 523 8886` pe WhatsApp mein join phrase bhejo,
+   phir "Namaste" likho. HaanJi jawab dega.
+7. `https://haanji-engine.onrender.com/api/status` mein `whatsapp.provider`
+   `twilio` dikhna chahiye. `/whatsapp` page pe join ka button aur QR aa jayega.
+
+Sandbox ki limits (Twilio ke docs, twilio.com/docs/whatsapp/sandbox):
+- Sirf wahi number message paa sakte hain jinhone join phrase bheja ho (error 63015).
+- Join karne ke **3 din baad** session khatam: join phrase dobara bhejna hoga.
+- Free-form jawab sirf **aakhri message ke 24 ghante** ke andar. Login code ya
+  reminder us window ke bahar nahi pahunchega; `/api/status` mein
+  `whatsapp.last_send.delivery` "failed" dikhayega.
+- Sandbox ek message har 3 second se zyada tez nahi bhejta.
+- Ye sirf testing ke liye hai. Twilio trial credit message bhejne par use hota
+  hai; rate Twilio ke pricing page pe dekho.
+
+Demo server pe Sandbox se aane wale message "(Demo)" shop mein jaate hain,
+bilkul simulator ki tarah, taaki asli clinic ka calendar saaf rahe.
+
 ## Pehle ye samajh lo (2 min)
 
 - Meta ka **test number** free hai lekin sirf **5 phone numbers** ko message

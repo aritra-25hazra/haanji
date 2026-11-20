@@ -49,7 +49,10 @@ export default function Dashboard() {
   return (
     <Page title={t("Today")} sub={t("{business}: every call the agent picked up, and what came of it.", { business: businessName(pack) })}
           actions={<>
-            {status?.whatsapp?.configured && (isTestNumber(status.whatsapp.number)
+            {status?.whatsapp?.configured && (status.whatsapp.sandbox
+              ? <Chip kind="warn" title={t("Twilio's test number: a phone joins by sending {join} once, and joins again after three days.", { join: status.whatsapp.join_code ?? "join …" })}>
+                  <Icon name="phone" small />{t("WhatsApp test number (Twilio Sandbox)")}</Chip>
+              : isTestNumber(status.whatsapp.number)
               ? <Chip kind="warn" title={t("Meta's sandbox number: only the 5 numbers added to it can talk to it.")}><Icon name="phone" small />{t("Demo WhatsApp number (Meta test)")}</Chip>
               : <Chip kind="ok"><Icon name="phone" small />{t("WhatsApp connected")}{status.whatsapp.number ? ` · ${status.whatsapp.number}` : ""}</Chip>)}
             <Link className="btn btn-ghost btn-sm" to="/calendar"><Icon name="calendar" small />{t("Calendar")}</Link>

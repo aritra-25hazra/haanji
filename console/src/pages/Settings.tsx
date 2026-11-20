@@ -53,6 +53,7 @@ function Connections({ pack }: { pack: string }) {
   const wa = status?.whatsapp, ph = status?.phone;
   useT();
   const waLine = !wa?.configured ? t("not connected yet")
+    : wa.sandbox ? t("connected · test number (Twilio Sandbox): phones join with {join}", { join: wa.join_code ?? "join …" })
     : isTestNumber(wa.number) ? t("connected · demo number (Meta test)") : `${t("connected")}${wa.number ? ` · ${wa.number}` : ""}`;
   const data = status?.storage === "postgres" ? t("saved in the database")
     : status?.backup?.s3 ? t("backed up every night") : t("resets when the server restarts");
@@ -72,7 +73,7 @@ function Connections({ pack }: { pack: string }) {
       </ul>
       <details className="tech">
         <summary>{t("Technical details")}</summary>
-        <p className="muted small">{t("For whoever runs the server. Sign-in: HAANJI_AUTH=on. Records that survive restarts: HAANJI_DATABASE_URL (Postgres) with HAANJI_VAULT_SECRET, or a nightly backup with HAANJI_BACKUP_S3_BUCKET. Google Calendar: HAANJI_GOOGLE_CLIENT_ID and HAANJI_GOOGLE_CLIENT_SECRET. WhatsApp: HAANJI_WA_TOKEN and HAANJI_WA_PHONE_ID. See docs/operations.md.")}</p>
+        <p className="muted small">{t("For whoever runs the server. Sign-in: HAANJI_AUTH=on. Records that survive restarts: HAANJI_DATABASE_URL (Postgres) with HAANJI_VAULT_SECRET, or a nightly backup with HAANJI_BACKUP_S3_BUCKET. Google Calendar: HAANJI_GOOGLE_CLIENT_ID and HAANJI_GOOGLE_CLIENT_SECRET. WhatsApp: HAANJI_WA_TOKEN and HAANJI_WA_PHONE_ID (Meta), or HAANJI_TWILIO_ACCOUNT_SID, HAANJI_TWILIO_AUTH_TOKEN, HAANJI_TWILIO_WA_FROM and HAANJI_TWILIO_WA_JOIN (the Twilio Sandbox). Email codes: HAANJI_SMTP_HOST, HAANJI_SMTP_USER, HAANJI_SMTP_PASSWORD. See docs/operations.md.")}</p>
       </details>
     </Panel>
   );

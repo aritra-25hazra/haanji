@@ -41,6 +41,7 @@ from typing import Literal
 from . import __version__
 from .adapters.mock import NullTTS
 from .backend.local import LocalBackend
+from .channels import twilio_whatsapp as twilio_wa
 from .channels import whatsapp as wa_channel
 from . import collect as collect_mod
 from . import onboard as onboard_mod
@@ -140,7 +141,7 @@ RATE_LIMIT_GET_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_GET_PER_MIN", "60
 # Sign-in, codes and resets per client per minute, on top of the per-account
 # locks: guessing across many accounts from one address is slowed too.
 RATE_LIMIT_AUTH_PER_MIN = int(os.environ.get("HAANJI_RATE_LIMIT_AUTH_PER_MIN", "20"))
-RATE_LIMIT_EXEMPT = ("/wa/webhook", "/api/status", "/telephony/", "/payments/")
+RATE_LIMIT_EXEMPT = ("/wa/webhook", "/wa/twilio", "/api/status", "/telephony/", "/payments/")
 # X-Forwarded-For is only meaningful behind a proxy we trust; it is then the
 # *last* hop that the proxy appended, never the first value a client can set.
 TRUST_PROXY = os.environ.get("HAANJI_TRUST_PROXY", "1").lower() in ("1", "true", "on", "yes")
@@ -1331,6 +1332,18 @@ async def wa_verify(request: Request):
     raise HTTPException(403, "bad verify token")
 
 
+def _wa_pack() -> str:
+    """The shop that answers real WhatsApp (HAANJI_WA_PACK). On a product
+    demo server the messages come from visitors, so the shop's demo twin
+    answers, as in the simulator; a pack this server does not offer falls
+    back to the default."""
+    pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
+    if pack not in list_packs():
+        pack = DEFAULT_PACK
+    twin = pack + DEMO_SUFFIX
+    return twin if twin in demo_twins() else pack
+
+
 # Message ids Meta has already delivered; it retries anything it did not get a
 # prompt 200 for, and a retried booking must not become two bookings.
 _wa_seen: deque[str] = deque(maxlen=500)
@@ -1342,7 +1355,9 @@ async def wa_webhook(request: Request):
     if len(raw) > MAX_BODY_BYTES:
         raise HTTPException(413, "request body too large")
     secret = os.environ.get("HAANJI_WA_APP_SECRET") or None
-    if secret is None and IS_PUBLIC and wa_channel.configured():
+    if secret is None and IS_PUBLIC:
+        # Even with Meta not set up: a forged delivery here would otherwise be
+        # answered through whichever provider is (Twilio), to any number.
         raise HTTPException(403, "HAANJI_WA_APP_SECRET is not set; refusing unsigned deliveries")
     if secret and not wa_channel.verify_signature(secret, raw, request.headers.get("X-Hub-Signature-256")):
         raise HTTPException(403, "bad signature")
@@ -1350,7 +1365,7 @@ async def wa_webhook(request: Request):
         payload = json.loads(raw or b"{}")
     except ValueError:
         raise HTTPException(400, "not json")
-    pack = os.environ.get("HAANJI_WA_PACK") or DEFAULT_PACK
+    pack = _wa_pack()
     handled = 0
     to_number = wa_channel.receiving_phone_id(payload)        # reply from the number they wrote to
     wa_channel.note_incoming(to_number)
@@ -1365,6 +1380,89 @@ async def wa_webhook(request: Request):
             await wa_channel.send_text(phone, r["text"], phone_id=to_number)
         handled += 1
     return {"ok": True, "handled": handled}
+
+
+# WhatsApp through Twilio (the Sandbox until Meta verifies the business). The
+# same _wa_turn as the simulator and Meta's webhook; the replies go back in
+# the TwiML answer, or, for a turn slower than Twilio waits, by the REST API.
+TWILIO_INLINE_S = 10.0
+_twilio_late: set[asyncio.Task] = set()
+
+
+def _twilio_form(raw: bytes) -> dict[str, str]:
+    import urllib.parse
+    return {k: v[0] for k, v in urllib.parse.parse_qs(raw.decode("utf-8", "replace"), keep_blank_values=True).items()}
+
+
+def _twilio_signed(request: Request, form: dict[str, str]) -> None:
+    """Twilio signs the public https URL and the form. On a public server an
+    unsigned or wrongly signed request is refused; behind the platform's
+    proxy the URL we see may say http://, so it is rebuilt from PUBLIC_URL."""
+    token = os.environ.get("HAANJI_TWILIO_AUTH_TOKEN")
+    if not token:
+        if IS_PUBLIC:
+            raise HTTPException(403, "HAANJI_TWILIO_AUTH_TOKEN is not set; refusing unsigned requests")
+        return
+    url = (f"{PUBLIC_URL}{request.url.path}" + (f"?{request.url.query}" if request.url.query else "")
+           if IS_PUBLIC else str(request.url))
+    if not twilio_mod.verify_signature(token, url, form, request.headers.get("X-Twilio-Signature")):
+        raise HTTPException(403, "bad Twilio signature")
+
+
+@app.post("/wa/twilio")
+async def wa_twilio(request: Request):
+    raw = await request.body()
+    if len(raw) > MAX_BODY_BYTES:
+        raise HTTPException(413, "request body too large")
+    form = _twilio_form(raw)
+    _twilio_signed(request, form)
+    xml = lambda texts: Response(twilio_wa.twiml(texts), media_type="application/xml")   # noqa: E731
+    msg_id, text = form.get("MessageSid", ""), (form.get("Body") or "").strip()
+    phone = twilio_wa.phone_of(form.get("From", ""))
+    if not text or len(phone) != 10:
+        return xml([])                                         # a photo, a voice note, a status: nothing to answer
+    if msg_id:
+        if msg_id in _wa_seen:
+            return xml([])
+        _wa_seen.append(msg_id)
+    pack = _wa_pack()
+    turn = asyncio.create_task(_wa_turn(pack, phone, text, verified=True))   # Twilio vouches for the sender
+    done, _ = await asyncio.wait({turn}, timeout=TWILIO_INLINE_S)
+    if turn in done:
+        return xml([r["text"] for r in turn.result()])
+
+    async def late() -> None:
+        try:
+            for r in await turn:
+                await wa_channel.send_text(phone, r["text"])
+        except Exception as exc:                      # noqa: BLE001 - logged; Twilio already has its 200
+            log.warning("late WhatsApp reply to …%s failed: %s", phone[-4:], type(exc).__name__)
+    task = asyncio.create_task(late())
+    _twilio_late.add(task)
+    task.add_done_callback(_twilio_late.discard)
+    return xml([])
+
+
+@app.get("/api/whatsapp/join-qr")
+async def whatsapp_join_qr():
+    """A QR of the Sandbox join link, for a projector or a printed card:
+    scanning it opens WhatsApp with the join phrase typed in."""
+    link = twilio_wa.join_link() if wa_channel.provider() == "twilio" else None
+    if not link:
+        raise HTTPException(404, "no WhatsApp join link on this server (HAANJI_TWILIO_WA_JOIN)")
+    import qrcode
+    import qrcode.image.svg
+    svg = qrcode.make(link, image_factory=qrcode.image.svg.SvgPathImage, box_size=10, border=2).to_string()
+    return Response(svg, media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=300"})
+
+
+@app.post("/wa/twilio/status")
+async def wa_twilio_status(request: Request):
+    """Twilio reports what became of a message we sent (delivered, failed…)."""
+    form = _twilio_form(await request.body())
+    _twilio_signed(request, form)
+    twilio_wa.note_status(form)
+    return Response(status_code=204)
 
 
 # ───────────────────────────────────────────────────── missed-call recovery

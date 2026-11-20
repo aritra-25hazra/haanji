@@ -144,3 +144,11 @@ def test_turning_it_off_needs_a_current_code(client):
     assert client.post("/api/auth/2fa/disable", headers=hdr, json={"code": app_code(secret)}).json() == {"enabled": False}
     assert "token" in login(client)
     assert any(a["path"] == "/api/auth/2fa/disable" for a in server.auth.audit())
+
+
+def test_after_the_auth_secret_changes_recovery_codes_still_work_and_nothing_crashes(client, tmp_path):
+    secret, backup, _ = turn_on(client)
+    server.auth = AuthStore(str(tmp_path / "auth.sqlite"), "a-different-secret")   # the fixture restores it
+    ticket = server.auth.twofa_ticket(OWNER)
+    assert client.post("/api/auth/2fa/verify", json={"ticket": ticket, "code": app_code(secret)}).status_code == 401
+    assert client.post("/api/auth/2fa/verify", json={"ticket": ticket, "code": backup[1]}).status_code == 200

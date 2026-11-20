@@ -44,3 +44,39 @@ transparency log, payment pages. Yani customer aur verifier ko kabhi login
 nahi chahiye — sirf dukaan ke andar wale data ko. Login on hone pe WhatsApp
 *simulator*, recording/study APIs, `/api/ops` aur `/metrics` bhi login ke
 peeche aa jaate hain (ye demo/research surfaces hain, dukaan ke nahi).
+
+## Email se code, password reset (Gmail)
+
+Render mein ye 5 values daalo (sab `sync: false`, sirf dashboard mein):
+
+1. Gmail account mein **2-Step Verification** on karo (myaccount.google.com → Security).
+2. Wahi page pe **App passwords** → naam "HaanJi" → 16 akshar ka password milega.
+3. Render → Environment:
+   - `HAANJI_SMTP_HOST` = `smtp.gmail.com`
+   - `HAANJI_SMTP_PORT` = `465`
+   - `HAANJI_SMTP_USER` = aapka Gmail
+   - `HAANJI_SMTP_PASSWORD` = App password (asli Gmail password kabhi nahi)
+   - `HAANJI_MAIL_FROM` = `HaanJi <aapka@gmail.com>`
+
+Iske baad login page pe **"Iske bajaye email pe code"** aur **"Password bhool gaye?"** dikhenge.
+
+- Code 5 minute chalta hai, ek hi baar. 15 minute mein 3 se zyada code nahi.
+- 10 galat code → 15 minute ka lock.
+- Jawab hamesha same hota hai, chahe email ka account ho ya na ho, taaki koi
+  account dhoondh na sake. Mail jawab ke baad jaati hai, to time se bhi pata nahi chalta.
+- Reset ke baad har device se sign out ho jata hai, aur galat-password wala lock hat jata hai.
+- `/api/status` → `mail.last_send` batata hai aakhri mail gayi ya nahi (email aadha chhupa hua, password kabhi nahi).
+
+## 2-step login (authenticator app)
+
+Settings → **Two-step sign-in** → "chalu karo":
+
+1. QR ko Google Authenticator / Microsoft Authenticator / Authy se scan karo.
+2. App ka 6 ankon ka code daalo → **Pakka karo**.
+3. 8 recovery codes dikhenge, **sirf ek baar**. Save kar lo; phone kho jaye to har code ek baar chalega.
+
+Uske baad har login (password, email code, WhatsApp code, Google) ke baad app ka code maanga jata hai.
+Pehle step ke baad 5 minute ka ek-baar wala ticket milta hai; token sirf dusre step ke baad.
+Ek code dobara nahi chalta. 10 galat code → 15 minute lock. Band karne ke liye abhi ka code (ya recovery code) chahiye.
+App ka secret database mein encrypted rehta hai (`HAANJI_AUTH_SECRET` se bani key). Is wajah se
+`HAANJI_AUTH_SECRET` kabhi mat badlo: badla to sabke 2-step secret khul nahi payenge aur 2-step dobara set karna padega.
