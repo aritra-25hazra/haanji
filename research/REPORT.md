@@ -1,6 +1,6 @@
 # HaanJi: a voice receptionist for Indian small businesses that hears the business's own words, answers before the caller finishes, and can prove what was agreed
 
-<p class="byline">Aritra Hazra · Prabhav Upadhayay · Anuj Uniyal<br>
+<p class="byline">Aritra Hazra · Prabhav Upadhyay · Anuj Uniyal<br>
 B.Tech Information Technology (Artificial Intelligence), Medi-Caps University<br>
 Evaluation report, version 1.2 · 19 November 2026 · code and data: <a href="https://github.com/aritra-25hazra/haanji">github.com/aritra-25hazra/haanji</a></p>
 

@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 authors = [
-  { name = "Aritra Hazra" }, { name = "Prabhav Upadhayay" }, { name = "Anuj Uniyal" },
+  { name = "Aritra Hazra" }, { name = "Prabhav Upadhyay" }, { name = "Anuj Uniyal" },
 ]
 keywords = ["voice agent", "speech recognition", "Hinglish", "code-mixed", "phonetic matching",
             "contextual biasing", "speculative execution", "verifiable receipts", "India"]

@@ -1,6 +1,6 @@
 # Contributing — how three people build HaanJi on their own machines, on their own time
 
-HaanJi is built by **Aritra Hazra, Prabhav Upadhayay and Anuj Uniyal**. We do
+HaanJi is built by **Aritra Hazra, Prabhav Upadhyay and Anuj Uniyal**. We do
 not share a computer and we do not work at the same hours — one of us codes at
 8 in the morning, another after dinner. That is normal for every software team
 on earth, and the answer to "how?" is the same everywhere: **the project does
@@ -69,7 +69,7 @@ reviewer and tie-breaker*, not exclusive author — everyone works everywhere.
 | Area | Paths | Owner |
 |---|---|---|
 | Voice engine core — pipeline, speculation, adapters, web call | `engine/haanji/pipeline.py`, `speculation/`, `adapters/`, `web/talk.html`, `server.py` sessions | Aritra Hazra |
-| Language & channels — Bhasha Bridge, NLU, packs, WhatsApp, missed-call | `engine/haanji/bhasha/`, `nlu.py`, `speak.py`, `channels/`, `packs/` | Prabhav Upadhayay |
+| Language & channels — Bhasha Bridge, NLU, packs, WhatsApp, missed-call | `engine/haanji/bhasha/`, `nlu.py`, `speak.py`, `channels/`, `packs/` | Prabhav Upadhyay |
 | Trust & surfaces — Pramaan ledger, verifier, console, Pack Studio | `engine/haanji/pramaan/`, `web/verify.html`, `console/` | Anuj Uniyal |
 
 Cross-cutting files (`models.py`, `policy.py`, `tools/`, this file) belong to
